@@ -1,0 +1,4 @@
+version: 1
+display_name: EZ-AX RAG Compactor
+short_description: Keeps work-rag and rag concise, current, and continuation-safe.
+default_prompt: Update and compress ez-ax RAG after one closed autonomous task.

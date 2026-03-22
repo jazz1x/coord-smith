@@ -1,0 +1,4 @@
+version: 1
+display_name: EZ-AX Autonomous Loop
+short_description: Runs one full ez-ax autonomous implementation cycle for a single in-bounds task.
+default_prompt: Run one full ez-ax autonomous loop for the current smallest safe in-bounds task.

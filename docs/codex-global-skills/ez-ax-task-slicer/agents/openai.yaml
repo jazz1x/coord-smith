@@ -1,0 +1,4 @@
+version: 1
+display_name: EZ-AX Task Slicer
+short_description: Picks the smallest safe 1-commit task for ez-ax autonomous implementation loops.
+default_prompt: Choose exactly one smallest safe implementation task for the current ez-ax loop.

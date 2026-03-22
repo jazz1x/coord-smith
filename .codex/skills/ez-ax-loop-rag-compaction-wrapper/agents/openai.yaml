@@ -1,0 +1,4 @@
+version: 1
+display_name: EZ-AX Loop RAG Compaction Wrapper
+short_description: Feeds the ez-ax adapter into the global RAG compaction loop.
+default_prompt: Load the ez-ax repo adapter and compact current-tense RAG before cycle close.

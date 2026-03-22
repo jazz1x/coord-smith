@@ -1,0 +1,4 @@
+version: 1
+display_name: EZ-AX Loop Validation Picker Wrapper
+short_description: Feeds the ez-ax adapter into the global validation-picking loop.
+default_prompt: Load the ez-ax repo adapter and use it to choose the minimum honest validation bundle.

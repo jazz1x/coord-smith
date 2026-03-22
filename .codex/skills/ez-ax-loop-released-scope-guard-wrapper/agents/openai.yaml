@@ -1,0 +1,4 @@
+version: 1
+display_name: EZ-AX Loop Released Scope Guard Wrapper
+short_description: Feeds the ez-ax adapter into the global released-scope guard.
+default_prompt: Load the ez-ax repo adapter and decide whether the proposed task is in bounds.

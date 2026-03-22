@@ -1,0 +1,139 @@
+version: 1
+repo: ez-ax
+purpose: Repo-local adapter inputs for the reusable autonomous implementation loop.
+
+memory:
+  continuation_memory_path: docs/product/work-rag.json
+  reusable_asset_memory_path: docs/product/rag.json
+  tracked_core_skill_bundle_path: docs/codex-global-skills
+  tracked_core_skill_install_script: scripts/install-codex-global-skills.sh
+  low_attention_queue_prd_path: docs/product/prd-low-attention-implementation-queue.md
+
+scope:
+  active_scope_boundary: pageReadyObserved
+  released_anchors:
+    - prepareSession
+    - pageReadyObserved
+  authority_boundary:
+    browser_facing_actor: OpenClaw
+    orchestration_owner: ez-ax
+    canonical_implementation_path: Python-first
+  forbidden_paths:
+    - TypeScript runtime under src/
+    - Bun-first runtime validation as canonical path
+    - modeled-stage implementation presented as released behavior
+
+execution_rules:
+  one_task_per_commit: true
+  validation_first: true
+  compaction_before_cycle_close: true
+  current_work_memory_role: what_to_do_now
+  reusable_asset_memory_role: durable_lessons_only
+  paused_resume_search_order:
+    - rerun or identify one focused pytest target on the active anchor surface
+    - if pytest is clean, rerun or identify one focused mypy target for the active file group when typing is part of the contract
+    - if mypy is clean, rerun or identify one focused ruff check target for the active file group
+    - if focused validation is clean, scan one relevant PRD for one exact unenforced clause below pageReadyObserved
+    - if a clause is found, name one exact primary code location and one minimum honest validation command for the next one-commit slice
+    - if no exact gap is found for the current file group, advance to the next queued released-scope file group
+    - if the primary queue is exhausted cleanly, advance to the next queued secondary released-scope file group
+    - escalate only if neither a focused failing artifact nor an exact unenforced clause exists without guesswork and the documented primary plus secondary queues are exhausted
+  paused_file_group_queue:
+    - file_group: src/ez_ax/graph/langgraph_released_execution.py
+      first_prd: docs/product/prd-python-langgraph-runtime.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py
+    - file_group: src/ez_ax/graph/released_call_site.py
+      first_prd: docs/product/prd-python-runtime-layout.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_released_call_site.py
+    - file_group: src/ez_ax/graph/released_run_root.py
+      first_prd: docs/product/prd-python-runtime-layout.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_released_run_root.py
+    - file_group: src/ez_ax/adapters/openclaw/execution.py
+      first_prd: docs/product/prd-openclaw-computer-use-runtime.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py
+    - file_group: src/ez_ax/adapters/openclaw/mcp_adapter.py
+      first_prd: docs/product/prd-openclaw-computer-use-runtime.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py
+  paused_secondary_file_group_queue:
+    - file_group: src/ez_ax/config/mcp_stdio_cli.py
+      first_prd: docs/product/prd-python-mcp-client-acquisition.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint_argv.py
+    - file_group: src/ez_ax/graph/langgraph_released.py
+      first_prd: docs/product/prd-python-langgraph-runtime.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_released_entrypoint.py
+    - file_group: src/ez_ax/graph/released_cli_shim.py
+      first_prd: docs/product/prd-python-runtime-layout.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_released_cli_shim.py
+  auto_search_boundary:
+    tertiary_queue_allowed_by_default: false
+    heuristic_max_new_items_per_cycle: 1
+    heuristic_candidate_catalog:
+      - src/ez_ax/graph/released_call_site.py
+      - src/ez_ax/graph/released_run_root.py
+      - src/ez_ax/graph/langgraph_released_execution.py
+      - src/ez_ax/adapters/openclaw/execution.py
+      - src/ez_ax/adapters/openclaw/mcp_adapter.py
+      - src/ez_ax/adapters/openclaw/mcp_stdio_client.py
+    final_stop_condition: documented queue, bounded resume-search, and bounded queue-extension heuristic pass are exhausted without an exact in-bounds gap
+  low_attention_implementation_queue:
+    - src/ez_ax/config/mcp_stdio_cli.py
+    - src/ez_ax/graph/langgraph_released.py
+    - src/ez_ax/graph/released_cli_shim.py
+    - src/ez_ax/config/released_inputs.py
+    - src/ez_ax/reporting/summary.py
+    - src/ez_ax/graph/released_entrypoint.py
+    - src/ez_ax/models/checkpoint.py
+    - src/ez_ax/validation/bootstrap.py
+    - src/ez_ax/evidence/envelope.py
+    - src/ez_ax/adapters/openclaw/client.py
+    - src/ez_ax/validation/bootstrap.py
+    - src/ez_ax/graph/released_call_site.py
+    - src/ez_ax/graph/released_run_root.py
+    - src/ez_ax/graph/langgraph_released_execution.py
+    - src/ez_ax/adapters/openclaw/execution.py
+    - src/ez_ax/adapters/openclaw/mcp_adapter.py
+    - src/ez_ax/adapters/openclaw/mcp_stdio_client.py
+
+validation:
+  floor:
+    docs_only:
+      - python3 -m json.tool docs/product/work-rag.json
+      - git diff --check
+    test_only_rule: run the changed test target directly
+    behavior_or_contract_rule: run one focused test plus the narrowest applicable lint or type check
+    mixed_change_rule: treat docs+behavior as behavior_or_contract
+
+compaction:
+  command: Update docs/product/work-rag.json current state, add exactly one same-task history entry, compact same-scope history when it exceeds the raw checkpoint limit, and promote only durable lessons into docs/product/rag.json.
+  raw_checkpoint_limit_per_active_scope: 5
+  preferred_raw_checkpoint_limit_after_compaction: 2
+  active_lesson_tag: active-implementation
+  historical_lesson_tag: historical-cutover
+
+reporting:
+  closeout_shape:
+    - phase / milestone / anchor / invariant / next action
+    - changes made
+    - typed evidence
+    - commit hash
+    - checkpoint / failure-taxonomy impact
+
+model_routing:
+  main_implementer: gpt-5.2-codex
+  task_slicing: gpt-5.4-mini
+  validation_picking: gpt-5.4-mini
+  released_scope_guarding: gpt-5.4-mini
+  contract_scope_guardian_prompt: gpt-5.4-mini
+  rag_compaction: gpt-5.4-nano
+  continuation_cleanup: gpt-5.4-nano
+  assetization_pattern_promotion_prompt: gpt-5.4-nano
+
+orchestration:
+  primary_entry_skill: ez-ax-low-attention-autoloop
+  required_wrapper_chain:
+    - ez-ax-loop-released-scope-guard-wrapper
+    - ez-ax-loop-task-slicer-wrapper
+    - ez-ax-loop-validation-picker-wrapper
+    - ez-ax-loop-rag-compaction-wrapper
+  default_loop_mode: continuous_guarded_looping
+  final_stop_keyword: FINAL_STOP
