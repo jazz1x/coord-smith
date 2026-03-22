@@ -450,7 +450,7 @@ Why in-bounds:
   - focused pytest, mypy, and ruff are clean
   - no exact unenforced released entrypoint signature clause remains without
     guesswork
-- `next_if_clean`: final stop
+- `next_if_clean`: Item 19
 - `next_if_fail`:
   - fix the smallest safe one-commit slice in
     `src/ez_ax/graph/released_entrypoint.py`
@@ -460,6 +460,29 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens released-scope entrypoint contract determinism only
+- it remains below `pageReadyObserved`
+- it does not widen browser-facing or modeled-stage behavior
+
+### Item 19 — Released MCP Required-Field Schema Violation
+
+- `file_group`: `src/ez_ax/adapters/openclaw/mcp_adapter.py`
+- `tests`: `tests/unit/test_openclaw_mcp_adapter.py`
+- `first_prd`: `docs/product/prd-openclaw-computer-use-runtime.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean
+  - no exact unenforced required-field schema-violation clause remains without
+    guesswork
+- `next_if_clean`: final stop
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in
+    `src/ez_ax/adapters/openclaw/mcp_adapter.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface hardens released MCP response schema enforcement only
 - it remains below `pageReadyObserved`
 - it does not widen browser-facing or modeled-stage behavior
 

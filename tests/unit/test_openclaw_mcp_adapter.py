@@ -640,6 +640,47 @@ async def test_mcp_adapter_rejects_missing_observations(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
+async def test_mcp_adapter_rejects_missing_required_status_field(
+    tmp_path: Path,
+) -> None:
+    evidence_refs = [
+        "evidence://dom/page-shell-ready",
+        "evidence://action-log/release-ceiling-stop",
+    ]
+    invalid_output = {
+        "mission_name": "page_ready_observation",
+        "evidence_refs": evidence_refs,
+        "observations": {
+            evidence_refs[0]: _observation(ref=evidence_refs[0], value=True),
+            evidence_refs[1]: _observation(
+                ref=evidence_refs[1], value={"seeded": True}
+            ),
+        },
+    }
+    client = FakeMcpClient(
+        side_effects=[invalid_output, invalid_output, invalid_output]
+    )
+    adapter = McpBackedOpenClawAdapter(
+        settings=_settings(max_attempts=3),
+        mcp_client=client,
+        run_root=tmp_path,
+        request_id_factory=lambda: "req-1",
+    )
+
+    request = OpenClawExecutionRequest(
+        mission_name="page_ready_observation", payload={}
+    )
+
+    try:
+        await adapter.execute(request)
+    except ValidationError as exc:
+        assert "status" in str(exc)
+        assert client.call_count == 1
+    else:
+        raise AssertionError("Expected missing status field to raise ValidationError")
+
+
+@pytest.mark.asyncio
 async def test_mcp_adapter_rejects_observations_key_mismatch(tmp_path: Path) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
