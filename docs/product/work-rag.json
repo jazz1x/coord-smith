@@ -85,6 +85,19 @@
       "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
       "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
       "anchor": "pythonRuntimeBootstrapCreated",
+      "summary": "Promoted a durable lesson for repeated honest FINAL_STOP restatements: once stale-stop and operator-confirmation guards are in place, the same explicit FINAL_STOP should be treated as queue-authority exhaustion that needs a new PRD-backed slice, not as a prompt-tuning problem.",
+      "evidence": [
+        "docs/product/rag.json",
+        ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+        "docs/product/work-rag.json"
+      ],
+      "recorded_at": "2026-03-24T00:55:20+09:00"
+    },
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+      "anchor": "pythonRuntimeBootstrapCreated",
       "summary": "Promoted a durable lesson for operator-confirmation false negatives: once the documented exhaustion protocol is complete with no exact released-scope gap, the loop must declare FINAL_STOP directly instead of blocking on human confirmation.",
       "evidence": [
         "docs/product/rag.json",

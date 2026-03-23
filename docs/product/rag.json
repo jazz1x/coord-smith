@@ -588,6 +588,28 @@
         "final-stop-contract",
         "stop-handoff-guard"
       ]
+    },
+    {
+      "id": "lesson-reusable-heuristic-025",
+      "category": "reusable_heuristic",
+      "severity": "high",
+      "summary": "Repeated honest FINAL_STOP outputs after guardrail hardening usually mean queue authority is exhausted, not that the prompt needs another minor tweak.",
+      "lesson": "If the low-attention loop already quotes the exact on-disk `next_action`, rejects doc-only stop alignment, rejects operator-confirmation blocking, and still lands on the same explicit `FINAL_STOP`, treat that as evidence that the documented autonomous surface is genuinely exhausted. At that point, future progress should come from a new PRD-backed queue item or explicit queue/PRD extension, not from repeatedly re-running the same autoloop prompt and expecting a different slice to appear.",
+      "trigger": "Even after adding guards for stale FINAL_STOP and operator-confirmation failure modes, the low-attention run still honestly reported the same explicit FINAL_STOP from on-disk memory.",
+      "evidence": [
+        ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+        "docs/product/work-rag.json",
+        "docs/product/rag.json"
+      ],
+      "promoted_from_phase": "Phase R3 — Fresh Python Bootstrap",
+      "recorded_at": "2026-03-24T00:55:20+09:00",
+      "tags": [
+        "active-implementation",
+        "low-attention-loop",
+        "queue-authority",
+        "final-stop",
+        "resume-policy"
+      ]
     }
   ]
 }
