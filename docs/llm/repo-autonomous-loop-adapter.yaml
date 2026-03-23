@@ -67,14 +67,31 @@ execution_rules:
   auto_search_boundary:
     tertiary_queue_allowed_by_default: false
     heuristic_max_new_items_per_cycle: 1
+    heuristic_pass_interpretation: one bounded sweep across the full documented heuristic catalog; the pass may inspect every candidate in order but may promote at most one new queue item
     heuristic_candidate_catalog:
-      - src/ez_ax/graph/released_call_site.py
-      - src/ez_ax/graph/released_run_root.py
-      - src/ez_ax/graph/langgraph_released_execution.py
-      - src/ez_ax/adapters/openclaw/execution.py
-      - src/ez_ax/adapters/openclaw/mcp_adapter.py
-      - src/ez_ax/adapters/openclaw/mcp_stdio_client.py
-    final_stop_condition: documented queue, bounded resume-search, and bounded queue-extension heuristic pass are exhausted without an exact in-bounds gap
+      - file_group: src/ez_ax/config/mcp_stdio.py
+        first_prd: docs/product/prd-python-mcp-client-acquisition.md
+        first_validation: .venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py
+      - file_group: src/ez_ax/adapters/openclaw/mcp_settings.py
+        first_prd: docs/product/prd-openclaw-computer-use-runtime.md
+        first_validation: .venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_settings.py
+      - file_group: src/ez_ax/config/settings.py
+        first_prd: docs/product/prd-python-runtime-layout.md
+        first_validation: .venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py
+      - file_group: tests/unit/test_langgraph_released_assembly.py
+        first_prd: docs/product/prd-python-langgraph-runtime.md
+        first_validation: .venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py
+      - file_group: tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py
+        first_prd: docs/product/prd-python-mcp-client-acquisition.md
+        first_validation: .venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py
+    heuristic_candidate_scan_steps:
+      - run first_validation for the current candidate
+      - if first_validation fails, stop and open one one-commit task for that candidate
+      - if first_validation passes, run the narrowest applicable mypy target
+      - if mypy passes, run the narrowest applicable ruff check
+      - if focused validation is clean, scan first_prd for one exact unenforced clause tied to the candidate
+      - if no failing artifact and no exact clause are found, advance to the next documented heuristic candidate
+    final_stop_condition: documented queue, bounded resume-search, and the full documented queue-extension heuristic catalog are exhausted without an exact in-bounds gap
   low_attention_implementation_queue:
     - src/ez_ax/config/mcp_stdio_cli.py
     - src/ez_ax/graph/langgraph_released.py

@@ -506,7 +506,8 @@ Queue-extension heuristic gate:
   implementation may perform exactly one canonical queue-extension heuristic
   pass
   for that exhaustion cycle
-- that pass may add at most one new queue item
+- that pass may inspect multiple documented candidates in deterministic order,
+  but may add at most one new queue item total
 - the new queue item must come from a released-scope support surface already
   described by an exact `must` clause in the governing PRD set
 - the new queue item must remain one-task-per-commit safe
@@ -515,15 +516,59 @@ Queue-extension heuristic gate:
 
 Heuristic candidate catalog:
 
-- the queue-extension heuristic pass may draw only from this catalog:
-  - `src/ez_ax/graph/released_call_site.py`
-  - `src/ez_ax/graph/released_run_root.py`
-  - `src/ez_ax/graph/langgraph_released_execution.py`
-  - `src/ez_ax/adapters/openclaw/execution.py`
-  - `src/ez_ax/adapters/openclaw/mcp_adapter.py`
-  - `src/ez_ax/adapters/openclaw/mcp_stdio_client.py`
+- the queue-extension heuristic pass may draw only from this catalog and must
+  inspect it in order until one valid queue item is found or the catalog is
+  exhausted:
+  1. `src/ez_ax/config/mcp_stdio.py`
+     - `first_prd`: `docs/product/prd-python-mcp-client-acquisition.md`
+     - `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`
+     - why still in-bounds: released-scope MCP stdio configuration feeding the
+       released graph path only
+  2. `src/ez_ax/adapters/openclaw/mcp_settings.py`
+     - `first_prd`: `docs/product/prd-openclaw-computer-use-runtime.md`
+     - `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_settings.py`
+     - why still in-bounds: released-scope OpenClaw MCP settings contract only
+  3. `src/ez_ax/config/settings.py`
+     - `first_prd`: `docs/product/prd-python-runtime-layout.md`
+     - `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py`
+     - why still in-bounds: released-scope runtime settings shaping only
+  4. `tests/unit/test_langgraph_released_assembly.py`
+     - `first_prd`: `docs/product/prd-python-langgraph-runtime.md`
+     - `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py`
+     - why still in-bounds: released graph assembly verification below the
+       release ceiling
+  5. `tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`
+     - `first_prd`: `docs/product/prd-python-mcp-client-acquisition.md`
+     - `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`
+     - why still in-bounds: released-scope graph injection verification only
 - catalog use is deterministic and bounded; ad hoc tertiary discovery remains
   disallowed
+
+Heuristic pass procedure:
+
+1. start at candidate 1 and do not skip ahead without recording why the earlier
+   candidate was clean and gap-free
+2. for each candidate, run `first_validation`
+3. if `first_validation` fails, the candidate becomes the next one-commit task
+   and the heuristic pass stops
+4. if `first_validation` passes, run the narrowest focused mypy target for the
+   candidate when typing is relevant
+5. if focused mypy passes, run the narrowest focused `ruff check`
+6. only after focused validation is clean may the agent read the candidate's
+   `first_prd` for one exact unenforced clause
+7. if one exact clause is found, add one queue item and stop the heuristic pass
+8. if no exact failing artifact and no exact clause are found honestly, advance
+   to the next documented candidate
+
+Heuristic pass output requirement:
+
+- a successful heuristic pass must record:
+  - the selected candidate
+  - the exact PRD clause or failing validation artifact
+  - one primary file group
+  - one minimum honest validation command for the follow-on slice
+- a failed heuristic pass must record that every documented heuristic candidate
+  was scanned in order and none yielded an exact in-bounds next slice
 
 Cycle-reset rule:
 
@@ -537,6 +582,8 @@ Final-stop rule:
 
 - after this queue is exhausted and the exhaustion protocol gate order is also
   exhausted, lower-capacity autonomous implementation must stop
+- final stop is invalid if any documented heuristic candidate for the current
+  exhaustion cycle has not yet completed the full validation-plus-clause scan
 - reopening autonomous implementation requires either:
   - one new explicit in-bounds contract gap, or
   - one explicit PRD update that extends this implementation queue

@@ -67,22 +67,29 @@ Current cycle decision question:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current continuation state may record an explicit stop after the documented
-queue is exhausted.
+The current continuation state may record a paused stop-like state after the
+documented queue is exhausted.
 
 When that happens, the execution model now allows one bounded resume-search
 pass across the released-scope file groups listed in `docs/execution-model.md`
-before accepting final stop.
+and then one full documented heuristic-catalog sweep before accepting final
+stop.
 
 At the current state snapshot, the documented queue has been exhausted through
-Item 17 after continuous released-scope hardening.
+Item 19 after continuous released-scope hardening.
 
 The next continuation step is therefore:
 
-- preserve `FINAL_STOP` for this exhaustion cycle because queue +
-  resume-search + single-item heuristic pass are exhausted
-- reopen only when one new exact in-bounds PRD clause gap is identified without
-  guesswork, or when an explicit PRD/queue update authorizes new work
+- continue the documented heuristic ladder before accepting `FINAL_STOP`
+- start with released-scope support and settings surfaces already wired into the
+  same runtime path, in this order:
+  - `src/ez_ax/config/mcp_stdio.py`
+  - `src/ez_ax/adapters/openclaw/mcp_settings.py`
+  - `src/ez_ax/config/settings.py`
+  - `tests/unit/test_langgraph_released_assembly.py`
+  - `tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`
+- accept `FINAL_STOP` only if that documented heuristic catalog is exhausted
+  honestly with no focused failing artifact and no exact PRD-backed clause gap
 
 ## Consultation Context
 

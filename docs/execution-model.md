@@ -238,7 +238,8 @@ Queue-extension heuristic rule:
 
 - this pass exists to keep lower-capacity implementation moving when a nearby
   released-scope support surface was omitted from the documented queue
-- the pass may propose or start exactly one new queue item
+- one heuristic pass may inspect every documented heuristic candidate in order,
+  but may propose or start exactly one new queue item total
 - if no valid candidate exists without guesswork, final stop stands
 
 Cycle-reset rule:
@@ -258,13 +259,64 @@ Allowed candidate families:
 4. same released-scope reporting or comparability files
 
 Candidate validity requirements:
-
-- the file already exists in the repository
-- the file remains below `pageReadyObserved`
+- the candidate already exists in the repository and remains on the active
+  Python-first path
+- the candidate is directly adjacent to an exhausted queue item by import,
+  validation target, or released-scope runtime wiring
+- the candidate remains below `pageReadyObserved`
+- one exact governing PRD clause can be named before implementation begins
+- one focused validation command can be named before implementation begins
 - a focused validation target already exists or can be named deterministically
-- the governing PRD already contains one exact `must` or required clause for
-  that surface
-- the work can close in one task and one commit
+- the slice remains one-task-per-commit safe
+
+### Heuristic Pass Implementation Guide
+
+Interpret "one heuristic pass" as one bounded sweep across the documented
+candidate ladder, not as permission to inspect only one arbitrary candidate.
+
+Canonical heuristic sweep order:
+
+1. same-directory support modules imported by the exhausted released-scope file
+   group
+2. released-scope config or settings helpers that feed the same execution path
+3. released-scope assembly or injection tests that already exercise the same
+   path
+4. reporting, comparability, or evidence helpers that directly consume the same
+   released artifacts
+
+Per-candidate sweep steps:
+
+1. confirm the file is in the documented heuristic catalog
+2. run the candidate's first focused validation command
+3. if that validation fails, the failing artifact becomes the next one-commit
+   task
+4. if validation passes, run the narrowest focused mypy target when typing is
+   relevant
+5. if typing passes, run the narrowest focused ruff check
+6. if focused validation is clean, read one governing PRD and try to name one
+   exact unenforced clause tied to that candidate
+7. if an exact gap is found, emit one new queue item and stop the sweep
+8. if no exact gap is found honestly, continue to the next documented heuristic
+   candidate
+
+Heuristic output contract:
+
+- a successful heuristic pass must produce one new queue item with:
+  - one primary file group
+  - one first PRD
+  - one first focused validation command
+  - one sentence explaining why the candidate is still below
+    `pageReadyObserved`
+- a failed heuristic pass must explicitly state that every documented heuristic
+  candidate was inspected in order and yielded neither a focused failing
+  artifact nor an exact PRD-backed clause gap
+
+Heuristic-stop guard:
+
+- final stop is invalid while any documented heuristic candidate remains
+  uninspected for the active exhaustion cycle
+- "single heuristic pass exhausted" means the documented candidate ladder was
+  traversed completely, not that only one candidate was sampled
 
 Queue-extension output shape:
 
