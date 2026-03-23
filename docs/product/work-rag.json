@@ -1,746 +1,765 @@
 {
-  "version": 1,
-  "purpose": "Canonical current-tense work memory for autonomous continuation.",
-  "schema": {
+    "version": 1,
+    "purpose": "Canonical current-tense work memory for autonomous continuation.",
+    "schema": {
+        "current": {
+            "goal": "string",
+            "phase": "string",
+            "milestone": "string",
+            "anchor": "string",
+            "invariant": "string",
+            "next_action": "string",
+            "approved_scope_ceiling": "string",
+            "references": [
+                "string"
+            ]
+        },
+        "history_entry": {
+            "kind": "milestone_summary | phase_summary | checkpoint",
+            "phase": "string",
+            "milestone": "string",
+            "anchor": "string",
+            "summary": "string",
+            "evidence": [
+                "string"
+            ],
+            "recorded_at": "ISO-8601 string"
+        }
+    },
     "current": {
-      "goal": "string",
-      "phase": "string",
-      "milestone": "string",
-      "anchor": "string",
-      "invariant": "string",
-      "next_action": "string",
-      "approved_scope_ceiling": "string",
-      "references": [
-        "string"
-      ]
+        "goal": "Use the layered doc entrypoint (`docs/prd.md`, `docs/execution-model.md`, `docs/current-state.md`), the Python-first PRD set, and the two-tier RAG surface to keep lower-capacity autonomous implementation moving across consecutive one-commit in-bounds tasks without relying on removed TypeScript assets or ad hoc search expansion.",
+        "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+        "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+        "anchor": "pythonRuntimeBootstrapCreated",
+        "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
+        "next_action": "Item 22 \u2014 Mission Anchor Mapping Contract: run `.venv/bin/python -m pytest -q tests/unit/test_mission_anchor_mapping.py`, then `.venv/bin/python -m mypy src/ez_ax/missions/names.py`, then `.venv/bin/python -m ruff check src/ez_ax/missions/names.py tests/unit/test_mission_anchor_mapping.py`, and if clean scan `docs/product/prd-runtime-missions.md` for an exact remaining clause gap.",
+        "approved_scope_ceiling": "pageReadyObserved",
+        "references": [
+            "AGENTS.md",
+            "docs/prd.md",
+            "docs/execution-model.md",
+            "docs/current-state.md",
+            "docs/product/prd-e2e-orchestration.md",
+            "docs/product/prd-python-langgraph-runtime.md",
+            "docs/product/prd-low-attention-implementation-queue.md",
+            "docs/product/prd-python-validation-contract.md",
+            "docs/product/prd-python-rag-operations.md",
+            "docs/product/prd-openclaw-computer-use-runtime.md",
+            "docs/product/prd-openclaw-e2e-validation.md",
+            "docs/product/prd-openclaw-evidence-model.md",
+            "docs/product/work-rag.json",
+            "docs/product/rag.json",
+            "docs/llm/repo-autonomous-loop-adapter.yaml",
+            ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+            "docs/codex-global-skills/ez-ax-autonomous-loop/SKILL.md",
+            ".claude/python-engineering.md",
+            "tests/unit/test_bootstrap_assets.py",
+            "docs/product/prd-python-runtime-layout.md",
+            "docs/product/prd-langgraph-state-model.md",
+            "docs/product/prd-python-mcp-client-acquisition.md",
+            "docs/product/prd-runtime-missions.md",
+            "src/ez_ax/missions/names.py",
+            "tests/unit/test_mission_anchor_mapping.py"
+        ]
     },
-    "history_entry": {
-      "kind": "milestone_summary | phase_summary | checkpoint",
-      "phase": "string",
-      "milestone": "string",
-      "anchor": "string",
-      "summary": "string",
-      "evidence": [
-        "string"
-      ],
-      "recorded_at": "ISO-8601 string"
-    }
-  },
-  "current": {
-    "goal": "Use the layered doc entrypoint (`docs/prd.md`, `docs/execution-model.md`, `docs/current-state.md`), the Python-first PRD set, and the two-tier RAG surface to keep lower-capacity autonomous implementation moving across consecutive one-commit in-bounds tasks without relying on removed TypeScript assets or ad hoc search expansion.",
-    "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-    "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-    "anchor": "pythonRuntimeBootstrapCreated",
-    "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-    "next_action": "FINAL_STOP \u2014 documented queue, bounded resume-search pass, and full heuristic-catalog sweep are exhausted with no exact PRD-backed in-bounds clause gap remaining below pageReadyObserved.",
-    "approved_scope_ceiling": "pageReadyObserved",
-    "references": [
-      "AGENTS.md",
-      "docs/prd.md",
-      "docs/execution-model.md",
-      "docs/current-state.md",
-      "docs/product/prd-e2e-orchestration.md",
-      "docs/product/prd-python-langgraph-runtime.md",
-      "docs/product/prd-low-attention-implementation-queue.md",
-      "docs/product/prd-python-validation-contract.md",
-      "docs/product/prd-python-rag-operations.md",
-      "docs/product/prd-openclaw-computer-use-runtime.md",
-      "docs/product/prd-openclaw-e2e-validation.md",
-      "docs/product/prd-openclaw-evidence-model.md",
-      "docs/product/work-rag.json",
-      "docs/product/rag.json",
-      "docs/llm/repo-autonomous-loop-adapter.yaml",
-      ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
-      "docs/codex-global-skills/ez-ax-autonomous-loop/SKILL.md",
-      ".claude/python-engineering.md",
-      "tests/unit/test_bootstrap_assets.py",
-      "docs/product/prd-python-runtime-layout.md",
-      "docs/product/prd-langgraph-state-model.md",
-      "docs/product/prd-python-mcp-client-acquisition.md"
+    "compression_policy": {
+        "milestone_completion": "Compress current details into a milestone summary and retain only facts needed for autonomous continuation.",
+        "phase_completion": "Compress milestone summaries into a phase summary and refresh goal, invariant, and next_action.",
+        "never_drop": [
+            "current goal",
+            "current phase",
+            "current milestone",
+            "current anchor",
+            "invariant",
+            "next action",
+            "approved scope ceiling"
+        ]
+    },
+    "history": [
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Completed Item 21 validation ladder for `src/ez_ax/models/errors.py`: focused pytest, mypy, and ruff checks were clean; the typed error mapping clauses in `docs/product/prd-openclaw-computer-use-runtime.md` show no exact remaining gap, so the queue advances to Item 22.",
+            "evidence": [
+                ".venv/bin/python -m pytest -q tests/unit/test_error_hierarchy.py",
+                ".venv/bin/python -m mypy src/ez_ax/models/errors.py",
+                ".venv/bin/python -m ruff check src/ez_ax/models/errors.py tests/unit/test_error_hierarchy.py",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "docs/product/prd-low-attention-implementation-queue.md",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-24T00:38:12.859254+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Promoted a durable lesson for repeated stale-FINAL_STOP false positives: low-attention runs must quote the exact on-disk `work-rag` next_action verbatim first, and doc-only stop-state alignment is not valid continuation work unless explicitly requested.",
+            "evidence": [
+                "docs/product/rag.json",
+                ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-24T00:33:54+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted older same-scope checkpoints covering the resume-search, heuristic sweep, and final exact-gap re-evaluation that produced a stop claim. That stop evidence remains useful history, but the new durable lesson now takes precedence: low-attention runs must quote the exact on-disk `work-rag` next_action verbatim and must not treat doc-only stop-state alignment as valid continuation work.",
+            "evidence": [
+                "docs/prd.md",
+                "docs/execution-model.md",
+                "docs/current-state.md",
+                "docs/product/prd-e2e-orchestration.md",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "docs/product/prd-python-mcp-client-acquisition.md",
+                "docs/product/prd-python-runtime-layout.md",
+                "docs/product/prd-python-langgraph-runtime.md",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_client.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py",
+                "docs/product/work-rag.json",
+                "docs/product/rag.json"
+            ],
+            "recorded_at": "2026-03-24T00:33:54+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 4 same-scope checkpoints covering the earlier resume-search steps for released execution sequencing and the OpenClaw adapter boundary so only the newest resume-search checkpoints remain for continuation.",
+            "evidence": [
+                "docs/product/prd-python-langgraph-runtime.md",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "src/ez_ax/graph/langgraph_released_execution.py",
+                "src/ez_ax/adapters/openclaw/client.py",
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "tests/unit/test_langgraph_released_execution.py",
+                "tests/unit/test_openclaw_adapter_contract.py",
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-24T00:27:39+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 4 same-scope checkpoints covering Item 20\u201322 queue closeouts and the initial resume-search kickoff so only the newest resume-search checkpoints remain for continuation.",
+            "evidence": [
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "docs/product/prd-runtime-missions.md",
+                "docs/product/prd-python-runtime-layout.md",
+                "src/ez_ax/rag/paths.py",
+                "src/ez_ax/models/errors.py",
+                "src/ez_ax/missions/names.py",
+                "tests/unit/test_rag_paths.py",
+                "tests/unit/test_error_hierarchy.py",
+                "tests/unit/test_mission_anchor_mapping.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-24T00:24:14+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted older same-scope checkpoints covering the prior heuristic-catalog exhaustion claim, the continuous-loop contract upgrade, and the incorrect docs-only FINAL_STOP alignment. The continuation diagnosis is now corrected: omitted PRD-backed support surfaces under `rag/`, `models/errors`, and `missions/names` reopen the documented queue below `pageReadyObserved`.",
+            "evidence": [
+                "docs/execution-model.md",
+                "docs/current-state.md",
+                "docs/product/prd-low-attention-implementation-queue.md",
+                "docs/llm/repo-autonomous-loop-adapter.yaml",
+                ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+                "docs/product/prd-python-runtime-layout.md",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "docs/product/prd-runtime-missions.md",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-24T00:00:21+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted older same-scope raw checkpoints covering the Item 19 queue extension and the following exhaustion-cycle validation sweep: mcp_adapter required-field schema hardening closed cleanly, then released_call_site, released_run_root, langgraph_released_execution, and OpenClaw adapter/execution/MCP/mcp-stdio validations all stayed clean during the bounded exhaustion check sequence.",
+            "evidence": [
+                "docs/product/prd-low-attention-implementation-queue.md",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "tests/unit/test_openclaw_mcp_adapter.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
+                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_adapter.py",
+                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_adapter.py tests/unit/test_openclaw_mcp_adapter.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_released_call_site.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_client.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-23T23:06:09+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted older same-scope checkpoints from the low-attention continuation sequence (queue-extension rule updates, execution-model alignment, and prior released-scope queue closeouts) to keep only the newest two raw checkpoints needed for continuation. Additional same-scope compaction merged 14 older raw checkpoints from the Item 12-18 and prior exhaustion-check sequence, preserving only the newest raw checkpoints required for safe continuation.",
+            "evidence": [
+                "docs/execution-model.md",
+                "docs/current-state.md",
+                "docs/product/prd-low-attention-implementation-queue.md",
+                "docs/product/work-rag.json",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_adapter_contract.py",
+                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/client.py",
+                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/client.py",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "src/ez_ax/adapters/openclaw/client.py",
+                "tests/unit/test_openclaw_adapter_contract.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_evidence_envelope.py",
+                ".venv/bin/python -m mypy src/ez_ax/evidence/envelope.py",
+                ".venv/bin/python -m ruff check src/ez_ax/evidence/envelope.py",
+                "docs/product/prd-openclaw-evidence-model.md",
+                "src/ez_ax/evidence/envelope.py",
+                "tests/unit/test_evidence_envelope.py"
+            ],
+            "recorded_at": "2026-03-23T00:57:30+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted older same-scope checkpoints covering the queue-extension rule and earlier resume-search confirmations so only the newest raw checkpoints remain for continuation.",
+            "evidence": [
+                "docs/execution-model.md",
+                "docs/current-state.md",
+                "docs/product/prd-low-attention-implementation-queue.md",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-23T00:04:50+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted older same-scope checkpoints covering bounded resume-search confirmations and layered bootstrap-asset hardening so only the newest raw checkpoints remain for continuation.",
+            "evidence": [
+                "docs/execution-model.md",
+                "docs/current-state.md",
+                "docs/product/prd-low-attention-implementation-queue.md",
+                "src/ez_ax/validation/bootstrap.py",
+                "tests/unit/test_bootstrap_assets.py",
+                "src/ez_ax/graph/released_call_site.py",
+                "src/ez_ax/graph/released_run_root.py",
+                "src/ez_ax/graph/langgraph_released_execution.py",
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "src/ez_ax/adapters/openclaw/mcp_adapter.py",
+                "src/ez_ax/adapters/openclaw/mcp_stdio_client.py"
+            ],
+            "recorded_at": "2026-03-23T00:03:35+09:00"
+        },
+        {
+            "kind": "phase_summary",
+            "phase": "Phase 0-4 \u2014 Python Runtime Contract Definition",
+            "milestone": "Canonical Python-first runtime docs became the active implementation source of truth",
+            "anchor": "pythonValidationContractApproved",
+            "summary": "Replaced legacy-runtime ambiguity with a Python-first PRD set covering orchestration scope, runtime ownership, mission definitions, state modeling, repository layout, validation, OpenClaw evidence, and RAG operations while keeping the released ceiling fixed at pageReadyObserved.",
+            "evidence": [
+                "AGENTS.md",
+                "docs/product/prd-e2e-orchestration.md",
+                "docs/product/prd-python-langgraph-runtime.md",
+                "docs/product/prd-python-runtime-reset.md",
+                "docs/product/prd-runtime-missions.md",
+                "docs/product/prd-langgraph-state-model.md",
+                "docs/product/prd-python-runtime-layout.md",
+                "docs/product/prd-langchain-tooling-policy.md",
+                "docs/product/prd-python-validation-contract.md",
+                "docs/product/prd-python-rag-operations.md",
+                "docs/product/prd-openclaw-evidence-model.md",
+                "docs/product/prd-openclaw-e2e-validation.md"
+            ],
+            "recorded_at": "2026-03-20T10:45:00+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "The repo contains the new canonical Python structure and validation entrypoints",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Hardened runtime graph and reporting contracts across released-scope success, failure, order-violation, and checkpoint continuity paths; compressed dozens of narrow parity assertions into one continuation summary so future tasks can resume from the remaining unclosed edge instead of replaying every intermediate checkpoint.",
+            "evidence": [
+                "src/ez_ax/graph/runtime_graph.py",
+                "src/ez_ax/models/runtime.py",
+                "src/ez_ax/models/failure.py",
+                "src/ez_ax/models/transition.py",
+                "src/ez_ax/models/checkpoint.py",
+                "src/ez_ax/reporting/summary.py",
+                "tests/contract/test_runtime_graph_plan.py",
+                "tests/unit/test_transition_checkpoint_collection.py",
+                "tests/unit/test_transition_reporting.py",
+                "tests/unit/test_runtime_state.py"
+            ],
+            "recorded_at": "2026-03-20T11:20:00+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "The repo contains the new canonical Python structure and validation entrypoints",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Closed append-transition three-success continuity third-decision failure-taxonomy gap by asserting `third_decision.failure_code == \"NONE\"`, leaving low-attention autonomous continuation clarity as the next highest-value documentation hardening task.",
+            "evidence": [
+                "tests/contract/test_runtime_graph_plan.py",
+                ".venv/bin/pytest -q tests/contract/test_runtime_graph_plan.py tests/unit/test_runtime_state.py tests/unit/test_transition_checkpoint_collection.py tests/unit/test_transition_reporting.py",
+                ".venv/bin/ruff check src/ez_ax/graph/runtime_graph.py tests/contract/test_runtime_graph_plan.py",
+                ".venv/bin/mypy src/ez_ax/graph/runtime_graph.py tests/contract/test_runtime_graph_plan.py"
+            ],
+            "recorded_at": "2026-03-20T06:49:49+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 4 same-scope checkpoints; kept newest 2 for continuation. Recent work: stdio-backed MCP acquisition requires explicit server name; argv plumbing supports --mcp-server-name; released-scope adapter run_root binding is validated; MCP envelope parsing maps malformed non-JSON tool outputs to ExecutionTransportError.",
+            "evidence": [
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "docs/product/prd-python-mcp-client-acquisition.md",
+                "docs/product/rag.json",
+                "docs/product/work-rag.json",
+                "src/ez_ax/adapters/openclaw/mcp_adapter.py",
+                "src/ez_ax/adapters/openclaw/mcp_stdio_client.py",
+                "src/ez_ax/config/mcp_stdio_cli.py",
+                "src/ez_ax/graph/langgraph_released_execution.py",
+                "tests/unit/test_langgraph_released_execution.py",
+                "tests/unit/test_mcp_stdio_cli.py",
+                "tests/unit/test_openclaw_mcp_adapter.py",
+                "tests/unit/test_openclaw_mcp_stdio_client.py"
+            ],
+            "recorded_at": "2026-03-22T00:08:08+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted earlier same-scope hardening into one continuation summary (two-tier memory enforcement, Python version pin, and typed OpenClaw/MCP wrapper-envelope validation) so future work can focus on the remaining smallest contract gaps below pageReadyObserved.",
+            "evidence": [
+                "docs/product/work-rag.json",
+                "docs/product/rag.json",
+                "docs/llm/repo-autonomous-loop-adapter.yaml",
+                "pyproject.toml",
+                "src/ez_ax/adapters/openclaw/mcp_adapter.py",
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "tests/unit/test_openclaw_mcp_adapter.py",
+                "tests/unit/test_openclaw_execution_wrapper.py"
+            ],
+            "recorded_at": "2026-03-22T00:36:23+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted same-scope action-log validation hardening (typed evidence-ref parsing failures, expected mission name validation, and run_root validation in wrapper + action-log validators) into one continuation summary so future work can focus on remaining minimal envelope gaps below pageReadyObserved.",
+            "evidence": [
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/prd-e2e-orchestration.md",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T01:07:46+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted additional action-log artifact validation hardening (run_root checks in action-log schema / event-match / release-ceiling-stop validators) into one summary to keep only the newest two raw checkpoints for continuation.",
+            "evidence": [
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T01:15:18+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 4 same-scope action-log wrapper checkpoints (run_root type/existence/directory validation, action-log key kebab-case validation, and ISO-8601 'Z' timestamp acceptance) into one summary to keep only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/work-rag.json",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m ruff check tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m json.tool docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T01:24:44+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 3 same-scope wrapper+adapter timestamp/action-log checkpoints (MCP observations.ts 'Z' acceptance; benchmark_validation action-log acceptance; attach_session action-log acceptance) into one summary to keep only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "tests/unit/test_openclaw_mcp_adapter.py",
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/work-rag.json",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py -k zulu_observations_ts",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k benchmark_validation_action_log",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k attach_session_action_log",
+                ".venv/bin/python -m ruff check tests/unit/test_openclaw_mcp_adapter.py tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_mcp_adapter.py tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m json.tool docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T01:29:32+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 3 same-scope wrapper action-log boundary checkpoints (reject mission_name mismatch in action-log lines; no-op release-ceiling-stop validation when marker absent; reject non-Path run_root) into one summary to keep only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/work-rag.json",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k action_log_mission_mismatch",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k noops_without_marker",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_non_path_run_root",
+                ".venv/bin/python -m ruff check tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m json.tool docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T01:33:15+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 4 same-scope action-log validation checkpoints (invalid evidence ref wrapping for resolver/schema validator; release-ceiling-stop missing-artifact rejection; release-ceiling-stop 'Z' timestamp acceptance) into one summary to keep only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/work-rag.json",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k wraps_invalid_ref",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_missing_artifact",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k accepts_zulu_timestamp",
+                ".venv/bin/python -m ruff check tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m json.tool docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T01:38:39+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 4 same-scope action-log wrapper checkpoints (reject whitespace-normalization violations in action-log mission_name/event; dedupe run_root validation via helper; reject non-Path run_root in action_log_artifact_path) into one summary to keep only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/work-rag.json",
+                ".venv/bin/python -m json.tool docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T01:44:14+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 4 same-scope action-log validator checkpoints (non-action-log ignore behavior for resolver/schema/event-match validators; action-log key leading/trailing whitespace rejection) into one summary to keep only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/work-rag.json",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k ignores_non_action_log_refs",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_whitespace_wrapped_key",
+                ".venv/bin/python -m ruff check tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m json.tool docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T01:49:13+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 3 same-scope action-log artifact boundary checkpoints (reject whitespace-only key; reject non-string key; reject empty key) into one summary to keep only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/work-rag.json",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_whitespace_only_key",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_non_string_key",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_empty_key",
+                ".venv/bin/python -m ruff check tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m json.tool docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T01:53:44+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 5 same-scope micro-checkpoints into one continuation summary to keep raw checkpoints under the preferred limit. Also fixed validate_action_log_artifacts_contain_ref_events to validate every action-log evidence ref instead of returning after the first match, with a new unit test covering a missing secondary action-log ref event.",
+            "evidence": [
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k missing_second_event",
+                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/execution.py tests/unit/test_openclaw_execution_wrapper.py",
+                ".venv/bin/python -m ruff format --check src/ez_ax/adapters/openclaw/execution.py tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T02:03:04+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 3 same-scope checkpoints (action-log schema-lite optional detail field enforcement; JSONL tolerance clarification; PRD schema-lite alignment for detail normalization) into one summary to keep only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_non_string_detail",
+                "python3 -m json.tool docs/product/work-rag.json",
+                "git diff --check"
+            ],
+            "recorded_at": "2026-03-22T02:20:59+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 4 same-scope checkpoints (action-log artifact file enforcement and PRD alignment; action-log ref key-to-event association clarification; ReleasedRunContext scope ceiling enforcement) into one continuation summary to keep only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "src/ez_ax/graph/released_call_site.py",
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "tests/unit/test_released_call_site.py",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_directory_artifact",
+                ".venv/bin/python -m pytest -q tests/unit/test_released_call_site.py -k rejects_invalid_scope_ceiling",
+                "docs/product/work-rag.json",
+                "python3 -m json.tool docs/product/work-rag.json",
+                "git diff --check"
+            ],
+            "recorded_at": "2026-03-22T02:29:46+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 5 same-scope checkpoints (ReleasedRunContext run_root and ceiling enforcement; canonical action-log seeding key+mission validation; typed error mapping alignment; typed base_dir validation in create_run_root) into one continuation summary to keep only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "src/ez_ax/graph/released_call_site.py",
+                "src/ez_ax/graph/released_run_root.py",
+                "tests/unit/test_released_call_site.py",
+                "tests/unit/test_released_run_root.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_released_call_site.py -k rejects_unknown_mission",
+                ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py",
+                "docs/product/work-rag.json",
+                "python3 -m json.tool docs/product/work-rag.json",
+                "git diff --check"
+            ],
+            "recorded_at": "2026-03-22T03:05:59+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 5 same-scope checkpoints (typed error mapping and input guardrails for released-scope LangGraph; base_dir/run_id validation for run_root creation; adapter with_run_root binding error mapping) into one continuation summary to keep raw checkpoints under the preferred limit.",
+            "evidence": [
+                "src/ez_ax/graph/released_run_root.py",
+                "src/ez_ax/graph/langgraph_released_execution.py",
+                "tests/unit/test_released_run_root.py",
+                "tests/unit/test_langgraph_released_execution.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py -k rejects_non_path_base_dir",
+                "docs/product/work-rag.json",
+                "python3 -m json.tool docs/product/work-rag.json",
+                "git diff --check"
+            ],
+            "recorded_at": "2026-03-22T03:13:55+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 3 same-scope checkpoints (with_run_root binding errors -> ConfigError; generate_run_id compatibility contract; FlowError typing for missing RuntimeState in released-scope LangGraph state I/O) into one summary to keep raw checkpoints within the preferred continuation budget.",
+            "evidence": [
+                "src/ez_ax/graph/langgraph_released_execution.py",
+                "tests/unit/test_langgraph_released_execution.py",
+                "src/ez_ax/graph/released_run_root.py",
+                "tests/unit/test_released_run_root.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py -k generate_run_id_is_safe_for_run_root_creation",
+                "docs/product/work-rag.json",
+                "python3 -m json.tool docs/product/work-rag.json",
+                "git diff --check"
+            ],
+            "recorded_at": "2026-03-22T03:40:17+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 4 same-scope checkpoints; kept newest 2 for continuation. Recent work: released-scope LangGraph build_released_scope_execution_graph hardening now enforces attach/prepare string guardrails, rejects duck-typed run objects to preserve the pageReadyObserved ceiling, and fail-fast validates adapters provide execute(); also recorded the stop condition rule to avoid scope-widening-by-attrition below pageReadyObserved.",
+            "evidence": [
+                "src/ez_ax/graph/langgraph_released_execution.py",
+                "tests/unit/test_langgraph_released_execution.py",
+                "docs/product/prd-e2e-orchestration.md",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T03:58:46+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 4 same-scope checkpoints; kept newest 2 raw checkpoints for continuation. Recent work aligned stale released-scope pytest expectations with the ConfigError and mcp_server_name contract, then cleared targeted mypy failures across OpenClaw adapter and released-scope LangGraph wiring.",
+            "evidence": [
+                "tests/unit/test_modeled_mcp_entrypoint_argv.py",
+                "tests/unit/test_released_entrypoint.py",
+                "src/ez_ax/config/mcp_stdio_cli.py",
+                "src/ez_ax/adapters/openclaw/client.py",
+                "src/ez_ax/graph/langgraph_released_execution.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint_argv.py::test_modeled_mcp_entrypoint_argv_runs_released_scope_to_ceiling",
+                ".venv/bin/python -m pytest -q tests/unit/test_released_entrypoint.py",
+                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/client.py",
+                ".venv/bin/python -m mypy src/ez_ax/graph/langgraph_released_execution.py",
+                "docs/product/work-rag.json",
+                "python3 -m json.tool docs/product/work-rag.json",
+                "git diff --check"
+            ],
+            "recorded_at": "2026-03-22T04:06:14+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted older same-scope checkpoints covering OpenClaw action-log validation hardening, release-ceiling PRD crosswalk alignment, MCP acquisition clarification, and related documentation/test updates; confirmed the final scan found no remaining shorthand release-ceiling PRD references, keeping only the newest raw checkpoints for continuation.",
+            "evidence": [
+                "docs/product/work-rag.json",
+                "docs/product/rag.json",
+                "docs/product/prd-e2e-orchestration.md",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "docs/product/prd-openclaw-e2e-validation.md",
+                "docs/product/prd-openclaw-evidence-model.md",
+                "docs/product/prd-python-validation-contract.md",
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "tests/unit/test_openclaw_execution_wrapper.py",
+                "src/ez_ax/adapters/openclaw/mcp_adapter.py",
+                "tests/unit/test_openclaw_mcp_adapter.py"
+            ],
+            "recorded_at": "2026-03-22T13:06:31+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted 6 same-scope checkpoints covering paused-state resume-search on released execution surfaces: fixed the repo-venv pytest invocation expectation, completed the OpenClaw execution helper validation ladder with no exact clause gap, then completed the LangGraph released_execution pytest/mypy/ruff/PRD scan ladder with no exact gap and proved that generic stop behavior must be replaced by a queued file-group fallback. Compacted 42 same-scope checkpoints covering low-attention queue progress through released-scope validation and PRD scans; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints during released-cli validation sequence; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints during released-cli queue closeout; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing into released input validation; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing released input typing; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while resolving released-input linting; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while closing released input PRD scan; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing transition-reporting validation; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing transition-reporting typing; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing transition-reporting linting; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while closing the reporting PRD scan; retained only the newest checkpoints needed for continuation. Compacted 2 same-scope checkpoints while advancing released entrypoint validation; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing released entrypoint typing; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing released entrypoint linting; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while closing released entrypoint PRD scan; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing checkpoint comparability validation; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing checkpoint comparability typing; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing checkpoint comparability linting; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while closing checkpoint comparability PRD scan; retained only the newest checkpoints needed for continuation.",
+            "evidence": [
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_missing_artifact",
+                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/execution.py",
+                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/execution.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py",
+                ".venv/bin/python -m mypy src/ez_ax/graph/langgraph_released_execution.py",
+                ".venv/bin/python -m ruff check src/ez_ax/graph/langgraph_released_execution.py",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "docs/product/prd-python-langgraph-runtime.md",
+                "src/ez_ax/adapters/openclaw/execution.py",
+                "src/ez_ax/graph/langgraph_released_execution.py",
+                "docs/product/prd-low-attention-implementation-queue.md",
+                "src/ez_ax/config/mcp_stdio_cli.py",
+                "src/ez_ax/graph/langgraph_released.py",
+                "src/ez_ax/graph/released_cli_shim.py",
+                "tests/unit/test_modeled_mcp_entrypoint_argv.py",
+                "tests/unit/test_released_entrypoint.py",
+                "tests/unit/test_released_cli_shim.py",
+                "docs/product/work-rag.json",
+                "docs/product/prd-python-runtime-layout.md",
+                "tests/unit/test_released_inputs.py",
+                "src/ez_ax/config/released_inputs.py",
+                "tests/unit/test_transition_reporting.py",
+                "src/ez_ax/reporting/summary.py",
+                "docs/product/prd-e2e-orchestration.md",
+                "src/ez_ax/graph/released_entrypoint.py",
+                "tests/unit/test_transition_checkpoint_collection.py",
+                "src/ez_ax/models/checkpoint.py"
+            ],
+            "recorded_at": "2026-03-22T14:42:16+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted older same-scope checkpoints covering layered doc entrypoint hardening, checkpoint-comparability validation/PRD scan, and released_run_root focused validation so only the newest raw checkpoints remain for continuation.",
+            "evidence": [
+                "AGENTS.md",
+                "docs/prd.md",
+                "docs/execution-model.md",
+                "docs/current-state.md",
+                "docs/product/prd-python-runtime-layout.md",
+                "docs/product/prd-e2e-orchestration.md",
+                "src/ez_ax/models/checkpoint.py",
+                "tests/unit/test_transition_checkpoint_collection.py",
+                "src/ez_ax/graph/released_run_root.py",
+                "tests/unit/test_released_run_root.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T23:32:46+09:00"
+        },
+        {
+            "kind": "milestone_summary",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Compacted older same-scope checkpoints covering the heuristic-catalog sweep across MCP stdio config, OpenClaw MCP settings, runtime settings, released assembly verification, and stdio graph injection; the sequence fixed a narrow lint issue in MCP settings and fixture typing for injection tests while proving those released-scope support surfaces clean enough for continuation policy updates.",
+            "evidence": [
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+                ".venv/bin/python -m mypy src/ez_ax/config/mcp_stdio.py",
+                ".venv/bin/python -m ruff check src/ez_ax/config/mcp_stdio.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_settings.py",
+                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_settings.py",
+                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_settings.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py",
+                ".venv/bin/python -m mypy tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+                ".venv/bin/python -m ruff check tests/fixtures/fake_mcp_sdk.py",
+                "tests/fixtures/fake_mcp_sdk.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-23T23:06:09+09:00"
+        }
     ]
-  },
-  "compression_policy": {
-    "milestone_completion": "Compress current details into a milestone summary and retain only facts needed for autonomous continuation.",
-    "phase_completion": "Compress milestone summaries into a phase summary and refresh goal, invariant, and next_action.",
-    "never_drop": [
-      "current goal",
-      "current phase",
-      "current milestone",
-      "current anchor",
-      "invariant",
-      "next action",
-      "approved scope ceiling"
-    ]
-  },
-  "history": [
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Promoted a durable lesson for repeated stale-FINAL_STOP false positives: low-attention runs must quote the exact on-disk `work-rag` next_action verbatim first, and doc-only stop-state alignment is not valid continuation work unless explicitly requested.",
-      "evidence": [
-        "docs/product/rag.json",
-        ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:33:54+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted older same-scope checkpoints covering the resume-search, heuristic sweep, and final exact-gap re-evaluation that produced a stop claim. That stop evidence remains useful history, but the new durable lesson now takes precedence: low-attention runs must quote the exact on-disk `work-rag` next_action verbatim and must not treat doc-only stop-state alignment as valid continuation work.",
-      "evidence": [
-        "docs/prd.md",
-        "docs/execution-model.md",
-        "docs/current-state.md",
-        "docs/product/prd-e2e-orchestration.md",
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "docs/product/prd-python-mcp-client-acquisition.md",
-        "docs/product/prd-python-runtime-layout.md",
-        "docs/product/prd-python-langgraph-runtime.md",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_client.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py",
-        "docs/product/work-rag.json",
-        "docs/product/rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:33:54+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 4 same-scope checkpoints covering the earlier resume-search steps for released execution sequencing and the OpenClaw adapter boundary so only the newest resume-search checkpoints remain for continuation.",
-      "evidence": [
-        "docs/product/prd-python-langgraph-runtime.md",
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "src/ez_ax/graph/langgraph_released_execution.py",
-        "src/ez_ax/adapters/openclaw/client.py",
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "tests/unit/test_langgraph_released_execution.py",
-        "tests/unit/test_openclaw_adapter_contract.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:27:39+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 4 same-scope checkpoints covering Item 20\u201322 queue closeouts and the initial resume-search kickoff so only the newest resume-search checkpoints remain for continuation.",
-      "evidence": [
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "docs/product/prd-runtime-missions.md",
-        "docs/product/prd-python-runtime-layout.md",
-        "src/ez_ax/rag/paths.py",
-        "src/ez_ax/models/errors.py",
-        "src/ez_ax/missions/names.py",
-        "tests/unit/test_rag_paths.py",
-        "tests/unit/test_error_hierarchy.py",
-        "tests/unit/test_mission_anchor_mapping.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:24:14+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted older same-scope checkpoints covering the prior heuristic-catalog exhaustion claim, the continuous-loop contract upgrade, and the incorrect docs-only FINAL_STOP alignment. The continuation diagnosis is now corrected: omitted PRD-backed support surfaces under `rag/`, `models/errors`, and `missions/names` reopen the documented queue below `pageReadyObserved`.",
-      "evidence": [
-        "docs/execution-model.md",
-        "docs/current-state.md",
-        "docs/product/prd-low-attention-implementation-queue.md",
-        "docs/llm/repo-autonomous-loop-adapter.yaml",
-        ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
-        "docs/product/prd-python-runtime-layout.md",
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "docs/product/prd-runtime-missions.md",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:00:21+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted older same-scope raw checkpoints covering the Item 19 queue extension and the following exhaustion-cycle validation sweep: mcp_adapter required-field schema hardening closed cleanly, then released_call_site, released_run_root, langgraph_released_execution, and OpenClaw adapter/execution/MCP/mcp-stdio validations all stayed clean during the bounded exhaustion check sequence.",
-      "evidence": [
-        "docs/product/prd-low-attention-implementation-queue.md",
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "tests/unit/test_openclaw_mcp_adapter.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_adapter.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_adapter.py tests/unit/test_openclaw_mcp_adapter.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_call_site.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_client.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-23T23:06:09+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted older same-scope checkpoints from the low-attention continuation sequence (queue-extension rule updates, execution-model alignment, and prior released-scope queue closeouts) to keep only the newest two raw checkpoints needed for continuation. Additional same-scope compaction merged 14 older raw checkpoints from the Item 12-18 and prior exhaustion-check sequence, preserving only the newest raw checkpoints required for safe continuation.",
-      "evidence": [
-        "docs/execution-model.md",
-        "docs/current-state.md",
-        "docs/product/prd-low-attention-implementation-queue.md",
-        "docs/product/work-rag.json",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_adapter_contract.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/client.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/client.py",
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "src/ez_ax/adapters/openclaw/client.py",
-        "tests/unit/test_openclaw_adapter_contract.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_evidence_envelope.py",
-        ".venv/bin/python -m mypy src/ez_ax/evidence/envelope.py",
-        ".venv/bin/python -m ruff check src/ez_ax/evidence/envelope.py",
-        "docs/product/prd-openclaw-evidence-model.md",
-        "src/ez_ax/evidence/envelope.py",
-        "tests/unit/test_evidence_envelope.py"
-      ],
-      "recorded_at": "2026-03-23T00:57:30+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted older same-scope checkpoints covering the queue-extension rule and earlier resume-search confirmations so only the newest raw checkpoints remain for continuation.",
-      "evidence": [
-        "docs/execution-model.md",
-        "docs/current-state.md",
-        "docs/product/prd-low-attention-implementation-queue.md",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-23T00:04:50+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted older same-scope checkpoints covering bounded resume-search confirmations and layered bootstrap-asset hardening so only the newest raw checkpoints remain for continuation.",
-      "evidence": [
-        "docs/execution-model.md",
-        "docs/current-state.md",
-        "docs/product/prd-low-attention-implementation-queue.md",
-        "src/ez_ax/validation/bootstrap.py",
-        "tests/unit/test_bootstrap_assets.py",
-        "src/ez_ax/graph/released_call_site.py",
-        "src/ez_ax/graph/released_run_root.py",
-        "src/ez_ax/graph/langgraph_released_execution.py",
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "src/ez_ax/adapters/openclaw/mcp_adapter.py",
-        "src/ez_ax/adapters/openclaw/mcp_stdio_client.py"
-      ],
-      "recorded_at": "2026-03-23T00:03:35+09:00"
-    },
-    {
-      "kind": "phase_summary",
-      "phase": "Phase 0-4 \u2014 Python Runtime Contract Definition",
-      "milestone": "Canonical Python-first runtime docs became the active implementation source of truth",
-      "anchor": "pythonValidationContractApproved",
-      "summary": "Replaced legacy-runtime ambiguity with a Python-first PRD set covering orchestration scope, runtime ownership, mission definitions, state modeling, repository layout, validation, OpenClaw evidence, and RAG operations while keeping the released ceiling fixed at pageReadyObserved.",
-      "evidence": [
-        "AGENTS.md",
-        "docs/product/prd-e2e-orchestration.md",
-        "docs/product/prd-python-langgraph-runtime.md",
-        "docs/product/prd-python-runtime-reset.md",
-        "docs/product/prd-runtime-missions.md",
-        "docs/product/prd-langgraph-state-model.md",
-        "docs/product/prd-python-runtime-layout.md",
-        "docs/product/prd-langchain-tooling-policy.md",
-        "docs/product/prd-python-validation-contract.md",
-        "docs/product/prd-python-rag-operations.md",
-        "docs/product/prd-openclaw-evidence-model.md",
-        "docs/product/prd-openclaw-e2e-validation.md"
-      ],
-      "recorded_at": "2026-03-20T10:45:00+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "The repo contains the new canonical Python structure and validation entrypoints",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Hardened runtime graph and reporting contracts across released-scope success, failure, order-violation, and checkpoint continuity paths; compressed dozens of narrow parity assertions into one continuation summary so future tasks can resume from the remaining unclosed edge instead of replaying every intermediate checkpoint.",
-      "evidence": [
-        "src/ez_ax/graph/runtime_graph.py",
-        "src/ez_ax/models/runtime.py",
-        "src/ez_ax/models/failure.py",
-        "src/ez_ax/models/transition.py",
-        "src/ez_ax/models/checkpoint.py",
-        "src/ez_ax/reporting/summary.py",
-        "tests/contract/test_runtime_graph_plan.py",
-        "tests/unit/test_transition_checkpoint_collection.py",
-        "tests/unit/test_transition_reporting.py",
-        "tests/unit/test_runtime_state.py"
-      ],
-      "recorded_at": "2026-03-20T11:20:00+09:00"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "The repo contains the new canonical Python structure and validation entrypoints",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Closed append-transition three-success continuity third-decision failure-taxonomy gap by asserting `third_decision.failure_code == \"NONE\"`, leaving low-attention autonomous continuation clarity as the next highest-value documentation hardening task.",
-      "evidence": [
-        "tests/contract/test_runtime_graph_plan.py",
-        ".venv/bin/pytest -q tests/contract/test_runtime_graph_plan.py tests/unit/test_runtime_state.py tests/unit/test_transition_checkpoint_collection.py tests/unit/test_transition_reporting.py",
-        ".venv/bin/ruff check src/ez_ax/graph/runtime_graph.py tests/contract/test_runtime_graph_plan.py",
-        ".venv/bin/mypy src/ez_ax/graph/runtime_graph.py tests/contract/test_runtime_graph_plan.py"
-      ],
-      "recorded_at": "2026-03-20T06:49:49+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 4 same-scope checkpoints; kept newest 2 for continuation. Recent work: stdio-backed MCP acquisition requires explicit server name; argv plumbing supports --mcp-server-name; released-scope adapter run_root binding is validated; MCP envelope parsing maps malformed non-JSON tool outputs to ExecutionTransportError.",
-      "evidence": [
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "docs/product/prd-python-mcp-client-acquisition.md",
-        "docs/product/rag.json",
-        "docs/product/work-rag.json",
-        "src/ez_ax/adapters/openclaw/mcp_adapter.py",
-        "src/ez_ax/adapters/openclaw/mcp_stdio_client.py",
-        "src/ez_ax/config/mcp_stdio_cli.py",
-        "src/ez_ax/graph/langgraph_released_execution.py",
-        "tests/unit/test_langgraph_released_execution.py",
-        "tests/unit/test_mcp_stdio_cli.py",
-        "tests/unit/test_openclaw_mcp_adapter.py",
-        "tests/unit/test_openclaw_mcp_stdio_client.py"
-      ],
-      "recorded_at": "2026-03-22T00:08:08+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted earlier same-scope hardening into one continuation summary (two-tier memory enforcement, Python version pin, and typed OpenClaw/MCP wrapper-envelope validation) so future work can focus on the remaining smallest contract gaps below pageReadyObserved.",
-      "evidence": [
-        "docs/product/work-rag.json",
-        "docs/product/rag.json",
-        "docs/llm/repo-autonomous-loop-adapter.yaml",
-        "pyproject.toml",
-        "src/ez_ax/adapters/openclaw/mcp_adapter.py",
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "tests/unit/test_openclaw_mcp_adapter.py",
-        "tests/unit/test_openclaw_execution_wrapper.py"
-      ],
-      "recorded_at": "2026-03-22T00:36:23+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted same-scope action-log validation hardening (typed evidence-ref parsing failures, expected mission name validation, and run_root validation in wrapper + action-log validators) into one continuation summary so future work can focus on remaining minimal envelope gaps below pageReadyObserved.",
-      "evidence": [
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/prd-e2e-orchestration.md",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T01:07:46+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted additional action-log artifact validation hardening (run_root checks in action-log schema / event-match / release-ceiling-stop validators) into one summary to keep only the newest two raw checkpoints for continuation.",
-      "evidence": [
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T01:15:18+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 4 same-scope action-log wrapper checkpoints (run_root type/existence/directory validation, action-log key kebab-case validation, and ISO-8601 'Z' timestamp acceptance) into one summary to keep only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m ruff check tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m json.tool docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T01:24:44+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 3 same-scope wrapper+adapter timestamp/action-log checkpoints (MCP observations.ts 'Z' acceptance; benchmark_validation action-log acceptance; attach_session action-log acceptance) into one summary to keep only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "tests/unit/test_openclaw_mcp_adapter.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py -k zulu_observations_ts",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k benchmark_validation_action_log",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k attach_session_action_log",
-        ".venv/bin/python -m ruff check tests/unit/test_openclaw_mcp_adapter.py tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_mcp_adapter.py tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m json.tool docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T01:29:32+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 3 same-scope wrapper action-log boundary checkpoints (reject mission_name mismatch in action-log lines; no-op release-ceiling-stop validation when marker absent; reject non-Path run_root) into one summary to keep only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k action_log_mission_mismatch",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k noops_without_marker",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_non_path_run_root",
-        ".venv/bin/python -m ruff check tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m json.tool docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T01:33:15+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 4 same-scope action-log validation checkpoints (invalid evidence ref wrapping for resolver/schema validator; release-ceiling-stop missing-artifact rejection; release-ceiling-stop 'Z' timestamp acceptance) into one summary to keep only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k wraps_invalid_ref",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_missing_artifact",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k accepts_zulu_timestamp",
-        ".venv/bin/python -m ruff check tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m json.tool docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T01:38:39+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 4 same-scope action-log wrapper checkpoints (reject whitespace-normalization violations in action-log mission_name/event; dedupe run_root validation via helper; reject non-Path run_root in action_log_artifact_path) into one summary to keep only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json",
-        ".venv/bin/python -m json.tool docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T01:44:14+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 4 same-scope action-log validator checkpoints (non-action-log ignore behavior for resolver/schema/event-match validators; action-log key leading/trailing whitespace rejection) into one summary to keep only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k ignores_non_action_log_refs",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_whitespace_wrapped_key",
-        ".venv/bin/python -m ruff check tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m json.tool docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T01:49:13+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 3 same-scope action-log artifact boundary checkpoints (reject whitespace-only key; reject non-string key; reject empty key) into one summary to keep only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_whitespace_only_key",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_non_string_key",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_empty_key",
-        ".venv/bin/python -m ruff check tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m ruff format --check tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m json.tool docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T01:53:44+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 5 same-scope micro-checkpoints into one continuation summary to keep raw checkpoints under the preferred limit. Also fixed validate_action_log_artifacts_contain_ref_events to validate every action-log evidence ref instead of returning after the first match, with a new unit test covering a missing secondary action-log ref event.",
-      "evidence": [
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k missing_second_event",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/execution.py tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m ruff format --check src/ez_ax/adapters/openclaw/execution.py tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T02:03:04+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 3 same-scope checkpoints (action-log schema-lite optional detail field enforcement; JSONL tolerance clarification; PRD schema-lite alignment for detail normalization) into one summary to keep only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_non_string_detail",
-        "python3 -m json.tool docs/product/work-rag.json",
-        "git diff --check"
-      ],
-      "recorded_at": "2026-03-22T02:20:59+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 4 same-scope checkpoints (action-log artifact file enforcement and PRD alignment; action-log ref key-to-event association clarification; ReleasedRunContext scope ceiling enforcement) into one continuation summary to keep only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "src/ez_ax/graph/released_call_site.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "tests/unit/test_released_call_site.py",
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_directory_artifact",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_call_site.py -k rejects_invalid_scope_ceiling",
-        "docs/product/work-rag.json",
-        "python3 -m json.tool docs/product/work-rag.json",
-        "git diff --check"
-      ],
-      "recorded_at": "2026-03-22T02:29:46+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 5 same-scope checkpoints (ReleasedRunContext run_root and ceiling enforcement; canonical action-log seeding key+mission validation; typed error mapping alignment; typed base_dir validation in create_run_root) into one continuation summary to keep only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "src/ez_ax/graph/released_call_site.py",
-        "src/ez_ax/graph/released_run_root.py",
-        "tests/unit/test_released_call_site.py",
-        "tests/unit/test_released_run_root.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_call_site.py -k rejects_unknown_mission",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py",
-        "docs/product/work-rag.json",
-        "python3 -m json.tool docs/product/work-rag.json",
-        "git diff --check"
-      ],
-      "recorded_at": "2026-03-22T03:05:59+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 5 same-scope checkpoints (typed error mapping and input guardrails for released-scope LangGraph; base_dir/run_id validation for run_root creation; adapter with_run_root binding error mapping) into one continuation summary to keep raw checkpoints under the preferred limit.",
-      "evidence": [
-        "src/ez_ax/graph/released_run_root.py",
-        "src/ez_ax/graph/langgraph_released_execution.py",
-        "tests/unit/test_released_run_root.py",
-        "tests/unit/test_langgraph_released_execution.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py -k rejects_non_path_base_dir",
-        "docs/product/work-rag.json",
-        "python3 -m json.tool docs/product/work-rag.json",
-        "git diff --check"
-      ],
-      "recorded_at": "2026-03-22T03:13:55+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 3 same-scope checkpoints (with_run_root binding errors -> ConfigError; generate_run_id compatibility contract; FlowError typing for missing RuntimeState in released-scope LangGraph state I/O) into one summary to keep raw checkpoints within the preferred continuation budget.",
-      "evidence": [
-        "src/ez_ax/graph/langgraph_released_execution.py",
-        "tests/unit/test_langgraph_released_execution.py",
-        "src/ez_ax/graph/released_run_root.py",
-        "tests/unit/test_released_run_root.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py -k generate_run_id_is_safe_for_run_root_creation",
-        "docs/product/work-rag.json",
-        "python3 -m json.tool docs/product/work-rag.json",
-        "git diff --check"
-      ],
-      "recorded_at": "2026-03-22T03:40:17+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 4 same-scope checkpoints; kept newest 2 for continuation. Recent work: released-scope LangGraph build_released_scope_execution_graph hardening now enforces attach/prepare string guardrails, rejects duck-typed run objects to preserve the pageReadyObserved ceiling, and fail-fast validates adapters provide execute(); also recorded the stop condition rule to avoid scope-widening-by-attrition below pageReadyObserved.",
-      "evidence": [
-        "src/ez_ax/graph/langgraph_released_execution.py",
-        "tests/unit/test_langgraph_released_execution.py",
-        "docs/product/prd-e2e-orchestration.md",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T03:58:46+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 4 same-scope checkpoints; kept newest 2 raw checkpoints for continuation. Recent work aligned stale released-scope pytest expectations with the ConfigError and mcp_server_name contract, then cleared targeted mypy failures across OpenClaw adapter and released-scope LangGraph wiring.",
-      "evidence": [
-        "tests/unit/test_modeled_mcp_entrypoint_argv.py",
-        "tests/unit/test_released_entrypoint.py",
-        "src/ez_ax/config/mcp_stdio_cli.py",
-        "src/ez_ax/adapters/openclaw/client.py",
-        "src/ez_ax/graph/langgraph_released_execution.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint_argv.py::test_modeled_mcp_entrypoint_argv_runs_released_scope_to_ceiling",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_entrypoint.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/client.py",
-        ".venv/bin/python -m mypy src/ez_ax/graph/langgraph_released_execution.py",
-        "docs/product/work-rag.json",
-        "python3 -m json.tool docs/product/work-rag.json",
-        "git diff --check"
-      ],
-      "recorded_at": "2026-03-22T04:06:14+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted older same-scope checkpoints covering OpenClaw action-log validation hardening, release-ceiling PRD crosswalk alignment, MCP acquisition clarification, and related documentation/test updates; confirmed the final scan found no remaining shorthand release-ceiling PRD references, keeping only the newest raw checkpoints for continuation.",
-      "evidence": [
-        "docs/product/work-rag.json",
-        "docs/product/rag.json",
-        "docs/product/prd-e2e-orchestration.md",
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "docs/product/prd-openclaw-e2e-validation.md",
-        "docs/product/prd-openclaw-evidence-model.md",
-        "docs/product/prd-python-validation-contract.md",
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        "src/ez_ax/adapters/openclaw/mcp_adapter.py",
-        "tests/unit/test_openclaw_mcp_adapter.py"
-      ],
-      "recorded_at": "2026-03-22T13:06:31+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted 6 same-scope checkpoints covering paused-state resume-search on released execution surfaces: fixed the repo-venv pytest invocation expectation, completed the OpenClaw execution helper validation ladder with no exact clause gap, then completed the LangGraph released_execution pytest/mypy/ruff/PRD scan ladder with no exact gap and proved that generic stop behavior must be replaced by a queued file-group fallback. Compacted 42 same-scope checkpoints covering low-attention queue progress through released-scope validation and PRD scans; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints during released-cli validation sequence; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints during released-cli queue closeout; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing into released input validation; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing released input typing; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while resolving released-input linting; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while closing released input PRD scan; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing transition-reporting validation; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing transition-reporting typing; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing transition-reporting linting; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while closing the reporting PRD scan; retained only the newest checkpoints needed for continuation. Compacted 2 same-scope checkpoints while advancing released entrypoint validation; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing released entrypoint typing; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing released entrypoint linting; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while closing released entrypoint PRD scan; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing checkpoint comparability validation; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing checkpoint comparability typing; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while advancing checkpoint comparability linting; retained only the newest checkpoints needed for continuation. Compacted 1 same-scope checkpoints while closing checkpoint comparability PRD scan; retained only the newest checkpoints needed for continuation.",
-      "evidence": [
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py -k rejects_missing_artifact",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/execution.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/execution.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py",
-        ".venv/bin/python -m mypy src/ez_ax/graph/langgraph_released_execution.py",
-        ".venv/bin/python -m ruff check src/ez_ax/graph/langgraph_released_execution.py",
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "docs/product/prd-python-langgraph-runtime.md",
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "src/ez_ax/graph/langgraph_released_execution.py",
-        "docs/product/prd-low-attention-implementation-queue.md",
-        "src/ez_ax/config/mcp_stdio_cli.py",
-        "src/ez_ax/graph/langgraph_released.py",
-        "src/ez_ax/graph/released_cli_shim.py",
-        "tests/unit/test_modeled_mcp_entrypoint_argv.py",
-        "tests/unit/test_released_entrypoint.py",
-        "tests/unit/test_released_cli_shim.py",
-        "docs/product/work-rag.json",
-        "docs/product/prd-python-runtime-layout.md",
-        "tests/unit/test_released_inputs.py",
-        "src/ez_ax/config/released_inputs.py",
-        "tests/unit/test_transition_reporting.py",
-        "src/ez_ax/reporting/summary.py",
-        "docs/product/prd-e2e-orchestration.md",
-        "src/ez_ax/graph/released_entrypoint.py",
-        "tests/unit/test_transition_checkpoint_collection.py",
-        "src/ez_ax/models/checkpoint.py"
-      ],
-      "recorded_at": "2026-03-22T14:42:16+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted older same-scope checkpoints covering layered doc entrypoint hardening, checkpoint-comparability validation/PRD scan, and released_run_root focused validation so only the newest raw checkpoints remain for continuation.",
-      "evidence": [
-        "AGENTS.md",
-        "docs/prd.md",
-        "docs/execution-model.md",
-        "docs/current-state.md",
-        "docs/product/prd-python-runtime-layout.md",
-        "docs/product/prd-e2e-orchestration.md",
-        "src/ez_ax/models/checkpoint.py",
-        "tests/unit/test_transition_checkpoint_collection.py",
-        "src/ez_ax/graph/released_run_root.py",
-        "tests/unit/test_released_run_root.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-22T23:32:46+09:00"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Compacted older same-scope checkpoints covering the heuristic-catalog sweep across MCP stdio config, OpenClaw MCP settings, runtime settings, released assembly verification, and stdio graph injection; the sequence fixed a narrow lint issue in MCP settings and fixture typing for injection tests while proving those released-scope support surfaces clean enough for continuation policy updates.",
-      "evidence": [
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-        ".venv/bin/python -m mypy src/ez_ax/config/mcp_stdio.py",
-        ".venv/bin/python -m ruff check src/ez_ax/config/mcp_stdio.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_settings.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_settings.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_settings.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py",
-        ".venv/bin/python -m mypy tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-        ".venv/bin/python -m ruff check tests/fixtures/fake_mcp_sdk.py",
-        "tests/fixtures/fake_mcp_sdk.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-23T23:06:09+09:00"
-    }
-  ]
 }
