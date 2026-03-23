@@ -32,7 +32,7 @@
     "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
     "anchor": "pythonRuntimeBootstrapCreated",
     "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-    "next_action": "Resume-search continues with `src/ez_ax/adapters/openclaw/mcp_adapter.py`: run `.venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py`, then focused mypy and ruff for the file; if clean, scan the OpenClaw runtime PRD for an exact MCP adapter clause gap before advancing to the next file group.",
+    "next_action": "Resume-search continues with `src/ez_ax/adapters/openclaw/mcp_stdio_client.py`: run `.venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_client.py`, then focused mypy and ruff for the file; if clean, scan the MCP acquisition PRD for an exact clause gap before advancing to the final resume-search file group.",
     "approved_scope_ceiling": "pageReadyObserved",
     "references": [
       "AGENTS.md",
@@ -78,6 +78,23 @@
       "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
       "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
       "anchor": "pythonRuntimeBootstrapCreated",
+      "summary": "Completed the resume-search step on the OpenClaw MCP adapter; pytest, mypy, and ruff were clean for `src/ez_ax/adapters/openclaw/mcp_adapter.py`, and the OpenClaw runtime PRD revealed no additional exact MCP adapter clause gap, so the resume-search advances to MCP stdio acquisition.",
+      "evidence": [
+        "docs/product/prd-openclaw-computer-use-runtime.md",
+        "src/ez_ax/adapters/openclaw/mcp_adapter.py",
+        "tests/unit/test_openclaw_mcp_adapter.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
+        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_adapter.py",
+        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_adapter.py tests/unit/test_openclaw_mcp_adapter.py",
+        "docs/product/work-rag.json"
+      ],
+      "recorded_at": "2026-03-24T00:27:39+09:00"
+    },
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+      "anchor": "pythonRuntimeBootstrapCreated",
       "summary": "During the resume-search step for the OpenClaw execution wrapper, ruff required import sorting in the wrapper tests; organized the imports, then pytest, mypy, and ruff were clean with no additional exact wrapper clause gap found, so the resume-search advances to the MCP adapter.",
       "evidence": [
         "docs/product/prd-openclaw-computer-use-runtime.md",
@@ -91,72 +108,23 @@
       "recorded_at": "2026-03-24T00:26:54+09:00"
     },
     {
-      "kind": "checkpoint",
+      "kind": "milestone_summary",
       "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
       "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
       "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "During the resume-search step for the OpenClaw adapter boundary, ruff flagged long test names; added a file-level E501 ignore to the adapter contract test file, then pytest, mypy, and ruff were clean with no additional exact adapter clause gap found, so the resume-search advances to the OpenClaw execution wrapper.",
-      "evidence": [
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "src/ez_ax/adapters/openclaw/client.py",
-        "tests/unit/test_openclaw_adapter_contract.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_adapter_contract.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/client.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/client.py tests/unit/test_openclaw_adapter_contract.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:26:15+09:00"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Completed the third bounded resume-search step on released execution sequencing; pytest, mypy, and ruff were clean for `src/ez_ax/graph/langgraph_released_execution.py`, and the LangGraph runtime PRD revealed no additional exact released-execution clause gap, so the resume-search advances to the OpenClaw adapter boundary.",
+      "summary": "Compacted 4 same-scope checkpoints covering the earlier resume-search steps for released execution sequencing and the OpenClaw adapter boundary so only the newest resume-search checkpoints remain for continuation.",
       "evidence": [
         "docs/product/prd-python-langgraph-runtime.md",
+        "docs/product/prd-openclaw-computer-use-runtime.md",
         "src/ez_ax/graph/langgraph_released_execution.py",
+        "src/ez_ax/adapters/openclaw/client.py",
+        "src/ez_ax/adapters/openclaw/execution.py",
         "tests/unit/test_langgraph_released_execution.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py",
-        ".venv/bin/python -m mypy src/ez_ax/graph/langgraph_released_execution.py",
-        ".venv/bin/python -m ruff check src/ez_ax/graph/langgraph_released_execution.py tests/unit/test_langgraph_released_execution.py",
+        "tests/unit/test_openclaw_adapter_contract.py",
+        "tests/unit/test_openclaw_execution_wrapper.py",
         "docs/product/work-rag.json"
       ],
-      "recorded_at": "2026-03-24T00:24:57+09:00"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Completed the second bounded resume-search step on released run-root handling; pytest, mypy, and ruff were clean for `src/ez_ax/graph/released_run_root.py`, and the runtime-layout PRD revealed no additional exact released run-root clause gap, so the resume-search advances to released execution sequencing.",
-      "evidence": [
-        "docs/product/prd-python-runtime-layout.md",
-        "src/ez_ax/graph/released_run_root.py",
-        "tests/unit/test_released_run_root.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py",
-        ".venv/bin/python -m mypy src/ez_ax/graph/released_run_root.py",
-        ".venv/bin/python -m ruff check src/ez_ax/graph/released_run_root.py tests/unit/test_released_run_root.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:24:14+09:00"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Completed the first bounded resume-search step on released call-site wiring; pytest, mypy, and ruff were clean for `src/ez_ax/graph/released_call_site.py`, and the runtime-layout PRD revealed no additional exact released call-site clause gap, so the resume-search advances to released run-root.",
-      "evidence": [
-        "docs/product/prd-python-runtime-layout.md",
-        "src/ez_ax/graph/released_call_site.py",
-        "tests/unit/test_released_call_site.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_call_site.py",
-        ".venv/bin/python -m mypy src/ez_ax/graph/released_call_site.py",
-        ".venv/bin/python -m ruff check src/ez_ax/graph/released_call_site.py tests/unit/test_released_call_site.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:23:06+09:00"
+      "recorded_at": "2026-03-24T00:27:39+09:00"
     },
     {
       "kind": "milestone_summary",
