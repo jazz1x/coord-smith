@@ -120,6 +120,8 @@ execution_rules:
     - src/ez_ax/rag/paths.py
     - src/ez_ax/models/errors.py
     - src/ez_ax/missions/names.py
+    - src/ez_ax/graph/modeled_mcp_entrypoint.py
+    - src/ez_ax/graph/modeled_mcp_cli_entrypoint.py
 
 validation:
   floor:

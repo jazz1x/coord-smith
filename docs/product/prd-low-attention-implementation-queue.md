@@ -42,6 +42,8 @@ Allowed surfaces:
 - released-scope MCP/OpenClaw adapter and CLI/config entry surfaces
 - released-scope reporting or summary surfaces that do not imply modeled-stage
   workflow release
+- modeled-only helper entrypoints that still invoke the released sequence and
+  stop at `pageReadyObserved` without claiming higher-stage release
 
 Disallowed surfaces:
 
@@ -554,6 +556,53 @@ Why in-bounds:
   `pageReadyObserved`
 - it remains below the released ceiling
 - it preserves orchestration determinism without widening workflow release
+
+### Item 23 — Modeled MCP Entrypoint Helper
+
+- `file_group`: `src/ez_ax/graph/modeled_mcp_entrypoint.py`
+- `tests`: `tests/unit/test_modeled_mcp_entrypoint.py`
+- `first_prd`: `docs/product/prd-openclaw-computer-use-runtime.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean
+  - no exact unenforced modeled-helper clause remains without guesswork
+- `next_if_clean`: Item 24
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in
+    `src/ez_ax/graph/modeled_mcp_entrypoint.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface is explicitly modeled-only but still stops at the released
+  ceiling `pageReadyObserved`
+- it hardens MCP-backed helper orchestration without widening browser-facing
+  authority
+- it does not present modeled behavior as released behavior
+
+### Item 24 — Modeled MCP CLI Summary Entrypoint
+
+- `file_group`: `src/ez_ax/graph/modeled_mcp_cli_entrypoint.py`
+- `tests`: `tests/unit/test_modeled_mcp_cli_entrypoint.py`
+- `first_prd`: `docs/product/prd-openclaw-computer-use-runtime.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_cli_entrypoint.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean
+  - no exact unenforced modeled CLI-helper clause remains without guesswork
+- `next_if_clean`: final stop
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in
+    `src/ez_ax/graph/modeled_mcp_cli_entrypoint.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface is explicitly modeled-only but persists only a summary for runs
+  that already stop at `pageReadyObserved`
+- it hardens deterministic run-summary shaping without widening released scope
+- it remains Python-first and OpenClaw-boundary preserving
 
 ## Final Queue Stop
 

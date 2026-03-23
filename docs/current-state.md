@@ -51,6 +51,25 @@ The repository already has the following foundations in place:
 - low-attention autonomous loop rules
 - documented low-attention implementation queue
 
+## Scope Snapshot
+
+Implemented and hardened for the current released ceiling:
+
+- released-scope graph and entrypoint wiring up to `pageReadyObserved`
+- released-scope OpenClaw adapter, MCP acquisition, and response validation
+- released-scope evidence envelope, checkpoint comparability, and reporting
+- current-memory and durable-lesson RAG helpers
+- typed error hierarchy and mission anchor mapping needed below the released
+  ceiling
+
+Already present but still modeled-only or released-scope-adjacent:
+
+- MCP-backed modeled helper entrypoints that still stop at
+  `pageReadyObserved`
+- modeled mission and node definitions above the current released ceiling
+- post-ready workflow stages such as `sync_observation`, `armed_state_entry`,
+  `trigger_wait`, `click_dispatch`, and `success_observation`
+
 ## Current Goal
 
 Keep the Python-first released-scope scaffold hard enough that a lower-capacity
@@ -81,16 +100,18 @@ Item 19 after continuous released-scope hardening.
 
 The next continuation step is therefore:
 
-- reject docs-only `FINAL_STOP` alignment as a continuation task
-- `src/ez_ax/rag/paths.py` is now documented and validated as an in-bounds
-  support slice
-- continue with the remaining newly documented in-bounds support surfaces that
-  were omitted from the queue, in this order:
-  - `src/ez_ax/models/errors.py`
-  - `src/ez_ax/missions/names.py`
-- accept `FINAL_STOP` only if those documented follow-on slices also close
-  honestly and the full exhaustion protocol still leaves no exact PRD-backed
-  in-bounds gap below `pageReadyObserved`
+- treat released-scope hardening below `pageReadyObserved` as exhausted for the
+  current queue
+- `src/ez_ax/graph/modeled_mcp_entrypoint.py` is now validated as the first
+  modeled-only helper continuation slice
+- continue autonomous work through the remaining documented modeled-only helper
+  entrypoint surface that still stops at `pageReadyObserved`:
+  - `src/ez_ax/graph/modeled_mcp_cli_entrypoint.py`
+- keep these slices explicitly labeled modeled-only and do not describe them as
+  released-scope expansion
+- accept `FINAL_STOP` for this broader continuation path only if those
+  modeled-only helper slices also close honestly and no exact remaining
+  documented queue item stays below the current released ceiling
 
 ## Consultation Context
 
