@@ -42,7 +42,8 @@ Use these wrappers in order. They are execution aids; PRD remains the authority.
 
 Default mode is continuous guarded looping:
 
-1. restate `phase / milestone / anchor / invariant / next_action`
+1. quote the exact on-disk `docs/product/work-rag.json` `current.next_action`
+   verbatim, then restate `phase / milestone / anchor / invariant / next_action`
 2. run scope guard
 3. if out-of-bounds: stop immediately and report reason
 4. pick exactly one task candidate
@@ -67,6 +68,8 @@ Continuous-loop bias:
 - doc-only edits whose only purpose is to align or restate `FINAL_STOP` are not
   valid continuation slices unless the user explicitly requested stop-state
   cleanup
+- if the exact quoted on-disk `next_action` names a concrete slice, do not
+  output `FINAL_STOP`
 
 ## Exhaustion and Stop Protocol
 
@@ -115,4 +118,4 @@ Always report in this compact shape:
 
 Use this short prompt in a new session:
 
-`Use $ez-ax-low-attention-autoloop. Run autonomous continuation in continuous guarded looping mode across consecutive one-commit slices. After each committed slice, immediately select the next exact documented PRD-backed in-bounds slice and continue in the same session. Treat FINAL_STOP as valid only as a last resort after the documented queue, bounded resume-search, full heuristic-catalog sweep, and final exact gap re-evaluation are all exhausted and you still cannot honestly name one exact next one-commit slice below pageReadyObserved.`
+`Use $ez-ax-low-attention-autoloop. First quote the exact on-disk \`docs/product/work-rag.json\` \`current.next_action\` verbatim. If it names a concrete slice, execute that slice and do not output FINAL_STOP. Then run autonomous continuation in continuous guarded looping mode across consecutive one-commit slices. After each committed slice, immediately select the next exact documented PRD-backed in-bounds slice and continue in the same session. Treat FINAL_STOP as valid only as a last resort after the documented queue, bounded resume-search, full heuristic-catalog sweep, and final exact gap re-evaluation are all exhausted and you still cannot honestly name one exact next one-commit slice below pageReadyObserved.`

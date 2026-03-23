@@ -543,6 +543,29 @@
         "validation-floor",
         "stop-condition"
       ]
+    },
+    {
+      "id": "lesson-false-positive-023",
+      "category": "false_positive",
+      "severity": "high",
+      "summary": "A low-attention model can falsely restate FINAL_STOP even after being asked to reread on-disk state.",
+      "lesson": "When autonomous continuation depends on `work-rag.json`, require the model to quote the exact on-disk `current.next_action` verbatim before making any stop/continue decision. Treat any doc-only FINAL_STOP alignment task as invalid continuation work unless the user explicitly asked for stop-state cleanup, because otherwise the model may prefer a stale stop proof over an implementation-bearing or validation-bearing documented slice.",
+      "trigger": "Repeated low-attention runs reported FINAL_STOP and proposed stop-state alignment even after continuation prompts explicitly asked for an on-disk reread and a resume from the documented next slice.",
+      "evidence": [
+        ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+        "docs/execution-model.md",
+        "docs/current-state.md",
+        "docs/product/work-rag.json"
+      ],
+      "promoted_from_phase": "Phase R3 — Fresh Python Bootstrap",
+      "recorded_at": "2026-03-24T00:33:54+09:00",
+      "tags": [
+        "active-implementation",
+        "low-attention-loop",
+        "stale-final-stop",
+        "next-action-verbatim",
+        "stop-alignment-guard"
+      ]
     }
   ]
 }

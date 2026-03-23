@@ -78,108 +78,38 @@
       "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
       "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
       "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Final exact gap re-evaluation found no remaining explicit released-scope PRD clause gap below pageReadyObserved after the queue, resume-search, and heuristic sweep; continuation should stop with FINAL_STOP grounds recorded.",
+      "summary": "Promoted a durable lesson for repeated stale-FINAL_STOP false positives: low-attention runs must quote the exact on-disk `work-rag` next_action verbatim first, and doc-only stop-state alignment is not valid continuation work unless explicitly requested.",
+      "evidence": [
+        "docs/product/rag.json",
+        ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+        "docs/product/work-rag.json"
+      ],
+      "recorded_at": "2026-03-24T00:33:54+09:00"
+    },
+    {
+      "kind": "milestone_summary",
+      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+      "anchor": "pythonRuntimeBootstrapCreated",
+      "summary": "Compacted older same-scope checkpoints covering the resume-search, heuristic sweep, and final exact-gap re-evaluation that produced a stop claim. That stop evidence remains useful history, but the new durable lesson now takes precedence: low-attention runs must quote the exact on-disk `work-rag` next_action verbatim and must not treat doc-only stop-state alignment as valid continuation work.",
       "evidence": [
         "docs/prd.md",
         "docs/execution-model.md",
         "docs/current-state.md",
         "docs/product/prd-e2e-orchestration.md",
         "docs/product/prd-openclaw-computer-use-runtime.md",
-        "docs/product/prd-python-langgraph-runtime.md",
-        "docs/product/prd-python-runtime-layout.md",
-        "docs/product/prd-runtime-missions.md",
-        "docs/product/prd-python-validation-contract.md",
-        "docs/product/prd-python-rag-operations.md",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:30:18+09:00"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Completed the full queue-extension heuristic sweep across all documented candidates; focused pytest, mypy, and ruff were clean for `src/ez_ax/config/mcp_stdio.py`, `src/ez_ax/adapters/openclaw/mcp_settings.py`, `src/ez_ax/config/settings.py`, and the released-assembly/injection tests, and no exact PRD-backed clause gap was found, so the heuristic pass is exhausted and continuation moves to the final gap re-evaluation.",
-      "evidence": [
         "docs/product/prd-python-mcp-client-acquisition.md",
-        "docs/product/prd-openclaw-computer-use-runtime.md",
         "docs/product/prd-python-runtime-layout.md",
         "docs/product/prd-python-langgraph-runtime.md",
-        "src/ez_ax/config/mcp_stdio.py",
-        "src/ez_ax/adapters/openclaw/mcp_settings.py",
-        "src/ez_ax/config/settings.py",
-        "tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-        "tests/unit/test_openclaw_mcp_settings.py",
-        "tests/unit/test_runtime_settings.py",
-        "tests/unit/test_langgraph_released_assembly.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_settings.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_client.py",
         ".venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py",
         ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py",
-        ".venv/bin/python -m mypy src/ez_ax/config/mcp_stdio.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_settings.py",
-        ".venv/bin/python -m mypy src/ez_ax/config/settings.py",
-        ".venv/bin/python -m mypy tests/unit/test_langgraph_released_assembly.py",
-        ".venv/bin/python -m mypy tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-        ".venv/bin/python -m ruff check src/ez_ax/config/mcp_stdio.py tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_settings.py tests/unit/test_openclaw_mcp_settings.py",
-        ".venv/bin/python -m ruff check src/ez_ax/config/settings.py tests/unit/test_runtime_settings.py",
-        ".venv/bin/python -m ruff check tests/unit/test_langgraph_released_assembly.py",
-        ".venv/bin/python -m ruff check tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-        "docs/product/work-rag.json"
+        "docs/product/work-rag.json",
+        "docs/product/rag.json"
       ],
-      "recorded_at": "2026-03-24T00:29:47+09:00"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Completed the final bounded resume-search step on MCP stdio acquisition; pytest, mypy, and ruff were clean for `src/ez_ax/adapters/openclaw/mcp_stdio_client.py`, and the MCP acquisition PRD revealed no additional exact clause gap, so the resume-search pass is exhausted and the heuristic queue-extension pass begins.",
-      "evidence": [
-        "docs/product/prd-python-mcp-client-acquisition.md",
-        "src/ez_ax/adapters/openclaw/mcp_stdio_client.py",
-        "tests/unit/test_openclaw_mcp_stdio_client.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_client.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_stdio_client.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_stdio_client.py tests/unit/test_openclaw_mcp_stdio_client.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:28:12+09:00"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Completed the resume-search step on the OpenClaw MCP adapter; pytest, mypy, and ruff were clean for `src/ez_ax/adapters/openclaw/mcp_adapter.py`, and the OpenClaw runtime PRD revealed no additional exact MCP adapter clause gap, so the resume-search advances to MCP stdio acquisition.",
-      "evidence": [
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "src/ez_ax/adapters/openclaw/mcp_adapter.py",
-        "tests/unit/test_openclaw_mcp_adapter.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_adapter.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_adapter.py tests/unit/test_openclaw_mcp_adapter.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:27:39+09:00"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "During the resume-search step for the OpenClaw execution wrapper, ruff required import sorting in the wrapper tests; organized the imports, then pytest, mypy, and ruff were clean with no additional exact wrapper clause gap found, so the resume-search advances to the MCP adapter.",
-      "evidence": [
-        "docs/product/prd-openclaw-computer-use-runtime.md",
-        "src/ez_ax/adapters/openclaw/execution.py",
-        "tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/execution.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/execution.py tests/unit/test_openclaw_execution_wrapper.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-24T00:26:54+09:00"
+      "recorded_at": "2026-03-24T00:33:54+09:00"
     },
     {
       "kind": "milestone_summary",
