@@ -70,6 +70,9 @@ Continuous-loop bias:
   cleanup
 - if the exact quoted on-disk `next_action` names a concrete slice, do not
   output `FINAL_STOP`
+- if the documented exhaustion protocol is complete and no exact slice remains,
+  declare `FINAL_STOP` directly; do not switch to `blocked` or ask for operator
+  confirmation
 
 ## Exhaustion and Stop Protocol
 

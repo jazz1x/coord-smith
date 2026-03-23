@@ -566,6 +566,28 @@
         "next-action-verbatim",
         "stop-alignment-guard"
       ]
+    },
+    {
+      "id": "lesson-false-negative-024",
+      "category": "false_negative",
+      "severity": "high",
+      "summary": "A low-attention model can incorrectly ask for operator confirmation after the exhaustion protocol is already complete.",
+      "lesson": "When the documented queue, bounded resume-search, heuristic sweep, and final exact gap re-evaluation are all complete with no exact in-bounds PRD-backed gap, the model must declare `FINAL_STOP` itself rather than switching to `blocked` or asking for operator confirmation. Requiring human confirmation at that point is a false negative against the documented stop contract and needlessly stalls the loop.",
+      "trigger": "After completing the final exact-gap re-evaluation, the low-attention loop updated `work-rag` to await operator confirmation instead of concluding `FINAL_STOP` with explicit grounds.",
+      "evidence": [
+        ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+        "docs/execution-model.md",
+        "docs/product/work-rag.json"
+      ],
+      "promoted_from_phase": "Phase R3 — Fresh Python Bootstrap",
+      "recorded_at": "2026-03-24T00:49:26+09:00",
+      "tags": [
+        "active-implementation",
+        "low-attention-loop",
+        "operator-confirmation",
+        "final-stop-contract",
+        "stop-handoff-guard"
+      ]
     }
   ]
 }
