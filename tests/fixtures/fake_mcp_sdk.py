@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from types import ModuleType
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -39,7 +40,12 @@ class ReleasedScopeFakeClientSession:
     async def __aenter__(self) -> ReleasedScopeFakeClientSession:
         return self
 
-    async def __aexit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: object | None,
+    ) -> None:
         return None
 
     async def initialize(self) -> None:
@@ -94,7 +100,9 @@ class FakeStdioClient:
     last_server_params: object | None = None
 
     @asynccontextmanager
-    async def stdio_client(self, server_params: object):
+    async def stdio_client(
+        self, server_params: object
+    ) -> AsyncIterator[tuple[str, str]]:
         self.last_server_params = server_params
         yield ("read", "write")
 
@@ -116,9 +124,11 @@ def install_fake_mcp_sdk(
     session_mod = ModuleType("mcp.client.session")
     client_pkg = ModuleType("mcp.client")
 
-    stdio_mod.StdioServerParameters = FakeStdioServerParameters
-    stdio_mod.stdio_client = stdio_client.stdio_client
-    session_mod.ClientSession = client_session_cls
+    stdio_mod_any = cast(Any, stdio_mod)
+    session_mod_any = cast(Any, session_mod)
+    stdio_mod_any.StdioServerParameters = FakeStdioServerParameters
+    stdio_mod_any.stdio_client = stdio_client.stdio_client
+    session_mod_any.ClientSession = client_session_cls
 
     monkeypatch.setitem(sys.modules, "mcp", mcp_mod)
     monkeypatch.setitem(sys.modules, "mcp.client", client_pkg)

@@ -32,7 +32,7 @@
     "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
     "anchor": "pythonRuntimeBootstrapCreated",
     "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-    "next_action": "Continue the documented heuristic-catalog sweep from src/ez_ax/config/settings.py, then tests/unit/test_langgraph_released_assembly.py, and tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py; promote the first focused failing artifact or exact PRD-backed gap below pageReadyObserved into one new queue item.",
+    "next_action": "FINAL_STOP: documented queue, bounded resume-search, and full heuristic-catalog sweep are exhausted with no exact PRD-backed in-bounds gap below pageReadyObserved.",
     "approved_scope_ceiling": "pageReadyObserved",
     "references": [
       "AGENTS.md",
@@ -683,6 +683,28 @@
         "docs/product/work-rag.json"
       ],
       "recorded_at": "2026-03-23T22:53:38.462832+09:00"
+    },
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+      "anchor": "pythonRuntimeBootstrapCreated",
+      "summary": "Completed the heuristic-catalog sweep (settings, released assembly test, and stdio graph injection) with clean pytest/mypy/ruff; fixed test fixture typing so mypy passes, and confirmed no exact PRD-backed gap remains below pageReadyObserved, enabling FINAL_STOP.",
+      "evidence": [
+        ".venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py",
+        ".venv/bin/python -m mypy src/ez_ax/config/settings.py",
+        ".venv/bin/python -m ruff check src/ez_ax/config/settings.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py",
+        ".venv/bin/python -m mypy tests/unit/test_langgraph_released_assembly.py",
+        ".venv/bin/python -m ruff check tests/unit/test_langgraph_released_assembly.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+        ".venv/bin/python -m mypy tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+        ".venv/bin/python -m ruff check tests/fixtures/fake_mcp_sdk.py",
+        ".venv/bin/python -m ruff check tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+        "tests/fixtures/fake_mcp_sdk.py",
+        "docs/product/work-rag.json"
+      ],
+      "recorded_at": "2026-03-23T22:57:51.872782+09:00"
     }
   ]
 }
