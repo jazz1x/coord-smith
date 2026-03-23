@@ -27,12 +27,12 @@
     }
   },
   "current": {
-    "goal": "Use the layered doc entrypoint (`docs/prd.md`, `docs/execution-model.md`, `docs/current-state.md`), the Python-first PRD set, and the two-tier RAG surface to keep lower-capacity autonomous implementation moving one in-bounds task at a time without relying on removed TypeScript assets or ad hoc search expansion.",
+    "goal": "Use the layered doc entrypoint (`docs/prd.md`, `docs/execution-model.md`, `docs/current-state.md`), the Python-first PRD set, and the two-tier RAG surface to keep lower-capacity autonomous implementation moving across consecutive one-commit in-bounds tasks without relying on removed TypeScript assets or ad hoc search expansion.",
     "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
     "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
     "anchor": "pythonRuntimeBootstrapCreated",
     "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-    "next_action": "FINAL_STOP: documented queue, bounded resume-search, and full heuristic-catalog sweep are exhausted with no exact PRD-backed in-bounds gap below pageReadyObserved.",
+    "next_action": "Continue consecutive autonomous implementation by rewriting to and executing the next exact documented slice in the same session after each commit; the current documented heuristic ladder starts at src/ez_ax/config/mcp_stdio.py and only permits FINAL_STOP after the documented queue, bounded resume-search, full heuristic-catalog sweep, and final exact gap re-evaluation are all honestly exhausted with no exact next one-commit slice below pageReadyObserved.",
     "approved_scope_ceiling": "pageReadyObserved",
     "references": [
       "AGENTS.md",
@@ -78,6 +78,21 @@
       "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
       "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
       "anchor": "pythonRuntimeBootstrapCreated",
+      "summary": "Upgraded the low-attention operating contract from single-step closeout bias to consecutive autonomous looping: after each one-commit slice, work-rag must be rewritten to the next exact documented slice and the same session should continue unless scope, validation, or full exhaustion blocks it honestly.",
+      "evidence": [
+        "docs/execution-model.md",
+        "docs/current-state.md",
+        "docs/llm/repo-autonomous-loop-adapter.yaml",
+        ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+        "docs/product/work-rag.json"
+      ],
+      "recorded_at": "2026-03-23T23:06:09+09:00"
+    },
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+      "anchor": "pythonRuntimeBootstrapCreated",
       "summary": "Replaced the exhaustion-cycle single-candidate heuristic interpretation with a documented heuristic-catalog sweep so low-attention continuation must scan released-scope support, settings, and integration surfaces in deterministic order before accepting FINAL_STOP.",
       "evidence": [
         "docs/execution-model.md",
@@ -89,43 +104,11 @@
       "recorded_at": "2026-03-23T22:49:38+09:00"
     },
     {
-      "kind": "checkpoint",
+      "kind": "milestone_summary",
       "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
       "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
       "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Completed the Item 19 exhaustion cycle checks: bounded resume-search validations across released_call_site, released_run_root, langgraph_released_execution, and OpenClaw adapter/execution/MCP/mcp-stdio file groups were all clean; the single-item heuristic pass found no exact PRD-backed in-bounds gap below pageReadyObserved, so FINAL_STOP remains valid.",
-      "evidence": [
-        ".venv/bin/python -m pytest -q tests/unit/test_released_call_site.py",
-        ".venv/bin/python -m mypy src/ez_ax/graph/released_call_site.py",
-        ".venv/bin/python -m ruff check src/ez_ax/graph/released_call_site.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py",
-        ".venv/bin/python -m mypy src/ez_ax/graph/released_run_root.py",
-        ".venv/bin/python -m ruff check src/ez_ax/graph/released_run_root.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py",
-        ".venv/bin/python -m mypy src/ez_ax/graph/langgraph_released_execution.py",
-        ".venv/bin/python -m ruff check src/ez_ax/graph/langgraph_released_execution.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_adapter_contract.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/client.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/client.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/execution.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/execution.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_adapter.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_adapter.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_client.py",
-        ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_stdio_client.py",
-        ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_stdio_client.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-23T18:47:14+09:00"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Reopened continuation with an explicit PRD-backed queue extension (Item 19) and closed it by enforcing required-field schema violation handling for missing MCP response status; focused pytest/mypy/ruff were clean for the mcp_adapter file group.",
+      "summary": "Compacted older same-scope raw checkpoints covering the Item 19 queue extension and the following exhaustion-cycle validation sweep: mcp_adapter required-field schema hardening closed cleanly, then released_call_site, released_run_root, langgraph_released_execution, and OpenClaw adapter/execution/MCP/mcp-stdio validations all stayed clean during the bounded exhaustion check sequence.",
       "evidence": [
         "docs/product/prd-low-attention-implementation-queue.md",
         "docs/product/prd-openclaw-computer-use-runtime.md",
@@ -133,9 +116,14 @@
         ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
         ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_adapter.py",
         ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_adapter.py tests/unit/test_openclaw_mcp_adapter.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_released_call_site.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
+        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_client.py",
         "docs/product/work-rag.json"
       ],
-      "recorded_at": "2026-03-23T01:36:51+09:00"
+      "recorded_at": "2026-03-23T23:06:09+09:00"
     },
     {
       "kind": "milestone_summary",
@@ -667,11 +655,11 @@
       "recorded_at": "2026-03-22T23:32:46+09:00"
     },
     {
-      "kind": "checkpoint",
+      "kind": "milestone_summary",
       "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
       "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
       "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Heuristic-catalog sweep advanced past MCP stdio config with clean pytest/mypy/ruff, then fixed a ruff line-length violation in OpenClaw MCP settings and revalidated the lint target to keep the released-scope config surface clean.",
+      "summary": "Compacted older same-scope checkpoints covering the heuristic-catalog sweep across MCP stdio config, OpenClaw MCP settings, runtime settings, released assembly verification, and stdio graph injection; the sequence fixed a narrow lint issue in MCP settings and fixture typing for injection tests while proving those released-scope support surfaces clean enough for continuation policy updates.",
       "evidence": [
         ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
         ".venv/bin/python -m mypy src/ez_ax/config/mcp_stdio.py",
@@ -679,32 +667,14 @@
         ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_settings.py",
         ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_settings.py",
         ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_settings.py",
-        "src/ez_ax/adapters/openclaw/mcp_settings.py",
-        "docs/product/work-rag.json"
-      ],
-      "recorded_at": "2026-03-23T22:53:38.462832+09:00"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-      "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-      "anchor": "pythonRuntimeBootstrapCreated",
-      "summary": "Completed the heuristic-catalog sweep (settings, released assembly test, and stdio graph injection) with clean pytest/mypy/ruff; fixed test fixture typing so mypy passes, and confirmed no exact PRD-backed gap remains below pageReadyObserved, enabling FINAL_STOP.",
-      "evidence": [
         ".venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py",
-        ".venv/bin/python -m mypy src/ez_ax/config/settings.py",
-        ".venv/bin/python -m ruff check src/ez_ax/config/settings.py",
         ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py",
-        ".venv/bin/python -m mypy tests/unit/test_langgraph_released_assembly.py",
-        ".venv/bin/python -m ruff check tests/unit/test_langgraph_released_assembly.py",
-        ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
         ".venv/bin/python -m mypy tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
         ".venv/bin/python -m ruff check tests/fixtures/fake_mcp_sdk.py",
-        ".venv/bin/python -m ruff check tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
         "tests/fixtures/fake_mcp_sdk.py",
         "docs/product/work-rag.json"
       ],
-      "recorded_at": "2026-03-23T22:57:51.872782+09:00"
+      "recorded_at": "2026-03-23T23:06:09+09:00"
     }
   ]
 }

@@ -25,10 +25,16 @@ scope:
 
 execution_rules:
   one_task_per_commit: true
+  continuous_multi_commit_looping: true
   validation_first: true
   compaction_before_cycle_close: true
   current_work_memory_role: what_to_do_now
   reusable_asset_memory_role: durable_lessons_only
+  post_commit_continue_rule:
+    - after each honest task close, rewrite work-rag current.next_action to the next exact documented slice
+    - continue in the same session when the next slice can still be named honestly from the queue, resume-search order, or heuristic catalog
+    - do not stop only because one commit was completed
+    - FINAL_STOP is valid only when no exact next one-commit slice can still be named after the full documented exhaustion protocol
   paused_resume_search_order:
     - rerun or identify one focused pytest target on the active anchor surface
     - if pytest is clean, rerun or identify one focused mypy target for the active file group when typing is part of the contract
@@ -153,4 +159,5 @@ orchestration:
     - ez-ax-loop-validation-picker-wrapper
     - ez-ax-loop-rag-compaction-wrapper
   default_loop_mode: continuous_guarded_looping
+  continuation_bias: keep selecting the next documented one-commit slice after each commit until the full exhaustion protocol is honestly complete
   final_stop_keyword: FINAL_STOP

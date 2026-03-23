@@ -54,7 +54,7 @@ The repository already has the following foundations in place:
 ## Current Goal
 
 Keep the Python-first released-scope scaffold hard enough that a lower-capacity
-agent can continue one commit at a time without crossing above
+agent can continue across consecutive one-commit slices without crossing above
 `pageReadyObserved`.
 
 Current cycle decision question:
@@ -67,8 +67,9 @@ Current cycle decision question:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current continuation state may record a paused stop-like state after the
-documented queue is exhausted.
+The current continuation state should prefer an immediately resumable next slice
+over a paused stop-like state whenever one documented in-bounds action still
+exists.
 
 When that happens, the execution model now allows one bounded resume-search
 pass across the released-scope file groups listed in `docs/execution-model.md`
@@ -80,7 +81,8 @@ Item 19 after continuous released-scope hardening.
 
 The next continuation step is therefore:
 
-- continue the documented heuristic ladder before accepting `FINAL_STOP`
+- continue the documented heuristic ladder as a consecutive autonomous sequence
+  before accepting `FINAL_STOP`
 - start with released-scope support and settings surfaces already wired into the
   same runtime path, in this order:
   - `src/ez_ax/config/mcp_stdio.py`
@@ -88,6 +90,8 @@ The next continuation step is therefore:
   - `src/ez_ax/config/settings.py`
   - `tests/unit/test_langgraph_released_assembly.py`
   - `tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`
+- after each committed slice, rewrite `work-rag` to the next exact candidate
+  and continue in the same session when an honest next slice still exists
 - accept `FINAL_STOP` only if that documented heuristic catalog is exhausted
   honestly with no focused failing artifact and no exact PRD-backed clause gap
 
@@ -106,6 +110,7 @@ Any proposed continuation must remain:
 - Python-first
 - OpenClaw-boundary preserving
 - one-task-per-commit
+- multi-commit continuation friendly
 - verifiable with focused validation
 
 ## Source Of Ongoing Truth

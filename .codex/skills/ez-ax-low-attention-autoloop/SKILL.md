@@ -53,7 +53,17 @@ Default mode is continuous guarded looping:
 9. update `docs/product/work-rag.json` with exactly one meaningful history entry
 10. promote to `docs/product/rag.json` only if lesson is durable
 11. commit exactly once for the task
-12. re-enter loop only if one documented in-bounds next action remains
+12. immediately rewrite `next_action` to the next exact documented slice and
+    re-enter the loop in the same session whenever one documented in-bounds
+    next action remains
+
+Continuous-loop bias:
+
+- one-task-per-commit does not mean one-task-per-session
+- after each successful commit, prefer continuing into the next documented
+  queue item, resume-search file group, or heuristic candidate
+- do not stop just because one bounded task closed cleanly
+- `FINAL_STOP` is a last-resort exhaustion result, not the default closeout
 
 ## Exhaustion and Stop Protocol
 
@@ -102,4 +112,4 @@ Always report in this compact shape:
 
 Use this short prompt in a new session:
 
-`Use $ez-ax-low-attention-autoloop. Run autonomous continuation in continuous guarded looping mode until you either close one in-bounds task per commit or declare FINAL_STOP with explicit grounds.`
+`Use $ez-ax-low-attention-autoloop. Run autonomous continuation in continuous guarded looping mode across consecutive one-commit slices. After each committed slice, immediately select the next exact documented PRD-backed in-bounds slice and continue in the same session. Treat FINAL_STOP as valid only as a last resort after the documented queue, bounded resume-search, full heuristic-catalog sweep, and final exact gap re-evaluation are all exhausted and you still cannot honestly name one exact next one-commit slice below pageReadyObserved.`

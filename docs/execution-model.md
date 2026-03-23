@@ -58,8 +58,17 @@ Loop:
 6. update `docs/product/work-rag.json`
 7. promote to `docs/product/rag.json` only when a lesson is truly durable
 8. create one commit
+9. immediately select the next documented in-bounds action and continue the
+   loop when one still exists
 
-Continue only when a documented in-bounds next action remains.
+Continuous-loop rule:
+
+- one task per commit remains mandatory
+- a successful task close should normally hand off directly to the next
+  documented queue item, failing artifact, clause gap, or heuristic candidate
+- do not pause merely because one bounded task finished cleanly
+- pause only when scope is blocked, validation is blocked, or the full
+  exhaustion protocol is honestly complete
 
 ## Queue-Driven Selection
 
@@ -134,6 +143,26 @@ A task is not complete unless:
 Focused validation is preferred over broad cleanup.
 
 Repo-wide cleanup is out of scope unless a queue item explicitly requires it.
+
+## Post-Commit Continuation Rule
+
+After each honest one-commit task close, the agent must try to keep momentum in
+the same session.
+
+Post-commit order:
+
+1. rewrite `work-rag.json` `current.next_action` to the next exact documented
+   queue item or heuristic candidate
+2. restate the new `phase / milestone / anchor / invariant / next_action`
+3. continue into the next bounded slice without waiting for a new user prompt
+4. stop only if the next bounded slice would violate scope, lacks an honest
+   validation path, or the full exhaustion protocol is complete
+
+Post-commit guard:
+
+- "task closed successfully" is not by itself a valid stopping reason
+- if the next exact slice can already be named from documented queue order,
+  resume-search order, or heuristic catalog, continuation should proceed
 
 ## PRD-Clause Gap Checklist
 
