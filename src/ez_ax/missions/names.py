@@ -20,14 +20,26 @@ MODELED_MISSIONS: Final[tuple[str, ...]] = (
     "run_completion",
 )
 
-CONTROL_MISSIONS: Final[tuple[str, ...]] = (
+PRIMARY_CONTROL_MISSIONS: Final[tuple[str, ...]] = (
     "release_gate_evaluation",
     "retry_or_stop_decision",
+)
+
+RAG_MISSIONS: Final[tuple[str, ...]] = (
     "work_rag_update",
     "work_rag_compression",
     "lesson_promotion",
+)
+
+VALIDATION_MISSIONS: Final[tuple[str, ...]] = (
     "e2e_replay_or_comparison",
     "python_validation_execution",
+)
+
+CONTROL_MISSIONS: Final[tuple[str, ...]] = (
+    *PRIMARY_CONTROL_MISSIONS,
+    *RAG_MISSIONS,
+    *VALIDATION_MISSIONS,
 )
 
 BROWSER_FACING_MISSIONS: Final[tuple[str, ...]] = (

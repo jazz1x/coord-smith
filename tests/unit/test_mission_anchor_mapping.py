@@ -1,4 +1,9 @@
-from ez_ax.missions.names import released_anchor_for_mission
+from ez_ax.missions.names import (
+    CONTROL_MISSIONS,
+    RAG_MISSIONS,
+    VALIDATION_MISSIONS,
+    released_anchor_for_mission,
+)
 
 
 def test_released_anchor_for_mission_maps_prepare_session() -> None:
@@ -21,3 +26,13 @@ def test_released_anchor_for_mission_rejects_unknown_mission() -> None:
         assert "Unknown mission name" in str(exc)
     else:
         raise AssertionError("Expected unknown mission to be rejected")
+
+
+def test_rag_missions_are_control_grouped() -> None:
+    for mission_name in RAG_MISSIONS:
+        assert mission_name in CONTROL_MISSIONS
+
+
+def test_validation_missions_are_control_grouped() -> None:
+    for mission_name in VALIDATION_MISSIONS:
+        assert mission_name in CONTROL_MISSIONS
