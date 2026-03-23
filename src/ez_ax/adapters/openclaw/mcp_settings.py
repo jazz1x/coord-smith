@@ -22,7 +22,10 @@ def _require_normalized_setting(*, label: str, value: str) -> str:
         msg = f"OpenClaw MCP setting '{label}' must not be whitespace-only"
         raise ConfigError(msg)
     if value != value.strip():
-        msg = f"OpenClaw MCP setting '{label}' must not have leading or trailing whitespace"
+        msg = (
+            f"OpenClaw MCP setting '{label}' must not have leading or trailing "
+            "whitespace"
+        )
         raise ConfigError(msg)
     return value
 
