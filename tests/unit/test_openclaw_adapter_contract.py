@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 from ez_ax.adapters.openclaw.client import (
     OpenClawExecutionRequest,
     OpenClawExecutionResult,
