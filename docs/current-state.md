@@ -81,19 +81,11 @@ Item 19 after continuous released-scope hardening.
 
 The next continuation step is therefore:
 
-- continue the documented heuristic ladder as a consecutive autonomous sequence
-  before accepting `FINAL_STOP`
-- start with released-scope support and settings surfaces already wired into the
-  same runtime path, in this order:
-  - `src/ez_ax/config/mcp_stdio.py`
-  - `src/ez_ax/adapters/openclaw/mcp_settings.py`
-  - `src/ez_ax/config/settings.py`
-  - `tests/unit/test_langgraph_released_assembly.py`
-  - `tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`
-- after each committed slice, rewrite `work-rag` to the next exact candidate
-  and continue in the same session when an honest next slice still exists
-- accept `FINAL_STOP` only if that documented heuristic catalog is exhausted
-  honestly with no focused failing artifact and no exact PRD-backed clause gap
+- honor the documented exhaustion: the full heuristic catalog sweep completed
+  cleanly with no focused failing artifact and no exact PRD-backed clause gap
+  below `pageReadyObserved`
+- accept `FINAL_STOP` as the current continuation state until a newly
+  documented in-bounds next slice appears
 
 ## Consultation Context
 
