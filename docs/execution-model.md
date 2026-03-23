@@ -116,6 +116,8 @@ The following are forbidden:
 - modeled-stage implementation
 - refactors not required by an exact clause gap
 - multi-task bundling
+- doc-only rewrites whose only purpose is to restate, align, or justify
+  `FINAL_STOP`
 
 ## Per-Item Execution Flow
 
@@ -163,6 +165,8 @@ Post-commit guard:
 - "task closed successfully" is not by itself a valid stopping reason
 - if the next exact slice can already be named from documented queue order,
   resume-search order, or heuristic catalog, continuation should proceed
+- doc-only stop-state alignment is not a valid follow-on slice unless the user
+  explicitly asked for stop-state cleanup
 
 ## PRD-Clause Gap Checklist
 
@@ -216,6 +220,17 @@ When the queue is exhausted, follow this order:
 3. one gap re-evaluation pass
 
 If no valid in-bounds PRD clause gap remains, final stop stands.
+
+Final-stop alignment guard:
+
+- aligning docs to an already-claimed `FINAL_STOP` is not itself evidence that
+  the exhaustion protocol was correct
+- a lower-capacity agent must prefer one implementation-bearing or
+  validation-bearing documented slice over a docs-only stop-confirmation edit
+- if a released-scope support surface is still omitted from the documented
+  queue but is directly backed by an exact PRD clause and focused validation can
+  be named honestly, the agent should document and execute that slice before
+  accepting `FINAL_STOP`
 
 ### Stop-State Resume Search
 

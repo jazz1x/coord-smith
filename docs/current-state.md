@@ -81,11 +81,16 @@ Item 19 after continuous released-scope hardening.
 
 The next continuation step is therefore:
 
-- honor the documented exhaustion: the full heuristic catalog sweep completed
-  cleanly with no focused failing artifact and no exact PRD-backed clause gap
-  below `pageReadyObserved`
-- accept `FINAL_STOP` as the current continuation state until a newly
-  documented in-bounds next slice appears
+- reject docs-only `FINAL_STOP` alignment as a continuation task
+- `src/ez_ax/rag/paths.py` is now documented and validated as an in-bounds
+  support slice
+- continue with the remaining newly documented in-bounds support surfaces that
+  were omitted from the queue, in this order:
+  - `src/ez_ax/models/errors.py`
+  - `src/ez_ax/missions/names.py`
+- accept `FINAL_STOP` only if those documented follow-on slices also close
+  honestly and the full exhaustion protocol still leaves no exact PRD-backed
+  in-bounds gap below `pageReadyObserved`
 
 ## Consultation Context
 

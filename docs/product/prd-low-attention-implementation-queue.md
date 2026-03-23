@@ -70,6 +70,8 @@ Queue rule:
   `next_if_clean` condition honestly
 - after the documented queue is exhausted, the agent may run exactly one
   canonical queue-extension heuristic pass before accepting final stop
+- doc-only edits whose only purpose is to restate or align `FINAL_STOP` are not
+  valid queue items unless the user explicitly requested stop-state cleanup
 
 ## Queue Items
 
@@ -473,7 +475,7 @@ Why in-bounds:
   - focused pytest, mypy, and ruff are clean
   - no exact unenforced required-field schema-violation clause remains without
     guesswork
-- `next_if_clean`: final stop
+- `next_if_clean`: Item 20
 - `next_if_fail`:
   - fix the smallest safe one-commit slice in
     `src/ez_ax/adapters/openclaw/mcp_adapter.py`
@@ -485,6 +487,73 @@ Why in-bounds:
 - this surface hardens released MCP response schema enforcement only
 - it remains below `pageReadyObserved`
 - it does not widen browser-facing or modeled-stage behavior
+
+### Item 20 — Canonical RAG Path Helpers
+
+- `file_group`: `src/ez_ax/rag/paths.py`
+- `tests`: `tests/unit/test_rag_paths.py`
+- `first_prd`: `docs/product/prd-python-runtime-layout.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_rag_paths.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean
+  - no exact unenforced `rag/` helper clause remains without guesswork
+- `next_if_clean`: Item 21
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in `src/ez_ax/rag/paths.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface owns canonical `work-rag.json` and `rag.json` access helpers for
+  low-attention continuation
+- it is directly backed by the runtime-layout `rag/` ownership clause and stays
+  below `pageReadyObserved`
+- it hardens autonomous continuation memory without widening browser-facing or
+  modeled-stage behavior
+
+### Item 21 — Typed Error Hierarchy Contract
+
+- `file_group`: `src/ez_ax/models/errors.py`
+- `tests`: `tests/unit/test_error_hierarchy.py`
+- `first_prd`: `docs/product/prd-openclaw-computer-use-runtime.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_error_hierarchy.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean
+  - no exact unenforced typed-error clause remains without guesswork
+- `next_if_clean`: Item 22
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in `src/ez_ax/models/errors.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface hardens released-scope typed orchestration error mapping only
+- it remains below `pageReadyObserved`
+- it does not widen browser-facing or modeled-stage behavior
+
+### Item 22 — Mission Anchor Mapping Contract
+
+- `file_group`: `src/ez_ax/missions/names.py`
+- `tests`: `tests/unit/test_mission_anchor_mapping.py`
+- `first_prd`: `docs/product/prd-runtime-missions.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_mission_anchor_mapping.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean
+  - no exact unenforced mission-anchor clause remains without guesswork
+- `next_if_clean`: final stop
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in `src/ez_ax/missions/names.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface hardens known mission-name and released-anchor mapping used below
+  `pageReadyObserved`
+- it remains below the released ceiling
+- it preserves orchestration determinism without widening workflow release
 
 ## Final Queue Stop
 

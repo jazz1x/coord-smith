@@ -64,6 +64,9 @@ Continuous-loop bias:
   queue item, resume-search file group, or heuristic candidate
 - do not stop just because one bounded task closed cleanly
 - `FINAL_STOP` is a last-resort exhaustion result, not the default closeout
+- doc-only edits whose only purpose is to align or restate `FINAL_STOP` are not
+  valid continuation slices unless the user explicitly requested stop-state
+  cleanup
 
 ## Exhaustion and Stop Protocol
 
