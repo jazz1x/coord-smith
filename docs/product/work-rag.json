@@ -67,7 +67,10 @@
             "src/ez_ax/graph/modeled_mcp_cli_entrypoint.py",
             "tests/unit/test_modeled_mcp_cli_entrypoint.py",
             "src/ez_ax/graph/modeled_mcp_entrypoint.py",
-            "tests/unit/test_modeled_mcp_entrypoint_argv_env.py"
+            "tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
+            "src/ez_ax/rag/autoloop_prompt_driver.py",
+            "scripts/print-autoloop-command.py",
+            "tests/unit/test_autoloop_prompt_driver.py"
         ]
     },
     "compression_policy": {
@@ -84,6 +87,24 @@
         ]
     },
     "history": [
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Added a repeatable autoloop prompt driver so repeated operator commands can keep momentum without hand-editing prompts: the new planner emits implementation mode for concrete slices and continuation-seeding mode whenever `work-rag` records `FINAL_STOP`.",
+            "evidence": [
+                "src/ez_ax/rag/autoloop_prompt_driver.py",
+                "scripts/print-autoloop-command.py",
+                "tests/unit/test_autoloop_prompt_driver.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_autoloop_prompt_driver.py tests/unit/test_bootstrap_assets.py",
+                ".venv/bin/python -m mypy src/ez_ax/rag/autoloop_prompt_driver.py tests/unit/test_autoloop_prompt_driver.py",
+                ".venv/bin/python -m ruff check src/ez_ax/rag/autoloop_prompt_driver.py tests/unit/test_autoloop_prompt_driver.py scripts/print-autoloop-command.py",
+                "scripts/print-autoloop-command.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-25T00:10:00+09:00"
+        },
         {
             "kind": "checkpoint",
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
