@@ -32,7 +32,7 @@
         "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
         "anchor": "pythonRuntimeBootstrapCreated",
         "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-        "next_action": "FINAL_STOP — the active machine-readable execution contract at `docs/llm/low-attention-execution-contract.json` and coverage ledger at `docs/llm/low-attention-coverage-ledger.json` now let the autoloop derive phase/milestone/anchor rules plus pending-family status from canonical structured state alone, and no remaining exact in-bounds slice below `pageReadyObserved` is named by the queue, heuristic ladder, coverage-ledger contract, or stop-state consistency gate.",
+        "next_action": "FINAL_STOP — the active machine-readable execution contract at `docs/llm/low-attention-execution-contract.json`, coverage ledger at `docs/llm/low-attention-coverage-ledger.json`, and executable runner at `scripts/run-low-attention-loop.sh` now let the autoloop derive and execute phase/milestone/anchor rules from canonical structured state alone, and no remaining exact in-bounds slice below `pageReadyObserved` is named by the queue, heuristic ladder, coverage-ledger contract, or stop-state consistency gate.",
         "approved_scope_ceiling": "pageReadyObserved",
         "references": [
             "AGENTS.md",
@@ -75,7 +75,10 @@
             "tests/unit/test_slice_templates.py",
             "docs/llm/low-attention-slice-templates.json",
             "docs/llm/low-attention-coverage-ledger.json",
-            "docs/llm/low-attention-execution-contract.json"
+            "docs/llm/low-attention-execution-contract.json",
+            "scripts/run-low-attention-loop.sh",
+            "src/ez_ax/rag/autoloop_runner.py",
+            "tests/unit/test_autoloop_runner.py"
         ]
     },
     "compression_policy": {
@@ -92,6 +95,20 @@
         ]
     },
     "history": [
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Added an executable low-attention loop runner that repeatedly invokes `codex exec` from the canonical prompt plan, stores per-cycle last messages, and stops only on final-stop review or repeated no-progress signatures.",
+            "evidence": [
+                "scripts/run-low-attention-loop.sh",
+                "src/ez_ax/rag/autoloop_runner.py",
+                "tests/unit/test_autoloop_runner.py",
+                "tests/unit/test_bootstrap_assets.py"
+            ],
+            "recorded_at": "2026-03-25T02:05:00+09:00"
+        },
         {
             "kind": "checkpoint",
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",

@@ -22,6 +22,7 @@ REQUIRED_BOOTSTRAP_ASSETS: tuple[str, ...] = (
     "docs/codex-global-skills/ez-ax-rag-compactor/SKILL.md",
     "docs/codex-global-skills/ez-ax-released-scope-guard/SKILL.md",
     "scripts/install-codex-global-skills.sh",
+    "scripts/run-low-attention-loop.sh",
     "docs/product/prd-e2e-orchestration.md",
     "docs/product/prd-python-langgraph-runtime.md",
     "docs/product/prd-python-runtime-reset.md",
