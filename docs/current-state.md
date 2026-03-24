@@ -95,17 +95,11 @@ pass across the released-scope file groups listed in `docs/execution-model.md`
 and then one full documented heuristic-catalog sweep before accepting final
 stop.
 
-At the current state snapshot, the documented queue has already closed through
-Item 25, but one exact PRD-backed in-bounds surface was omitted from the
-documented continuation path.
+At the current state snapshot, the documented queue has resolved through Item 26.
 
-The next continuation step is therefore:
-
-- reopen the queue with Item 26 for
-  `src/ez_ax/config/mcp_stdio.py` using
-  `tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`
-- treat this as an in-bounds continuation-seeding slice for the explicit MCP
-  client acquisition contract feeding released-graph injection
+The documented next continuation step is therefore `FINAL_STOP` unless a new
+exact in-bounds queue extension or PRD-backed gap is introduced by the next
+continuation gate cycle.
 
 ## Consultation Context
 
