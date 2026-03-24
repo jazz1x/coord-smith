@@ -99,16 +99,16 @@ pass across the released-scope file groups listed in `docs/execution-model.md`
 and then one full documented heuristic-catalog sweep before accepting final
 stop.
 
-At the current state snapshot, the documented queue has resolved through Item 27
-and the docs-sufficiency maintenance slice has also closed.
+At the current state snapshot, the prior stop review has reopened one exact
+docs-sufficiency/operator-entrypoint slice.
 
-The transport-boundary family is now covered in the machine-readable coverage
-ledger, so the documented next continuation step is `FINAL_STOP` review rather
-than a reopened queue slice.
+The documented next continuation step is therefore no longer `FINAL_STOP`
+review but one concrete queue item that aligns the generated autoloop prompt
+surface with the newly declared skill-first operator entrypoint.
 
-That review must still read the machine-readable execution contract and
-coverage ledger first, then honor `FINAL_STOP` only if no exact in-bounds
-slice is reopened by canonical sources.
+That slice must update the prompt driver and its focused tests so canonical
+launch prompts use `$ez-ax-executable-autoloop` instead of the older
+`$ez-ax-low-attention-autoloop` skill name.
 
 ## Active Anchor Coverage Ledger
 
@@ -125,7 +125,7 @@ Canonical machine-readable ledger:
 | released evidence / reporting / comparability family | covered | evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices | none |
 | typed mission / error / memory helper family | covered | mission mapping, typed errors, and RAG path helper surfaces already closed as queue slices | none |
 | modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |
-| docs-sufficiency family for lower-capacity continuation | covered | machine-readable coverage-ledger state now lives in `docs/llm/low-attention-coverage-ledger.json`, so lower-capacity runs can pick the earliest pending family and matching template without interpreting freeform `next_action` text | none |
+| docs-sufficiency family for lower-capacity continuation | pending | the repo now declares a skill-first executable autoloop entrypoint, but the generated prompt surface still names the older core-loop skill instead of the operator-facing entry skill | update `src/ez_ax/rag/autoloop_prompt_driver.py` and `tests/unit/test_autoloop_prompt_driver.py` so canonical prompts use `$ez-ax-executable-autoloop` |
 
 ## Consultation Context
 

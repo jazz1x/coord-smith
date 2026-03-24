@@ -878,3 +878,31 @@ Why in-bounds:
 - it remains below `pageReadyObserved`
 - it demotes MCP to an optional modeled/reference transport rather than
   architecture truth
+
+### Item 28 — Skill-First AutoLoop Prompt Surface
+
+- `file_group`: `src/ez_ax/rag/autoloop_prompt_driver.py`
+- `tests`: `tests/unit/test_autoloop_prompt_driver.py`
+- `first_prd`: `docs/execution-model.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_autoloop_prompt_driver.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean
+  - no exact unenforced docs-sufficiency/operator-entrypoint clause remains
+    without guesswork for the generated autoloop prompt surface
+  - canonical generated launch prompts use `$ez-ax-executable-autoloop`
+    instead of `$ez-ax-low-attention-autoloop`
+- `next_if_clean`: rerun the active coverage-ledger check and reopen the next
+  exact in-bounds follow-on slice only if one still exists
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in
+    `src/ez_ax/rag/autoloop_prompt_driver.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface hardens the canonical operator-facing autoloop entry contract
+  without widening released behavior
+- it remains below `pageReadyObserved`
+- it keeps the skill-first execution surface aligned with the repo's
+  structured continuation assets

@@ -84,6 +84,7 @@ def test_build_autoloop_prompt_plan_uses_implementation_mode_for_concrete_slice(
     assert plan.mode == "implementation"
     assert "execute that slice" in plan.prompt
     assert "Current next_action" in plan.prompt
+    assert "$ez-ax-executable-autoloop" in plan.prompt
 
 
 def test_build_autoloop_prompt_plan_expands_matched_slice_template(
@@ -117,6 +118,7 @@ def test_build_autoloop_prompt_plan_expands_matched_slice_template(
     assert "Primary file group: src/ez_ax/validation/bootstrap.py" in plan.prompt
     assert "machine-readable source of truth" in plan.prompt
     assert "phase `Phase`" in plan.prompt
+    assert "$ez-ax-executable-autoloop" in plan.prompt
 
 
 def test_build_autoloop_prompt_plan_prefers_pending_coverage_ledger_over_final_stop(
@@ -142,6 +144,7 @@ def test_build_autoloop_prompt_plan_prefers_pending_coverage_ledger_over_final_s
     assert plan.mode == "implementation"
     assert "low-attention-coverage-ledger.json" in plan.prompt
     assert "docs_sufficiency_coverage_ledger_contract" in plan.prompt
+    assert "$ez-ax-executable-autoloop" in plan.prompt
 
 
 def test_build_autoloop_prompt_plan_uses_final_stop_review_when_no_pending_family(
@@ -164,3 +167,4 @@ def test_build_autoloop_prompt_plan_uses_final_stop_review_when_no_pending_famil
     assert "coverage ledger has no pending family" in plan.prompt
     assert "stop-state consistency gate" in plan.prompt
     assert "stop-a; stop-b" in plan.prompt
+    assert "$ez-ax-executable-autoloop" in plan.prompt

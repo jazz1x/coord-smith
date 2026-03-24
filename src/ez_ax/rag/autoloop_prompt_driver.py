@@ -44,7 +44,7 @@ def _implementation_prompt(*, next_action: str) -> str:
     template = match_slice_template(next_action=next_action)
     if template is not None:
         return (
-            "Use $ez-ax-low-attention-autoloop. Read AGENTS.md, docs/prd.md, "
+            "Use $ez-ax-executable-autoloop. Read AGENTS.md, docs/prd.md, "
             "docs/execution-model.md, docs/current-state.md, "
             "docs/product/work-rag.json, docs/product/rag.json, "
             "docs/llm/repo-autonomous-loop-adapter.yaml, and "
@@ -62,7 +62,7 @@ def _implementation_prompt(*, next_action: str) -> str:
             f"Current next_action: {next_action}"
         )
     return (
-        "Use $ez-ax-low-attention-autoloop. Read AGENTS.md, docs/prd.md, "
+        "Use $ez-ax-executable-autoloop. Read AGENTS.md, docs/prd.md, "
         "docs/execution-model.md, docs/current-state.md, "
         "docs/product/work-rag.json, docs/product/rag.json, and "
         "docs/llm/repo-autonomous-loop-adapter.yaml in order. Quote the exact "
@@ -89,7 +89,7 @@ def _template_prompt(
         raise ValueError(f"unknown slice template id: {template_id}")
     resolved_family = family or template.family
     return (
-        "Use $ez-ax-low-attention-autoloop. Read canonical inputs in this "
+        "Use $ez-ax-executable-autoloop. Read canonical inputs in this "
         f"exact order: {_canonical_input_summary(canonical_inputs)}. Restate "
         f"phase `{phase}`, milestone `{milestone}`, anchor `{anchor}`, and "
         f"invariant `{invariant}` before execution. Quote the "
@@ -117,7 +117,7 @@ def _continuation_seed_prompt(
     invariant: str,
 ) -> str:
     return (
-        "Use $ez-ax-low-attention-autoloop. Read canonical inputs in this "
+        "Use $ez-ax-executable-autoloop. Read canonical inputs in this "
         f"exact order: {_canonical_input_summary(canonical_inputs)}. Restate "
         f"phase `{phase}`, milestone `{milestone}`, anchor `{anchor}`, and "
         f"invariant `{invariant}` before execution. The current cycle is in "
@@ -152,7 +152,7 @@ def _final_stop_review_prompt(
     final_stop_requirements: tuple[str, ...],
 ) -> str:
     return (
-        "Use $ez-ax-low-attention-autoloop. Read canonical inputs in this "
+        "Use $ez-ax-executable-autoloop. Read canonical inputs in this "
         f"exact order: {_canonical_input_summary(canonical_inputs)}. Restate "
         f"phase `{phase}`, milestone `{milestone}`, anchor `{anchor}`, and "
         f"invariant `{invariant}` before execution. Quote the "

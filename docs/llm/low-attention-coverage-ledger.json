@@ -48,9 +48,9 @@
     },
     {
       "family": "docs-sufficiency family for lower-capacity continuation",
-      "status": "covered",
-      "evidence_or_reason": "machine-readable coverage-ledger state now exists as a canonical asset, and the autoloop prompt driver prefers it over freeform stop wording when selecting the next deterministic slice",
-      "next_slice_hint": "none",
+      "status": "pending",
+      "evidence_or_reason": "the repo now declares a skill-first executable autoloop entrypoint, but the generated prompt surface still names the older core-loop skill instead of the operator-facing entry skill",
+      "next_slice_hint": "update src/ez_ax/rag/autoloop_prompt_driver.py and tests/unit/test_autoloop_prompt_driver.py so canonical prompts use $ez-ax-executable-autoloop",
       "template_id": ""
     }
   ]
