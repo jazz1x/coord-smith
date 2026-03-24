@@ -43,8 +43,20 @@ execution_rules:
     - docs-sufficiency surfaces needed to name the next one-commit slice
   milestone_done_when:
     - every required anchor family is either covered by queue history or explicitly ruled out by an exact PRD clause
+    - every required anchor family has explicit ledger status covered or excluded
     - queue, resume-search, heuristic sweep, and continuation seeding are all exhausted honestly
     - canonical sources are sufficient for a lower-capacity agent to name the next slice or true exhaustion
+  coverage_ledger:
+    statuses:
+      - covered
+      - excluded
+      - pending
+    required_fields:
+      - family
+      - status
+      - evidence_or_reason
+      - next_slice_hint
+    final_stop_blocker: any pending family blocks FINAL_STOP
   post_commit_continue_rule:
     - after each honest task close, rewrite work-rag current.next_action to the next exact documented slice
     - continue in the same session when the next slice can still be named honestly from the queue, resume-search order, heuristic catalog, or continuation-seeding output
@@ -74,6 +86,7 @@ execution_rules:
       - name one first_prd before implementation
       - name one first_validation before implementation
       - update current-state, work-rag, and queue-bearing docs in the same task close
+      - update the active coverage ledger in the same task close
   stop_state_consistency_gate:
     required_sources:
       - docs/current-state.md

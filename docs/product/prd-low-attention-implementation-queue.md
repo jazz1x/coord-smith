@@ -70,6 +70,8 @@ Queue interpretation rule:
 - queue exhaustion does not prove milestone completion by itself
 - if one required anchor family still lacks a deterministic slice-generation
   path, continuation seeding must run before final stop
+- if one required anchor family is still `pending` in the active coverage
+  ledger, final stop is invalid
 
 ## Queue Execution Rule
 
@@ -806,6 +808,13 @@ Seeding-family checklist:
 - typed mission / error / memory helper family
 - modeled helper entrypoint family that still stops at `pageReadyObserved`
 - docs-sufficiency family for lower-capacity continuation
+
+Coverage-ledger requirement:
+
+- the active continuation state must keep one explicit status for each family:
+  `covered`, `excluded`, or `pending`
+- continuation seeding must target the earliest `pending` family first
+- queue exhaustion cannot overrule a `pending` family status
 
 Stop-state consistency gate:
 

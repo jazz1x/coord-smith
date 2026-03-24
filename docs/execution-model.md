@@ -70,6 +70,35 @@ Completion expectation:
   be interpreted as mechanisms for covering these families
 - true stop is invalid while one family still lacks a deterministic search rule
   or deterministic next-slice naming path
+- true stop is also invalid while a family lacks an explicit coverage status:
+  `covered`, `excluded`, or `pending`
+
+### Coverage Ledger Rule
+
+The active anchor must maintain one explicit coverage ledger in canonical
+sources.
+
+Required ledger fields per family:
+
+- `family`
+- `status`
+- `evidence_or_reason`
+- `next_slice_hint`
+
+Allowed statuses:
+
+- `covered`
+- `excluded`
+- `pending`
+
+Ledger rule:
+
+- `covered` means one queue, heuristic, or seeded slice closed honestly with
+  attributable evidence
+- `excluded` means one exact PRD clause rules out further work for that family
+- `pending` means the family still requires one deterministic next slice
+- lower-capacity agents must prefer the earliest `pending` family over generic
+  exhaustion wording
 
 ## Milestone Completion Table
 
@@ -83,6 +112,8 @@ Done when all are true:
 - every required anchor surface family below `pageReadyObserved` has either:
   - one completed queue slice history, or
   - one explicit PRD-backed exclusion from further work
+- every required anchor surface family also has an explicit coverage-ledger
+  status of `covered` or `excluded`
 - the queue, bounded resume-search, heuristic catalog, and continuation-seeding
   pass are all exhausted honestly for the current cycle
 - canonical sources are sufficient for a lower-capacity agent to name the next
@@ -93,6 +124,7 @@ Done when all are true:
 Not done when any are true:
 
 - a surface family is still described only implicitly
+- a surface family is still marked `pending`
 - the next slice can be inferred from phase / milestone / anchor context but is
   not yet documented
 - stop depends on remembering prior operator intent rather than on canonical
@@ -184,6 +216,9 @@ Heuristic-family rule:
   command before implementation begins
 - if a family yields one valid slice, the cycle closes that slice before
   searching further
+- if no family yields a slice but the coverage ledger still contains one
+  `pending` family, continuation seeding must target that `pending` family
+  rather than accepting stop
 
 ## Task Generation Rules
 
@@ -544,6 +579,8 @@ Seeding output contract:
   implementation or validation slice it is making possible next
 - after seeding, `docs/current-state.md`, `docs/product/work-rag.json`, and any
   queue-bearing source must be updated in the same task close
+- after seeding, the active coverage ledger must also be updated in the same
+  task close
 
 Seeding-stop guard:
 
@@ -551,6 +588,8 @@ Seeding-stop guard:
   current exhaustion cycle
 - `FINAL_STOP` is invalid if continuation seeding can still name one exact
   one-commit slice without guesswork
+- `FINAL_STOP` is invalid if any required family remains `pending` in the
+  active coverage ledger
 
 ## Stop-State Consistency Gate
 

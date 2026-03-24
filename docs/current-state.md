@@ -111,6 +111,18 @@ by preferring:
 Only if that continuation-seeding pass also exhausts honestly may the next
 cycle accept `FINAL_STOP`.
 
+## Active Anchor Coverage Ledger
+
+| Family | Status | Evidence Or Reason | Next Slice Hint |
+| --- | --- | --- | --- |
+| released graph wiring and call-sites | covered | released graph call-site and run-root surfaces already have queue and resume-search coverage evidence | none |
+| released entrypoint / CLI / input family | covered | released entrypoint, CLI shim, and released input resolution already closed as queue slices | none |
+| released adapter / MCP acquisition family | covered | adapter, MCP stdio config, settings, and related heuristic surfaces already have focused validation and queue history | none |
+| released evidence / reporting / comparability family | covered | evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices | none |
+| typed mission / error / memory helper family | covered | mission mapping, typed errors, and RAG path helper surfaces already closed as queue slices | none |
+| modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |
+| docs-sufficiency family for lower-capacity continuation | pending | the repo now defines anchor, milestone, heuristic, and seeding tables, but it still lacks one explicit reusable rule for maintaining the coverage ledger itself in the bootstrap/docs-sufficiency path | seed one docs-sufficiency slice that makes future coverage-ledger upkeep mechanically nameable |
+
 ## Consultation Context
 
 When asking another agent for help, the useful question is not “what feature
