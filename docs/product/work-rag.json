@@ -32,7 +32,7 @@
         "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
         "anchor": "pythonRuntimeBootstrapCreated",
         "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-        "next_action": "Continue the queue-extension heuristic pass (candidate 3) below `pageReadyObserved`: run `.venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py` for `src/ez_ax/config/settings.py`, then focused mypy and ruff for `src/ez_ax/config/settings.py` before scanning `docs/product/prd-python-runtime-layout.md` for one exact runtime settings clause gap.",
+        "next_action": "Continue the queue-extension heuristic pass (candidate 4) below `pageReadyObserved`: run `.venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py`, then focused mypy and ruff for `tests/unit/test_langgraph_released_assembly.py` before scanning `docs/product/prd-python-langgraph-runtime.md` for one exact released assembly clause gap.",
         "approved_scope_ceiling": "pageReadyObserved",
         "references": [
             "AGENTS.md",
@@ -87,6 +87,23 @@
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Heuristic pass candidate 3 (runtime settings) validated cleanly: focused pytest, mypy, and ruff passed for `config/settings`, and the runtime-layout PRD revealed no exact runtime settings clause gap, so the heuristic sweep advances to released assembly tests.",
+            "evidence": [
+                "docs/product/prd-python-runtime-layout.md",
+                "src/ez_ax/config/settings.py",
+                "tests/unit/test_runtime_settings.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py",
+                ".venv/bin/python -m mypy src/ez_ax/config/settings.py",
+                ".venv/bin/python -m ruff check src/ez_ax/config/settings.py tests/unit/test_runtime_settings.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-24T22:50:44+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
             "summary": "Heuristic pass candidate 2 (OpenClaw MCP settings) validated cleanly: focused pytest, mypy, and ruff passed for `openclaw/mcp_settings`, and the OpenClaw runtime PRD revealed no exact MCP settings clause gap, so the heuristic sweep advances to runtime settings.",
             "evidence": [
                 "docs/product/prd-openclaw-computer-use-runtime.md",
@@ -100,21 +117,16 @@
             "recorded_at": "2026-03-24T22:49:44+09:00"
         },
         {
-            "kind": "checkpoint",
+            "kind": "milestone_summary",
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Heuristic pass candidate 1 (MCP stdio config) validated cleanly: focused pytest, mypy, and ruff passed for `config/mcp_stdio`, and the MCP client acquisition PRD revealed no exact stdio config clause gap, so the heuristic sweep advances to MCP settings.",
+            "summary": "Compacted older same-scope checkpoints covering earlier heuristic steps so only the newest raw checkpoints remain for continuation.",
             "evidence": [
-                "docs/product/prd-python-mcp-client-acquisition.md",
-                "src/ez_ax/config/mcp_stdio.py",
-                "tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m mypy src/ez_ax/config/mcp_stdio.py",
-                ".venv/bin/python -m ruff check src/ez_ax/config/mcp_stdio.py tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                "docs/product/work-rag.json"
+                "docs/product/work-rag.json",
+                "docs/product/prd-python-runtime-layout.md"
             ],
-            "recorded_at": "2026-03-24T22:48:55+09:00"
+            "recorded_at": "2026-03-24T22:50:44+09:00"
         },
         {
             "kind": "milestone_summary",
