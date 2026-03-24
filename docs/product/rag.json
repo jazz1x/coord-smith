@@ -64,6 +64,31 @@
   },
   "lessons": [
     {
+      "id": "lesson-boundary-confusion-005",
+      "category": "boundary_confusion",
+      "severity": "high",
+      "summary": "Do not let one modeled transport option become the canonical truth of the OpenClaw boundary.",
+      "lesson": "When the PRD says `ez-ax` owns an injected OpenClaw adapter boundary, transport-specific scaffolding such as MCP stdio must remain an optional modeled/reference path unless the product PRD explicitly elevates it. If current-state, queue wording, or coverage-ledger names collapse the boundary into `OpenClaw=MCP`, lower-capacity loops can falsely conclude that transport-specific scaffolding exhausts the whole adapter family and emit `FINAL_STOP` too early.",
+      "trigger": "The repo had validated MCP-backed adapter and stdio acquisition scaffolding, but the user's actual OpenClaw setup did not imply MCP; canonical docs therefore overstated MCP as architecture truth and blocked a meaningful next slice.",
+      "evidence": [
+        "docs/prd.md",
+        "docs/current-state.md",
+        "docs/product/prd-openclaw-computer-use-runtime.md",
+        "docs/product/prd-python-mcp-client-acquisition.md",
+        "docs/product/prd-low-attention-implementation-queue.md",
+        "docs/product/work-rag.json"
+      ],
+      "promoted_from_phase": "Phase R3 — Fresh Python Bootstrap",
+      "recorded_at": "2026-03-25T02:25:00+09:00",
+      "tags": [
+        "active-implementation",
+        "openclaw-boundary",
+        "transport-agnostic",
+        "mcp-reference-only",
+        "final-stop-false-positive"
+      ]
+    },
+    {
       "id": "lesson-reusable-heuristic-008",
       "category": "reusable_heuristic",
       "severity": "high",

@@ -45,7 +45,8 @@ The repository already has the following foundations in place:
 - release-ceiling stop proof contract
 - `evidence_refs` schema and released minimums
 - typed error hierarchy
-- MCP-backed adapter direction and acquisition contract
+- transport-agnostic OpenClaw adapter boundary contract
+- optional MCP-backed adapter reference contract
 - Python-first runtime path
 - two-tier memory operation with `work-rag.json` and `rag.json`
 - low-attention autonomous loop rules
@@ -57,7 +58,8 @@ The repository already has the following foundations in place:
 Implemented and hardened for the current released ceiling:
 
 - released-scope graph and entrypoint wiring up to `pageReadyObserved`
-- released-scope OpenClaw adapter, MCP acquisition, and response validation
+- released-scope OpenClaw adapter boundary and response validation
+- optional MCP-backed acquisition scaffold
 - released-scope evidence envelope, checkpoint comparability, and reporting
 - current-memory and durable-lesson RAG helpers
 - typed error hierarchy and mission anchor mapping needed below the released
@@ -65,7 +67,7 @@ Implemented and hardened for the current released ceiling:
 
 Already present but still modeled-only or released-scope-adjacent:
 
-- MCP-backed modeled helper entrypoints that still stop at
+- modeled helper entrypoints, including MCP-backed reference helpers, that still stop at
   `pageReadyObserved`
 - modeled mission and node definitions above the current released ceiling
 - post-ready workflow stages such as `sync_observation`, `armed_state_entry`,
@@ -117,7 +119,7 @@ Canonical machine-readable ledger:
 | --- | --- | --- | --- |
 | released graph wiring and call-sites | covered | released graph call-site and run-root surfaces already have queue and resume-search coverage evidence | none |
 | released entrypoint / CLI / input family | covered | released entrypoint, CLI shim, and released input resolution already closed as queue slices | none |
-| released adapter / MCP acquisition family | covered | adapter, MCP stdio config, settings, and related heuristic surfaces already have focused validation and queue history | none |
+| released OpenClaw transport-boundary family | pending | the core PRD now treats OpenClaw as transport-agnostic while the current queue/history is still phrased mainly around MCP-backed scaffolding, so one follow-on slice should realign the active adapter contract surface around the injected boundary first and treat MCP as optional reference transport only | reopen queue with Item 27 transport-neutral OpenClaw adapter contract |
 | released evidence / reporting / comparability family | covered | evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices | none |
 | typed mission / error / memory helper family | covered | mission mapping, typed errors, and RAG path helper surfaces already closed as queue slices | none |
 | modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |

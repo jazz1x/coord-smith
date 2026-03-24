@@ -803,7 +803,7 @@ Seeding-family checklist:
 
 - released graph / call-site family
 - released entrypoint / CLI / input family
-- released adapter / MCP acquisition family
+- released OpenClaw transport-boundary family
 - released evidence / reporting / comparability family
 - typed mission / error / memory helper family
 - modeled helper entrypoint family that still stops at `pageReadyObserved`
@@ -850,3 +850,31 @@ Final-stop rule:
 - reopening autonomous implementation requires either:
   - one new explicit in-bounds contract gap, or
   - one explicit PRD update that extends this implementation queue
+
+### Item 27 — Transport-Neutral OpenClaw Adapter Contract
+
+- `file_group`: `src/ez_ax/adapters/openclaw/client.py`
+- `tests`: `tests/unit/test_openclaw_adapter_contract.py`
+- `first_prd`: `docs/product/prd-openclaw-computer-use-runtime.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_openclaw_adapter_contract.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean
+  - no exact unenforced injected-boundary clause remains without guesswork for
+    the transport-neutral OpenClaw adapter contract
+  - MCP-specific phrasing is not required to describe the canonical OpenClaw
+    execution boundary below `pageReadyObserved`
+- `next_if_clean`: rerun the active coverage-ledger check and reopen the next
+  exact in-bounds follow-on slice only if one still exists
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in
+    `src/ez_ax/adapters/openclaw/client.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface hardens the canonical injected OpenClaw boundary without
+  widening browser-facing authority
+- it remains below `pageReadyObserved`
+- it demotes MCP to an optional modeled/reference transport rather than
+  architecture truth

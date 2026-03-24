@@ -57,7 +57,7 @@ Required surface families:
 
 - released graph wiring and call-sites
 - released input-resolution and CLI entry surfaces
-- released MCP/OpenClaw adapter and response validation surfaces
+- released OpenClaw transport-boundary and response validation surfaces
 - released evidence, reporting, and comparability surfaces
 - typed mission/error/memory helpers needed for low-attention continuation
 - modeled helper entrypoints that still stop at `pageReadyObserved`

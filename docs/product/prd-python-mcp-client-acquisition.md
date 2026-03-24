@@ -2,11 +2,11 @@
 
 ## Purpose
 
-This PRD defines the **explicit** (code-enforceable) contract required for
-`ez-ax` to acquire a concrete Python MCP client/session handle that can be
-injected into the modeled MCP-backed OpenClaw adapter.
+This PRD defines the **explicit** (code-enforceable) contract required only if
+`ez-ax` chooses the optional MCP-backed boundary for OpenClaw invocation and
+needs to acquire a concrete Python MCP client/session handle.
 
-It exists to prevent transport guesswork.
+It exists to prevent transport guesswork inside that optional boundary.
 
 Scope:
 
@@ -40,6 +40,8 @@ Interpretation rule:
 - continuing “scaffold hardening” below `pageReadyObserved` is still allowed so
   long as it does not introduce a concrete MCP transport constructor and does
   not implicitly select a Python MCP library or its connection/auth inputs
+- if the active OpenClaw boundary is not MCP-backed, this PRD is reference-only
+  and must not be treated as the canonical OpenClaw contract
 
 ## Contract (Must Be Explicit Before Implementation)
 

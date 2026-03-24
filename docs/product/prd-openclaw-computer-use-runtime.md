@@ -394,42 +394,43 @@ Rules:
 - `OpenClaw` remains the only browser-facing execution actor
 - `ez-ax` may contain an `OpenClawAdapter` protocol and concrete adapter
   implementation
-- the concrete adapter may invoke OpenClaw through an approved boundary such
-  as:
-  - MCP-backed invocation
-  - in-engine injected implementation
+- the concrete adapter may invoke OpenClaw through an approved injected
+  boundary such as:
+  - an MCP-backed invocation
+  - an in-engine injected implementation
   - another explicitly approved boundary
 - no concrete boundary may be invented outside this contract
 
-##### Approved Invocation Mode
+##### Approved Boundary Shape
 
-The approved invocation mode for released-scope implementation is:
+The approved released-scope implementation shape is:
 
-- MCP-backed OpenClaw adapter
+- injected OpenClaw adapter boundary
 
 Interpretation:
 
-- `ez-ax` constructs a concrete `OpenClawAdapter`
-- that adapter invokes OpenClaw through an MCP-facing boundary
+- `ez-ax` constructs or receives a concrete `OpenClawAdapter`
 - browser-facing authority remains with OpenClaw, not with `ez-ax`
+- the released path does not require MCP specifically; MCP is one modeled and
+  approved boundary option, not the canonical truth of OpenClaw itself
 
 Non-approved alternatives for released-scope implementation:
 
-- direct HTTP client
-- direct RPC client
 - direct browser automation inside `ez-ax`
+- any transport guessed without an explicit contract for its inputs and
+  lifecycle
 
 These may exist only as modeled examples unless explicitly approved later.
 
 ##### Adapter Construction Inputs
 
-A concrete MCP-backed `OpenClawAdapter` must be constructible from explicit
-typed inputs.
+A concrete OpenClaw adapter boundary must be constructible from explicit typed
+inputs for its chosen invocation mode.
 
 Required construction inputs:
 
-- `mcp_server_name`: the MCP server identity that exposes OpenClaw execution
-- `tool_name`: the MCP tool name used for released-scope execution
+- boundary-specific transport identity inputs (for example `mcp_server_name`
+  and `tool_name` for an MCP-backed boundary)
 - `default_timeout_seconds`: request timeout for one released-scope invocation
 - `retry_policy`: typed retry settings for transient invocation failures
 
@@ -442,8 +443,8 @@ Optional construction inputs:
 
 Rules:
 
-- construction must fail fast if required MCP execution inputs are absent
-- the adapter must not guess server or tool names
+- construction must fail fast if required boundary execution inputs are absent
+- the adapter must not guess boundary identity inputs
 - the adapter must not silently fall back to another invocation mode
 
 ##### Configuration Source And Precedence
@@ -459,8 +460,20 @@ Rules:
 - released-scope wiring must not depend on undocumented implicit defaults
 - environment-variable use is allowed only if the runtime PRD or validation
   contract explicitly approves the variable names
-- if a required MCP invocation setting is missing, adapter construction fails
-  immediately
+- if a required invocation setting for the chosen boundary is missing, adapter
+  construction fails immediately
+
+##### MCP Boundary Status
+
+MCP remains an approved modeled boundary option for released-scope scaffold
+hardening, but it is not required to describe OpenClaw itself.
+
+Interpretation:
+
+- MCP-backed adapter code may exist and be validated below `pageReadyObserved`
+- the canonical OpenClaw boundary remains transport-agnostic at the PRD level
+- future work may replace MCP-specific assumptions with another approved
+  injected boundary without changing the core OpenClaw truth model
 
 ##### Authentication Responsibility
 

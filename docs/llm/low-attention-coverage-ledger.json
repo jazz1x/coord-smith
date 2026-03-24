@@ -19,10 +19,10 @@
       "template_id": ""
     },
     {
-      "family": "released adapter / MCP acquisition family",
-      "status": "covered",
-      "evidence_or_reason": "adapter, MCP stdio config, settings, and related heuristic surfaces already have focused validation and queue history",
-      "next_slice_hint": "none",
+      "family": "released OpenClaw transport-boundary family",
+      "status": "pending",
+      "evidence_or_reason": "the active PRD truth is transport-agnostic while the queue/history remain MCP-centered, so the next slice should realign the injected OpenClaw boundary contract and demote MCP to optional reference transport",
+      "next_slice_hint": "reopen queue with Item 27 for src/ez_ax/adapters/openclaw/client.py and tests/unit/test_openclaw_adapter_contract.py",
       "template_id": ""
     },
     {
