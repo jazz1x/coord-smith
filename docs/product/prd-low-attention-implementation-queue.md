@@ -53,6 +53,24 @@ Disallowed surfaces:
 - broad repo-wide cleanup
 - arbitrary third-tier search expansion not explicitly documented here
 
+## Anchor And Milestone Mapping
+
+This queue is not autonomous authority by itself; it is the concrete execution
+projection for the active phase / milestone / anchor.
+
+Active mapping:
+
+- `phase`: `Phase R3 — Fresh Python Bootstrap`
+- `milestone`: `Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract`
+- `anchor`: `pythonRuntimeBootstrapCreated`
+
+Queue interpretation rule:
+
+- queue items cover only one execution family at a time
+- queue exhaustion does not prove milestone completion by itself
+- if one required anchor family still lacks a deterministic slice-generation
+  path, continuation seeding must run before final stop
+
 ## Queue Execution Rule
 
 For each queue item, the lower-capacity agent must:
@@ -778,6 +796,16 @@ Continuation-seeding pass:
 - if no seeded queue item can be named honestly, the pass must record that the
   active phase / milestone context, queue PRD, and helper families were
   checked and yielded no new exact in-bounds slice
+
+Seeding-family checklist:
+
+- released graph / call-site family
+- released entrypoint / CLI / input family
+- released adapter / MCP acquisition family
+- released evidence / reporting / comparability family
+- typed mission / error / memory helper family
+- modeled helper entrypoint family that still stops at `pageReadyObserved`
+- docs-sufficiency family for lower-capacity continuation
 
 Stop-state consistency gate:
 

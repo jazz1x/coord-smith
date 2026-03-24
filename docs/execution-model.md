@@ -44,6 +44,60 @@ Preflight checks:
 
 If any preflight check fails, task execution must stop.
 
+## Anchor Contract Table
+
+The active phase must define which surface families are expected below the
+current anchor before true stop is admissible.
+
+### `Phase R3 — Fresh Python Bootstrap`
+
+### Anchor `pythonRuntimeBootstrapCreated`
+
+Required surface families:
+
+- released graph wiring and call-sites
+- released input-resolution and CLI entry surfaces
+- released MCP/OpenClaw adapter and response validation surfaces
+- released evidence, reporting, and comparability surfaces
+- typed mission/error/memory helpers needed for low-attention continuation
+- modeled helper entrypoints that still stop at `pageReadyObserved`
+- docs-sufficiency surfaces required so a lower-capacity agent can name the
+  next one-commit slice from canonical sources alone
+
+Completion expectation:
+
+- the active queue, heuristic catalog, and continuation-seeding pass must all
+  be interpreted as mechanisms for covering these families
+- true stop is invalid while one family still lacks a deterministic search rule
+  or deterministic next-slice naming path
+
+## Milestone Completion Table
+
+The active milestone is complete only when its continuation contract is
+exhausted, not merely when the current queue ends.
+
+### Milestone `Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract`
+
+Done when all are true:
+
+- every required anchor surface family below `pageReadyObserved` has either:
+  - one completed queue slice history, or
+  - one explicit PRD-backed exclusion from further work
+- the queue, bounded resume-search, heuristic catalog, and continuation-seeding
+  pass are all exhausted honestly for the current cycle
+- canonical sources are sufficient for a lower-capacity agent to name the next
+  slice or conclude exhaustion without operator interpretation
+- `work-rag.json` and `current-state.md` agree on whether continuation still
+  exists
+
+Not done when any are true:
+
+- a surface family is still described only implicitly
+- the next slice can be inferred from phase / milestone / anchor context but is
+  not yet documented
+- stop depends on remembering prior operator intent rather than on canonical
+  sources alone
+
 ## Low-Attention Loop
 
 Autonomous work is phase-driven and queue-backed rather than open-ended search.
@@ -104,6 +158,32 @@ Continue-priority ladder:
 5. one canonical queue-extension heuristic pass for the current exhaustion
    cycle, only after documented exhaustion
 6. one continuation-seeding slice for the active phase / milestone / anchor
+
+## Heuristic Family Table
+
+When the queue is clean for the current cycle, heuristic expansion must still
+follow the active anchor's family map.
+
+Family order for `pythonRuntimeBootstrapCreated`:
+
+1. same-file failing validation artifact
+2. same module's exact PRD-backed unenforced clause
+3. same directory support module imported by the just-closed slice
+4. same helper family variant:
+   `*_entrypoint.py`, `*_cli_entrypoint.py`, `*_argv.py`, `*_argv_env.py`
+5. same validation family:
+   colocated unit or contract tests already exercising the same path
+6. same-anchor config/settings/reporting/comparability helper
+7. docs-sufficiency source that prevents the next lower-capacity slice from
+   being named deterministically
+
+Heuristic-family rule:
+
+- the agent must climb this family ladder in order
+- each family must point to one exact PRD clause and one focused validation
+  command before implementation begins
+- if a family yields one valid slice, the cycle closes that slice before
+  searching further
 
 ## Task Generation Rules
 
@@ -422,6 +502,34 @@ Seed candidate priority:
 2. omitted same-anchor support modules already imported by active queue items
 3. docs-sufficiency gaps that prevent a lower-capacity agent from naming the
    next one-commit slice even though the phase remains active
+
+## Seeding Rule Table
+
+Continuation seeding must convert phase / milestone / anchor context into one
+deterministic next slice rather than a vague search instruction.
+
+Allowed seeded slice kinds:
+
+- omitted queue item for an existing source file
+- omitted queue item for an existing focused test surface
+- docs-sufficiency slice that introduces one explicit search rule, family map,
+  or completion rule needed by the next lower-capacity implementation slice
+
+Required seeded outputs:
+
+- one target path or file group
+- one governing PRD
+- one first validation command
+- one `done_when`
+- one `next_if_clean`
+- one `next_if_fail`
+
+Forbidden seeded outputs:
+
+- generic advice to "look for the next gap"
+- multiple competing next actions
+- broad roadmap rewrites with no immediate one-commit consumer
+- stop-state cleanup presented as continuation
 
 Seeding output contract:
 

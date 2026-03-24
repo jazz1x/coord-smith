@@ -92,6 +92,23 @@
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Reframed the autonomous contract around PRD-first continuation: execution-model and queue docs now define explicit anchor families, milestone completion criteria, heuristic family ladders, and continuation-seeding output rules so lower-capacity agents can derive the next slice from the active phase shape instead of depending on queue tail alone.",
+            "evidence": [
+                "docs/execution-model.md",
+                "docs/product/prd-low-attention-implementation-queue.md",
+                "docs/llm/repo-autonomous-loop-adapter.yaml",
+                "docs/product/work-rag.json",
+                ".venv/bin/python -m pytest -q tests/unit/test_bootstrap_assets.py tests/unit/test_autoloop_prompt_driver.py",
+                "python3 -m json.tool docs/product/work-rag.json",
+                "git diff --check"
+            ],
+            "recorded_at": "2026-03-25T00:50:00+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
             "summary": "Promoted continuation seeding into the canonical low-attention loop: queue exhaustion no longer defaults to `FINAL_STOP` while the active phase and milestone still authorize one more deterministic one-commit slice below `pageReadyObserved`.",
             "evidence": [
                 "docs/execution-model.md",

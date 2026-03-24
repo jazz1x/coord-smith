@@ -28,8 +28,23 @@ execution_rules:
   continuous_multi_commit_looping: true
   validation_first: true
   compaction_before_cycle_close: true
+  active_phase: Phase R3 — Fresh Python Bootstrap
+  active_milestone: Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract
+  active_anchor: pythonRuntimeBootstrapCreated
   current_work_memory_role: what_to_do_now
   reusable_asset_memory_role: durable_lessons_only
+  anchor_contract_families:
+    - released graph wiring and call-sites
+    - released input-resolution and CLI entry surfaces
+    - released MCP/OpenClaw adapter and response validation surfaces
+    - released evidence, reporting, and comparability surfaces
+    - typed mission, error, and memory helpers needed for continuation
+    - modeled helper entrypoints that still stop at pageReadyObserved
+    - docs-sufficiency surfaces needed to name the next one-commit slice
+  milestone_done_when:
+    - every required anchor family is either covered by queue history or explicitly ruled out by an exact PRD clause
+    - queue, resume-search, heuristic sweep, and continuation seeding are all exhausted honestly
+    - canonical sources are sufficient for a lower-capacity agent to name the next slice or true exhaustion
   post_commit_continue_rule:
     - after each honest task close, rewrite work-rag current.next_action to the next exact documented slice
     - continue in the same session when the next slice can still be named honestly from the queue, resume-search order, heuristic catalog, or continuation-seeding output
@@ -45,6 +60,14 @@ execution_rules:
       - omitted same-family helper or validation surfaces already on disk
       - omitted same-anchor support modules already imported by active queue items
       - docs-sufficiency gaps that block naming the next implementation slice
+    family_ladder:
+      - same-file failing validation artifact
+      - same module exact PRD-backed clause gap
+      - same directory imported support module
+      - same helper-family variant (*_entrypoint.py, *_cli_entrypoint.py, *_argv.py, *_argv_env.py)
+      - same validation family
+      - same-anchor config/settings/reporting/comparability helper
+      - docs-sufficiency source for next-slice naming
     seeded_slice_requirements:
       - remain below pageReadyObserved
       - one-task-per-commit safe
