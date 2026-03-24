@@ -75,10 +75,7 @@
             "tests/unit/test_slice_templates.py",
             "docs/llm/low-attention-slice-templates.json",
             "docs/llm/low-attention-coverage-ledger.json",
-            "docs/llm/low-attention-execution-contract.json",
-            "scripts/run-low-attention-loop.sh",
-            "src/ez_ax/rag/autoloop_runner.py",
-            "tests/unit/test_autoloop_runner.py"
+            "docs/llm/low-attention-execution-contract.json"
         ]
     },
     "compression_policy": {
@@ -95,6 +92,21 @@
         ]
     },
     "history": [
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Removed runner-script language from the canonical operator path so the executable autoloop skill remains the only user-facing continuation entrypoint; scripts may still exist as internal utilities, but they are no longer part of the active contract surface.",
+            "evidence": [
+                ".codex/skills/ez-ax-executable-autoloop/SKILL.md",
+                "docs/current-state.md",
+                "docs/product/work-rag.json",
+                "src/ez_ax/validation/bootstrap.py",
+                "tests/unit/test_bootstrap_assets.py"
+            ],
+            "recorded_at": "2026-03-25T03:10:00+09:00"
+        },
         {
             "kind": "checkpoint",
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",

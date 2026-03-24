@@ -51,7 +51,6 @@ The repository already has the following foundations in place:
 - two-tier memory operation with `work-rag.json` and `rag.json`
 - low-attention autonomous loop rules
 - documented low-attention implementation queue
-- executable low-attention loop runner command for Codex CLI cycles
 - skill-first executable autoloop entrypoint for operators
 
 ## Scope Snapshot

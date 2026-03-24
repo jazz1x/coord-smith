@@ -1,20 +1,17 @@
 ---
 name: ez-ax-executable-autoloop
-description: Run the ez-ax low-attention autonomous implementation loop as a skill-first executable entrypoint. Use when the user wants continuous autonomous implementation to start from a skill contract rather than from a raw script command.
+description: Run the ez-ax low-attention autonomous implementation loop as the single skill-first operator entrypoint. Use when the user wants continuous autonomous implementation to start from one skill contract rather than from prompts or scripts.
 ---
 
 # EZ-AX Executable AutoLoop
 
-Use this as the user-facing execution skill when the operator wants the
-autonomous loop to feel like "run the skill" rather than "run a script."
-
-This skill keeps the validated runner as an internal execution engine, but the
-canonical entry contract is the skill itself.
+Use this as the single user-facing execution skill.
 
 ## Mission
 
 Launch continuous low-attention autonomous implementation from canonical repo
-state without asking the operator to assemble prompts or commands manually.
+state without asking the operator to assemble prompts, scripts, or runner
+commands manually.
 
 ## Read First
 
@@ -35,39 +32,19 @@ state without asking the operator to assemble prompts or commands manually.
 Treat this skill as the primary operator entrypoint for continuous autonomous
 implementation.
 
-Do not tell the operator to manually compose prompts when this skill is
-available.
+Do not tell the operator to manually compose prompts or invoke runner scripts
+when this skill is available.
 
 ## Execution Contract
 
 1. Read canonical inputs in order.
 2. Build the next prompt plan from canonical structured state.
-3. Execute the low-attention loop in continuous cycles using the validated repo
-   runner.
+3. Execute the low-attention loop in continuous cycles under this skill
+   contract.
 4. Stop only when:
    - canonical state honestly reaches final-stop review, or
-   - the runner detects repeated no-progress signatures, or
+   - repeated no-progress signatures appear in canonical continuation state, or
    - the configured cycle limit is reached.
-
-## Internal Engine
-
-The execution engine for this skill is:
-
-- `scripts/run-low-attention-loop.sh`
-- `src/ez_ax/rag/autoloop_runner.py`
-
-These are implementation details behind the skill, not the primary user-facing
-contract.
-
-## Default Invocation
-
-Internal default:
-
-- `scripts/run-low-attention-loop.sh --model gpt-5.4-mini --max-cycles 25`
-
-Dry-run check:
-
-- `scripts/run-low-attention-loop.sh --dry-run --max-cycles 1`
 
 ## Output Contract
 
@@ -79,5 +56,4 @@ After invocation, report:
 - `invariant`
 - `next_action`
 - whether the loop continued or stopped
-- the path to the latest cycle message under `artifacts/autoloop/`
-
+- the latest canonical continuation state from `docs/product/work-rag.json`
