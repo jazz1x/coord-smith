@@ -11,9 +11,10 @@ Use this skill after the task is chosen and before final reporting.
 
 Always read:
 
-1. `docs/product/prd-python-validation-contract.md`
-2. `docs/product/prd-e2e-orchestration.md`
-3. `docs/product/work-rag.json`
+1. `docs/prd.md`
+2. `docs/execution-model.md`
+3. `docs/product/prd-python-validation-contract.md`
+4. `docs/product/work-rag.json`
 
 ## Validation Rules
 

@@ -64,6 +64,33 @@
   },
   "lessons": [
     {
+      "id": "lesson-reusable-heuristic-006",
+      "category": "reusable_heuristic",
+      "severity": "high",
+      "summary": "Low-capacity autonomous loops stop early when canonical next_action and shared skill entrypoints drift apart.",
+      "lesson": "When the repo uses a layered entrypoint, every shared autonomous-loop skill must read `AGENTS.md`, `docs/prd.md`, `docs/execution-model.md`, `docs/current-state.md`, and the on-disk `docs/product/work-rag.json` before consulting legacy benchmark PRDs. If `work-rag current.next_action` points at a concrete queue item, preserve that exact slice verbatim; stale paused-state instructions or legacy-first skill inputs cause lower-capacity agents to rerun exhausted search and declare `FINAL_STOP` too early.",
+      "trigger": "The repo's current-state summary advanced to Item 24, but `work-rag current.next_action` and several shared skills still pointed lower-capacity agents at an older resume-search path or legacy-first entrypoint.",
+      "evidence": [
+        "AGENTS.md",
+        "docs/prd.md",
+        "docs/execution-model.md",
+        "docs/current-state.md",
+        "docs/product/work-rag.json",
+        "docs/codex-global-skills/ez-ax-autonomous-loop/SKILL.md",
+        "docs/codex-global-skills/ez-ax-task-slicer/SKILL.md",
+        "docs/codex-global-skills/ez-ax-released-scope-guard/SKILL.md"
+      ],
+      "promoted_from_phase": "Phase R3 — Fresh Python Bootstrap",
+      "recorded_at": "2026-03-24T02:05:00+09:00",
+      "tags": [
+        "active-implementation",
+        "autonomous-loop",
+        "layered-entrypoint",
+        "next-action-drift",
+        "final-stop-false-positive"
+      ]
+    },
+    {
       "id": "lesson-release-ceiling-artifact-001",
       "category": "reusable_heuristic",
       "severity": "medium",

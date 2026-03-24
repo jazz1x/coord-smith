@@ -13,9 +13,11 @@ current loop.
 Always read:
 
 1. `AGENTS.md`
-2. `docs/product/prd-e2e-orchestration.md`
-3. `docs/product/work-rag.json`
-4. `docs/product/rag.json`
+2. `docs/prd.md`
+3. `docs/execution-model.md`
+4. `docs/current-state.md`
+5. `docs/product/work-rag.json`
+6. `docs/product/rag.json`
 
 Read additional runtime PRDs only if the candidate task touches that domain.
 
@@ -32,13 +34,17 @@ Read additional runtime PRDs only if the candidate task touches that domain.
 
 - Prefer `work-rag.json` `current.next_action` if it is already a one-commit
   task.
+- If the exact on-disk `current.next_action` names a concrete documented queue
+  item, validation command, PRD, and file group, execute that slice rather than
+  widening search or proposing stop.
 - Otherwise choose one smallest in-bounds implementation or test-hardening
   slice.
 - Prefer work under `prepareSession` or `pageReadyObserved`.
 - Prefer one file group and one focused validation target.
 - Reject tasks that span multiple milestones, require broad validation, or mix
   runtime behavior change with a large docs rewrite.
-- If no safe task exists, stop rather than widening scope.
+- Stop only after the documented queue, bounded resume-search, and documented
+  heuristic pass are honestly exhausted.
 
 ## Output
 

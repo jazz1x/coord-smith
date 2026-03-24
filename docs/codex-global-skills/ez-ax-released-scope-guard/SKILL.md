@@ -12,9 +12,16 @@ unclear.
 
 Always read:
 
-1. `docs/product/prd-e2e-orchestration.md`
-2. `docs/product/work-rag.json`
-3. `docs/product/rag.json`
+1. `AGENTS.md`
+2. `docs/prd.md`
+3. `docs/execution-model.md`
+4. `docs/current-state.md`
+5. `docs/product/work-rag.json`
+6. `docs/product/rag.json`
+
+Read `docs/product/prd-e2e-orchestration.md` only as a supporting reference
+after the layered entrypoint when the proposed task needs the legacy benchmark
+contract.
 
 ## Scope Rules
 
