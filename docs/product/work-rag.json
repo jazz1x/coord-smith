@@ -32,7 +32,7 @@
         "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
         "anchor": "pythonRuntimeBootstrapCreated",
         "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-        "next_action": "Seed the earliest pending family from the active coverage ledger before honoring FINAL_STOP: close the docs-sufficiency family gap by adding one deterministic bootstrap/docs-sufficiency slice definition that makes future coverage-ledger maintenance mechanically nameable for lower-capacity continuation below `pageReadyObserved`.",
+        "next_action": "Execute template `docs_sufficiency_coverage_ledger_contract` from `docs/llm/low-attention-slice-templates.json`: close the pending docs-sufficiency family by wiring a deterministic bootstrap/docs-sufficiency maintenance rule for coverage-ledger upkeep, with primary file group `src/ez_ax/validation/bootstrap.py` and focused validation `tests/unit/test_bootstrap_assets.py tests/unit/test_autoloop_prompt_driver.py`.",
         "approved_scope_ceiling": "pageReadyObserved",
         "references": [
             "AGENTS.md",
@@ -69,8 +69,11 @@
             "src/ez_ax/graph/modeled_mcp_entrypoint.py",
             "tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
             "src/ez_ax/rag/autoloop_prompt_driver.py",
+            "src/ez_ax/rag/slice_templates.py",
             "scripts/print-autoloop-command.py",
-            "tests/unit/test_autoloop_prompt_driver.py"
+            "tests/unit/test_autoloop_prompt_driver.py",
+            "tests/unit/test_slice_templates.py",
+            "docs/llm/low-attention-slice-templates.json"
         ]
     },
     "compression_policy": {

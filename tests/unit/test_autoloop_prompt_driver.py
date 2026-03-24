@@ -40,6 +40,27 @@ def test_build_autoloop_prompt_plan_uses_implementation_mode_for_concrete_slice(
     assert "Current next_action" in plan.prompt
 
 
+def test_build_autoloop_prompt_plan_expands_matched_slice_template(
+    tmp_path: Path,
+) -> None:
+    work_rag = _write_work_rag(
+        tmp_path,
+        next_action=(
+            "Seed the earliest pending family from the active coverage ledger "
+            "before honoring FINAL_STOP: close the docs-sufficiency family gap "
+            "by adding one deterministic bootstrap/docs-sufficiency slice "
+            "definition that makes future coverage-ledger maintenance "
+            "mechanically nameable."
+        ),
+    )
+
+    plan = build_autoloop_prompt_plan(work_rag_path=work_rag)
+
+    assert plan.mode == "implementation"
+    assert "docs_sufficiency_coverage_ledger_contract" in plan.prompt
+    assert "Primary file group: src/ez_ax/validation/bootstrap.py" in plan.prompt
+
+
 def test_build_autoloop_prompt_plan_uses_continuation_seed_mode_for_final_stop(
     tmp_path: Path,
 ) -> None:

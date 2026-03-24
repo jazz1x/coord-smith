@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ez_ax.rag.paths import WORK_RAG_PATH
+from ez_ax.rag.slice_templates import match_slice_template
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +32,26 @@ def _load_next_action(*, work_rag_path: Path) -> str:
 
 
 def _implementation_prompt(*, next_action: str) -> str:
+    template = match_slice_template(next_action=next_action)
+    if template is not None:
+        return (
+            "Use $ez-ax-low-attention-autoloop. Read AGENTS.md, docs/prd.md, "
+            "docs/execution-model.md, docs/current-state.md, "
+            "docs/product/work-rag.json, docs/product/rag.json, "
+            "docs/llm/repo-autonomous-loop-adapter.yaml, and "
+            "docs/llm/low-attention-slice-templates.json in order. Quote the "
+            "exact on-disk docs/product/work-rag.json current.next_action "
+            "verbatim. Then execute the matched deterministic slice template "
+            f"`{template.id}` for family `{template.family}`. Primary file "
+            f"group: {template.file_group}. Supporting files: "
+            f"{', '.join(template.supporting_files)}. First PRD: "
+            f"{template.first_prd}. Validation sequence: "
+            f"{template.first_validation}; {template.mypy_target}; "
+            f"{template.ruff_target}. Done when: "
+            f"{'; '.join(template.done_when)}. next_if_clean: "
+            f"{template.next_if_clean}. next_if_fail: {template.next_if_fail}. "
+            f"Current next_action: {next_action}"
+        )
     return (
         "Use $ez-ax-low-attention-autoloop. Read AGENTS.md, docs/prd.md, "
         "docs/execution-model.md, docs/current-state.md, "

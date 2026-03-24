@@ -121,7 +121,7 @@ cycle accept `FINAL_STOP`.
 | released evidence / reporting / comparability family | covered | evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices | none |
 | typed mission / error / memory helper family | covered | mission mapping, typed errors, and RAG path helper surfaces already closed as queue slices | none |
 | modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |
-| docs-sufficiency family for lower-capacity continuation | pending | the repo now defines anchor, milestone, heuristic, and seeding tables, but it still lacks one explicit reusable rule for maintaining the coverage ledger itself in the bootstrap/docs-sufficiency path | seed one docs-sufficiency slice that makes future coverage-ledger upkeep mechanically nameable |
+| docs-sufficiency family for lower-capacity continuation | pending | the repo now defines anchor, milestone, heuristic, and seeding tables, but future low-capacity runs still need one template-backed bootstrap/docs-sufficiency rule to make coverage-ledger upkeep mechanically nameable | execute template `docs_sufficiency_coverage_ledger_contract` from `docs/llm/low-attention-slice-templates.json` |
 
 ## Consultation Context
 

@@ -11,6 +11,7 @@ REQUIRED_BOOTSTRAP_ASSETS: tuple[str, ...] = (
     "docs/execution-model.md",
     "docs/current-state.md",
     "docs/llm/repo-autonomous-loop-adapter.yaml",
+    "docs/llm/low-attention-slice-templates.json",
     ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
     "docs/llm/agents/contract-scope-guardian.md",
     "docs/llm/agents/assetization-pattern-promoter.md",

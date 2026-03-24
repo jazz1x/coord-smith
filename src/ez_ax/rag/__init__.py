@@ -1,1 +1,1 @@
-"""RAG file location, memory helpers, and autoloop prompt helpers."""
+"""RAG file location, memory helpers, prompt helpers, and slice templates."""
