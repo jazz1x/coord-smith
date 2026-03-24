@@ -218,6 +218,7 @@ When the queue is exhausted, follow this order:
 1. one bounded resume-search pass
 2. one queue-extension heuristic pass for this exhaustion cycle
 3. one gap re-evaluation pass
+4. one stop-state consistency gate
 
 If no valid in-bounds PRD clause gap remains, final stop stands.
 
@@ -362,6 +363,64 @@ Heuristic-stop guard:
 - "single heuristic pass exhausted" means the documented candidate ladder was
   traversed completely, not that only one candidate was sampled
 
+## Stop-State Consistency Gate
+
+Before honoring `FINAL_STOP`, the agent must verify that the repository's
+current-tense continuation surfaces still agree.
+
+Required consistency checks:
+
+1. `docs/current-state.md`
+2. `docs/product/work-rag.json`
+3. `docs/product/prd-low-attention-implementation-queue.md`
+4. `docs/llm/repo-autonomous-loop-adapter.yaml`
+
+Consistency rule:
+
+- `FINAL_STOP` is invalid if any of the sources above still names a concrete
+  next slice, stale queue boundary, or omitted continuation surface below
+  `pageReadyObserved`
+- a lower-capacity agent must prefer a reopened documented queue item over a
+  previously recorded stop string
+- if the queue PRD and repo adapter disagree about the tail of the queue, the
+  stop is stale until the discrepancy is resolved
+- if `current-state.md` still describes continuation-bearing modeled or
+  released-scope helper surfaces, the stop is stale until those surfaces are
+  either documented as queue items or explicitly ruled out by an exact PRD
+  clause
+
+### Adjacent-Surface Completion Check
+
+As part of the stop-state consistency gate, the agent must run one bounded
+adjacent-surface completion check before accepting `FINAL_STOP`.
+
+Purpose:
+
+- catch small omitted surfaces that belong to the same deterministic helper or
+  entrypoint family as the most recently closed queue item
+
+Allowed adjacent families:
+
+1. `*_entrypoint.py`
+2. `*_cli_entrypoint.py`
+3. `*_argv.py`
+4. `*_argv_env.py`
+5. colocated focused tests that already exercise one of those helpers
+
+Adjacent-surface rules:
+
+- the candidate must already exist on disk
+- the candidate must share the same module family or validation family as the
+  last documented queue item or heuristic candidate
+- one governing PRD clause must be namable before implementation begins
+- one focused validation command must already exist or be derivable
+  mechanically from an existing colocated test file
+- this check may reopen at most one new queue item per exhaustion cycle
+- if one valid adjacent candidate exists, the agent must document it as the
+  next queue item instead of accepting `FINAL_STOP`
+- if no valid adjacent candidate exists honestly, the stop-state consistency
+  gate may complete
+
 Queue-extension output shape:
 
 - `file_group`
@@ -385,6 +444,7 @@ Declare final stop only when all are true:
 - queue is exhausted
 - one bounded resume-search pass is exhausted
 - one queue-extension heuristic pass for the exhaustion cycle is exhausted
+- one stop-state consistency gate is exhausted
 - no exact PRD-backed in-bounds clause gap remains
 
 A final-stop report must explicitly state these grounds.

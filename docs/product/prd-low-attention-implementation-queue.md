@@ -645,6 +645,7 @@ Exhaustion protocol gate order:
 1. run exactly one bounded resume-search pass below `pageReadyObserved`
 2. run exactly one queue-extension heuristic pass for the exhaustion cycle
 3. run one final exact gap re-evaluation pass
+4. run one stop-state consistency gate
 
 Queue-extension heuristic gate:
 
@@ -724,12 +725,35 @@ Cycle-reset rule:
 - each new honest exhaustion cycle reopens exactly one canonical queue-
   extension heuristic pass
 
+Stop-state consistency gate:
+
+- before accepting `FINAL_STOP`, compare:
+  - `docs/current-state.md`
+  - `docs/product/work-rag.json`
+  - this queue PRD
+  - `docs/llm/repo-autonomous-loop-adapter.yaml`
+- `FINAL_STOP` is stale if any of those sources still names one exact in-bounds
+  continuation surface below `pageReadyObserved`
+- as part of this gate, run one bounded adjacent-surface completion check for
+  same-family helper surfaces already present on disk, including:
+  - `*_entrypoint.py`
+  - `*_cli_entrypoint.py`
+  - `*_argv.py`
+  - `*_argv_env.py`
+  - colocated focused tests for those helpers
+- if that adjacent-surface check finds one valid PRD-backed candidate with a
+  deterministic focused validation target, the queue must be reopened with one
+  new item instead of accepting `FINAL_STOP`
+
 Final-stop rule:
 
 - after this queue is exhausted and the exhaustion protocol gate order is also
   exhausted, lower-capacity autonomous implementation must stop
 - final stop is invalid if any documented heuristic candidate for the current
   exhaustion cycle has not yet completed the full validation-plus-clause scan
+- final stop is also invalid if the stop-state consistency gate has not yet
+  compared all required continuation sources or has not yet run the bounded
+  adjacent-surface completion check
 - reopening autonomous implementation requires either:
   - one new explicit in-bounds contract gap, or
   - one explicit PRD update that extends this implementation queue

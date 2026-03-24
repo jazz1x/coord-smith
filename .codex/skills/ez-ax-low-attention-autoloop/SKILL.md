@@ -70,9 +70,17 @@ Continuous-loop bias:
   cleanup
 - if the exact quoted on-disk `next_action` names a concrete slice, do not
   output `FINAL_STOP`
-- if the documented exhaustion protocol is complete and no exact slice remains,
-  declare `FINAL_STOP` directly; do not switch to `blocked` or ask for operator
-  confirmation
+- if the quoted `next_action` says `FINAL_STOP`, first run the stop-state
+  consistency gate across `docs/current-state.md`,
+  `docs/product/work-rag.json`,
+  `docs/product/prd-low-attention-implementation-queue.md`, and
+  `docs/llm/repo-autonomous-loop-adapter.yaml`
+- as part of that gate, run one bounded adjacent-surface completion check for
+  same-family helper surfaces such as `*_entrypoint.py`,
+  `*_cli_entrypoint.py`, `*_argv.py`, and `*_argv_env.py`
+- declare `FINAL_STOP` directly only after the documented exhaustion protocol
+  and the stop-state consistency gate both fail to reopen one exact slice; do
+  not switch to `blocked` or ask for operator confirmation
 
 ## Exhaustion and Stop Protocol
 
@@ -81,12 +89,14 @@ When queue appears exhausted, enforce this exact order:
 1. one bounded resume-search pass
 2. one queue-extension heuristic pass (max one new task from the documented catalog)
 3. one final exact gap re-evaluation pass
+4. one stop-state consistency gate
 
 Declare `FINAL_STOP` only when all are true:
 
 - queue exhausted
 - resume-search exhausted
 - queue-extension heuristic pass exhausted
+- stop-state consistency gate exhausted
 - no exact PRD-backed in-bounds gap remains
 
 ## Failure Taxonomy Guard
@@ -121,4 +131,4 @@ Always report in this compact shape:
 
 Use this short prompt in a new session:
 
-`Use $ez-ax-low-attention-autoloop. First quote the exact on-disk \`docs/product/work-rag.json\` \`current.next_action\` verbatim. If it names a concrete slice, execute that slice and do not output FINAL_STOP. Then run autonomous continuation in continuous guarded looping mode across consecutive one-commit slices. After each committed slice, immediately select the next exact documented PRD-backed in-bounds slice and continue in the same session. Treat FINAL_STOP as valid only as a last resort after the documented queue, bounded resume-search, full heuristic-catalog sweep, and final exact gap re-evaluation are all exhausted and you still cannot honestly name one exact next one-commit slice below pageReadyObserved.`
+`Use $ez-ax-low-attention-autoloop. First quote the exact on-disk \`docs/product/work-rag.json\` \`current.next_action\` verbatim. If it names a concrete slice, execute that slice and do not output FINAL_STOP. If it says FINAL_STOP, do not stop immediately: first run the documented stop-state consistency gate across \`docs/current-state.md\`, \`docs/product/work-rag.json\`, \`docs/product/prd-low-attention-implementation-queue.md\`, and \`docs/llm/repo-autonomous-loop-adapter.yaml\`, including one bounded adjacent-surface completion check for same-family helper surfaces. Then run autonomous continuation in continuous guarded looping mode across consecutive one-commit slices. Treat FINAL_STOP as valid only as a last resort after the documented queue, bounded resume-search, full heuristic-catalog sweep, final exact gap re-evaluation, and stop-state consistency gate are all exhausted and you still cannot honestly name one exact next one-commit slice below pageReadyObserved.`

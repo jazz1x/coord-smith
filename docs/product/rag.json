@@ -64,6 +64,31 @@
   },
   "lessons": [
     {
+      "id": "lesson-reusable-heuristic-007",
+      "category": "false_negative",
+      "severity": "high",
+      "summary": "A raw `FINAL_STOP` string in work-rag is not sufficient evidence that continuation is truly exhausted.",
+      "lesson": "Before a lower-capacity autoloop accepts `FINAL_STOP`, it must run a stop-state consistency gate across the layered current-state summary, `work-rag`, the queue PRD, and the repo adapter, then perform one bounded adjacent-surface completion check for same-family helper surfaces already present on disk. Otherwise the loop can falsely stop even though phase/milestone/anchor context and nearby helper variants still imply one exact in-bounds slice.",
+      "trigger": "The autoloop repeatedly honored `work-rag current.next_action = FINAL_STOP` too early even though nearby modeled helper variants and stale cross-document disagreement could reopen the queue safely.",
+      "evidence": [
+        "docs/execution-model.md",
+        "docs/current-state.md",
+        "docs/product/work-rag.json",
+        "docs/product/prd-low-attention-implementation-queue.md",
+        "docs/llm/repo-autonomous-loop-adapter.yaml",
+        ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md"
+      ],
+      "promoted_from_phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+      "recorded_at": "2026-03-24T23:45:00+09:00",
+      "tags": [
+        "active-implementation",
+        "autonomous-loop",
+        "false-negative-stop",
+        "stop-state-consistency",
+        "adjacent-surface-check"
+      ]
+    },
+    {
       "id": "lesson-reusable-heuristic-006",
       "category": "reusable_heuristic",
       "severity": "high",

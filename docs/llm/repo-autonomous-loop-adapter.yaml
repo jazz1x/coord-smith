@@ -36,6 +36,30 @@ execution_rules:
     - do not stop only because one commit was completed
     - FINAL_STOP is valid only when no exact next one-commit slice can still be named after the full documented exhaustion protocol
     - doc-only FINAL_STOP alignment is not a valid continuation slice unless the user explicitly asked for stop-state cleanup
+  stop_state_consistency_gate:
+    required_sources:
+      - docs/current-state.md
+      - docs/product/work-rag.json
+      - docs/product/prd-low-attention-implementation-queue.md
+      - docs/llm/repo-autonomous-loop-adapter.yaml
+    invalid_if:
+      - any required source still names a concrete next slice below pageReadyObserved
+      - queue PRD and repo adapter disagree about the documented queue tail
+      - current-state summary still describes continuation-bearing helper surfaces not reflected in the queue
+    adjacent_surface_completion_check:
+      enabled: true
+      max_new_items_per_cycle: 1
+      allowed_families:
+        - "*_entrypoint.py"
+        - "*_cli_entrypoint.py"
+        - "*_argv.py"
+        - "*_argv_env.py"
+        - "colocated focused tests for those helpers"
+      candidate_requirements:
+        - candidate already exists on disk
+        - candidate shares the same helper family or validation family as the last closed queue item or heuristic candidate
+        - one governing PRD clause can be named before implementation
+        - one focused validation command can be named before implementation
   paused_resume_search_order:
     - rerun or identify one focused pytest target on the active anchor surface
     - if pytest is clean, rerun or identify one focused mypy target for the active file group when typing is part of the contract
@@ -98,7 +122,7 @@ execution_rules:
       - if mypy passes, run the narrowest applicable ruff check
       - if focused validation is clean, scan first_prd for one exact unenforced clause tied to the candidate
       - if no failing artifact and no exact clause are found, advance to the next documented heuristic candidate
-    final_stop_condition: documented queue, bounded resume-search, and the full documented queue-extension heuristic catalog are exhausted without an exact in-bounds gap
+    final_stop_condition: documented queue, bounded resume-search, the full documented queue-extension heuristic catalog, and the stop-state consistency gate are exhausted without an exact in-bounds gap
   low_attention_implementation_queue:
     - src/ez_ax/config/mcp_stdio_cli.py
     - src/ez_ax/graph/langgraph_released.py
