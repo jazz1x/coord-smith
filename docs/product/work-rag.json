@@ -32,7 +32,7 @@
         "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
         "anchor": "pythonRuntimeBootstrapCreated",
         "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-        "next_action": "Continue the queue-extension heuristic pass (candidate 5) below `pageReadyObserved`: run `.venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`, then focused mypy and ruff for `tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py` before scanning `docs/product/prd-python-mcp-client-acquisition.md` for one exact released-graph injection clause gap.",
+        "next_action": "Run the final exact gap re-evaluation below `pageReadyObserved`: confirm the documented queue, bounded resume-search list, and heuristic catalog contain no remaining exact PRD-backed clause gaps; if none remain, declare `FINAL_STOP` with explicit exhaustion grounds.",
         "approved_scope_ceiling": "pageReadyObserved",
         "references": [
             "AGENTS.md",
@@ -87,6 +87,22 @@
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Heuristic pass candidate 5 (released-graph injection tests) validated cleanly: focused pytest, mypy, and ruff passed for `test_openclaw_mcp_stdio_released_graph_injection`, and the MCP client acquisition PRD revealed no exact injection clause gap, exhausting the heuristic catalog and triggering the final exact gap re-evaluation step.",
+            "evidence": [
+                "docs/product/prd-python-mcp-client-acquisition.md",
+                "tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+                ".venv/bin/python -m mypy tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+                ".venv/bin/python -m ruff check tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-24T22:52:39+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
             "summary": "Heuristic pass candidate 4 (released assembly tests) validated cleanly: focused pytest, mypy, and ruff passed for `test_langgraph_released_assembly`, and the LangGraph runtime PRD revealed no exact released assembly clause gap, so the heuristic sweep advances to the released-graph injection test surface.",
             "evidence": [
                 "docs/product/prd-python-langgraph-runtime.md",
@@ -99,21 +115,16 @@
             "recorded_at": "2026-03-24T22:51:41+09:00"
         },
         {
-            "kind": "checkpoint",
+            "kind": "milestone_summary",
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Heuristic pass candidate 3 (runtime settings) validated cleanly: focused pytest, mypy, and ruff passed for `config/settings`, and the runtime-layout PRD revealed no exact runtime settings clause gap, so the heuristic sweep advances to released assembly tests.",
+            "summary": "Compacted older same-scope checkpoints covering earlier heuristic steps so only the newest raw checkpoints remain for continuation.",
             "evidence": [
-                "docs/product/prd-python-runtime-layout.md",
-                "src/ez_ax/config/settings.py",
-                "tests/unit/test_runtime_settings.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py",
-                ".venv/bin/python -m mypy src/ez_ax/config/settings.py",
-                ".venv/bin/python -m ruff check src/ez_ax/config/settings.py tests/unit/test_runtime_settings.py",
-                "docs/product/work-rag.json"
+                "docs/product/work-rag.json",
+                "docs/product/prd-python-mcp-client-acquisition.md"
             ],
-            "recorded_at": "2026-03-24T22:50:44+09:00"
+            "recorded_at": "2026-03-24T22:52:39+09:00"
         },
         {
             "kind": "milestone_summary",
