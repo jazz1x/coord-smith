@@ -113,6 +113,10 @@ cycle accept `FINAL_STOP`.
 
 ## Active Anchor Coverage Ledger
 
+Canonical machine-readable ledger:
+
+- `docs/llm/low-attention-coverage-ledger.json`
+
 | Family | Status | Evidence Or Reason | Next Slice Hint |
 | --- | --- | --- | --- |
 | released graph wiring and call-sites | covered | released graph call-site and run-root surfaces already have queue and resume-search coverage evidence | none |
@@ -121,7 +125,7 @@ cycle accept `FINAL_STOP`.
 | released evidence / reporting / comparability family | covered | evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices | none |
 | typed mission / error / memory helper family | covered | mission mapping, typed errors, and RAG path helper surfaces already closed as queue slices | none |
 | modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |
-| docs-sufficiency family for lower-capacity continuation | pending | the repo now defines anchor, milestone, heuristic, and seeding tables, but future low-capacity runs still need one template-backed bootstrap/docs-sufficiency rule to make coverage-ledger upkeep mechanically nameable | execute template `docs_sufficiency_coverage_ledger_contract` from `docs/llm/low-attention-slice-templates.json` |
+| docs-sufficiency family for lower-capacity continuation | covered | machine-readable coverage-ledger state now lives in `docs/llm/low-attention-coverage-ledger.json`, so lower-capacity runs can pick the earliest pending family and matching template without interpreting freeform `next_action` text | none |
 
 ## Consultation Context
 

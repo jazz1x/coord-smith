@@ -64,6 +64,31 @@
   },
   "lessons": [
     {
+      "id": "lesson-reusable-heuristic-008",
+      "category": "reusable_heuristic",
+      "severity": "high",
+      "summary": "Lower-capacity continuation should pick the next slice from a structured coverage ledger, not from freeform stop prose.",
+      "lesson": "When low-attention continuation depends on phase/milestone/anchor family coverage, maintain a machine-readable coverage ledger with ordered family statuses and template ids, and teach the prompt driver to prefer its earliest `pending` family over `work-rag current.next_action`. This removes natural-language interpretation from the critical next-slice handoff and makes honest `FINAL_STOP` admissible only after the structured ledger contains no pending family.",
+      "trigger": "Even after queue, seeding, and coverage-ledger rules were documented, lower-capacity runs could still stop too early because they had to interpret freeform `next_action` text instead of selecting from canonical structured family state.",
+      "evidence": [
+        "docs/execution-model.md",
+        "docs/current-state.md",
+        "docs/llm/low-attention-coverage-ledger.json",
+        "src/ez_ax/rag/coverage_ledger.py",
+        "src/ez_ax/rag/autoloop_prompt_driver.py",
+        "docs/product/work-rag.json"
+      ],
+      "promoted_from_phase": "Phase R3 — Fresh Python Bootstrap",
+      "recorded_at": "2026-03-25T01:20:00+09:00",
+      "tags": [
+        "active-implementation",
+        "autonomous-loop",
+        "machine-readable-ledger",
+        "next-slice-selection",
+        "final-stop-false-positive"
+      ]
+    },
+    {
       "id": "lesson-reusable-heuristic-007",
       "category": "false_negative",
       "severity": "high",

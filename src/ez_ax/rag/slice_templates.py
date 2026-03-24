@@ -71,6 +71,15 @@ def match_slice_template(
     return None
 
 
+def get_slice_template_by_id(
+    *, template_id: str, template_path: Path = SLICE_TEMPLATE_PATH
+) -> LowAttentionSliceTemplate | None:
+    for template in load_slice_templates(template_path=template_path):
+        if template.id == template_id:
+            return template
+    return None
+
+
 def _require_str(payload: dict[str, object], key: str) -> str:
     value = payload.get(key)
     if not isinstance(value, str) or not value.strip():

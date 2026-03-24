@@ -22,6 +22,7 @@ def test_bootstrap_assets_do_not_require_optional_pattern_cache() -> None:
 def test_bootstrap_assets_require_repo_loop_adapter_and_tracked_skills() -> None:
     required = {
         "docs/llm/repo-autonomous-loop-adapter.yaml",
+        "docs/llm/low-attention-coverage-ledger.json",
         ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
         "docs/llm/agents/contract-scope-guardian.md",
         "docs/llm/agents/assetization-pattern-promoter.md",

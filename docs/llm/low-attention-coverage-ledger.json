@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "active_phase": "Phase R3 — Fresh Python Bootstrap",
+  "active_milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+  "active_anchor": "pythonRuntimeBootstrapCreated",
+  "families": [
+    {
+      "family": "released graph wiring and call-sites",
+      "status": "covered",
+      "evidence_or_reason": "released graph call-site and run-root surfaces already have queue and resume-search coverage evidence",
+      "next_slice_hint": "none",
+      "template_id": ""
+    },
+    {
+      "family": "released entrypoint / CLI / input family",
+      "status": "covered",
+      "evidence_or_reason": "released entrypoint, CLI shim, and released input resolution already closed as queue slices",
+      "next_slice_hint": "none",
+      "template_id": ""
+    },
+    {
+      "family": "released adapter / MCP acquisition family",
+      "status": "covered",
+      "evidence_or_reason": "adapter, MCP stdio config, settings, and related heuristic surfaces already have focused validation and queue history",
+      "next_slice_hint": "none",
+      "template_id": ""
+    },
+    {
+      "family": "released evidence / reporting / comparability family",
+      "status": "covered",
+      "evidence_or_reason": "evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices",
+      "next_slice_hint": "none",
+      "template_id": ""
+    },
+    {
+      "family": "typed mission / error / memory helper family",
+      "status": "covered",
+      "evidence_or_reason": "mission mapping, typed errors, and RAG path helper surfaces already closed as queue slices",
+      "next_slice_hint": "none",
+      "template_id": ""
+    },
+    {
+      "family": "modeled helper entrypoint family",
+      "status": "covered",
+      "evidence_or_reason": "modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence",
+      "next_slice_hint": "none",
+      "template_id": ""
+    },
+    {
+      "family": "docs-sufficiency family for lower-capacity continuation",
+      "status": "covered",
+      "evidence_or_reason": "machine-readable coverage-ledger state now exists as a canonical asset, and the autoloop prompt driver prefers it over freeform stop wording when selecting the next deterministic slice",
+      "next_slice_hint": "none",
+      "template_id": ""
+    }
+  ]
+}

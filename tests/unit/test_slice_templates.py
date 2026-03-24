@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from ez_ax.rag.slice_templates import load_slice_templates, match_slice_template
+from ez_ax.rag.slice_templates import (
+    get_slice_template_by_id,
+    load_slice_templates,
+    match_slice_template,
+)
 
 
 def test_load_slice_templates_includes_docs_sufficiency_template() -> None:
@@ -22,3 +26,12 @@ def test_match_slice_template_returns_docs_sufficiency_template() -> None:
 
     assert template is not None
     assert template.id == "docs_sufficiency_coverage_ledger_contract"
+
+
+def test_get_slice_template_by_id_returns_docs_sufficiency_template() -> None:
+    template = get_slice_template_by_id(
+        template_id="docs_sufficiency_coverage_ledger_contract"
+    )
+
+    assert template is not None
+    assert template.family == "docs-sufficiency family for lower-capacity continuation"

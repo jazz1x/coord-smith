@@ -78,6 +78,10 @@ Completion expectation:
 The active anchor must maintain one explicit coverage ledger in canonical
 sources.
 
+Canonical machine-readable ledger path for the active phase:
+
+- `docs/llm/low-attention-coverage-ledger.json`
+
 Required ledger fields per family:
 
 - `family`
@@ -99,6 +103,8 @@ Ledger rule:
 - `pending` means the family still requires one deterministic next slice
 - lower-capacity agents must prefer the earliest `pending` family over generic
   exhaustion wording
+- when the machine-readable ledger and readable summary disagree, the
+  machine-readable ledger is the source of truth for next-slice selection
 
 ## Milestone Completion Table
 
