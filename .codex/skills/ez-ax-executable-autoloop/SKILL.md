@@ -41,7 +41,10 @@ when this skill is available.
 2. Build the next prompt plan from canonical structured state.
 3. Execute the low-attention loop in continuous cycles under this skill
    contract.
-4. Stop only when:
+4. When the queue tail is reached but the active phase / milestone still remain
+   continuation-bearing, run one mandatory continuation-seeding pass as part of
+   this same skill contract instead of stopping immediately.
+5. Stop only when:
    - canonical state honestly reaches final-stop review, or
    - canonical continuation state cannot reopen one exact in-bounds slice
      without guesswork.

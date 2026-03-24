@@ -41,7 +41,8 @@
     "name one first_prd before implementation",
     "name one first_validation before implementation",
     "update current-state, work-rag, and queue-bearing docs in the same task close",
-    "update the active coverage ledger in the same task close"
+    "update the active coverage ledger in the same task close",
+    "if queue and heuristic surfaces are exhausted while the phase remains active, rewrite current.next_action to one mandatory continuation-seeding pass before FINAL_STOP review"
   ],
   "final_stop_requirements": [
     "no coverage-ledger family remains pending",
@@ -49,6 +50,7 @@
     "bounded resume-search is exhausted honestly",
     "heuristic sweep is exhausted honestly",
     "continuation seeding is exhausted honestly",
-    "stop-state consistency gate reopens no exact in-bounds slice"
+    "stop-state consistency gate reopens no exact in-bounds slice",
+    "canonical current state no longer points to one mandatory continuation-seeding pass"
   ]
 }

@@ -49,7 +49,7 @@
     {
       "family": "docs-sufficiency family for lower-capacity continuation",
       "status": "covered",
-      "evidence_or_reason": "the operator-facing executable autoloop skill now describes stop/output behavior only in canonical continuation-state terms, without runner-specific leakage",
+      "evidence_or_reason": "canonical current state now rewrites queue-tail exhaustion into one mandatory continuation-seeding pass, so lower-capacity agents do not treat queue exhaustion as terminal before the loop seeds its own next slice",
       "next_slice_hint": "none",
       "template_id": ""
     }

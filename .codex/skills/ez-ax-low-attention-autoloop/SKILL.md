@@ -85,6 +85,8 @@ Continuous-loop bias:
 - before honoring `FINAL_STOP`, run one continuation-seeding pass for the
   active phase / milestone / anchor and try to produce one new deterministic
   one-commit slice
+- that continuation-seeding pass is owned by this loop itself; do not treat it
+  as an operator-side reopen chore
 - as part of that gate, run one bounded adjacent-surface completion check for
   same-family helper surfaces such as `*_entrypoint.py`,
   `*_cli_entrypoint.py`, `*_argv.py`, and `*_argv_env.py`

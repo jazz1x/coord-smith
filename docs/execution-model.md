@@ -157,7 +157,8 @@ Loop:
 9. immediately select the next documented in-bounds action and continue the
    loop when one still exists
 10. if no documented action remains but the phase and milestone are still
-    active, run continuation seeding instead of accepting stop by default
+    active, rewrite `current.next_action` into one mandatory
+    continuation-seeding pass instead of accepting stop by default
 
 Continuous-loop rule:
 
@@ -169,6 +170,8 @@ Continuous-loop rule:
 - do not pause merely because one bounded task finished cleanly
 - pause only when scope is blocked, validation is blocked, or the full
   exhaustion protocol is honestly complete
+- the autonomous loop is responsible for both task execution and task seeding
+  while the active phase and milestone still remain continuation-bearing
 
 ## Queue-Driven Selection
 
@@ -300,6 +303,17 @@ Post-commit order:
 3. continue into the next bounded slice without waiting for a new user prompt
 4. stop only if the next bounded slice would violate scope, lacks an honest
    validation path, or the full exhaustion protocol is complete
+
+Queue-tail rewrite rule:
+
+- if one task closes cleanly and no concrete queue or heuristic slice remains
+  while the phase / milestone are still active, rewrite
+  `work-rag.json current.next_action` to one mandatory continuation-seeding
+  pass rather than to `FINAL_STOP` review
+- that continuation-seeding pass is part of the autonomous loop itself, not an
+  operator-only recovery step
+- lower-capacity agents must treat that rewritten seeding pass as the next
+  exact task-selection surface for the next cycle
 
 Post-commit guard:
 
@@ -524,6 +538,8 @@ Purpose:
 Continuation-seeding rule:
 
 - this pass is mandatory while the current phase and milestone remain active
+- this pass is performed by the autonomous loop itself rather than by a manual
+  operator reopen step
 - the pass may seed at most one new slice per exhaustion cycle
 - the seeded slice must remain below `pageReadyObserved`
 - the seeded slice must be one-task-per-commit safe
@@ -600,6 +616,8 @@ Seeding-stop guard:
   one-commit slice without guesswork
 - `FINAL_STOP` is invalid if any required family remains `pending` in the
   active coverage ledger
+- `FINAL_STOP` is invalid if canonical current state still points to one
+  mandatory continuation-seeding pass for the active phase / milestone
 
 ## Stop-State Consistency Gate
 

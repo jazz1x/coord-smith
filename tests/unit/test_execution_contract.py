@@ -9,3 +9,7 @@ def test_load_execution_contract_exposes_active_phase_and_inputs() -> None:
     assert contract.active_phase == "Phase R3 — Fresh Python Bootstrap"
     assert "docs/llm/low-attention-execution-contract.json" in contract.canonical_inputs
     assert contract.final_stop_requirements
+    assert any(
+        "mandatory continuation-seeding pass" in requirement
+        for requirement in contract.seeded_slice_requirements
+    )

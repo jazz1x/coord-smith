@@ -62,12 +62,13 @@ execution_rules:
     - continue in the same session when the next slice can still be named honestly from the queue, resume-search order, heuristic catalog, or continuation-seeding output
     - do not stop only because one commit was completed
     - queue exhaustion alone is not sufficient for FINAL_STOP while the active phase and milestone remain continuation-bearing
+    - when queue and heuristic surfaces are exhausted but the active phase and milestone still remain continuation-bearing, rewrite current.next_action to one mandatory continuation-seeding pass instead of FINAL_STOP review
     - FINAL_STOP is valid only when no exact next one-commit slice can still be named after the full documented exhaustion protocol, including continuation seeding
     - doc-only FINAL_STOP alignment is not a valid continuation slice unless the user explicitly asked for stop-state cleanup
   continuation_seeding:
     enabled: true
     max_new_slices_per_cycle: 1
-    purpose: convert active phase/milestone/anchor context into one new deterministic one-commit slice when the queue and heuristic surfaces are exhausted
+    purpose: convert active phase/milestone/anchor context into one new deterministic one-commit slice when the queue and heuristic surfaces are exhausted; this pass is performed by the loop itself, not by a manual operator reopen
     candidate_priority:
       - omitted same-family helper or validation surfaces already on disk
       - omitted same-anchor support modules already imported by active queue items
@@ -173,7 +174,7 @@ execution_rules:
       - if mypy passes, run the narrowest applicable ruff check
       - if focused validation is clean, scan first_prd for one exact unenforced clause tied to the candidate
       - if no failing artifact and no exact clause are found, advance to the next documented heuristic candidate
-    final_stop_condition: documented queue, bounded resume-search, the full documented queue-extension heuristic catalog, continuation seeding, and the stop-state consistency gate are exhausted without an exact in-bounds gap
+    final_stop_condition: documented queue, bounded resume-search, the full documented queue-extension heuristic catalog, the loop's mandatory continuation-seeding pass, and the stop-state consistency gate are exhausted without an exact in-bounds gap
   low_attention_implementation_queue:
     - src/ez_ax/config/mcp_stdio_cli.py
     - src/ez_ax/graph/langgraph_released.py

@@ -168,3 +168,28 @@ def test_build_autoloop_prompt_plan_uses_final_stop_review_when_no_pending_famil
     assert "stop-state consistency gate" in plan.prompt
     assert "stop-a; stop-b" in plan.prompt
     assert "$ez-ax-executable-autoloop" in plan.prompt
+
+
+def test_build_autoloop_prompt_plan_uses_continuation_seed_mode_for_seed_pass(
+    tmp_path: Path,
+) -> None:
+    work_rag = _write_work_rag(
+        tmp_path,
+        next_action=(
+            "Run one mandatory continuation-seeding pass for the active phase / "
+            "milestone / anchor before honoring FINAL_STOP."
+        ),
+    )
+    coverage_ledger = _write_coverage_ledger(tmp_path, status="covered")
+    execution_contract = _write_execution_contract(tmp_path)
+
+    plan = build_autoloop_prompt_plan(
+        work_rag_path=work_rag,
+        coverage_ledger_path=coverage_ledger,
+        execution_contract_path=execution_contract,
+    )
+
+    assert plan.mode == "continuation_seed"
+    assert "continuation-seeding mode, not terminal stop mode" in plan.prompt
+    assert "Produce exactly one one-commit-safe seeded slice" in plan.prompt
+    assert "$ez-ax-executable-autoloop" in plan.prompt

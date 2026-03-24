@@ -844,6 +844,9 @@ Final-stop rule:
   exhaustion cycle has not yet completed the full validation-plus-clause scan
 - final stop is invalid if continuation seeding has not yet attempted to create
   one new queue item for the active phase / milestone / anchor
+- final stop is invalid if canonical current state still points to one
+  mandatory continuation-seeding pass for the active phase / milestone /
+  anchor
 - final stop is also invalid if the stop-state consistency gate has not yet
   compared all required continuation sources or has not yet run the bounded
   adjacent-surface completion check
@@ -934,3 +937,33 @@ Why in-bounds:
 - it remains below `pageReadyObserved`
 - it removes another source of non-canonical runner leakage from the
   lower-capacity operator path
+
+### Item 30 — Mandatory Self-Seeding Loop Contract
+
+- `file_group`: `docs/execution-model.md`
+- `tests`: `tests/unit/test_autoloop_prompt_driver.py`, `tests/unit/test_execution_contract.py`
+- `first_prd`: `docs/execution-model.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_autoloop_prompt_driver.py tests/unit/test_execution_contract.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean for the touched file set
+  - no exact unenforced continuation-seeding clause remains without guesswork
+    for the skill-first low-attention loop contract
+  - canonical current state prefers one mandatory continuation-seeding pass
+    over `FINAL_STOP` review whenever the active phase / milestone still remain
+    continuation-bearing
+- `next_if_clean`: rerun the active continuation-seeding pass and reopen one
+  exact seeded slice if canonical sources can now name one honestly
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in `docs/execution-model.md`,
+    `docs/current-state.md`, or the autoloop prompt/contract assets that keep
+    `FINAL_STOP` ahead of self-seeding
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface hardens the autonomous loop's continuation behavior without
+  widening released runtime scope
+- it remains below `pageReadyObserved`
+- it turns the low-attention loop into a task seeder as well as a task
+  executor, which is required for continuous autonomous implementation
