@@ -96,11 +96,11 @@
     },
     "history": [
         {
-            "kind": "checkpoint",
+            "kind": "milestone_summary",
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Rechecked the stop-state consistency gate against the canonical current-state, work-rag, queue PRD, repo adapter, execution contract, coverage ledger, and slice templates; the bounded adjacent-surface check only found already-covered helper surfaces, so no exact in-bounds slice reopened and FINAL_STOP remains the honest next action.",
+            "summary": "Compacted older same-scope checkpoints covering the transport-boundary reopen, docs-sufficiency maintenance, and prior stop-state verification passes; the canonical stop-state consistency gate was rechecked this session across docs/current-state.md, docs/product/work-rag.json, docs/product/prd-low-attention-implementation-queue.md, docs/llm/repo-autonomous-loop-adapter.yaml, docs/llm/low-attention-execution-contract.json, docs/llm/low-attention-coverage-ledger.json, and docs/llm/low-attention-slice-templates.json, and it still reopens no exact in-bounds slice below pageReadyObserved, so FINAL_STOP remains honest.",
             "evidence": [
                 "docs/current-state.md",
                 "docs/product/work-rag.json",
@@ -110,7 +110,7 @@
                 "docs/llm/low-attention-coverage-ledger.json",
                 "docs/llm/low-attention-slice-templates.json"
             ],
-            "recorded_at": "2026-03-25T00:21:03+09:00"
+            "recorded_at": "2026-03-25T00:22:50+09:00"
         },
         {
             "kind": "checkpoint",
@@ -142,262 +142,6 @@
                 "docs/llm/low-attention-coverage-ledger.json"
             ],
             "recorded_at": "2026-03-25T02:25:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Added an executable low-attention loop runner that repeatedly invokes `codex exec` from the canonical prompt plan, stores per-cycle last messages, and stops only on final-stop review or repeated no-progress signatures.",
-            "evidence": [
-                "scripts/run-low-attention-loop.sh",
-                "src/ez_ax/rag/autoloop_runner.py",
-                "tests/unit/test_autoloop_runner.py",
-                "tests/unit/test_bootstrap_assets.py"
-            ],
-            "recorded_at": "2026-03-25T02:05:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Promoted the active phase/milestone/anchor contract into a machine-readable execution-contract asset and taught the autoloop prompt driver to use that structured contract together with the coverage ledger, so lower-capacity runs no longer need markdown-table interpretation for active inputs, family ladder, or final-stop admissibility.",
-            "evidence": [
-                "docs/llm/low-attention-execution-contract.json",
-                "src/ez_ax/rag/execution_contract.py",
-                "src/ez_ax/rag/autoloop_prompt_driver.py",
-                "tests/unit/test_execution_contract.py",
-                "tests/unit/test_autoloop_prompt_driver.py",
-                "tests/unit/test_bootstrap_assets.py"
-            ],
-            "recorded_at": "2026-03-25T01:45:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Added a machine-readable coverage ledger and taught the autoloop prompt driver to prefer its earliest pending family over freeform `work-rag next_action`, so lower-capacity runs can select the next deterministic template-backed slice from canonical structured state alone.",
-            "evidence": [
-                "docs/llm/low-attention-coverage-ledger.json",
-                "src/ez_ax/rag/coverage_ledger.py",
-                "src/ez_ax/rag/autoloop_prompt_driver.py",
-                "tests/unit/test_autoloop_prompt_driver.py",
-                "tests/unit/test_slice_templates.py",
-                "tests/unit/test_bootstrap_assets.py"
-            ],
-            "recorded_at": "2026-03-25T01:20:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Reframed the autonomous contract around PRD-first continuation: execution-model and queue docs now define explicit anchor families, milestone completion criteria, heuristic family ladders, and continuation-seeding output rules so lower-capacity agents can derive the next slice from the active phase shape instead of depending on queue tail alone.",
-            "evidence": [
-                "docs/execution-model.md",
-                "docs/product/prd-low-attention-implementation-queue.md",
-                "docs/llm/repo-autonomous-loop-adapter.yaml",
-                "docs/product/work-rag.json",
-                ".venv/bin/python -m pytest -q tests/unit/test_bootstrap_assets.py tests/unit/test_autoloop_prompt_driver.py",
-                "python3 -m json.tool docs/product/work-rag.json",
-                "git diff --check"
-            ],
-            "recorded_at": "2026-03-25T00:50:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Promoted continuation seeding into the canonical low-attention loop: queue exhaustion no longer defaults to `FINAL_STOP` while the active phase and milestone still authorize one more deterministic one-commit slice below `pageReadyObserved`.",
-            "evidence": [
-                "docs/execution-model.md",
-                "docs/llm/repo-autonomous-loop-adapter.yaml",
-                "docs/product/prd-low-attention-implementation-queue.md",
-                ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
-                "docs/current-state.md",
-                "docs/product/work-rag.json"
-            ],
-            "recorded_at": "2026-03-25T00:35:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Closed Item 26 (`src/ez_ax/config/mcp_stdio.py`) as a focused validation-clean and gap-free in-bounds slice; the focused pytest, mypy, and ruff targets are clean and no exact PRD-backed in-bounds gap remains, so next_action moved to FINAL_STOP.",
-            "evidence": [
-                "docs/execution-model.md",
-                "docs/current-state.md",
-                "docs/product/prd-low-attention-implementation-queue.md",
-                "docs/product/work-rag.json",
-                "docs/product/rag.json",
-                "docs/llm/repo-autonomous-loop-adapter.yaml",
-                "docs/product/prd-python-mcp-client-acquisition.md",
-                "src/ez_ax/config/mcp_stdio.py",
-                "tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m mypy src/ez_ax/config/mcp_stdio.py",
-                ".venv/bin/python -m ruff check src/ez_ax/config/mcp_stdio.py tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py"
-            ],
-            "recorded_at": "2026-03-24T23:31:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Continuation-seeded one exact in-bounds omission after stop-state consistency gate by appending Item 26 (`src/ez_ax/config/mcp_stdio.py`) to the low-attention queue using the MCP acquisition PRD, then updated the current-state snapshot, adapter queue projection, and work-rag next_action so the next one-commit slice is nameable without reopening FINAL_STOP.",
-            "evidence": [
-                "docs/execution-model.md",
-                "docs/current-state.md",
-                "docs/product/prd-low-attention-implementation-queue.md",
-                "docs/llm/repo-autonomous-loop-adapter.yaml",
-                "docs/product/work-rag.json",
-                "docs/product/rag.json",
-                "src/ez_ax/config/mcp_stdio.py",
-                "tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_released_entrypoint.py",
-                ".venv/bin/python -m mypy src/ez_ax/graph/released_entrypoint.py",
-                ".venv/bin/python -m ruff check src/ez_ax/graph/released_entrypoint.py tests/unit/test_released_entrypoint.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_cli_entrypoint.py",
-                ".venv/bin/python -m mypy src/ez_ax/graph/modeled_mcp_cli_entrypoint.py",
-                ".venv/bin/python -m ruff check src/ez_ax/graph/modeled_mcp_cli_entrypoint.py tests/unit/test_modeled_mcp_cli_entrypoint.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint.py tests/unit/test_modeled_mcp_entrypoint_argv.py tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
-                ".venv/bin/python -m mypy src/ez_ax/graph/modeled_mcp_entrypoint.py",
-                ".venv/bin/python -m ruff check src/ez_ax/graph/modeled_mcp_entrypoint.py tests/unit/test_modeled_mcp_entrypoint.py tests/unit/test_modeled_mcp_entrypoint_argv.py tests/unit/test_modeled_mcp_entrypoint_argv_env.py"
-            ],
-            "recorded_at": "2026-03-24T23:18:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Added a repeatable autoloop prompt driver so repeated operator commands can keep momentum without hand-editing prompts: the new planner emits implementation mode for concrete slices and continuation-seeding mode whenever `work-rag` records `FINAL_STOP`.",
-            "evidence": [
-                "src/ez_ax/rag/autoloop_prompt_driver.py",
-                "scripts/print-autoloop-command.py",
-                "tests/unit/test_autoloop_prompt_driver.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_autoloop_prompt_driver.py tests/unit/test_bootstrap_assets.py",
-                ".venv/bin/python -m mypy src/ez_ax/rag/autoloop_prompt_driver.py tests/unit/test_autoloop_prompt_driver.py",
-                ".venv/bin/python -m ruff check src/ez_ax/rag/autoloop_prompt_driver.py tests/unit/test_autoloop_prompt_driver.py scripts/print-autoloop-command.py",
-                "scripts/print-autoloop-command.py",
-                "docs/product/work-rag.json"
-            ],
-            "recorded_at": "2026-03-25T00:10:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Ran the full exhaustion protocol from FINAL_STOP condition: one bounded resume-search pass, one queue-extension heuristic pass, final exact-gap re-evaluation, and stop-state consistency gate with bounded adjacent helper-surface checks; all focused pytest/mypy/ruff targets were clean and no exact in-bounds PRD-backed candidate was discovered.",
-            "evidence": [
-                "docs/execution-model.md",
-                "docs/current-state.md",
-                "docs/product/work-rag.json",
-                "docs/product/rag.json",
-                "docs/product/prd-low-attention-implementation-queue.md",
-                "docs/llm/repo-autonomous-loop-adapter.yaml",
-                ".venv/bin/python -m pytest -q tests/unit/test_released_call_site.py",
-                ".venv/bin/python -m mypy src/ez_ax/graph/released_call_site.py",
-                ".venv/bin/python -m ruff check src/ez_ax/graph/released_call_site.py tests/unit/test_released_call_site.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_released_run_root.py",
-                ".venv/bin/python -m mypy src/ez_ax/graph/released_run_root.py",
-                ".venv/bin/python -m ruff check src/ez_ax/graph/released_run_root.py tests/unit/test_released_run_root.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py",
-                ".venv/bin/python -m mypy src/ez_ax/graph/langgraph_released_execution.py",
-                ".venv/bin/python -m ruff check src/ez_ax/graph/langgraph_released_execution.py tests/unit/test_langgraph_released_execution.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_adapter_contract.py",
-                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/client.py",
-                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/client.py tests/unit/test_openclaw_adapter_contract.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_execution_wrapper.py",
-                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/execution.py",
-                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/execution.py tests/unit/test_openclaw_execution_wrapper.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
-                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_adapter.py",
-                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_adapter.py tests/unit/test_openclaw_mcp_adapter.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_client.py",
-                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_stdio_client.py",
-                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_stdio_client.py tests/unit/test_openclaw_mcp_stdio_client.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m mypy src/ez_ax/config/mcp_stdio.py",
-                ".venv/bin/python -m ruff check src/ez_ax/config/mcp_stdio.py tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_settings.py",
-                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_settings.py",
-                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_settings.py tests/unit/test_openclaw_mcp_settings.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py",
-                ".venv/bin/python -m mypy src/ez_ax/config/settings.py",
-                ".venv/bin/python -m ruff check src/ez_ax/config/settings.py tests/unit/test_runtime_settings.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m mypy src/ez_ax/graph/released_entrypoint.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_released_entrypoint.py",
-                ".venv/bin/python -m ruff check src/ez_ax/graph/released_entrypoint.py tests/unit/test_released_entrypoint.py",
-                ".venv/bin/python -m mypy src/ez_ax/graph/modeled_mcp_cli_entrypoint.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_cli_entrypoint.py",
-                ".venv/bin/python -m ruff check src/ez_ax/graph/modeled_mcp_cli_entrypoint.py tests/unit/test_modeled_mcp_cli_entrypoint.py",
-                ".venv/bin/python -m mypy src/ez_ax/graph/modeled_mcp_entrypoint.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint_argv.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
-                ".venv/bin/python -m ruff check src/ez_ax/graph/modeled_mcp_entrypoint.py tests/unit/test_modeled_mcp_entrypoint.py tests/unit/test_modeled_mcp_entrypoint_argv.py tests/unit/test_modeled_mcp_entrypoint_argv_env.py"
-            ],
-            "recorded_at": "2026-03-24T23:13:58+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Hardened the autoloop against premature stop states by requiring a stop-state consistency gate before honoring `FINAL_STOP`; the gate now cross-checks current-state, work-rag, the queue PRD, and the repo adapter, then runs one bounded adjacent-surface completion check for omitted helper-family slices.",
-            "evidence": [
-                "docs/execution-model.md",
-                ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
-                "docs/llm/repo-autonomous-loop-adapter.yaml",
-                "docs/product/prd-low-attention-implementation-queue.md",
-                "docs/product/work-rag.json",
-                ".venv/bin/python -m pytest -q tests/unit/test_bootstrap_assets.py",
-                "git diff --check"
-            ],
-            "recorded_at": "2026-03-24T23:45:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Closed Item 25 modeled argv+env entrypoint validation: focused pytest, mypy, and ruff were clean for modeled_mcp_entrypoint argv+env composition, and the runtime-layout PRD revealed no exact user-facing entrypoint clause gap, so the queue returns to FINAL_STOP with explicit exhaustion grounds.",
-            "evidence": [
-                "docs/product/prd-python-runtime-layout.md",
-                "src/ez_ax/graph/modeled_mcp_entrypoint.py",
-                "tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
-                ".venv/bin/python -m mypy src/ez_ax/graph/modeled_mcp_entrypoint.py",
-                ".venv/bin/python -m ruff check src/ez_ax/graph/modeled_mcp_entrypoint.py tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
-                "docs/product/work-rag.json"
-            ],
-            "recorded_at": "2026-03-24T23:06:49+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Reopened the low-attention queue with Item 25 after identifying one omitted PRD-backed modeled helper surface: the argv+env user-facing composition entrypoint in `src/ez_ax/graph/modeled_mcp_entrypoint.py` still needs its own deterministic input-resolution slice below `pageReadyObserved`.",
-            "evidence": [
-                "docs/product/prd-python-runtime-layout.md",
-                "docs/product/prd-low-attention-implementation-queue.md",
-                "docs/current-state.md",
-                "docs/llm/repo-autonomous-loop-adapter.yaml",
-                "src/ez_ax/graph/modeled_mcp_entrypoint.py",
-                "tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
-                "docs/product/work-rag.json"
-            ],
-            "recorded_at": "2026-03-24T23:20:00+09:00"
         },
         {
             "kind": "milestone_summary",
@@ -1267,24 +1011,6 @@
                 "docs/product/work-rag.json"
             ],
             "recorded_at": "2026-03-23T23:06:09+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Realigned the canonical OpenClaw adapter contract around an explicit transport-neutral injected boundary protocol in `src/ez_ax/adapters/openclaw/client.py`, kept the focused Item 27 validation bundle green, and refreshed the active coverage ledger/current-state snapshot so the OpenClaw transport-boundary family is covered and stop-state review is the next honest continuation step.",
-            "evidence": [
-                "src/ez_ax/adapters/openclaw/client.py",
-                "tests/unit/test_openclaw_adapter_contract.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_adapter_contract.py",
-                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/client.py",
-                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/client.py tests/unit/test_openclaw_adapter_contract.py",
-                "docs/llm/low-attention-coverage-ledger.json",
-                "docs/current-state.md",
-                "docs/product/work-rag.json"
-            ],
-            "recorded_at": "2026-03-25T00:18:36+09:00"
         }
     ]
 }
