@@ -614,7 +614,7 @@ Why in-bounds:
   - focused pytest, mypy, and ruff are clean
   - no exact unenforced user-facing entrypoint input-resolution clause remains
     without guesswork for the modeled argv+env helper
-- `next_if_clean`: final stop
+- `next_if_clean`: Item 26
 - `next_if_fail`:
   - fix the smallest safe one-commit slice in
     `src/ez_ax/graph/modeled_mcp_entrypoint.py`
@@ -631,6 +631,29 @@ Why in-bounds:
   missing
 - it hardens deterministic entrypoint composition without widening browser-
   facing authority or presenting modeled behavior as released behavior
+
+### Item 26 — MCP Stdio Configuration Contract for Injected Client Acquisition
+
+- `file_group`: `src/ez_ax/config/mcp_stdio.py`
+- `tests`: `tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`
+- `first_prd`: `docs/product/prd-python-mcp-client-acquisition.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean
+  - no exact unenforced MCP stdio acquisition contract clause remains for released
+    graph injection shaping
+- `next_if_clean`: final stop
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in `src/ez_ax/config/mcp_stdio.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface is in-scope for the explicit MCP-client acquisition PRD and feeds
+  released graph-path injection only
+- it remains below `pageReadyObserved`
+- it does not introduce concrete transport behavior into released wiring
 
 ## Final Queue Stop
 

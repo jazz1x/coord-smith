@@ -96,20 +96,16 @@ and then one full documented heuristic-catalog sweep before accepting final
 stop.
 
 At the current state snapshot, the documented queue has already closed through
-Item 24, but one exact PRD-backed modeled helper surface was omitted from the
+Item 25, but one exact PRD-backed in-bounds surface was omitted from the
 documented continuation path.
 
 The next continuation step is therefore:
 
-- reopen the queue with Item 25 for
-  `src/ez_ax/graph/modeled_mcp_entrypoint.py` using
-  `tests/unit/test_modeled_mcp_entrypoint_argv_env.py`
-- treat this as modeled-only helper hardening for the user-facing argv+env
-  composition path that still stops at `pageReadyObserved`
-- keep the slice explicitly labeled modeled-only and do not describe it as
-  released-scope expansion
-- accept `FINAL_STOP` only if Item 25 also closes honestly and no exact
-  remaining documented queue item stays below the current released ceiling
+- reopen the queue with Item 26 for
+  `src/ez_ax/config/mcp_stdio.py` using
+  `tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py`
+- treat this as an in-bounds continuation-seeding slice for the explicit MCP
+  client acquisition contract feeding released-graph injection
 
 ## Consultation Context
 
