@@ -20,9 +20,9 @@
     },
     {
       "family": "released OpenClaw transport-boundary family",
-      "status": "pending",
-      "evidence_or_reason": "the active PRD truth is transport-agnostic while the queue/history remain MCP-centered, so the next slice should realign the injected OpenClaw boundary contract and demote MCP to optional reference transport",
-      "next_slice_hint": "reopen queue with Item 27 for src/ez_ax/adapters/openclaw/client.py and tests/unit/test_openclaw_adapter_contract.py",
+      "status": "covered",
+      "evidence_or_reason": "the canonical OpenClaw adapter contract now exposes an explicit transport-neutral injected boundary protocol in client.py, and the focused Item 27 validation bundle stayed green",
+      "next_slice_hint": "none",
       "template_id": ""
     },
     {

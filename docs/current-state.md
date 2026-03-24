@@ -99,11 +99,12 @@ pass across the released-scope file groups listed in `docs/execution-model.md`
 and then one full documented heuristic-catalog sweep before accepting final
 stop.
 
-At the current state snapshot, the documented queue has resolved through Item 26
+At the current state snapshot, the documented queue has resolved through Item 27
 and the docs-sufficiency maintenance slice has also closed.
 
-The documented next continuation step is therefore `FINAL_STOP` review, not
-generic continuation seeding.
+The transport-boundary family is now covered in the machine-readable coverage
+ledger, so the documented next continuation step is `FINAL_STOP` review rather
+than a reopened queue slice.
 
 That review must still read the machine-readable execution contract and
 coverage ledger first, then honor `FINAL_STOP` only if no exact in-bounds
@@ -120,7 +121,7 @@ Canonical machine-readable ledger:
 | --- | --- | --- | --- |
 | released graph wiring and call-sites | covered | released graph call-site and run-root surfaces already have queue and resume-search coverage evidence | none |
 | released entrypoint / CLI / input family | covered | released entrypoint, CLI shim, and released input resolution already closed as queue slices | none |
-| released OpenClaw transport-boundary family | pending | the core PRD now treats OpenClaw as transport-agnostic while the current queue/history is still phrased mainly around MCP-backed scaffolding, so one follow-on slice should realign the active adapter contract surface around the injected boundary first and treat MCP as optional reference transport only | reopen queue with Item 27 transport-neutral OpenClaw adapter contract |
+| released OpenClaw transport-boundary family | covered | the canonical OpenClaw adapter contract now exposes an explicit transport-neutral injected boundary protocol in `src/ez_ax/adapters/openclaw/client.py`, and the focused Item 27 validation bundle stayed green | none |
 | released evidence / reporting / comparability family | covered | evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices | none |
 | typed mission / error / memory helper family | covered | mission mapping, typed errors, and RAG path helper surfaces already closed as queue slices | none |
 | modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |

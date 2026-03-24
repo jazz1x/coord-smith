@@ -1,4 +1,4 @@
-"""OpenClaw adapter protocol for browser-facing execution."""
+"""Transport-neutral injected boundary contract for OpenClaw execution."""
 
 import json
 from dataclasses import dataclass
@@ -29,12 +29,16 @@ class OpenClawExecutionResult:
     evidence_refs: tuple[str, ...]
 
 
-class OpenClawAdapter(Protocol):
-    """Protocol for the only browser-facing runtime actor."""
+class OpenClawInvocationBoundary(Protocol):
+    """Transport-neutral injected boundary for OpenClaw execution."""
 
     async def execute(
         self, request: OpenClawExecutionRequest
     ) -> OpenClawExecutionResult: ...
+
+
+class OpenClawAdapter(OpenClawInvocationBoundary, Protocol):
+    """Canonical alias for the injected OpenClaw execution boundary."""
 
 
 def validate_openclaw_mission_name(mission_name: str) -> None:

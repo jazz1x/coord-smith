@@ -32,7 +32,7 @@
         "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
         "anchor": "pythonRuntimeBootstrapCreated",
         "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-        "next_action": "Execute Item 27 from `docs/product/prd-low-attention-implementation-queue.md`: realign the canonical OpenClaw adapter contract around the transport-neutral injected boundary in `src/ez_ax/adapters/openclaw/client.py`, with focused validation `.venv/bin/python -m pytest -q tests/unit/test_openclaw_adapter_contract.py`.",
+        "next_action": "FINAL_STOP review: the OpenClaw transport-boundary family is covered, and the next step is to reopen only if a new exact in-bounds slice is documented in the canonical queue or PRD set.",
         "approved_scope_ceiling": "pageReadyObserved",
         "references": [
             "AGENTS.md",
@@ -1250,6 +1250,24 @@
                 "docs/product/work-rag.json"
             ],
             "recorded_at": "2026-03-23T23:06:09+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Realigned the canonical OpenClaw adapter contract around an explicit transport-neutral injected boundary protocol in `src/ez_ax/adapters/openclaw/client.py`, kept the focused Item 27 validation bundle green, and refreshed the active coverage ledger/current-state snapshot so the OpenClaw transport-boundary family is covered and stop-state review is the next honest continuation step.",
+            "evidence": [
+                "src/ez_ax/adapters/openclaw/client.py",
+                "tests/unit/test_openclaw_adapter_contract.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_adapter_contract.py",
+                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/client.py",
+                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/client.py tests/unit/test_openclaw_adapter_contract.py",
+                "docs/llm/low-attention-coverage-ledger.json",
+                "docs/current-state.md",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-25T00:18:36+09:00"
         }
     ]
 }
