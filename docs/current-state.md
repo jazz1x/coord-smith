@@ -97,9 +97,19 @@ stop.
 
 At the current state snapshot, the documented queue has resolved through Item 26.
 
-The documented next continuation step is therefore `FINAL_STOP` unless a new
-exact in-bounds queue extension or PRD-backed gap is introduced by the next
-continuation gate cycle.
+The documented next continuation step is therefore not immediate `FINAL_STOP`
+but one continuation-seeding pass for the active phase / milestone / anchor.
+
+That pass must try to produce exactly one new deterministic one-commit slice
+by preferring:
+
+- omitted same-family helper or validation surfaces already on disk
+- omitted same-anchor support modules already imported by active queue items
+- one docs-sufficiency slice that makes the next implementation task
+  mechanically nameable
+
+Only if that continuation-seeding pass also exhausts honestly may the next
+cycle accept `FINAL_STOP`.
 
 ## Consultation Context
 

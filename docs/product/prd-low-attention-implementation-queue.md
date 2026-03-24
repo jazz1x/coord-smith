@@ -13,6 +13,8 @@ It exists so an agent can determine, without guesswork:
 - which PRD to scan first for an exact contract gap
 - when to implement a one-commit slice versus advance to the next queue item
 - when the queue is honestly exhausted
+- how to seed exactly one next slice before true stop when the phase remains
+  active
 
 This PRD is subordinate to:
 
@@ -71,7 +73,9 @@ Queue rule:
 - the agent must not skip ahead unless the current queue item reaches its
   `next_if_clean` condition honestly
 - after the documented queue is exhausted, the agent may run exactly one
-  canonical queue-extension heuristic pass before accepting final stop
+  canonical queue-extension heuristic pass before continuation seeding
+- after the heuristic pass is exhausted, the agent must run exactly one
+  continuation-seeding pass before accepting final stop
 - doc-only edits whose only purpose is to restate or align `FINAL_STOP` are not
   valid queue items unless the user explicitly requested stop-state cleanup
 
@@ -668,7 +672,8 @@ Exhaustion protocol gate order:
 1. run exactly one bounded resume-search pass below `pageReadyObserved`
 2. run exactly one queue-extension heuristic pass for the exhaustion cycle
 3. run one final exact gap re-evaluation pass
-4. run one stop-state consistency gate
+4. run one continuation-seeding pass
+5. run one stop-state consistency gate
 
 Queue-extension heuristic gate:
 
@@ -747,6 +752,32 @@ Cycle-reset rule:
   queue exhaustion starts a new exhaustion cycle
 - each new honest exhaustion cycle reopens exactly one canonical queue-
   extension heuristic pass
+- if continuation seeding adds one valid queue item and that queue item later
+  closes honestly with validation, `work-rag` update, and commit, the next
+  queue exhaustion also starts a new exhaustion cycle
+
+Continuation-seeding pass:
+
+- this pass is mandatory while the current phase and milestone still authorize
+  low-attention continuation below `pageReadyObserved`
+- it may add at most one new queue item total for the exhaustion cycle
+- it must prefer:
+  1. omitted same-family helper surfaces already on disk
+  2. omitted same-anchor support surfaces already imported by active queue
+     items
+  3. one docs-sufficiency slice that makes the next implementation task
+     mechanically nameable
+- a valid seeded queue item must name:
+  - `file_group`
+  - `tests`
+  - `first_prd`
+  - `first_validation`
+  - `done_when`
+  - `next_if_clean`
+  - `next_if_fail`
+- if no seeded queue item can be named honestly, the pass must record that the
+  active phase / milestone context, queue PRD, and helper families were
+  checked and yielded no new exact in-bounds slice
 
 Stop-state consistency gate:
 
@@ -774,6 +805,8 @@ Final-stop rule:
   exhausted, lower-capacity autonomous implementation must stop
 - final stop is invalid if any documented heuristic candidate for the current
   exhaustion cycle has not yet completed the full validation-plus-clause scan
+- final stop is invalid if continuation seeding has not yet attempted to create
+  one new queue item for the active phase / milestone / anchor
 - final stop is also invalid if the stop-state consistency gate has not yet
   compared all required continuation sources or has not yet run the bounded
   adjacent-surface completion check

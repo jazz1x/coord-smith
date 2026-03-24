@@ -46,7 +46,7 @@ If any preflight check fails, task execution must stop.
 
 ## Low-Attention Loop
 
-Autonomous work is queue-driven rather than open-ended search.
+Autonomous work is phase-driven and queue-backed rather than open-ended search.
 
 Loop:
 
@@ -60,12 +60,16 @@ Loop:
 8. create one commit
 9. immediately select the next documented in-bounds action and continue the
    loop when one still exists
+10. if no documented action remains but the phase and milestone are still
+    active, run continuation seeding instead of accepting stop by default
 
 Continuous-loop rule:
 
 - one task per commit remains mandatory
 - a successful task close should normally hand off directly to the next
   documented queue item, failing artifact, clause gap, or heuristic candidate
+- documented queue exhaustion is not by itself a valid reason to stop while the
+  current phase and milestone still authorize low-attention continuation
 - do not pause merely because one bounded task finished cleanly
 - pause only when scope is blocked, validation is blocked, or the full
   exhaustion protocol is honestly complete
@@ -99,6 +103,7 @@ Continue-priority ladder:
 4. the current queue item's `next_if_clean` successor
 5. one canonical queue-extension heuristic pass for the current exhaustion
    cycle, only after documented exhaustion
+6. one continuation-seeding slice for the active phase / milestone / anchor
 
 ## Task Generation Rules
 
@@ -118,6 +123,17 @@ The following are forbidden:
 - multi-task bundling
 - doc-only rewrites whose only purpose is to restate, align, or justify
   `FINAL_STOP`
+
+Continuation-seeding tasks are valid only when all are true:
+
+- the documented queue and bounded heuristic surfaces are exhausted for the
+  current cycle
+- the current phase, milestone, and anchor still authorize continuation below
+  `pageReadyObserved`
+- the task produces exactly one new deterministic next slice for a
+  lower-capacity agent
+- the task updates canonical sources so the next cycle can name one exact
+  follow-on implementation or validation slice without guesswork
 
 ## Per-Item Execution Flow
 
@@ -154,7 +170,7 @@ the same session.
 Post-commit order:
 
 1. rewrite `work-rag.json` `current.next_action` to the next exact documented
-   queue item or heuristic candidate
+   queue item, heuristic candidate, or continuation-seeded slice
 2. restate the new `phase / milestone / anchor / invariant / next_action`
 3. continue into the next bounded slice without waiting for a new user prompt
 4. stop only if the next bounded slice would violate scope, lacks an honest
@@ -164,7 +180,8 @@ Post-commit guard:
 
 - "task closed successfully" is not by itself a valid stopping reason
 - if the next exact slice can already be named from documented queue order,
-  resume-search order, or heuristic catalog, continuation should proceed
+  resume-search order, heuristic catalog, or continuation-seeding output,
+  continuation should proceed
 - doc-only stop-state alignment is not a valid follow-on slice unless the user
   explicitly asked for stop-state cleanup
 
@@ -218,7 +235,8 @@ When the queue is exhausted, follow this order:
 1. one bounded resume-search pass
 2. one queue-extension heuristic pass for this exhaustion cycle
 3. one gap re-evaluation pass
-4. one stop-state consistency gate
+4. one continuation-seeding pass
+5. one stop-state consistency gate
 
 If no valid in-bounds PRD clause gap remains, final stop stands.
 
@@ -232,6 +250,9 @@ Final-stop alignment guard:
   queue but is directly backed by an exact PRD clause and focused validation can
   be named honestly, the agent should document and execute that slice before
   accepting `FINAL_STOP`
+- if the current phase and milestone still define continuation work below
+  `pageReadyObserved`, the agent must prefer one continuation-seeding slice
+  over immediate final stop
 
 ### Stop-State Resume Search
 
@@ -363,6 +384,66 @@ Heuristic-stop guard:
 - "single heuristic pass exhausted" means the documented candidate ladder was
   traversed completely, not that only one candidate was sampled
 
+## Continuation Seeding
+
+When the documented queue, bounded resume-search pass, and heuristic catalog are
+all exhausted for the active cycle, the agent must run exactly one
+continuation-seeding pass before honoring `FINAL_STOP`.
+
+Purpose:
+
+- keep low-attention autonomous implementation moving by converting active
+  phase / milestone / anchor context into one new deterministic one-commit
+  slice
+
+Continuation-seeding rule:
+
+- this pass is mandatory while the current phase and milestone remain active
+- the pass may seed at most one new slice per exhaustion cycle
+- the seeded slice must remain below `pageReadyObserved`
+- the seeded slice must be one-task-per-commit safe
+- the seeded slice must either:
+  - add one new queue item for an omitted in-bounds surface already present in
+    the repo, or
+  - add one docs-sufficiency improvement that makes the next implementation
+    slice deterministically nameable from canonical sources
+
+Canonical seeding inputs:
+
+1. current `phase / milestone / anchor / invariant`
+2. `docs/current-state.md`
+3. `docs/product/work-rag.json`
+4. `docs/product/rag.json`
+5. the governing PRD for the most recently closed queue item or helper family
+
+Seed candidate priority:
+
+1. omitted same-family helper or validation surfaces already on disk
+2. omitted same-anchor support modules already imported by active queue items
+3. docs-sufficiency gaps that prevent a lower-capacity agent from naming the
+   next one-commit slice even though the phase remains active
+
+Seeding output contract:
+
+- one seeded slice must name:
+  - `file_group`
+  - `first_prd`
+  - `first_validation`
+  - `done_when`
+  - `next_if_clean`
+  - `next_if_fail`
+- if the seeded slice is docs-sufficiency only, it must also name the exact
+  implementation or validation slice it is making possible next
+- after seeding, `docs/current-state.md`, `docs/product/work-rag.json`, and any
+  queue-bearing source must be updated in the same task close
+
+Seeding-stop guard:
+
+- `FINAL_STOP` is invalid if continuation seeding has not yet run for the
+  current exhaustion cycle
+- `FINAL_STOP` is invalid if continuation seeding can still name one exact
+  one-commit slice without guesswork
+
 ## Stop-State Consistency Gate
 
 Before honoring `FINAL_STOP`, the agent must verify that the repository's
@@ -444,6 +525,7 @@ Declare final stop only when all are true:
 - queue is exhausted
 - one bounded resume-search pass is exhausted
 - one queue-extension heuristic pass for the exhaustion cycle is exhausted
+- one continuation-seeding pass for the exhaustion cycle is exhausted
 - one stop-state consistency gate is exhausted
 - no exact PRD-backed in-bounds clause gap remains
 

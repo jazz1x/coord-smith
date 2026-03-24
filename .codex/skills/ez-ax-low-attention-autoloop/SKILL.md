@@ -16,7 +16,8 @@ Execute bounded autonomous continuation under the active PRD contract:
 - never violate OpenClaw-only browser boundary
 - never do speculative expansion
 - enforce one-task-per-commit
-- stop honestly with `FINAL_STOP` when gap-free
+- stop honestly with `FINAL_STOP` only after continuation seeding is also
+  exhausted
 
 ## Read First (Every Cycle)
 
@@ -62,7 +63,8 @@ Continuous-loop bias:
 
 - one-task-per-commit does not mean one-task-per-session
 - after each successful commit, prefer continuing into the next documented
-  queue item, resume-search file group, or heuristic candidate
+  queue item, resume-search file group, heuristic candidate, or
+  continuation-seeded slice
 - do not stop just because one bounded task closed cleanly
 - `FINAL_STOP` is a last-resort exhaustion result, not the default closeout
 - doc-only edits whose only purpose is to align or restate `FINAL_STOP` are not
@@ -75,12 +77,16 @@ Continuous-loop bias:
   `docs/product/work-rag.json`,
   `docs/product/prd-low-attention-implementation-queue.md`, and
   `docs/llm/repo-autonomous-loop-adapter.yaml`
+- before honoring `FINAL_STOP`, run one continuation-seeding pass for the
+  active phase / milestone / anchor and try to produce one new deterministic
+  one-commit slice
 - as part of that gate, run one bounded adjacent-surface completion check for
   same-family helper surfaces such as `*_entrypoint.py`,
   `*_cli_entrypoint.py`, `*_argv.py`, and `*_argv_env.py`
 - declare `FINAL_STOP` directly only after the documented exhaustion protocol
-  and the stop-state consistency gate both fail to reopen one exact slice; do
-  not switch to `blocked` or ask for operator confirmation
+  plus continuation seeding and the stop-state consistency gate all fail to
+  reopen one exact slice; do not switch to `blocked` or ask for operator
+  confirmation
 
 ## Exhaustion and Stop Protocol
 
@@ -89,13 +95,15 @@ When queue appears exhausted, enforce this exact order:
 1. one bounded resume-search pass
 2. one queue-extension heuristic pass (max one new task from the documented catalog)
 3. one final exact gap re-evaluation pass
-4. one stop-state consistency gate
+4. one continuation-seeding pass
+5. one stop-state consistency gate
 
 Declare `FINAL_STOP` only when all are true:
 
 - queue exhausted
 - resume-search exhausted
 - queue-extension heuristic pass exhausted
+- continuation-seeding pass exhausted
 - stop-state consistency gate exhausted
 - no exact PRD-backed in-bounds gap remains
 
@@ -131,4 +139,4 @@ Always report in this compact shape:
 
 Use this short prompt in a new session:
 
-`Use $ez-ax-low-attention-autoloop. First quote the exact on-disk \`docs/product/work-rag.json\` \`current.next_action\` verbatim. If it names a concrete slice, execute that slice and do not output FINAL_STOP. If it says FINAL_STOP, do not stop immediately: first run the documented stop-state consistency gate across \`docs/current-state.md\`, \`docs/product/work-rag.json\`, \`docs/product/prd-low-attention-implementation-queue.md\`, and \`docs/llm/repo-autonomous-loop-adapter.yaml\`, including one bounded adjacent-surface completion check for same-family helper surfaces. Then run autonomous continuation in continuous guarded looping mode across consecutive one-commit slices. Treat FINAL_STOP as valid only as a last resort after the documented queue, bounded resume-search, full heuristic-catalog sweep, final exact gap re-evaluation, and stop-state consistency gate are all exhausted and you still cannot honestly name one exact next one-commit slice below pageReadyObserved.`
+`Use $ez-ax-low-attention-autoloop. First quote the exact on-disk \`docs/product/work-rag.json\` \`current.next_action\` verbatim. If it names a concrete slice, execute that slice and do not output FINAL_STOP. If it says FINAL_STOP, do not stop immediately: run continuation seeding for the active phase / milestone / anchor to try to create one new deterministic one-commit slice, then run the documented stop-state consistency gate across \`docs/current-state.md\`, \`docs/product/work-rag.json\`, \`docs/product/prd-low-attention-implementation-queue.md\`, and \`docs/llm/repo-autonomous-loop-adapter.yaml\`, including one bounded adjacent-surface completion check for same-family helper surfaces. Then run autonomous continuation in continuous guarded looping mode across consecutive one-commit slices. Treat FINAL_STOP as valid only as a last resort after the documented queue, bounded resume-search, full heuristic-catalog sweep, final exact gap re-evaluation, continuation seeding, and stop-state consistency gate are all exhausted and you still cannot honestly name one exact next one-commit slice below pageReadyObserved.`
