@@ -906,3 +906,31 @@ Why in-bounds:
 - it remains below `pageReadyObserved`
 - it keeps the skill-first execution surface aligned with the repo's
   structured continuation assets
+
+### Item 29 — Skill-Only AutoLoop Stop Contract
+
+- `file_group`: `.codex/skills/ez-ax-executable-autoloop/SKILL.md`
+- `tests`: `tests/unit/test_bootstrap_assets.py`
+- `first_prd`: `docs/execution-model.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_bootstrap_assets.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean for the touched file set
+  - no runner-specific stop or output language remains in the canonical
+    operator-facing executable autoloop skill contract
+  - the executable autoloop skill describes autonomous continuation in terms of
+    canonical state only, not internal runner mechanics
+- `next_if_clean`: rerun the active coverage-ledger check and reopen the next
+  exact in-bounds follow-on slice only if one still exists
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in
+    `.codex/skills/ez-ax-executable-autoloop/SKILL.md`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface hardens the skill-first autonomous contract without widening
+  released behavior
+- it remains below `pageReadyObserved`
+- it removes another source of non-canonical runner leakage from the
+  lower-capacity operator path

@@ -98,8 +98,8 @@ pass across the released-scope file groups listed in `docs/execution-model.md`
 and then one full documented heuristic-catalog sweep before accepting final
 stop.
 
-At the current state snapshot, the operator-entrypoint alignment slice has now
-closed honestly.
+At the current state snapshot, the skill-contract cleanup slice has now closed
+honestly.
 
 The documented next continuation step is therefore back to `FINAL_STOP` review.
 
@@ -122,7 +122,7 @@ Canonical machine-readable ledger:
 | released evidence / reporting / comparability family | covered | evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices | none |
 | typed mission / error / memory helper family | covered | mission mapping, typed errors, and RAG path helper surfaces already closed as queue slices | none |
 | modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |
-| docs-sufficiency family for lower-capacity continuation | covered | the generated prompt surface now uses `$ez-ax-executable-autoloop`, so the operator-facing skill contract and canonical continuation prompt agree | none |
+| docs-sufficiency family for lower-capacity continuation | covered | the operator-facing executable autoloop skill now describes stop/output behavior only in canonical continuation-state terms, without runner-specific leakage | none |
 
 ## Consultation Context
 

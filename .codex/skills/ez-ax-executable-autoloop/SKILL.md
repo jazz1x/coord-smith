@@ -43,8 +43,8 @@ when this skill is available.
    contract.
 4. Stop only when:
    - canonical state honestly reaches final-stop review, or
-   - repeated no-progress signatures appear in canonical continuation state, or
-   - the configured cycle limit is reached.
+   - canonical continuation state cannot reopen one exact in-bounds slice
+     without guesswork.
 
 ## Output Contract
 

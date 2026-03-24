@@ -49,7 +49,7 @@
     {
       "family": "docs-sufficiency family for lower-capacity continuation",
       "status": "covered",
-      "evidence_or_reason": "the generated prompt surface now uses $ez-ax-executable-autoloop, so the operator-facing skill contract and canonical continuation prompt agree",
+      "evidence_or_reason": "the operator-facing executable autoloop skill now describes stop/output behavior only in canonical continuation-state terms, without runner-specific leakage",
       "next_slice_hint": "none",
       "template_id": ""
     }
