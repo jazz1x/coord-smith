@@ -32,7 +32,7 @@
         "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
         "anchor": "pythonRuntimeBootstrapCreated",
         "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-        "next_action": "Begin the queue-extension heuristic pass (candidate 1) below `pageReadyObserved`: run `.venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py` for `src/ez_ax/config/mcp_stdio.py`, then focused mypy and ruff for `src/ez_ax/config/mcp_stdio.py` before scanning `docs/product/prd-python-mcp-client-acquisition.md` for one exact MCP stdio config clause gap.",
+        "next_action": "Continue the queue-extension heuristic pass (candidate 2) below `pageReadyObserved`: run `.venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_settings.py` for `src/ez_ax/adapters/openclaw/mcp_settings.py`, then focused mypy and ruff for `src/ez_ax/adapters/openclaw/mcp_settings.py` before scanning `docs/product/prd-openclaw-computer-use-runtime.md` for one exact MCP settings clause gap.",
         "approved_scope_ceiling": "pageReadyObserved",
         "references": [
             "AGENTS.md",
@@ -87,6 +87,23 @@
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Heuristic pass candidate 1 (MCP stdio config) validated cleanly: focused pytest, mypy, and ruff passed for `config/mcp_stdio`, and the MCP client acquisition PRD revealed no exact stdio config clause gap, so the heuristic sweep advances to MCP settings.",
+            "evidence": [
+                "docs/product/prd-python-mcp-client-acquisition.md",
+                "src/ez_ax/config/mcp_stdio.py",
+                "tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+                ".venv/bin/python -m mypy src/ez_ax/config/mcp_stdio.py",
+                ".venv/bin/python -m ruff check src/ez_ax/config/mcp_stdio.py tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-24T22:48:55+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
             "summary": "Completed the bounded resume-search pass for MCP stdio acquisition: focused pytest, mypy, and ruff were clean for `openclaw/mcp_stdio_client`, and the MCP client acquisition PRD revealed no exact stdio acquisition clause gap, so the resume-search exhausts and the heuristic queue-extension pass begins with the MCP stdio config surface.",
             "evidence": [
                 "docs/product/prd-python-mcp-client-acquisition.md",
@@ -100,21 +117,16 @@
             "recorded_at": "2026-03-24T22:47:57+09:00"
         },
         {
-            "kind": "checkpoint",
+            "kind": "milestone_summary",
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Completed the bounded resume-search pass for the MCP response envelope surface: focused pytest, mypy, and ruff were clean for `openclaw/mcp_adapter`, and the OpenClaw runtime PRD revealed no exact MCP response-envelope clause gap, so the resume-search advances to the MCP stdio acquisition file group.",
+            "summary": "Compacted older same-scope checkpoints covering earlier resume-search steps so only the newest raw checkpoints remain for continuation.",
             "evidence": [
-                "docs/product/prd-openclaw-computer-use-runtime.md",
-                "src/ez_ax/adapters/openclaw/mcp_adapter.py",
-                "tests/unit/test_openclaw_mcp_adapter.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_adapter.py",
-                ".venv/bin/python -m mypy src/ez_ax/adapters/openclaw/mcp_adapter.py",
-                ".venv/bin/python -m ruff check src/ez_ax/adapters/openclaw/mcp_adapter.py tests/unit/test_openclaw_mcp_adapter.py",
-                "docs/product/work-rag.json"
+                "docs/product/work-rag.json",
+                "docs/product/prd-python-mcp-client-acquisition.md"
             ],
-            "recorded_at": "2026-03-24T22:46:55+09:00"
+            "recorded_at": "2026-03-24T22:48:55+09:00"
         },
         {
             "kind": "milestone_summary",
