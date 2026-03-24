@@ -15,6 +15,7 @@ REQUIRED_BOOTSTRAP_ASSETS: tuple[str, ...] = (
     "docs/llm/low-attention-coverage-ledger.json",
     "docs/llm/low-attention-slice-templates.json",
     ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+    ".codex/skills/ez-ax-executable-autoloop/SKILL.md",
     "docs/llm/agents/contract-scope-guardian.md",
     "docs/llm/agents/assetization-pattern-promoter.md",
     "docs/codex-global-skills/ez-ax-task-slicer/SKILL.md",

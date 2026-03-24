@@ -100,6 +100,21 @@
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Promoted autonomous execution to a skill-first operator contract by adding a dedicated executable autoloop skill that wraps the validated runner, so users can invoke continuous implementation through a skill surface rather than a raw script command.",
+            "evidence": [
+                ".codex/skills/ez-ax-executable-autoloop/SKILL.md",
+                ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
+                "scripts/run-low-attention-loop.sh",
+                "src/ez_ax/validation/bootstrap.py",
+                "tests/unit/test_bootstrap_assets.py"
+            ],
+            "recorded_at": "2026-03-25T02:40:00+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
             "summary": "Reopened the low-attention queue after noticing that the active PRD truth is transport-agnostic while canonical current-state and queue wording still treated MCP as architectural truth; the next exact slice is now Item 27 to realign the injected OpenClaw boundary contract and demote MCP to an optional reference transport.",
             "evidence": [
                 "docs/product/prd-openclaw-computer-use-runtime.md",

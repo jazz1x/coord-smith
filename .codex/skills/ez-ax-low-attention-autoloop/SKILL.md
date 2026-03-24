@@ -5,8 +5,13 @@ description: Run the ez-ax low-attention autonomous implementation loop end-to-e
 
 # EZ-AX Low-Attention AutoLoop
 
-Use this as the single entry skill when a lower-capacity model should continue
-implementation safely without re-reading long operator prompts every cycle.
+Use this as the core implementation skill when a lower-capacity model should
+continue implementation safely without re-reading long operator prompts every
+cycle.
+
+If the user wants a skill-first executable entrypoint rather than a raw prompt
+or script, use `.codex/skills/ez-ax-executable-autoloop/SKILL.md` as the
+operator-facing launcher and treat this skill as the loop logic beneath it.
 
 ## Mission
 
