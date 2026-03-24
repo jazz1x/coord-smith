@@ -47,6 +47,24 @@ def _write_coverage_ledger(
     return path
 
 
+def _write_execution_contract(tmp_path: Path) -> Path:
+    path = tmp_path / "low-attention-execution-contract.json"
+    payload = {
+        "active_phase": "Phase",
+        "active_milestone": "Milestone",
+        "active_anchor": "Anchor",
+        "active_invariant": "Invariant",
+        "scope_ceiling": "pageReadyObserved",
+        "canonical_inputs": ["AGENTS.md", "docs/prd.md"],
+        "anchor_contract_families": ["family-a"],
+        "heuristic_family_ladder": ["ladder-a"],
+        "seeded_slice_requirements": ["seed-a"],
+        "final_stop_requirements": ["stop-a", "stop-b"],
+    }
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
 def test_build_autoloop_prompt_plan_uses_implementation_mode_for_concrete_slice(
     tmp_path: Path,
 ) -> None:
@@ -55,10 +73,12 @@ def test_build_autoloop_prompt_plan_uses_implementation_mode_for_concrete_slice(
         next_action="Run pytest for tests/unit/test_modeled_mcp_entrypoint.py",
     )
     coverage_ledger = _write_coverage_ledger(tmp_path, status="covered")
+    execution_contract = _write_execution_contract(tmp_path)
 
     plan = build_autoloop_prompt_plan(
         work_rag_path=work_rag,
         coverage_ledger_path=coverage_ledger,
+        execution_contract_path=execution_contract,
     )
 
     assert plan.mode == "implementation"
@@ -84,16 +104,19 @@ def test_build_autoloop_prompt_plan_expands_matched_slice_template(
         status="pending",
         template_id="docs_sufficiency_coverage_ledger_contract",
     )
+    execution_contract = _write_execution_contract(tmp_path)
 
     plan = build_autoloop_prompt_plan(
         work_rag_path=work_rag,
         coverage_ledger_path=coverage_ledger,
+        execution_contract_path=execution_contract,
     )
 
     assert plan.mode == "implementation"
     assert "docs_sufficiency_coverage_ledger_contract" in plan.prompt
     assert "Primary file group: src/ez_ax/validation/bootstrap.py" in plan.prompt
     assert "machine-readable source of truth" in plan.prompt
+    assert "phase `Phase`" in plan.prompt
 
 
 def test_build_autoloop_prompt_plan_prefers_pending_coverage_ledger_over_final_stop(
@@ -108,10 +131,12 @@ def test_build_autoloop_prompt_plan_prefers_pending_coverage_ledger_over_final_s
         status="pending",
         template_id="docs_sufficiency_coverage_ledger_contract",
     )
+    execution_contract = _write_execution_contract(tmp_path)
 
     plan = build_autoloop_prompt_plan(
         work_rag_path=work_rag,
         coverage_ledger_path=coverage_ledger,
+        execution_contract_path=execution_contract,
     )
 
     assert plan.mode == "implementation"
@@ -127,12 +152,15 @@ def test_build_autoloop_prompt_plan_uses_final_stop_review_when_no_pending_famil
         next_action="FINAL_STOP - queue exhausted",
     )
     coverage_ledger = _write_coverage_ledger(tmp_path, status="covered")
+    execution_contract = _write_execution_contract(tmp_path)
 
     plan = build_autoloop_prompt_plan(
         work_rag_path=work_rag,
         coverage_ledger_path=coverage_ledger,
+        execution_contract_path=execution_contract,
     )
 
     assert plan.mode == "final_stop_review"
     assert "coverage ledger has no pending family" in plan.prompt
     assert "stop-state consistency gate" in plan.prompt
+    assert "stop-a; stop-b" in plan.prompt

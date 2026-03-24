@@ -80,6 +80,7 @@ sources.
 
 Canonical machine-readable ledger path for the active phase:
 
+- `docs/llm/low-attention-execution-contract.json`
 - `docs/llm/low-attention-coverage-ledger.json`
 
 Required ledger fields per family:
@@ -105,6 +106,9 @@ Ledger rule:
   exhaustion wording
 - when the machine-readable ledger and readable summary disagree, the
   machine-readable ledger is the source of truth for next-slice selection
+- the machine-readable execution contract is the source of truth for active
+  phase, milestone, anchor, canonical inputs, family ladder, and final-stop
+  admissibility
 
 ## Milestone Completion Table
 

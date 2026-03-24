@@ -95,26 +95,21 @@ pass across the released-scope file groups listed in `docs/execution-model.md`
 and then one full documented heuristic-catalog sweep before accepting final
 stop.
 
-At the current state snapshot, the documented queue has resolved through Item 26.
+At the current state snapshot, the documented queue has resolved through Item 26
+and the docs-sufficiency maintenance slice has also closed.
 
-The documented next continuation step is therefore not immediate `FINAL_STOP`
-but one continuation-seeding pass for the active phase / milestone / anchor.
+The documented next continuation step is therefore `FINAL_STOP` review, not
+generic continuation seeding.
 
-That pass must try to produce exactly one new deterministic one-commit slice
-by preferring:
-
-- omitted same-family helper or validation surfaces already on disk
-- omitted same-anchor support modules already imported by active queue items
-- one docs-sufficiency slice that makes the next implementation task
-  mechanically nameable
-
-Only if that continuation-seeding pass also exhausts honestly may the next
-cycle accept `FINAL_STOP`.
+That review must still read the machine-readable execution contract and
+coverage ledger first, then honor `FINAL_STOP` only if no exact in-bounds
+slice is reopened by canonical sources.
 
 ## Active Anchor Coverage Ledger
 
 Canonical machine-readable ledger:
 
+- `docs/llm/low-attention-execution-contract.json`
 - `docs/llm/low-attention-coverage-ledger.json`
 
 | Family | Status | Evidence Or Reason | Next Slice Hint |

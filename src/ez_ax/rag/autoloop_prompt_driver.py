@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ez_ax.rag.coverage_ledger import COVERAGE_LEDGER_PATH, first_pending_family
+from ez_ax.rag.execution_contract import (
+    EXECUTION_CONTRACT_PATH,
+    load_execution_contract,
+)
 from ez_ax.rag.paths import WORK_RAG_PATH
 from ez_ax.rag.slice_templates import get_slice_template_by_id, match_slice_template
 
@@ -16,6 +20,10 @@ class AutoloopPromptPlan:
     mode: str
     next_action: str
     prompt: str
+
+
+def _canonical_input_summary(inputs: tuple[str, ...]) -> str:
+    return ", ".join(inputs)
 
 
 def _load_next_action(*, work_rag_path: Path) -> str:
@@ -70,18 +78,21 @@ def _template_prompt(
     template_id: str,
     next_action: str,
     family: str | None = None,
+    canonical_inputs: tuple[str, ...],
+    phase: str,
+    milestone: str,
+    anchor: str,
+    invariant: str,
 ) -> str:
     template = get_slice_template_by_id(template_id=template_id)
     if template is None:
         raise ValueError(f"unknown slice template id: {template_id}")
     resolved_family = family or template.family
     return (
-        "Use $ez-ax-low-attention-autoloop. Read AGENTS.md, docs/prd.md, "
-        "docs/execution-model.md, docs/current-state.md, "
-        "docs/product/work-rag.json, docs/product/rag.json, "
-        "docs/llm/repo-autonomous-loop-adapter.yaml, "
-        "docs/llm/low-attention-coverage-ledger.json, and "
-        "docs/llm/low-attention-slice-templates.json in order. Quote the "
+        "Use $ez-ax-low-attention-autoloop. Read canonical inputs in this "
+        f"exact order: {_canonical_input_summary(canonical_inputs)}. Restate "
+        f"phase `{phase}`, milestone `{milestone}`, anchor `{anchor}`, and "
+        f"invariant `{invariant}` before execution. Quote the "
         "exact on-disk docs/product/work-rag.json current.next_action "
         "verbatim. Then treat docs/llm/low-attention-coverage-ledger.json as "
         "the machine-readable source of truth for the active pending family "
@@ -96,9 +107,20 @@ def _template_prompt(
     )
 
 
-def _continuation_seed_prompt(*, next_action: str) -> str:
+def _continuation_seed_prompt(
+    *,
+    next_action: str,
+    canonical_inputs: tuple[str, ...],
+    phase: str,
+    milestone: str,
+    anchor: str,
+    invariant: str,
+) -> str:
     return (
-        "Use $ez-ax-low-attention-autoloop. The current cycle is in "
+        "Use $ez-ax-low-attention-autoloop. Read canonical inputs in this "
+        f"exact order: {_canonical_input_summary(canonical_inputs)}. Restate "
+        f"phase `{phase}`, milestone `{milestone}`, anchor `{anchor}`, and "
+        f"invariant `{invariant}` before execution. The current cycle is in "
         "continuation-seeding mode, not terminal stop mode. First execute the "
         "current next_action exactly as written. Then, if needed, run the "
         "documented stop-state consistency gate across docs/current-state.md, "
@@ -119,18 +141,28 @@ def _continuation_seed_prompt(*, next_action: str) -> str:
     )
 
 
-def _final_stop_review_prompt(*, next_action: str) -> str:
+def _final_stop_review_prompt(
+    *,
+    next_action: str,
+    canonical_inputs: tuple[str, ...],
+    phase: str,
+    milestone: str,
+    anchor: str,
+    invariant: str,
+    final_stop_requirements: tuple[str, ...],
+) -> str:
     return (
-        "Use $ez-ax-low-attention-autoloop. Read AGENTS.md, docs/prd.md, "
-        "docs/execution-model.md, docs/current-state.md, "
-        "docs/product/work-rag.json, docs/product/rag.json, "
-        "docs/llm/repo-autonomous-loop-adapter.yaml, "
-        "and docs/llm/low-attention-coverage-ledger.json in order. Quote the "
+        "Use $ez-ax-low-attention-autoloop. Read canonical inputs in this "
+        f"exact order: {_canonical_input_summary(canonical_inputs)}. Restate "
+        f"phase `{phase}`, milestone `{milestone}`, anchor `{anchor}`, and "
+        f"invariant `{invariant}` before execution. Quote the "
         "exact on-disk docs/product/work-rag.json current.next_action verbatim. "
         "The machine-readable coverage ledger has no pending family, so do not "
         "run generic continuation seeding. Instead, run the documented "
         "stop-state consistency gate and honor FINAL_STOP only if no exact "
-        "in-bounds slice is reopened by canonical sources. Current next_action: "
+        "in-bounds slice is reopened by canonical sources and all final-stop "
+        f"requirements remain true: {'; '.join(final_stop_requirements)}. "
+        "Current next_action: "
         f"{next_action}"
     )
 
@@ -139,7 +171,9 @@ def build_autoloop_prompt_plan(
     *,
     work_rag_path: Path = WORK_RAG_PATH,
     coverage_ledger_path: Path = COVERAGE_LEDGER_PATH,
+    execution_contract_path: Path = EXECUTION_CONTRACT_PATH,
 ) -> AutoloopPromptPlan:
+    contract = load_execution_contract(contract_path=execution_contract_path)
     next_action = _load_next_action(work_rag_path=work_rag_path)
     pending_family = first_pending_family(ledger_path=coverage_ledger_path)
     if pending_family is not None and pending_family.template_id:
@@ -150,6 +184,11 @@ def build_autoloop_prompt_plan(
                 template_id=pending_family.template_id,
                 next_action=next_action,
                 family=pending_family.family,
+                canonical_inputs=contract.canonical_inputs,
+                phase=contract.active_phase,
+                milestone=contract.active_milestone,
+                anchor=contract.active_anchor,
+                invariant=contract.active_invariant,
             ),
         )
 
@@ -157,14 +196,29 @@ def build_autoloop_prompt_plan(
         return AutoloopPromptPlan(
             mode="final_stop_review",
             next_action=next_action,
-            prompt=_final_stop_review_prompt(next_action=next_action),
+            prompt=_final_stop_review_prompt(
+                next_action=next_action,
+                canonical_inputs=contract.canonical_inputs,
+                phase=contract.active_phase,
+                milestone=contract.active_milestone,
+                anchor=contract.active_anchor,
+                invariant=contract.active_invariant,
+                final_stop_requirements=contract.final_stop_requirements,
+            ),
         )
 
     if "continuation-seeding pass" in next_action:
         return AutoloopPromptPlan(
             mode="continuation_seed",
             next_action=next_action,
-            prompt=_continuation_seed_prompt(next_action=next_action),
+            prompt=_continuation_seed_prompt(
+                next_action=next_action,
+                canonical_inputs=contract.canonical_inputs,
+                phase=contract.active_phase,
+                milestone=contract.active_milestone,
+                anchor=contract.active_anchor,
+                invariant=contract.active_invariant,
+            ),
         )
 
     return AutoloopPromptPlan(
