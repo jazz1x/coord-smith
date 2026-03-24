@@ -32,7 +32,7 @@
         "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
         "anchor": "pythonRuntimeBootstrapCreated",
         "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-        "next_action": "Continue the documented queue at Item 25 in `docs/product/prd-low-attention-implementation-queue.md`: run `.venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint_argv_env.py`, then focused mypy and ruff for `src/ez_ax/graph/modeled_mcp_entrypoint.py` before scanning `docs/product/prd-python-runtime-layout.md` for the exact user-facing entrypoint clause requiring deterministic CLI-then-env input resolution below `pageReadyObserved`.",
+        "next_action": "FINAL_STOP \u2014 Item 25 modeled argv+env entrypoint validation closed cleanly; documented queue exhausted, bounded resume-search exhausted, heuristic catalog exhausted, and final exact PRD-backed gap re-evaluation found no remaining in-bounds clause below pageReadyObserved.",
         "approved_scope_ceiling": "pageReadyObserved",
         "references": [
             "AGENTS.md",
@@ -89,6 +89,23 @@
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Closed Item 25 modeled argv+env entrypoint validation: focused pytest, mypy, and ruff were clean for modeled_mcp_entrypoint argv+env composition, and the runtime-layout PRD revealed no exact user-facing entrypoint clause gap, so the queue returns to FINAL_STOP with explicit exhaustion grounds.",
+            "evidence": [
+                "docs/product/prd-python-runtime-layout.md",
+                "src/ez_ax/graph/modeled_mcp_entrypoint.py",
+                "tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
+                ".venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
+                ".venv/bin/python -m mypy src/ez_ax/graph/modeled_mcp_entrypoint.py",
+                ".venv/bin/python -m ruff check src/ez_ax/graph/modeled_mcp_entrypoint.py tests/unit/test_modeled_mcp_entrypoint_argv_env.py",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-24T23:06:49+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
             "summary": "Reopened the low-attention queue with Item 25 after identifying one omitted PRD-backed modeled helper surface: the argv+env user-facing composition entrypoint in `src/ez_ax/graph/modeled_mcp_entrypoint.py` still needs its own deterministic input-resolution slice below `pageReadyObserved`.",
             "evidence": [
                 "docs/product/prd-python-runtime-layout.md",
@@ -102,37 +119,16 @@
             "recorded_at": "2026-03-24T23:20:00+09:00"
         },
         {
-            "kind": "checkpoint",
+            "kind": "milestone_summary",
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Completed the final exact gap re-evaluation: no remaining PRD-backed in-bounds clause gaps were found after the queue, resume-search list, and heuristic catalog were exhausted, so the current continuation state moves to FINAL_STOP with explicit exhaustion grounds.",
+            "summary": "Compacted older same-scope checkpoints covering earlier queue and exhaustion steps so only the newest raw checkpoints remain for continuation.",
             "evidence": [
-                "docs/product/prd-low-attention-implementation-queue.md",
-                "docs/execution-model.md",
-                "docs/product/prd-python-mcp-client-acquisition.md",
-                "docs/product/prd-openclaw-computer-use-runtime.md",
-                "docs/product/prd-python-langgraph-runtime.md",
-                "docs/product/prd-python-runtime-layout.md",
-                "docs/product/work-rag.json"
+                "docs/product/work-rag.json",
+                "docs/product/prd-low-attention-implementation-queue.md"
             ],
-            "recorded_at": "2026-03-24T22:53:22+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Heuristic pass candidate 5 (released-graph injection tests) validated cleanly: focused pytest, mypy, and ruff passed for `test_openclaw_mcp_stdio_released_graph_injection`, and the MCP client acquisition PRD revealed no exact injection clause gap, exhausting the heuristic catalog and triggering the final exact gap re-evaluation step.",
-            "evidence": [
-                "docs/product/prd-python-mcp-client-acquisition.md",
-                "tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m mypy tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                ".venv/bin/python -m ruff check tests/unit/test_openclaw_mcp_stdio_released_graph_injection.py",
-                "docs/product/work-rag.json"
-            ],
-            "recorded_at": "2026-03-24T22:52:39+09:00"
+            "recorded_at": "2026-03-24T23:06:49+09:00"
         },
         {
             "kind": "milestone_summary",
