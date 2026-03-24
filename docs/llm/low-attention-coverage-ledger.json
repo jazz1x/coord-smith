@@ -27,16 +27,16 @@
     },
     {
       "family": "released evidence / reporting / comparability family",
-      "status": "covered",
-      "evidence_or_reason": "evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices",
-      "next_slice_hint": "none",
+      "status": "pending",
+      "evidence_or_reason": "the loop advanced past Item 31 and reopened one exact checkpoint-typing slice from an existing focused mypy artifact in tests/unit/test_transition_checkpoint_collection.py",
+      "next_slice_hint": "Item 32 — Transition Checkpoint Typing Contract",
       "template_id": ""
     },
     {
       "family": "typed mission / error / memory helper family",
-      "status": "pending",
-      "evidence_or_reason": "the continuation-seeding pass reopened one exact runtime-state support surface imported by the runtime graph family; src/ez_ax/models/runtime.py still carries the next deterministic released-ceiling state hardening slice",
-      "next_slice_hint": "Item 31 — Runtime State Released-Ceiling Contract",
+      "status": "covered",
+      "evidence_or_reason": "the runtime-state support surface in src/ez_ax/models/runtime.py and tests/unit/test_runtime_state.py has already been consumed as Item 31 and no longer justifies leaving continuation pinned there",
+      "next_slice_hint": "none",
       "template_id": ""
     },
     {

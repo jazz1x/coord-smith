@@ -16,5 +16,5 @@ def test_first_pending_family_returns_runtime_state_family_for_repo_ledger() -> 
     pending = first_pending_family()
 
     assert pending is not None
-    assert pending.family == "typed mission / error / memory helper family"
-    assert pending.next_slice_hint == "Item 31 — Runtime State Released-Ceiling Contract"
+    assert pending.family == "released evidence / reporting / comparability family"
+    assert pending.next_slice_hint == "Item 32 — Transition Checkpoint Typing Contract"

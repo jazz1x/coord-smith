@@ -201,6 +201,7 @@ execution_rules:
     - src/ez_ax/graph/modeled_mcp_entrypoint.py
     - src/ez_ax/config/mcp_stdio.py
     - src/ez_ax/models/runtime.py
+    - tests/unit/test_transition_checkpoint_collection.py
 
 validation:
   floor:

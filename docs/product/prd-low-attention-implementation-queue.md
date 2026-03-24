@@ -998,3 +998,35 @@ Why in-bounds:
 - it remains below `pageReadyObserved`
 - it is an existing same-anchor support module already imported by the runtime
   graph family and has a focused validation target on disk
+
+### Item 32 — Transition Checkpoint Typing Contract
+
+- `file_group`: `tests/unit/test_transition_checkpoint_collection.py`
+- `tests`: `tests/unit/test_transition_checkpoint_collection.py`
+- `first_prd`: `docs/product/prd-e2e-orchestration.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_transition_checkpoint_collection.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean for
+    `tests/unit/test_transition_checkpoint_collection.py`,
+    `src/ez_ax/models/transition.py`, and `src/ez_ax/models/checkpoint.py`
+  - no exact unenforced typed checkpoint or transition-artifact clause remains
+    without guesswork for this focused validation family
+  - the checkpoint typing surface no longer stalls on an existing focused mypy
+    artifact
+- `next_if_clean`: rerun the active continuation-seeding pass and reopen the
+  next exact seeded slice only if canonical sources can still name one
+  honestly
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in
+    `tests/unit/test_transition_checkpoint_collection.py`,
+    `src/ez_ax/models/transition.py`, or `src/ez_ax/models/checkpoint.py`
+  - validate with the failing pytest/mypy target plus the narrowest applicable
+    lint check
+
+Why in-bounds:
+
+- this surface hardens typed checkpoint comparability and transition-artifact
+  validation only
+- it remains below `pageReadyObserved`
+- it was reopened mechanically from an existing focused mypy artifact rather
+  than from speculative search

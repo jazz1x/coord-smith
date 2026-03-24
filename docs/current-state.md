@@ -98,16 +98,17 @@ pass across the released-scope file groups listed in `docs/execution-model.md`
 and then one full documented heuristic-catalog sweep before accepting final
 stop.
 
-At the current state snapshot, the mandatory self-seeding contract slice has
-already been consumed to reopen one exact next implementation slice.
+At the current state snapshot, Item 31 has been consumed cleanly enough to
+advance continuation state rather than remain pinned in place.
 
-The documented next continuation step is now Item 31 for the runtime-state
-released-ceiling contract.
+The documented next continuation step is now Item 32 for the transition
+checkpoint typing contract.
 
-That item came from the loop's own continuation-seeding pass after canonical
-sources identified `src/ez_ax/models/runtime.py` and
-`tests/unit/test_runtime_state.py` as an omitted same-anchor support surface
-with an existing focused validation path.
+That item was reopened mechanically from an existing focused validation
+artifact after Item 31: `tests/unit/test_transition_checkpoint_collection.py`
+passes under pytest and ruff but still exposes one narrow mypy artifact, so
+the loop now has a concrete next implementation slice instead of repeating the
+Item 31 posture.
 
 ## Active Anchor Coverage Ledger
 
@@ -121,8 +122,8 @@ Canonical machine-readable ledger:
 | released graph wiring and call-sites | covered | released graph call-site and run-root surfaces already have queue and resume-search coverage evidence | none |
 | released entrypoint / CLI / input family | covered | released entrypoint, CLI shim, and released input resolution already closed as queue slices | none |
 | released OpenClaw transport-boundary family | covered | the canonical OpenClaw adapter contract now exposes an explicit transport-neutral injected boundary protocol in `src/ez_ax/adapters/openclaw/client.py`, and the focused Item 27 validation bundle stayed green | none |
-| released evidence / reporting / comparability family | covered | evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices | none |
-| typed mission / error / memory helper family | pending | the continuation-seeding pass reopened one exact runtime-state support surface imported by the runtime graph family; `src/ez_ax/models/runtime.py` and `tests/unit/test_runtime_state.py` now form Item 31 for released-ceiling state hardening | Item 31 — Runtime State Released-Ceiling Contract |
+| released evidence / reporting / comparability family | pending | the loop advanced past Item 31 and reopened one exact checkpoint-typing slice from an existing focused mypy artifact in `tests/unit/test_transition_checkpoint_collection.py` | Item 32 — Transition Checkpoint Typing Contract |
+| typed mission / error / memory helper family | covered | the runtime-state support surface in `src/ez_ax/models/runtime.py` and `tests/unit/test_runtime_state.py` has already been consumed as Item 31 and no longer justifies leaving current continuation pinned there | none |
 | modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |
 | docs-sufficiency family for lower-capacity continuation | covered | canonical current state now rewrites queue-tail exhaustion into one mandatory continuation-seeding pass, so lower-capacity agents do not treat queue exhaustion as terminal before the loop seeds its own next slice | none |
 
