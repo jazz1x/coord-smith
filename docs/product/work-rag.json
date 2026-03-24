@@ -32,7 +32,7 @@
         "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
         "anchor": "pythonRuntimeBootstrapCreated",
         "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-        "next_action": "Run the final exact gap re-evaluation below `pageReadyObserved`: confirm the documented queue, bounded resume-search list, and heuristic catalog contain no remaining exact PRD-backed clause gaps; if none remain, declare `FINAL_STOP` with explicit exhaustion grounds.",
+        "next_action": "FINAL_STOP \u2014 documented queue exhausted (Items 1\u201324), bounded resume-search exhausted (released_call_site through mcp_stdio_client), heuristic catalog exhausted (mcp_stdio config, mcp_settings, runtime settings, released assembly test, released-graph injection test), and final exact PRD-backed gap re-evaluation found no remaining in-bounds clause below pageReadyObserved.",
         "approved_scope_ceiling": "pageReadyObserved",
         "references": [
             "AGENTS.md",
@@ -87,6 +87,23 @@
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Completed the final exact gap re-evaluation: no remaining PRD-backed in-bounds clause gaps were found after the queue, resume-search list, and heuristic catalog were exhausted, so the current continuation state moves to FINAL_STOP with explicit exhaustion grounds.",
+            "evidence": [
+                "docs/product/prd-low-attention-implementation-queue.md",
+                "docs/execution-model.md",
+                "docs/product/prd-python-mcp-client-acquisition.md",
+                "docs/product/prd-openclaw-computer-use-runtime.md",
+                "docs/product/prd-python-langgraph-runtime.md",
+                "docs/product/prd-python-runtime-layout.md",
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-24T22:53:22+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
             "summary": "Heuristic pass candidate 5 (released-graph injection tests) validated cleanly: focused pytest, mypy, and ruff passed for `test_openclaw_mcp_stdio_released_graph_injection`, and the MCP client acquisition PRD revealed no exact injection clause gap, exhausting the heuristic catalog and triggering the final exact gap re-evaluation step.",
             "evidence": [
                 "docs/product/prd-python-mcp-client-acquisition.md",
@@ -99,20 +116,16 @@
             "recorded_at": "2026-03-24T22:52:39+09:00"
         },
         {
-            "kind": "checkpoint",
+            "kind": "milestone_summary",
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Heuristic pass candidate 4 (released assembly tests) validated cleanly: focused pytest, mypy, and ruff passed for `test_langgraph_released_assembly`, and the LangGraph runtime PRD revealed no exact released assembly clause gap, so the heuristic sweep advances to the released-graph injection test surface.",
+            "summary": "Compacted older same-scope checkpoints covering earlier heuristic steps so only the newest raw checkpoints remain for continuation.",
             "evidence": [
-                "docs/product/prd-python-langgraph-runtime.md",
-                "tests/unit/test_langgraph_released_assembly.py",
-                ".venv/bin/python -m pytest -q tests/unit/test_langgraph_released_assembly.py",
-                ".venv/bin/python -m mypy tests/unit/test_langgraph_released_assembly.py",
-                ".venv/bin/python -m ruff check tests/unit/test_langgraph_released_assembly.py",
-                "docs/product/work-rag.json"
+                "docs/product/work-rag.json",
+                "docs/product/prd-low-attention-implementation-queue.md"
             ],
-            "recorded_at": "2026-03-24T22:51:41+09:00"
+            "recorded_at": "2026-03-24T22:53:22+09:00"
         },
         {
             "kind": "milestone_summary",
