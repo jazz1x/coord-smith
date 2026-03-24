@@ -32,7 +32,7 @@
         "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
         "anchor": "pythonRuntimeBootstrapCreated",
         "invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-        "next_action": "Run one mandatory continuation-seeding pass for the active phase / milestone / anchor: use canonical state to seed exactly one deterministic one-commit slice before honoring FINAL_STOP, and update current-state, queue-bearing docs, and work-rag in the same task close if a new slice is found.",
+        "next_action": "Item 31 — Runtime State Released-Ceiling Contract: run `.venv/bin/python -m pytest -q tests/unit/test_runtime_state.py`, then `.venv/bin/python -m mypy src/ez_ax/models/runtime.py tests/unit/test_runtime_state.py`, then `.venv/bin/python -m ruff check src/ez_ax/models/runtime.py tests/unit/test_runtime_state.py`, and close the smallest safe one-commit slice in `src/ez_ax/models/runtime.py` or `tests/unit/test_runtime_state.py` if a focused validation artifact or exact PRD clause gap remains.",
         "approved_scope_ceiling": "pageReadyObserved",
         "references": [
             "AGENTS.md",
@@ -97,6 +97,22 @@
             "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
             "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
             "anchor": "pythonRuntimeBootstrapCreated",
+            "summary": "Consumed the mandatory self-seeding pass to reopen Item 31: the loop found one omitted same-anchor support surface in `src/ez_ax/models/runtime.py` with focused validation in `tests/unit/test_runtime_state.py`, so current continuation is back in concrete implementation mode instead of seeding mode.",
+            "evidence": [
+                "docs/current-state.md",
+                "docs/llm/low-attention-coverage-ledger.json",
+                "docs/llm/repo-autonomous-loop-adapter.yaml",
+                "docs/product/prd-low-attention-implementation-queue.md",
+                "tests/unit/test_runtime_state.py",
+                "src/ez_ax/models/runtime.py"
+            ],
+            "recorded_at": "2026-03-25T05:05:00+09:00"
+        },
+        {
+            "kind": "checkpoint",
+            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
+            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+            "anchor": "pythonRuntimeBootstrapCreated",
             "summary": "Closed Item 30 by promoting self-seeding into the canonical loop contract: queue-tail exhaustion now rewrites current.next_action into one mandatory continuation-seeding pass instead of FINAL_STOP review, so the executable autoloop can keep moving without operator reopening.",
             "evidence": [
                 "docs/execution-model.md",
@@ -107,78 +123,6 @@
                 "tests/unit/test_execution_contract.py"
             ],
             "recorded_at": "2026-03-25T04:25:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Closed Item 29 by removing runner-specific stop/output wording from the executable autoloop skill; the operator-facing contract now speaks only in canonical continuation-state terms, so the docs-sufficiency family returns to covered.",
-            "evidence": [
-                ".codex/skills/ez-ax-executable-autoloop/SKILL.md",
-                "docs/current-state.md",
-                "docs/llm/low-attention-coverage-ledger.json",
-                "tests/unit/test_bootstrap_assets.py"
-            ],
-            "recorded_at": "2026-03-25T03:55:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Reopened continuation again after identifying one exact skill-contract gap: the executable autoloop skill still leaked runner-specific stop/output language, so Item 29 now cleans that contract to keep the operator path fully skill-first and canonical-state driven.",
-            "evidence": [
-                ".codex/skills/ez-ax-executable-autoloop/SKILL.md",
-                "docs/current-state.md",
-                "docs/llm/low-attention-coverage-ledger.json",
-                "docs/product/prd-low-attention-implementation-queue.md"
-            ],
-            "recorded_at": "2026-03-25T03:45:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Closed Item 28 by aligning the generated autoloop prompt surface with the skill-first operator entrypoint: canonical launch prompts now use `$ez-ax-executable-autoloop`, so the docs-sufficiency family returns to covered and active-scope continuation can honestly rest on final-stop review again.",
-            "evidence": [
-                "src/ez_ax/rag/autoloop_prompt_driver.py",
-                "tests/unit/test_autoloop_prompt_driver.py",
-                "docs/current-state.md",
-                "docs/llm/low-attention-coverage-ledger.json"
-            ],
-            "recorded_at": "2026-03-25T03:25:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Removed runner-script language from the canonical operator path so the executable autoloop skill remains the only user-facing continuation entrypoint; scripts may still exist as internal utilities, but they are no longer part of the active contract surface.",
-            "evidence": [
-                ".codex/skills/ez-ax-executable-autoloop/SKILL.md",
-                "docs/current-state.md",
-                "docs/product/work-rag.json",
-                "src/ez_ax/validation/bootstrap.py",
-                "tests/unit/test_bootstrap_assets.py"
-            ],
-            "recorded_at": "2026-03-25T03:10:00+09:00"
-        },
-        {
-            "kind": "checkpoint",
-            "phase": "Phase R3 \u2014 Fresh Python Bootstrap",
-            "milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-            "anchor": "pythonRuntimeBootstrapCreated",
-            "summary": "Reopened continuation after finding one exact docs-sufficiency/operator-entrypoint gap: the repo declared a skill-first executable autoloop entrypoint, but the generated prompt surface still emitted the older core-loop skill name.",
-            "evidence": [
-                "src/ez_ax/rag/autoloop_prompt_driver.py",
-                "tests/unit/test_autoloop_prompt_driver.py",
-                "docs/current-state.md",
-                "docs/llm/low-attention-coverage-ledger.json",
-                "docs/product/prd-low-attention-implementation-queue.md"
-            ],
-            "recorded_at": "2026-03-25T02:55:00+09:00"
         },
         {
             "kind": "milestone_summary",

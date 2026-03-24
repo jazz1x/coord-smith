@@ -967,3 +967,34 @@ Why in-bounds:
 - it remains below `pageReadyObserved`
 - it turns the low-attention loop into a task seeder as well as a task
   executor, which is required for continuous autonomous implementation
+
+### Item 31 — Runtime State Released-Ceiling Contract
+
+- `file_group`: `src/ez_ax/models/runtime.py`
+- `tests`: `tests/unit/test_runtime_state.py`
+- `first_prd`: `docs/product/prd-langgraph-state-model.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_runtime_state.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean for `src/ez_ax/models/runtime.py`
+    and `tests/unit/test_runtime_state.py`
+  - no exact unenforced global run-state or released-ceiling clause remains
+    without guesswork for the runtime-state surface
+  - canonical runtime-state validation remains explicit about
+    `current_anchor`, `approved_scope_ceiling`, and released-vs-modeled scope
+    rejection below `pageReadyObserved`
+- `next_if_clean`: rerun the active continuation-seeding pass and reopen the
+  next exact seeded slice only if canonical sources can still name one
+  honestly
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in `src/ez_ax/models/runtime.py` or
+    `tests/unit/test_runtime_state.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface hardens released-scope runtime-state and ceiling enforcement
+  only
+- it remains below `pageReadyObserved`
+- it is an existing same-anchor support module already imported by the runtime
+  graph family and has a focused validation target on disk

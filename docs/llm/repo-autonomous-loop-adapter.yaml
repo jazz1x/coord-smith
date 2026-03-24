@@ -200,6 +200,7 @@ execution_rules:
     - src/ez_ax/graph/modeled_mcp_cli_entrypoint.py
     - src/ez_ax/graph/modeled_mcp_entrypoint.py
     - src/ez_ax/config/mcp_stdio.py
+    - src/ez_ax/models/runtime.py
 
 validation:
   floor:

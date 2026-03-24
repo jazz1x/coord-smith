@@ -99,15 +99,15 @@ and then one full documented heuristic-catalog sweep before accepting final
 stop.
 
 At the current state snapshot, the mandatory self-seeding contract slice has
-now closed honestly.
+already been consumed to reopen one exact next implementation slice.
 
-The documented next continuation step is now one mandatory
-continuation-seeding pass driven by the loop itself rather than `FINAL_STOP`
-review.
+The documented next continuation step is now Item 31 for the runtime-state
+released-ceiling contract.
 
-That pass must read the machine-readable execution contract and coverage
-ledger first, then seed exactly one deterministic next slice if canonical
-sources can still name one honestly.
+That item came from the loop's own continuation-seeding pass after canonical
+sources identified `src/ez_ax/models/runtime.py` and
+`tests/unit/test_runtime_state.py` as an omitted same-anchor support surface
+with an existing focused validation path.
 
 ## Active Anchor Coverage Ledger
 
@@ -122,7 +122,7 @@ Canonical machine-readable ledger:
 | released entrypoint / CLI / input family | covered | released entrypoint, CLI shim, and released input resolution already closed as queue slices | none |
 | released OpenClaw transport-boundary family | covered | the canonical OpenClaw adapter contract now exposes an explicit transport-neutral injected boundary protocol in `src/ez_ax/adapters/openclaw/client.py`, and the focused Item 27 validation bundle stayed green | none |
 | released evidence / reporting / comparability family | covered | evidence envelope, reporting summary, and checkpoint comparability already closed as in-bounds slices | none |
-| typed mission / error / memory helper family | covered | mission mapping, typed errors, and RAG path helper surfaces already closed as queue slices | none |
+| typed mission / error / memory helper family | pending | the continuation-seeding pass reopened one exact runtime-state support surface imported by the runtime graph family; `src/ez_ax/models/runtime.py` and `tests/unit/test_runtime_state.py` now form Item 31 for released-ceiling state hardening | Item 31 — Runtime State Released-Ceiling Contract |
 | modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |
 | docs-sufficiency family for lower-capacity continuation | covered | canonical current state now rewrites queue-tail exhaustion into one mandatory continuation-seeding pass, so lower-capacity agents do not treat queue exhaustion as terminal before the loop seeds its own next slice | none |
 

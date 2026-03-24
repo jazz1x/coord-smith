@@ -12,5 +12,9 @@ def test_load_coverage_ledger_includes_docs_sufficiency_family() -> None:
     )
 
 
-def test_first_pending_family_returns_none_when_repo_ledger_is_fully_covered() -> None:
-    assert first_pending_family() is None
+def test_first_pending_family_returns_runtime_state_family_for_repo_ledger() -> None:
+    pending = first_pending_family()
+
+    assert pending is not None
+    assert pending.family == "typed mission / error / memory helper family"
+    assert pending.next_slice_hint == "Item 31 — Runtime State Released-Ceiling Contract"

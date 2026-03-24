@@ -34,9 +34,9 @@
     },
     {
       "family": "typed mission / error / memory helper family",
-      "status": "covered",
-      "evidence_or_reason": "mission mapping, typed errors, and RAG path helper surfaces already closed as queue slices",
-      "next_slice_hint": "none",
+      "status": "pending",
+      "evidence_or_reason": "the continuation-seeding pass reopened one exact runtime-state support surface imported by the runtime graph family; src/ez_ax/models/runtime.py still carries the next deterministic released-ceiling state hardening slice",
+      "next_slice_hint": "Item 31 — Runtime State Released-Ceiling Contract",
       "template_id": ""
     },
     {
