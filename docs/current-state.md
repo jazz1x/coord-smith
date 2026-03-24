@@ -95,23 +95,21 @@ pass across the released-scope file groups listed in `docs/execution-model.md`
 and then one full documented heuristic-catalog sweep before accepting final
 stop.
 
-At the current state snapshot, the documented queue has been exhausted through
-Item 19 after continuous released-scope hardening.
+At the current state snapshot, the documented queue has already closed through
+Item 24, but one exact PRD-backed modeled helper surface was omitted from the
+documented continuation path.
 
 The next continuation step is therefore:
 
-- treat released-scope hardening below `pageReadyObserved` as exhausted for the
-  current queue
-- `src/ez_ax/graph/modeled_mcp_entrypoint.py` is now validated as the first
-  modeled-only helper continuation slice
-- continue autonomous work through the remaining documented modeled-only helper
-  entrypoint surface that still stops at `pageReadyObserved`:
-  - `src/ez_ax/graph/modeled_mcp_cli_entrypoint.py`
-- keep these slices explicitly labeled modeled-only and do not describe them as
+- reopen the queue with Item 25 for
+  `src/ez_ax/graph/modeled_mcp_entrypoint.py` using
+  `tests/unit/test_modeled_mcp_entrypoint_argv_env.py`
+- treat this as modeled-only helper hardening for the user-facing argv+env
+  composition path that still stops at `pageReadyObserved`
+- keep the slice explicitly labeled modeled-only and do not describe it as
   released-scope expansion
-- accept `FINAL_STOP` for this broader continuation path only if those
-  modeled-only helper slices also close honestly and no exact remaining
-  documented queue item stays below the current released ceiling
+- accept `FINAL_STOP` only if Item 25 also closes honestly and no exact
+  remaining documented queue item stays below the current released ceiling
 
 ## Consultation Context
 

@@ -604,6 +604,34 @@ Why in-bounds:
 - it hardens deterministic run-summary shaping without widening released scope
 - it remains Python-first and OpenClaw-boundary preserving
 
+### Item 25 — Modeled MCP Argv+Env Composition Entrypoint
+
+- `file_group`: `src/ez_ax/graph/modeled_mcp_entrypoint.py`
+- `tests`: `tests/unit/test_modeled_mcp_entrypoint_argv_env.py`
+- `first_prd`: `docs/product/prd-python-runtime-layout.md`
+- `first_validation`: `.venv/bin/python -m pytest -q tests/unit/test_modeled_mcp_entrypoint_argv_env.py`
+- `done_when`:
+  - focused pytest, mypy, and ruff are clean
+  - no exact unenforced user-facing entrypoint input-resolution clause remains
+    without guesswork for the modeled argv+env helper
+- `next_if_clean`: final stop
+- `next_if_fail`:
+  - fix the smallest safe one-commit slice in
+    `src/ez_ax/graph/modeled_mcp_entrypoint.py`
+  - validate with the failing pytest target plus the narrowest applicable type
+    or lint check
+
+Why in-bounds:
+
+- this surface is modeled-only but still invokes the released-scope sequence
+  and stops at `pageReadyObserved`
+- it directly exercises the explicit runtime-layout clause that any user-facing
+  entrypoint calling `run_released_scope` must resolve released inputs in
+  deterministic CLI-then-env order and fail fast when required values are
+  missing
+- it hardens deterministic entrypoint composition without widening browser-
+  facing authority or presenting modeled behavior as released behavior
+
 ## Final Queue Stop
 
 The documented low-attention implementation queue is exhausted only when:
