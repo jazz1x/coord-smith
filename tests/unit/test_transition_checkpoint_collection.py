@@ -149,8 +149,8 @@ def test_checkpoint_collection_allows_unknown_target_mission_stop_reason() -> No
 
 def test_build_transition_artifact_rejects_non_string_predecessor() -> None:
     try:
-        build_transition_artifact(  # type: ignore[arg-type]
-            predecessor_mission=123,
+        build_transition_artifact(
+            predecessor_mission=123,  # type: ignore[arg-type]
             target_mission="attach_session",
             allowed=True,
             stop_reason="none",

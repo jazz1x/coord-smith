@@ -14,6 +14,26 @@ from ez_ax.rag.execution_contract import (
 from ez_ax.rag.paths import WORK_RAG_PATH
 from ez_ax.rag.slice_templates import get_slice_template_by_id, match_slice_template
 
+_HISTORY_COMPRESSION_THRESHOLD = 3
+
+
+def _history_compression_warning(*, work_rag_path: Path) -> str:
+    """Return a compression warning if work-rag history exceeds threshold."""
+    payload = json.loads(work_rag_path.read_text(encoding="utf-8"))
+    history = payload.get("history")
+    if not isinstance(history, list):
+        return ""
+    count = len(history)
+    if count <= _HISTORY_COMPRESSION_THRESHOLD:
+        return ""
+    return (
+        f" COMPRESSION WARNING: work-rag.json history has {count} entries "
+        f"(threshold is {_HISTORY_COMPRESSION_THRESHOLD}). Before starting "
+        "implementation, compress the oldest same-scope checkpoints into one "
+        "summary and keep only the latest 2 raw checkpoints, as required by "
+        "docs/core-loop.md."
+    )
+
 
 @dataclass(frozen=True, slots=True)
 class AutoloopPromptPlan:
@@ -45,7 +65,7 @@ def _implementation_prompt(*, next_action: str) -> str:
     if template is not None:
         return (
             "Use $ez-ax-executable-autoloop. Read AGENTS.md, docs/prd.md, "
-            "docs/execution-model.md, docs/current-state.md, "
+            "docs/core-loop.md, docs/current-state.md, "
             "docs/product/work-rag.json, docs/product/rag.json, "
             "docs/llm/repo-autonomous-loop-adapter.yaml, and "
             "docs/llm/low-attention-slice-templates.json in order. Quote the "
@@ -63,7 +83,7 @@ def _implementation_prompt(*, next_action: str) -> str:
         )
     return (
         "Use $ez-ax-executable-autoloop. Read AGENTS.md, docs/prd.md, "
-        "docs/execution-model.md, docs/current-state.md, "
+        "docs/core-loop.md, docs/current-state.md, "
         "docs/product/work-rag.json, docs/product/rag.json, and "
         "docs/llm/repo-autonomous-loop-adapter.yaml in order. Quote the exact "
         "on-disk docs/product/work-rag.json current.next_action verbatim. "
@@ -175,6 +195,7 @@ def build_autoloop_prompt_plan(
 ) -> AutoloopPromptPlan:
     contract = load_execution_contract(contract_path=execution_contract_path)
     next_action = _load_next_action(work_rag_path=work_rag_path)
+    compression_suffix = _history_compression_warning(work_rag_path=work_rag_path)
     pending_family = first_pending_family(ledger_path=coverage_ledger_path)
     if pending_family is not None and pending_family.template_id:
         return AutoloopPromptPlan(
@@ -189,7 +210,8 @@ def build_autoloop_prompt_plan(
                 milestone=contract.active_milestone,
                 anchor=contract.active_anchor,
                 invariant=contract.active_invariant,
-            ),
+            )
+            + compression_suffix,
         )
 
     if next_action.startswith("FINAL_STOP"):
@@ -204,7 +226,8 @@ def build_autoloop_prompt_plan(
                 anchor=contract.active_anchor,
                 invariant=contract.active_invariant,
                 final_stop_requirements=contract.final_stop_requirements,
-            ),
+            )
+            + compression_suffix,
         )
 
     if "continuation-seeding pass" in next_action:
@@ -218,11 +241,12 @@ def build_autoloop_prompt_plan(
                 milestone=contract.active_milestone,
                 anchor=contract.active_anchor,
                 invariant=contract.active_invariant,
-            ),
+            )
+            + compression_suffix,
         )
 
     return AutoloopPromptPlan(
         mode="implementation",
         next_action=next_action,
-        prompt=_implementation_prompt(next_action=next_action),
+        prompt=_implementation_prompt(next_action=next_action) + compression_suffix,
     )

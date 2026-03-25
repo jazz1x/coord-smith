@@ -27,9 +27,9 @@
     },
     {
       "family": "released evidence / reporting / comparability family",
-      "status": "pending",
-      "evidence_or_reason": "the loop advanced past Item 31 and reopened one exact checkpoint-typing slice from an existing focused mypy artifact in tests/unit/test_transition_checkpoint_collection.py",
-      "next_slice_hint": "Item 32 — Transition Checkpoint Typing Contract",
+      "status": "covered",
+      "evidence_or_reason": "Item 32 closed: the focused mypy artifact in tests/unit/test_transition_checkpoint_collection.py was fixed (type: ignore moved to correct line)",
+      "next_slice_hint": "none",
       "template_id": ""
     },
     {

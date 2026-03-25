@@ -7,13 +7,17 @@ Codex and other repository agents should use this file as the operational entryp
 All agents must begin with the layered document system in this exact order:
 
 1. [docs/prd.md](docs/prd.md)
-2. [docs/execution-model.md](docs/execution-model.md)
+2. [docs/core-loop.md](docs/core-loop.md) (quick reference — read this first)
 3. [docs/current-state.md](docs/current-state.md)
+
+For detailed rules on exhaustion protocols, continuation seeding, and stop
+decisions, read [docs/execution-model.md](docs/execution-model.md) only when
+the current task involves queue exhaustion or stop decisions.
 
 Meaning of the layers:
 
 - PRD defines invariant system truth
-- Execution Model defines how autonomous work proceeds
+- Core Loop defines the minimal operating reference for autonomous work
 - Current State defines where work currently continues
 
 Entrypoint rule:
@@ -125,9 +129,11 @@ When the PRD and any remembered prior repository state differ:
 
 Low-attention reading rule:
 
-- always read `AGENTS.md`, `docs/prd.md`, `docs/execution-model.md`,
+- always read `AGENTS.md`, `docs/prd.md`, `docs/core-loop.md`,
   `docs/current-state.md`, `docs/product/work-rag.json`, and
   `docs/product/rag.json`
+- read `docs/execution-model.md` only when the current task involves queue
+  exhaustion or stop decisions
 - read runtime, state-model, validation, layout, mission, and OpenClaw PRDs only
   when the current task touches those domains
 
@@ -140,10 +146,9 @@ Task-close compression rule:
 
 - every autonomous task close must update `work-rag.json` current state and add
   exactly one new checkpoint or summary entry when meaningful work occurred
-- if more than five raw checkpoints accumulate for the same active
-  phase-milestone pair, compress the oldest same-scope checkpoints into one
-  milestone summary and keep only the newest raw checkpoints needed for
-  continuation
+- if more than three entries accumulate in `work-rag.json` history for the
+  active phase-milestone pair, compress the oldest same-scope entries into one
+  milestone summary and keep only the latest two raw checkpoints
 - prefer keeping at most the latest two raw checkpoints for the active
   phase-milestone pair unless an older checkpoint is uniquely required for safe
   continuation

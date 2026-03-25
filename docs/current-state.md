@@ -8,7 +8,8 @@ continuation.
 It is intentionally changeable and subordinate to:
 
 - `docs/prd.md`
-- `docs/execution-model.md`
+- `docs/core-loop.md` (quick operating reference)
+- `docs/execution-model.md` (detailed rules — read only for exhaustion/stop decisions)
 - the active product PRD set under `docs/product/`
 
 ## Current Phase Snapshot
@@ -98,17 +99,14 @@ pass across the released-scope file groups listed in `docs/execution-model.md`
 and then one full documented heuristic-catalog sweep before accepting final
 stop.
 
-At the current state snapshot, Item 31 has been consumed cleanly enough to
-advance continuation state rather than remain pinned in place.
-
-The documented next continuation step is now Item 32 for the transition
-checkpoint typing contract.
-
-That item was reopened mechanically from an existing focused validation
-artifact after Item 31: `tests/unit/test_transition_checkpoint_collection.py`
-passes under pytest and ruff but still exposes one narrow mypy artifact, so
-the loop now has a concrete next implementation slice instead of repeating the
-Item 31 posture.
+At the current state snapshot, Item 32 (Transition Checkpoint Typing Contract)
+has been closed: the focused mypy artifact in
+`tests/unit/test_transition_checkpoint_collection.py` was fixed (type: ignore
+moved to the correct argument line). All seven coverage-ledger families are
+now covered. The next continuation step
+is one mandatory continuation-seeding pass: check the queue and canonical
+sources for any remaining exact in-bounds slice below `pageReadyObserved`; if
+none can be named honestly, advance to FINAL_STOP review.
 
 ## Active Anchor Coverage Ledger
 
@@ -122,7 +120,7 @@ Canonical machine-readable ledger:
 | released graph wiring and call-sites | covered | released graph call-site and run-root surfaces already have queue and resume-search coverage evidence | none |
 | released entrypoint / CLI / input family | covered | released entrypoint, CLI shim, and released input resolution already closed as queue slices | none |
 | released OpenClaw transport-boundary family | covered | the canonical OpenClaw adapter contract now exposes an explicit transport-neutral injected boundary protocol in `src/ez_ax/adapters/openclaw/client.py`, and the focused Item 27 validation bundle stayed green | none |
-| released evidence / reporting / comparability family | pending | the loop advanced past Item 31 and reopened one exact checkpoint-typing slice from an existing focused mypy artifact in `tests/unit/test_transition_checkpoint_collection.py` | Item 32 — Transition Checkpoint Typing Contract |
+| released evidence / reporting / comparability family | covered | Item 32 closed: the focused mypy artifact in `tests/unit/test_transition_checkpoint_collection.py` was fixed (type: ignore moved to correct line) | none |
 | typed mission / error / memory helper family | covered | the runtime-state support surface in `src/ez_ax/models/runtime.py` and `tests/unit/test_runtime_state.py` has already been consumed as Item 31 and no longer justifies leaving current continuation pinned there | none |
 | modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |
 | docs-sufficiency family for lower-capacity continuation | covered | canonical current state now rewrites queue-tail exhaustion into one mandatory continuation-seeding pass, so lower-capacity agents do not treat queue exhaustion as terminal before the loop seeds its own next slice | none |
