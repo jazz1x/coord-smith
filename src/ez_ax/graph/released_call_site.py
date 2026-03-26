@@ -9,8 +9,9 @@ from pathlib import Path
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from ez_ax.adapters.openclaw.client import OpenClawAdapter, OpenClawExecutionResult
-from ez_ax.adapters.openclaw.execution import (
+from ez_ax.adapters.openclaw.client import (
+    OpenClawAdapter,
+    OpenClawExecutionResult,
     action_log_artifact_path,
     execute_openclaw_within_scope,
 )

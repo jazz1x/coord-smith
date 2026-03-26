@@ -1,4 +1,7 @@
-from ez_ax.graph.runtime_graph import build_runtime_graph_plan, evaluate_forward_transition
+from ez_ax.graph.runtime_graph import (
+    build_runtime_graph_plan,
+    evaluate_forward_transition,
+)
 from ez_ax.models.failure import failure_code_for_stop_reason
 from ez_ax.models.transition import build_transition_artifact
 from ez_ax.reporting.summary import (

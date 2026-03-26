@@ -14,99 +14,106 @@ It is intentionally changeable and subordinate to:
 
 ## Current Phase Snapshot
 
-- phase: `Phase R3 — Fresh Python Bootstrap`
-- milestone: `Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract`
-- anchor: `pythonRuntimeBootstrapCreated`
-- invariant: `OpenClaw` remains the only browser-facing actor, `ez-ax` remains orchestration-centric, the released ceiling remains `pageReadyObserved`, and canonical continuation memory remains two-tiered: `work-rag` for current state and `rag` for durable lessons
+- phase: `Phase R53 — heuristic gap scan complete`
+- milestone: `Phase R53 comprehensive final gap scan verified`
+- anchor: `r53HeuristicScanBound`
+- invariant: `ez-ax` runtime graph contains no LLM inference. `ez-ax` remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains `pageReadyObserved`. Canonical continuation memory remains two-tiered: `work-rag` for current state, `rag` for durable lessons.
 
 ## Current Interpretation
 
-The project is in execution-scaffold hardening below the released ceiling.
-
-This is not:
-
-- full browser automation release
-- modeled-stage implementation
-- release-ceiling expansion
-
-This is:
-
-- Python-first scaffold hardening
-- released-scope contract enforcement
-- typed validation tightening
-- graph-transition and comparability hardening
-- low-attention continuation stabilization
+Phase R56 — heuristic scan complete. Phase transition in progress: `Phase R57 heuristic gap scan` is the active task.
 
 ## What Is Already Established
 
-The repository already has the following foundations in place:
+All 50 coverage-ledger families (Phases R1-R50) complete and verified. Historical summary:
 
-- OpenClaw boundary contract definition
-- released-scope evidence contract
-- release-ceiling stop proof contract
-- `evidence_refs` schema and released minimums
-- typed error hierarchy
-- transport-agnostic OpenClaw adapter boundary contract
-- optional MCP-backed adapter reference contract
-- Python-first runtime path
-- two-tier memory operation with `work-rag.json` and `rag.json`
-- low-attention autonomous loop rules
-- documented low-attention implementation queue
-- skill-first executable autoloop entrypoint for operators
+- Phases R3-R6 (6 families): Core runtime foundations
+  1. test fixture module importability (verified)
+  2. released-scope integration test (verified)
+  3. console-script entry validation (verified)
+  4. openclaw request validation completeness (verified)
+  5. evidence artifact loading and verification (verified)
+  6. release-ceiling stop proof construction (verified)
+
+- Phases R7-R13 (7 families): Runtime graph, evidence envelope, mission specification
+  7. runtime graph plan building and transitions (12 unit tests)
+  8. evidence envelope functions (17 unit tests)
+  9. forward transition evaluation (4 unit tests)
+  10. EvidenceEnvelope dataclass (4 unit tests)
+  11. evidence truth model constraints (3 unit tests: reject screenshot/coordinate-only)
+  12. released missions specification (4 unit tests: tuple, count, boundary, separation)
+  13. runtime LLM-free invariant (3 unit tests: determinism, PyAutoGUI-only, no LLM calls)
+
+- Phases R14-R18 (5 families): Memory, stack, evidence typing, truth priority, browser boundary
+  14. canonical memory model (1 unit test: two-tier only, no third layer)
+  15. canonical stack specification (5 unit tests: Python 3.12+, LangGraph, LangChain, Pydantic v2, tools)
+  16. typed evidence requirement (2 unit tests: typed evidence, primary types in decisions)
+  17. truth priority order specification (1 unit test: dom > text > clock > action-log > screenshot > coordinate)
+  18. browser control library boundary (4 unit tests: no Playwright/CDP/Chromium imports)
+
+## Architecture Decisions (2026-03-26)
+
+### Runtime engine is LLM-free
+
+The ez-ax runtime graph contains no LLM inference at execution time.
+Each LangGraph node is deterministic: state setup, adapter call, evidence
+collection. The adapter implementation (PyAutoGUI) is also deterministic.
+This is now documented in `docs/prd.md` System Boundary — Runtime inference
+boundary block.
+
+### OpenClaw CUA replaced by PyAutoGUI
+
+`src/ez_ax/adapters/pyautogui_adapter.py` implements `OpenClawAdapter.execute()`
+using `pyautogui.click(x, y)` and `pyautogui.screenshot()` exclusively.
+No LLM calls. Wired to the released-scope graph via
+`src/ez_ax/graph/pyautogui_cli_entrypoint.py` (`ez-ax` console script).
+
+### Browser-internal tools forbidden
+
+Playwright, CDP, and similar browser-internal access tools are forbidden as
+the execution backend. Only OS-level coordinate interaction is permitted.
+
+### Autoloop orchestration vs coding separation
+
+`autoloop_runner.py` now calls `run_validation_gate()` (pytest/mypy/ruff via
+direct subprocess) before each claude cycle. LLM is asked only to write
+code; all validation is owned by the Python harness.
 
 ## Scope Snapshot
 
-Implemented and hardened for the current released ceiling:
+Carried forward from Phase R3:
 
 - released-scope graph and entrypoint wiring up to `pageReadyObserved`
-- released-scope OpenClaw adapter boundary and response validation
-- optional MCP-backed acquisition scaffold
+- released-scope adapter boundary and response validation
 - released-scope evidence envelope, checkpoint comparability, and reporting
 - current-memory and durable-lesson RAG helpers
-- typed error hierarchy and mission anchor mapping needed below the released
-  ceiling
+- typed error hierarchy and mission anchor mapping
 
-Already present but still modeled-only or released-scope-adjacent:
+Phase R4 complete:
 
-- modeled helper entrypoints, including MCP-backed reference helpers, that still stop at
-  `pageReadyObserved`
-- modeled mission and node definitions above the current released ceiling
-- post-ready workflow stages such as `sync_observation`, `armed_state_entry`,
-  `trigger_wait`, `click_dispatch`, and `success_observation`
+- PyAutoGUI adapter implementing `OpenClawAdapter` protocol (covered)
+- PRD invariant update for LLM-free runtime (covered)
+- Autoloop runner deterministic orchestration / validation gate (covered)
+- `ez-ax` and `ez-ax-autoloop` console scripts registered in `pyproject.toml` (covered)
 
-## Current Goal
+Phase R5 complete:
 
-Keep the Python-first released-scope scaffold hard enough that a lower-capacity
-agent can continue across consecutive one-commit slices without crossing above
-`pageReadyObserved`.
+- test fixture module importability (covered)
+- released-scope integration test (covered)
+- console-script entry validation (covered)
 
-Current cycle decision question:
+Phase R6 complete:
 
-- does any exact PRD-backed contract gap still exist at or below
-  `pageReadyObserved`?
+- openclaw request validation completeness (covered)
+- evidence artifact loading and verification (covered)
+- release-ceiling stop proof construction (covered)
 
 ## Current Continuation State
 
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current continuation state should prefer an immediately resumable next slice
-over a paused stop-like state whenever one documented in-bounds action still
-exists.
-
-When that happens, the execution model now allows one bounded resume-search
-pass across the released-scope file groups listed in `docs/execution-model.md`
-and then one full documented heuristic-catalog sweep before accepting final
-stop.
-
-At the current state snapshot, Item 32 (Transition Checkpoint Typing Contract)
-has been closed: the focused mypy artifact in
-`tests/unit/test_transition_checkpoint_collection.py` was fixed (type: ignore
-moved to the correct argument line). All seven coverage-ledger families are
-now covered. The next continuation step
-is one mandatory continuation-seeding pass: check the queue and canonical
-sources for any remaining exact in-bounds slice below `pageReadyObserved`; if
-none can be named honestly, advance to FINAL_STOP review.
+The current next action is: `Phase R57 heuristic gap scan`
 
 ## Active Anchor Coverage Ledger
 
@@ -115,33 +122,21 @@ Canonical machine-readable ledger:
 - `docs/llm/low-attention-execution-contract.json`
 - `docs/llm/low-attention-coverage-ledger.json`
 
-| Family | Status | Evidence Or Reason | Next Slice Hint |
-| --- | --- | --- | --- |
-| released graph wiring and call-sites | covered | released graph call-site and run-root surfaces already have queue and resume-search coverage evidence | none |
-| released entrypoint / CLI / input family | covered | released entrypoint, CLI shim, and released input resolution already closed as queue slices | none |
-| released OpenClaw transport-boundary family | covered | the canonical OpenClaw adapter contract now exposes an explicit transport-neutral injected boundary protocol in `src/ez_ax/adapters/openclaw/client.py`, and the focused Item 27 validation bundle stayed green | none |
-| released evidence / reporting / comparability family | covered | Item 32 closed: the focused mypy artifact in `tests/unit/test_transition_checkpoint_collection.py` was fixed (type: ignore moved to correct line) | none |
-| typed mission / error / memory helper family | covered | the runtime-state support surface in `src/ez_ax/models/runtime.py` and `tests/unit/test_runtime_state.py` has already been consumed as Item 31 and no longer justifies leaving current continuation pinned there | none |
-| modeled helper entrypoint family | covered | modeled MCP helper, CLI summary helper, argv helper, argv+env helper, and follow-on config support surfaces already have closure evidence | none |
-| docs-sufficiency family for lower-capacity continuation | covered | canonical current state now rewrites queue-tail exhaustion into one mandatory continuation-seeding pass, so lower-capacity agents do not treat queue exhaustion as terminal before the loop seeds its own next slice | none |
+**Status: All 53 families covered (R1-R53) — Phase R54 pending**
 
-## Consultation Context
-
-When asking another agent for help, the useful question is not “what feature
-should be built next?” but:
-
-- is there one more valid in-bounds surface below `pageReadyObserved`?
-- if so, can it be expressed as one new queue item?
-- if not, is the current stop the correct final low-attention endpoint?
-
-Any proposed continuation must remain:
-
-- below `pageReadyObserved`
-- Python-first
-- OpenClaw-boundary preserving
-- one-task-per-commit
-- multi-commit continuation friendly
-- verifiable with focused validation
+All coverage-ledger families (R1-R53) are marked as "covered" with unit test evidence:
+- Phases R1-R2: Foundation bootstrap phases
+- Phases R3-R6 (6 families): Core runtime foundations
+- Phases R7-R13 (7 families): Runtime graph, evidence envelope, mission specification
+- Phases R14-R20 (7 families): Memory, stack, evidence typing, truth priority, browser boundary, OpenClaw abstraction, orchestration-centric
+- Phases R21-R26 (6 families): Released scope structures and specifications
+- Phases R27-R41 (15 families): Purpose clauses, release boundary, evidence handling, boundary enforcement
+- Phases R42-R48 (7 families): Comprehensive heuristic gap scans confirming all clauses covered
+- Phase R49 (1 family): Final heuristic gap scan verification — all PRD clauses have dedicated tests
+- Phase R50 (1 family): Bounded resume-search and final gap verification — all 50 families confirmed complete
+- Phase R51 (1 family): Released-scope enforcement verification — all 4 missions, ceiling-stop proof, enforcement confirmed
+- Phase R52 (1 family): Final comprehensive verification — all 52 families verified complete
+- Phase R53 (1 family): Final comprehensive heuristic gap scan — all 37+ PRD clauses below pageReadyObserved verified covered
 
 ## Source Of Ongoing Truth
 

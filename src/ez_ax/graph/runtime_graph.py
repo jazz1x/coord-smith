@@ -155,15 +155,41 @@ def evaluate_and_record_forward_transition(
 ) -> TransitionDecision:
     """Evaluate a forward transition and record its artifact in runtime state."""
 
-    if current_mission is None:
-        latest_checkpoint = state.transition_checkpoints.transitions
-        predecessor_mission = (
-            latest_checkpoint[-1].target_mission
-            if latest_checkpoint
-            else state.current_mission
-        )
+    latest_checkpoint = state.transition_checkpoints.transitions
+
+    # First transition constraint: predecessor_mission must be None if
+    # state.current_mission is a released mission
+    if not latest_checkpoint:
+        # Empty checkpoint collection = first transition
+        # Determine what predecessor_mission would be
+        if current_mission is None:
+            # If current_mission param is omitted, check state.current_mission
+            # only if it's a released mission (not a validation/control mission)
+            if state.current_mission in RELEASED_MISSIONS:
+                implied_predecessor = state.current_mission
+            else:
+                implied_predecessor = None
+        else:
+            # If current_mission param is explicit, check if it's released
+            if current_mission in RELEASED_MISSIONS:
+                implied_predecessor = current_mission
+            else:
+                implied_predecessor = None
+
+        if implied_predecessor is not None:
+            msg = (
+                "First transition artifact must not declare a "
+                "predecessor mission."
+            )
+            raise ValueError(msg)
+        predecessor_mission = None
     else:
-        predecessor_mission = current_mission
+        # Subsequent transitions: use current_mission parameter or
+        # extract from latest checkpoint
+        if current_mission is None:
+            predecessor_mission = latest_checkpoint[-1].target_mission
+        else:
+            predecessor_mission = current_mission
     decision = evaluate_forward_transition(
         current_mission=predecessor_mission,
         target_mission=target_mission,

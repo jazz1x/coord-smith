@@ -27,6 +27,17 @@ Authority boundary:
 - `OpenClaw` owns browser-facing execution
 - `ez-ax` owns orchestration, validation, stopping, and reasoning
 
+Runtime inference boundary:
+
+- The `ez-ax` runtime must not invoke any LLM inference at execution time
+- All graph traversal, evidence validation, and stopping decisions are
+  deterministic Python; no model calls are made during a run
+- `PyAutoGUIAdapter` is the sole execution backend: coordinate-click and
+  screenshot only, no LLM calls
+- LLM inference is restricted to the offline autoloop harness
+  (`ez-ax-autoloop`) that generates implementation; it is not part of the
+  runtime path
+
 ## Release Boundary
 
 Current released ceiling:

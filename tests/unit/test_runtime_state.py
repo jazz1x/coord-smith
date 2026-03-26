@@ -3,6 +3,7 @@ from ez_ax.models.runtime import (
     effective_scope_ceiling,
     format_scope_ceiling_detail,
     mission_is_within_approved_scope,
+    mission_lifecycle,
 )
 from ez_ax.models.transition import build_transition_artifact
 
@@ -196,3 +197,40 @@ def test_runtime_state_stores_typed_transition_checkpoint_collection() -> None:
     assert (
         state.transition_checkpoints.transitions[0].target_mission == "attach_session"
     )
+
+
+def test_mission_lifecycle_classifies_released_missions() -> None:
+    assert mission_lifecycle("attach_session") == "released"
+    assert mission_lifecycle("prepare_session") == "released"
+    assert mission_lifecycle("benchmark_validation") == "released"
+    assert mission_lifecycle("page_ready_observation") == "released"
+
+
+def test_mission_lifecycle_classifies_modeled_missions() -> None:
+    assert mission_lifecycle("sync_observation") == "modeled"
+    assert mission_lifecycle("target_actionability_observation") == "modeled"
+    assert mission_lifecycle("armed_state_entry") == "modeled"
+    assert mission_lifecycle("trigger_wait") == "modeled"
+    assert mission_lifecycle("click_dispatch") == "modeled"
+    assert mission_lifecycle("click_completion") == "modeled"
+    assert mission_lifecycle("success_observation") == "modeled"
+    assert mission_lifecycle("run_completion") == "modeled"
+
+
+def test_mission_lifecycle_classifies_control_only_missions() -> None:
+    assert mission_lifecycle("release_gate_evaluation") == "control-only"
+    assert mission_lifecycle("retry_or_stop_decision") == "control-only"
+    assert mission_lifecycle("work_rag_update") == "control-only"
+    assert mission_lifecycle("work_rag_compression") == "control-only"
+    assert mission_lifecycle("lesson_promotion") == "control-only"
+    assert mission_lifecycle("e2e_replay_or_comparison") == "control-only"
+    assert mission_lifecycle("python_validation_execution") == "control-only"
+
+
+def test_mission_lifecycle_rejects_unknown_mission_name() -> None:
+    try:
+        mission_lifecycle("not_a_real_mission")
+    except ValueError as exc:
+        assert "Unknown mission name" in str(exc)
+    else:
+        raise AssertionError("Expected unknown mission to be rejected")

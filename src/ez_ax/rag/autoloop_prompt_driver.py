@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -64,7 +65,7 @@ def _implementation_prompt(*, next_action: str) -> str:
     template = match_slice_template(next_action=next_action)
     if template is not None:
         return (
-            "Use $ez-ax-executable-autoloop. Read AGENTS.md, docs/prd.md, "
+            "Read AGENTS.md, docs/prd.md, "
             "docs/core-loop.md, docs/current-state.md, "
             "docs/product/work-rag.json, docs/product/rag.json, "
             "docs/llm/repo-autonomous-loop-adapter.yaml, and "
@@ -82,7 +83,7 @@ def _implementation_prompt(*, next_action: str) -> str:
             f"Current next_action: {next_action}"
         )
     return (
-        "Use $ez-ax-executable-autoloop. Read AGENTS.md, docs/prd.md, "
+        "Read AGENTS.md, docs/prd.md, "
         "docs/core-loop.md, docs/current-state.md, "
         "docs/product/work-rag.json, docs/product/rag.json, and "
         "docs/llm/repo-autonomous-loop-adapter.yaml in order. Quote the exact "
@@ -109,7 +110,7 @@ def _template_prompt(
         raise ValueError(f"unknown slice template id: {template_id}")
     resolved_family = family or template.family
     return (
-        "Use $ez-ax-executable-autoloop. Read canonical inputs in this "
+        "Read canonical inputs in this "
         f"exact order: {_canonical_input_summary(canonical_inputs)}. Restate "
         f"phase `{phase}`, milestone `{milestone}`, anchor `{anchor}`, and "
         f"invariant `{invariant}` before execution. Quote the "
@@ -137,7 +138,7 @@ def _continuation_seed_prompt(
     invariant: str,
 ) -> str:
     return (
-        "Use $ez-ax-executable-autoloop. Read canonical inputs in this "
+        "Read canonical inputs in this "
         f"exact order: {_canonical_input_summary(canonical_inputs)}. Restate "
         f"phase `{phase}`, milestone `{milestone}`, anchor `{anchor}`, and "
         f"invariant `{invariant}` before execution. The current cycle is in "
@@ -172,7 +173,7 @@ def _final_stop_review_prompt(
     final_stop_requirements: tuple[str, ...],
 ) -> str:
     return (
-        "Use $ez-ax-executable-autoloop. Read canonical inputs in this "
+        "Read canonical inputs in this "
         f"exact order: {_canonical_input_summary(canonical_inputs)}. Restate "
         f"phase `{phase}`, milestone `{milestone}`, anchor `{anchor}`, and "
         f"invariant `{invariant}` before execution. Quote the "
@@ -182,8 +183,80 @@ def _final_stop_review_prompt(
         "stop-state consistency gate and honor FINAL_STOP only if no exact "
         "in-bounds slice is reopened by canonical sources and all final-stop "
         f"requirements remain true: {'; '.join(final_stop_requirements)}. "
+        "IMPORTANT: when updating docs/product/work-rag.json current.next_action, "
+        "the value MUST start with exactly 'FINAL_STOP — ' (if declaring stop) "
+        "or with the exact family name (if reopening work). "
         "Current next_action: "
         f"{next_action}"
+    )
+
+
+_PHASE_DEF_RE = re.compile(r"^Define (Phase R\d+) scope and anchor$")
+
+
+def _pending_family_prompt(
+    *,
+    pending_family_name: str,
+    next_slice_hint: str,
+    next_action: str,
+    canonical_inputs: tuple[str, ...],
+    phase: str,
+    milestone: str,
+    anchor: str,
+    invariant: str,
+    first_validation: str,
+    mypy_target: str,
+    ruff_target: str,
+    done_when: tuple[str, ...],
+) -> str:
+    """Prompt for a pending coverage-ledger family without a slice template."""
+    inputs_summary = _canonical_input_summary(canonical_inputs)
+    validation_parts = [v for v in [first_validation, mypy_target, ruff_target] if v]
+    validation_seq = "; ".join(validation_parts)
+    done_summary = "; ".join(done_when)
+
+    phase_def_match = _PHASE_DEF_RE.match(pending_family_name)
+    if phase_def_match:
+        next_phase_label = phase_def_match.group(1)
+        preamble = (
+            f"PHASE TRANSITION TASK — DO NOT run the stop-state exhaustion protocol "
+            f"and DO NOT output or write FINAL_STOP anywhere. "
+            f"docs/current-state.md and other canonical sources currently show the "
+            f"PRIOR COMPLETED PHASE's terminal state — that state is stale. "
+            f"Your concrete task is to define {next_phase_label}: "
+            f"(1) update docs/llm/low-attention-execution-contract.json with "
+            f"{next_phase_label} active_phase, active_milestone, active_anchor, "
+            f"and 2-4 anchor_contract_families; "
+            f"(2) add those 2-4 concrete pending implementation families to "
+            f"docs/llm/low-attention-coverage-ledger.json; "
+            f"(3) mark `{pending_family_name}` as covered in coverage-ledger.json; "
+            f"(4) set docs/product/work-rag.json current.next_action to the first "
+            f"new {next_phase_label} family name; "
+            f"(5) update docs/current-state.md to reflect the new phase; "
+            f"(6) commit once. "
+        )
+    else:
+        preamble = ""
+
+    return (
+        preamble
+        + f"Read canonical inputs in this exact order: {inputs_summary}. "
+        f"Also read docs/prd.md (especially System Boundary section). "
+        f"Phase `{phase}`, milestone `{milestone}`, anchor `{anchor}`, "
+        f"invariant `{invariant}`. "
+        f"Pending family: `{pending_family_name}`. "
+        f"Next slice hint: {next_slice_hint}. "
+        + (f"Validation sequence: {validation_seq}. " if validation_seq else "")
+        + (f"Done when: {done_summary}. " if done_summary else "")
+        + f"After completing: in docs/llm/low-attention-coverage-ledger.json "
+        f"find the entry whose `family` field equals "
+        f"`{pending_family_name}` and set its `status` to `covered`. "
+        f"In docs/product/work-rag.json set `current.next_action` to the "
+        f"`next_slice_hint` of the first remaining entry with "
+        f"`status: pending` in the coverage ledger, or to "
+        f"`FINAL_STOP_REVIEW - queue exhausted` if none remain. "
+        f"Then commit once. "
+        f"Current next_action: {next_action}"
     )
 
 
@@ -210,6 +283,27 @@ def build_autoloop_prompt_plan(
                 milestone=contract.active_milestone,
                 anchor=contract.active_anchor,
                 invariant=contract.active_invariant,
+            )
+            + compression_suffix,
+        )
+
+    if pending_family is not None:
+        return AutoloopPromptPlan(
+            mode="implementation",
+            next_action=next_action,
+            prompt=_pending_family_prompt(
+                pending_family_name=pending_family.family,
+                next_slice_hint=pending_family.next_slice_hint,
+                next_action=next_action,
+                canonical_inputs=contract.canonical_inputs,
+                phase=contract.active_phase,
+                milestone=contract.active_milestone,
+                anchor=contract.active_anchor,
+                invariant=contract.active_invariant,
+                first_validation=pending_family.first_validation,
+                mypy_target=pending_family.mypy_target,
+                ruff_target=pending_family.ruff_target,
+                done_when=pending_family.done_when,
             )
             + compression_suffix,
         )

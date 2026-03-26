@@ -977,6 +977,65 @@ def test_validate_openclaw_execution_result_rejects_duplicate_refs() -> None:
         raise AssertionError("Expected duplicate evidence refs to be rejected")
 
 
+def test_validate_openclaw_execution_result_rejects_screenshot_only() -> None:
+    """Verify PRD clause: truth must not be derived from vision alone."""
+    result = OpenClawExecutionResult(
+        mission_name="page_ready_observation",
+        evidence_refs=("evidence://screenshot/page-shell-ready-fallback",),
+    )
+
+    try:
+        validate_openclaw_execution_result(result)
+    except ValueError as exc:
+        assert "missing required minimum keys" in str(exc)
+    else:
+        raise AssertionError(
+            "Expected screenshot-only evidence to be rejected per PRD "
+            "truth-must-not-be-vision-alone clause"
+        )
+
+
+def test_validate_openclaw_execution_result_rejects_coordinate_only() -> None:
+    """Verify PRD clause: truth must not be derived from coordinates alone."""
+    result = OpenClawExecutionResult(
+        mission_name="benchmark_validation",
+        evidence_refs=("evidence://coordinate/click-location",),
+    )
+
+    try:
+        validate_openclaw_execution_result(result)
+    except ValueError as exc:
+        assert "missing required minimum keys" in str(exc)
+    else:
+        raise AssertionError(
+            "Expected coordinate-only evidence to be rejected per PRD "
+            "truth-must-not-be-coordinate-alone clause"
+        )
+
+
+def test_validate_openclaw_execution_result_rejects_screenshot_and_coordinate_only() -> (
+    None
+):
+    """Verify PRD clause: truth must not be derived from vision or coordinates alone."""
+    result = OpenClawExecutionResult(
+        mission_name="prepare_session",
+        evidence_refs=(
+            "evidence://screenshot/prepare-session-fallback",
+            "evidence://coordinate/click-location",
+        ),
+    )
+
+    try:
+        validate_openclaw_execution_result(result)
+    except ValueError as exc:
+        assert "missing required minimum keys" in str(exc)
+    else:
+        raise AssertionError(
+            "Expected screenshot+coordinate-only evidence to be rejected per PRD "
+            "truth-must-not-be-vision-or-coordinate-alone clause"
+        )
+
+
 def test_validate_openclaw_execution_result_rejects_empty_ref() -> None:
     result = OpenClawExecutionResult(mission_name="attach_session", evidence_refs=("",))
 

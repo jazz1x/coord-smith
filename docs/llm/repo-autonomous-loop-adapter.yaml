@@ -28,19 +28,15 @@ execution_rules:
   continuous_multi_commit_looping: true
   validation_first: true
   compaction_before_cycle_close: true
-  active_phase: Phase R3 — Fresh Python Bootstrap
-  active_milestone: Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract
-  active_anchor: pythonRuntimeBootstrapCreated
+  active_phase: Phase R6 — Released-Scope Validation Hardening
+  active_milestone: OpenClaw request/result validation, evidence artifact loading, and release-ceiling stop proof are complete
+  active_anchor: releasedScopeValidationHardeningBound
   current_work_memory_role: what_to_do_now
   reusable_asset_memory_role: durable_lessons_only
   anchor_contract_families:
-    - released graph wiring and call-sites
-    - released input-resolution and CLI entry surfaces
-    - released OpenClaw transport-boundary and response validation surfaces
-    - released evidence, reporting, and comparability surfaces
-    - typed mission, error, and memory helpers needed for continuation
-    - modeled helper entrypoints that still stop at pageReadyObserved
-    - docs-sufficiency surfaces needed to name the next one-commit slice
+    - test fixture module importability
+    - released-scope integration test
+    - console-script entry validation
   milestone_done_when:
     - every required anchor family is either covered by queue history or explicitly ruled out by an exact PRD clause
     - every required anchor family has explicit ledger status covered or excluded
@@ -228,22 +224,19 @@ reporting:
     - checkpoint / failure-taxonomy impact
 
 model_routing:
-  main_implementer: gpt-5.2-codex
-  task_slicing: gpt-5.4-mini
-  validation_picking: gpt-5.4-mini
-  released_scope_guarding: gpt-5.4-mini
-  contract_scope_guardian_prompt: gpt-5.4-mini
-  rag_compaction: gpt-5.4-nano
-  continuation_cleanup: gpt-5.4-nano
-  assetization_pattern_promotion_prompt: gpt-5.4-nano
+  main_implementer: claude-sonnet-4-6
+  task_slicing: claude-haiku-4-5-20251001
+  validation_picking: claude-haiku-4-5-20251001
+  released_scope_guarding: claude-haiku-4-5-20251001
+  contract_scope_guardian_prompt: claude-haiku-4-5-20251001
+  rag_compaction: claude-haiku-4-5-20251001
+  continuation_cleanup: claude-haiku-4-5-20251001
+  assetization_pattern_promotion_prompt: claude-haiku-4-5-20251001
 
 orchestration:
-  primary_entry_skill: ez-ax-low-attention-autoloop
-  required_wrapper_chain:
-    - ez-ax-loop-released-scope-guard-wrapper
-    - ez-ax-loop-task-slicer-wrapper
-    - ez-ax-loop-validation-picker-wrapper
-    - ez-ax-loop-rag-compaction-wrapper
+  primary_entry_skill: ez-ax-executable-autoloop
+  runner_script: ez-ax-autoloop
+  runtime: claude-code-cli
   default_loop_mode: continuous_guarded_looping
   continuation_bias: keep selecting the next documented one-commit slice after each commit until the full exhaustion protocol is honestly complete
   final_stop_keyword: FINAL_STOP

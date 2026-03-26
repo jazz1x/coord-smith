@@ -24,15 +24,10 @@ def test_bootstrap_assets_require_repo_loop_adapter_and_tracked_skills() -> None
         "docs/llm/repo-autonomous-loop-adapter.yaml",
         "docs/llm/low-attention-execution-contract.json",
         "docs/llm/low-attention-coverage-ledger.json",
-        ".codex/skills/ez-ax-low-attention-autoloop/SKILL.md",
-        ".codex/skills/ez-ax-executable-autoloop/SKILL.md",
+        ".claude/skills/ez-ax-autoloop/SKILL.md",
+        ".claude/skills/ez-ax-executable-autoloop/SKILL.md",
         "docs/llm/agents/contract-scope-guardian.md",
         "docs/llm/agents/assetization-pattern-promoter.md",
-        "docs/codex-global-skills/ez-ax-task-slicer/SKILL.md",
-        "docs/codex-global-skills/ez-ax-validation-picker/SKILL.md",
-        "docs/codex-global-skills/ez-ax-rag-compactor/SKILL.md",
-        "docs/codex-global-skills/ez-ax-released-scope-guard/SKILL.md",
-        "scripts/install-codex-global-skills.sh",
     }
 
     assert required.issubset(set(REQUIRED_BOOTSTRAP_ASSETS))

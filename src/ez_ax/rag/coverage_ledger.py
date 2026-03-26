@@ -17,6 +17,10 @@ class CoverageLedgerEntry:
     evidence_or_reason: str
     next_slice_hint: str
     template_id: str
+    first_validation: str
+    mypy_target: str
+    ruff_target: str
+    done_when: tuple[str, ...]
 
 
 def load_coverage_ledger(
@@ -39,8 +43,12 @@ def load_coverage_ledger(
                 family=_require_str(family, "family"),
                 status=status,
                 evidence_or_reason=_require_str(family, "evidence_or_reason"),
-                next_slice_hint=_require_str(family, "next_slice_hint"),
+                next_slice_hint=_require_optional_str(family, "next_slice_hint"),
                 template_id=_require_optional_str(family, "template_id"),
+                first_validation=_require_optional_str(family, "first_validation"),
+                mypy_target=_require_optional_str(family, "mypy_target"),
+                ruff_target=_require_optional_str(family, "ruff_target"),
+                done_when=_require_optional_str_list(family, "done_when"),
             )
         )
     return tuple(normalized)
@@ -67,3 +75,15 @@ def _require_optional_str(payload: dict[str, object], key: str) -> str:
     if not isinstance(value, str):
         raise ValueError(f"coverage ledger '{key}' must be a string")
     return value
+
+
+def _require_optional_str_list(
+    payload: dict[str, object], key: str
+) -> tuple[str, ...]:
+    value = payload.get(key, [])
+    if not isinstance(value, list):
+        raise ValueError(f"coverage ledger '{key}' must be a list")
+    for item in value:
+        if not isinstance(item, str):
+            raise ValueError(f"coverage ledger '{key}' entries must be strings")
+    return tuple(str(item) for item in value)

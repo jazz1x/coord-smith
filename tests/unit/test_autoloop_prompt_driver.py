@@ -30,6 +30,10 @@ def _write_coverage_ledger(
     *,
     status: str,
     template_id: str = "",
+    first_validation: str = "pytest tests/ -q",
+    mypy_target: str = "mypy src/",
+    ruff_target: str = "ruff check src/",
+    done_when: list[str] | None = None,
 ) -> Path:
     path = tmp_path / "low-attention-coverage-ledger.json"
     payload = {
@@ -40,6 +44,10 @@ def _write_coverage_ledger(
                 "evidence_or_reason": "reason",
                 "next_slice_hint": "hint",
                 "template_id": template_id,
+                "first_validation": first_validation,
+                "mypy_target": mypy_target,
+                "ruff_target": ruff_target,
+                "done_when": done_when or ["validation clean", "committed"],
             }
         ]
     }
@@ -84,7 +92,6 @@ def test_build_autoloop_prompt_plan_uses_implementation_mode_for_concrete_slice(
     assert plan.mode == "implementation"
     assert "execute that slice" in plan.prompt
     assert "Current next_action" in plan.prompt
-    assert "$ez-ax-executable-autoloop" in plan.prompt
 
 
 def test_build_autoloop_prompt_plan_expands_matched_slice_template(
@@ -118,7 +125,6 @@ def test_build_autoloop_prompt_plan_expands_matched_slice_template(
     assert "Primary file group: src/ez_ax/validation/bootstrap.py" in plan.prompt
     assert "machine-readable source of truth" in plan.prompt
     assert "phase `Phase`" in plan.prompt
-    assert "$ez-ax-executable-autoloop" in plan.prompt
 
 
 def test_build_autoloop_prompt_plan_prefers_pending_coverage_ledger_over_final_stop(
@@ -144,7 +150,6 @@ def test_build_autoloop_prompt_plan_prefers_pending_coverage_ledger_over_final_s
     assert plan.mode == "implementation"
     assert "low-attention-coverage-ledger.json" in plan.prompt
     assert "docs_sufficiency_coverage_ledger_contract" in plan.prompt
-    assert "$ez-ax-executable-autoloop" in plan.prompt
 
 
 def test_build_autoloop_prompt_plan_uses_final_stop_review_when_no_pending_family(
@@ -167,7 +172,38 @@ def test_build_autoloop_prompt_plan_uses_final_stop_review_when_no_pending_famil
     assert "coverage ledger has no pending family" in plan.prompt
     assert "stop-state consistency gate" in plan.prompt
     assert "stop-a; stop-b" in plan.prompt
-    assert "$ez-ax-executable-autoloop" in plan.prompt
+
+
+def test_build_autoloop_prompt_plan_pending_family_prompt_includes_validation_sequence(
+    tmp_path: Path,
+) -> None:
+    work_rag = _write_work_rag(tmp_path, next_action="implement-something")
+    coverage_ledger = _write_coverage_ledger(
+        tmp_path,
+        status="pending",
+        template_id="",
+        first_validation="pytest tests/unit/ -q",
+        mypy_target="mypy src/ez_ax/",
+        ruff_target="ruff check src/ez_ax/",
+        done_when=["prd updated", "pytest clean", "committed"],
+    )
+    execution_contract = _write_execution_contract(tmp_path)
+
+    plan = build_autoloop_prompt_plan(
+        work_rag_path=work_rag,
+        coverage_ledger_path=coverage_ledger,
+        execution_contract_path=execution_contract,
+    )
+
+    assert plan.mode == "implementation"
+    assert "Validation sequence:" in plan.prompt
+    assert "pytest tests/unit/ -q" in plan.prompt
+    assert "mypy src/ez_ax/" in plan.prompt
+    assert "ruff check src/ez_ax/" in plan.prompt
+    assert "Done when:" in plan.prompt
+    assert "prd updated" in plan.prompt
+    assert "pytest clean" in plan.prompt
+    assert "committed" in plan.prompt
 
 
 def test_build_autoloop_prompt_plan_uses_continuation_seed_mode_for_seed_pass(
@@ -192,4 +228,3 @@ def test_build_autoloop_prompt_plan_uses_continuation_seed_mode_for_seed_pass(
     assert plan.mode == "continuation_seed"
     assert "continuation-seeding mode, not terminal stop mode" in plan.prompt
     assert "Produce exactly one one-commit-safe seeded slice" in plan.prompt
-    assert "$ez-ax-executable-autoloop" in plan.prompt

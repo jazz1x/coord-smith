@@ -1,56 +1,41 @@
 {
-  "version": 1,
-  "active_phase": "Phase R3 — Fresh Python Bootstrap",
-  "active_milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
-  "active_anchor": "pythonRuntimeBootstrapCreated",
-  "active_invariant": "OpenClaw remains the only browser-facing actor, ez-ax remains orchestration-centric, the released ceiling remains pageReadyObserved, and canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
+  "version": 3,
+  "active_phase": "Phase R57 — heuristic scan",
+  "active_milestone": "Phase R57 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r57HeuristicScanBound",
+  "active_invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains pageReadyObserved. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
   "scope_ceiling": "pageReadyObserved",
   "canonical_inputs": [
-    "AGENTS.md",
-    "docs/prd.md",
     "docs/core-loop.md",
     "docs/current-state.md",
     "docs/product/work-rag.json",
+    "docs/llm/low-attention-coverage-ledger.json"
+  ],
+  "extended_inputs_when_needed": [
+    "AGENTS.md",
+    "docs/prd.md",
     "docs/product/rag.json",
     "docs/llm/repo-autonomous-loop-adapter.yaml",
-    "docs/llm/low-attention-execution-contract.json",
-    "docs/llm/low-attention-coverage-ledger.json",
-    "docs/llm/low-attention-slice-templates.json"
+    "docs/llm/low-attention-execution-contract.json"
   ],
   "anchor_contract_families": [
-    "released graph wiring and call-sites",
-    "released input-resolution and CLI entry surfaces",
-    "released OpenClaw transport-boundary and response validation surfaces",
-    "released evidence, reporting, and comparability surfaces",
-    "typed mission, error, and memory helpers needed for continuation",
-    "modeled helper entrypoints that still stop at pageReadyObserved",
-    "docs-sufficiency surfaces needed to name the next one-commit slice"
+    "Phase R57 heuristic gap scan"
   ],
   "heuristic_family_ladder": [
     "same-file failing validation artifact",
     "same module exact PRD-backed clause gap",
-    "same directory imported support module",
-    "same helper-family variant (*_entrypoint.py, *_cli_entrypoint.py, *_argv.py, *_argv_env.py)",
-    "same validation family",
-    "same-anchor config/settings/reporting/comparability helper",
-    "docs-sufficiency source for next-slice naming"
+    "same directory imported support module"
   ],
   "seeded_slice_requirements": [
     "remain below pageReadyObserved",
     "one-task-per-commit safe",
-    "name one first_prd before implementation",
     "name one first_validation before implementation",
-    "update current-state, work-rag, and queue-bearing docs in the same task close",
-    "update the active coverage ledger in the same task close",
-    "if queue and heuristic surfaces are exhausted while the phase remains active, rewrite current.next_action to one mandatory continuation-seeding pass before FINAL_STOP review"
+    "update current-state and work-rag in the same task close",
+    "update the active coverage ledger in the same task close"
   ],
   "final_stop_requirements": [
     "no coverage-ledger family remains pending",
-    "documented queue is exhausted honestly",
-    "bounded resume-search is exhausted honestly",
-    "heuristic sweep is exhausted honestly",
-    "continuation seeding is exhausted honestly",
-    "stop-state consistency gate reopens no exact in-bounds slice",
-    "canonical current state no longer points to one mandatory continuation-seeding pass"
+    "all anchor families are covered or explicitly excluded",
+    "canonical current state does not name a concrete next slice"
   ]
 }

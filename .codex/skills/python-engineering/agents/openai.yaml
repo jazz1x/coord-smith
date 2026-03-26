@@ -1,4 +1,0 @@
-version: 1
-display_name: Python Engineering
-short_description: Applies the repository's shared Python engineering principles to Python work.
-default_prompt: Use the shared Python engineering guide for this Python task.
