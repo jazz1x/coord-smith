@@ -954,8 +954,8 @@
     },
     {
       "family": "Phase R57 heuristic gap scan",
-      "status": "pending",
-      "evidence_or_reason": "Phase R56 — heuristic scan complete; Phase R57 heuristic scan needed.",
+      "status": "covered",
+      "evidence_or_reason": "Created test_phase_r57_heuristic_gap_verification.py with 4 focused tests: (1) test_phase_r57_released_scope_clauses_have_test_coverage verifies all 5 released-scope clauses (attach, prepareSession, benchmark validation, pageReadyObserved, intentional stop at ceiling) have dedicated test coverage, (2) test_phase_r57_no_new_uncovered_clauses_in_release_boundary confirms no new uncovered clauses in Release Boundary section and all R1-R56 families remain covered, (3) test_phase_r57_released_scope_integration_verified verifies released-scope integration test exists and covers all missions with ceiling enforcement, (4) test_phase_r57_coverage_ledger_families_r56_remain_covered confirms all families R1-R56 remain covered/excluded with proper evidence. Validation: 4 new tests pass, 584 total unit tests passing (580 existing + 4 from Phase R57), mypy clean, ruff clean. All released-scope clauses verified covered. No new uncovered clauses detected.",
       "next_slice_hint": "Read docs/prd.md and list all released-scope implementation clauses (below pageReadyObserved). Cross-reference with tests/unit/ to find the first clause that has no dedicated unit test. Write one focused pytest function for it, run pytest to confirm it passes, mark this family covered in docs/llm/low-attention-coverage-ledger.json, update docs/product/work-rag.json current.next_action to the next pending family (or 'FINAL_STOP — Phase R57 complete' if none remain), and commit.",
       "first_validation": "python -m pytest tests/unit/ -q",
       "mypy_target": "src/",
