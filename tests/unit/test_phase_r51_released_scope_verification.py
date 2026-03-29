@@ -105,15 +105,22 @@ async def test_phase_r51_released_scope_missions_execute_in_sequence(
 ) -> None:
     """Phase R51: Verify released missions execute in correct sequence.
 
-    PRD Release Boundary (lines 47-53):
+    PRD Release Boundary (lines 47-62):
     'Released implementation scope:
     - attach
     - prepareSession
     - benchmark validation
-    - pageReadyObserved'
+    - pageReadyObserved
+    - syncObservation
+    - targetActionabilityObservation
+    - armedStateEntry
+    - triggerWait
+    - clickDispatch
+    - clickCompletion
+    - successObservation
+    - runCompletion'
 
-    The missions must execute in this exact order: attach_session →
-    prepare_session → benchmark_validation → page_ready_observation.
+    All 12 missions must execute in this exact sequence ending at run_completion.
     """
     adapter = ReleasedScopeTestAdapter()
 

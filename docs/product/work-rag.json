@@ -32,7 +32,7 @@
     "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
     "anchor": "r67ScopeExpansionBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling expands from pageReadyObserved to runCompletion. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine.",
-    "next_action": "scope-expansion-integration-e2e-tests",
+    "next_action": "scope-expansion-heuristic-test-cleanup",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -59,6 +59,26 @@
     ]
   },
   "history": [
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
+      "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
+      "anchor": "r67ScopeExpansionBound",
+      "summary": "scope-expansion-integration-e2e-tests complete: Verified all 12-mission test integration is already correct. Compressed work-rag.json history by removing prior phase summary (kept to 3 entries for current phase-milestone). Updated test function names in test_release_boundary_current_ceiling.py to reflect runCompletion ceiling (was misleadingly named for page_ready_observation). Updated docstrings in test_phase_r51_released_scope_verification.py and test_purpose_preserve_run_comparability.py to document all 12 missions. Validated: all 613 unit tests passing, 4 E2E tests passing, mypy clean, ruff clean.",
+      "evidence": [
+        "tests/unit/test_released_scope_integration.py: FakeExecutionAdapter has all 12 missions with evidence refs",
+        "tests/unit/test_release_boundary_current_ceiling.py: Test names updated to reflect run_completion ceiling, all 12 missions expected",
+        "tests/unit/test_released_cli_shim.py: FakeExecutionAdapter handles all 12 missions",
+        "tests/unit/test_phase_r51_released_scope_verification.py: Docstring updated to list all 12 missions, ending at run_completion",
+        "tests/unit/test_purpose_preserve_run_comparability.py: Docstring updated to reference 12 missions instead of 4",
+        "tests/e2e/test_released_path_e2e.py: All 4 E2E tests verify 12-mission sequence and runCompletion ceiling",
+        "work-rag.json: Compressed history by removing R3-R65 phase summary",
+        "pytest tests/ -q: 617 tests passing (613 unit + 4 e2e)",
+        "mypy src/ez_ax/: clean",
+        "ruff check src/ez_ax/ tests/: clean"
+      ],
+      "recorded_at": "2026-03-30T05:00:00.000000Z"
+    },
     {
       "kind": "checkpoint",
       "phase": "Phase R67 \u2014 scope expansion: pageReadyObserved to runCompletion",
@@ -117,20 +137,6 @@
         "docs/llm/low-attention-coverage-ledger.json: scope-expansion-mission-registry, scope-expansion-prd-docs, scope-expansion-graph-wiring all covered"
       ],
       "recorded_at": "2026-03-30T01:00:00.000000Z"
-    },
-    {
-      "kind": "phase_summary",
-      "phase": "Phases R3-R65 \u2014 Foundation through FINAL_STOP (Compressed History)",
-      "milestone": "All 65 families covered, FINAL_STOP verified at pageReadyObserved ceiling",
-      "anchor": "r65HeuristicScanBound",
-      "summary": "Cumulative compression of Phases R3-R65. 65 families total: 36 foundation, 13 heuristic, then progressive exhaustion verification through R65. All released-scope PRD clauses below pageReadyObserved verified with dedicated unit test coverage. 746 tests passing. Real-environment E2E scaffold established. FINAL_STOP reached and verified via stop-state consistency gate. Architecture clarified: adapters/openclaw renamed to adapters/execution to reflect factual ownership (OpenClaw is external caller, ez-ax owns CUA engine). Phase R66 excluded (superseded by scope expansion decision).",
-      "evidence": [
-        "Phases R3-R65: 65 families covered",
-        "FINAL_STOP verified via autoloop stop-state consistency gate",
-        "adapters/openclaw \u2192 adapters/execution rename complete",
-        "746 tests passing, mypy clean, ruff clean"
-      ],
-      "recorded_at": "2026-03-29T14:00:00.000000Z"
     }
   ]
 }

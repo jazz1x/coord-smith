@@ -95,7 +95,7 @@ class CeilingTrackingAdapter:
 
 
 @pytest.mark.asyncio
-async def test_current_released_ceiling_is_page_ready_observed(
+async def test_current_released_ceiling_is_run_completion(
     tmp_path: Path,
 ) -> None:
     """Verify the current released ceiling is runCompletion.
@@ -123,7 +123,7 @@ async def test_current_released_ceiling_is_page_ready_observed(
 
 
 @pytest.mark.asyncio
-async def test_released_ceiling_page_ready_observation_not_exceeded(
+async def test_released_ceiling_run_completion_not_exceeded(
     tmp_path: Path,
 ) -> None:
     """Verify runCompletion ceiling is not exceeded in released scope.
@@ -165,7 +165,7 @@ async def test_released_ceiling_page_ready_observation_not_exceeded(
 
 
 @pytest.mark.asyncio
-async def test_released_ceiling_stops_after_page_ready_observation(
+async def test_released_ceiling_stops_at_run_completion(
     tmp_path: Path,
 ) -> None:
     """Verify execution stops at runCompletion ceiling.

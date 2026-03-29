@@ -103,8 +103,9 @@ async def test_runs_with_identical_inputs_produce_identical_mission_sequence(
     execution sequences.
 
     This test verifies that:
-    - Both runs execute the same 4 missions in the same order
+    - Both runs execute all 12 missions in the same order
     - No variation in mission sequence occurs with identical inputs
+    - Both runs stop at run_completion ceiling
     """
     adapter1 = ComparableRunAdapter()
     adapter2 = ComparableRunAdapter()
