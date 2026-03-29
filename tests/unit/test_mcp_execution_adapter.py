@@ -7,7 +7,10 @@ import pytest
 
 from ez_ax.adapters.execution.client import ExecutionRequest
 from ez_ax.adapters.execution.mcp_adapter import McpBackedExecutionAdapter
-from ez_ax.adapters.execution.mcp_settings import McpExecutionAdapterSettings, RetryPolicy
+from ez_ax.adapters.execution.mcp_settings import (
+    McpExecutionAdapterSettings,
+    RetryPolicy,
+)
 from ez_ax.models.errors import (
     ConfigError,
     ExecutionTransportError,

@@ -1,22 +1,26 @@
 {
   "version": 3,
-  "active_phase": "Phase R63 — heuristic scan",
-  "active_milestone": "Phase R63 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r63HeuristicScanBound",
+  "active_phase": "Phase R63 — heuristic gap scan and released-path E2E scaffold hardening",
+  "active_milestone": "Phase R63 initial synthetic E2E verification complete",
+  "active_anchor": "r63ReleasedPathE2E",
   "active_invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains pageReadyObserved. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
   "scope_ceiling": "pageReadyObserved",
   "canonical_inputs": [
+    "AGENTS.md",
+    "docs/prd.md",
     "docs/core-loop.md",
     "docs/current-state.md",
     "docs/product/work-rag.json",
+    "docs/product/rag.json",
+    "docs/llm/repo-autonomous-loop-adapter.yaml",
+    "docs/llm/low-attention-execution-contract.json",
     "docs/llm/low-attention-coverage-ledger.json"
   ],
   "extended_inputs_when_needed": [
-    "AGENTS.md",
-    "docs/prd.md",
-    "docs/product/rag.json",
-    "docs/llm/repo-autonomous-loop-adapter.yaml",
-    "docs/llm/low-attention-execution-contract.json"
+    "docs/product/prd-low-attention-implementation-queue.md",
+    "docs/llm/low-attention-slice-templates.json",
+    "tests/e2e/test_released_path_e2e.py",
+    "tests/e2e/README.md"
   ],
   "anchor_contract_families": [
     "Phase R63 heuristic gap scan"
@@ -31,11 +35,13 @@
     "one-task-per-commit safe",
     "name one first_validation before implementation",
     "update current-state and work-rag in the same task close",
+    "keep real-environment E2E work below pageReadyObserved and preserve comparable stop-proof artifacts",
     "update the active coverage ledger in the same task close"
   ],
   "final_stop_requirements": [
     "no coverage-ledger family remains pending",
     "all anchor families are covered or explicitly excluded",
-    "canonical current state does not name a concrete next slice"
+    "canonical current state does not name a concrete next slice",
+    "released-path E2E evidence remains typed and comparable at pageReadyObserved"
   ]
 }

@@ -65,9 +65,27 @@ def build_validation_commands(*, project_root: Path) -> tuple[tuple[str, ...], .
     )
 
 
-def run_validation_gate(*, project_root: Path) -> int:
+def _requires_e2e_validation(*, next_action: str) -> bool:
+    lowered = next_action.lower()
+    return "e2e" in lowered or "real-environment" in lowered
+
+
+def build_cycle_validation_commands(
+    *, project_root: Path, next_action: str
+) -> tuple[tuple[str, ...], ...]:
+    base_commands = list(build_validation_commands(project_root=project_root))
+    if _requires_e2e_validation(next_action=next_action):
+        python_exe = sys.executable
+        base_commands.insert(1, (python_exe, "-m", "pytest", "tests/e2e/", "-q"))
+    return tuple(base_commands)
+
+
+def run_validation_gate(*, project_root: Path, next_action: str) -> int:
     """Run pytest, mypy, ruff directly; return 0 if all clean, else first nonzero."""
-    for command in build_validation_commands(project_root=project_root):
+    for command in build_cycle_validation_commands(
+        project_root=project_root,
+        next_action=next_action,
+    ):
         result = subprocess.run(command, cwd=str(project_root), check=False)
         if result.returncode != 0:
             return result.returncode
@@ -257,7 +275,10 @@ def run_autoloop(*, settings: AutoloopRunSettings) -> int:
         print(f"[cycle {cycle_index}] next_action={plan.next_action}")
         print(f"[cycle {cycle_index}] last_message={last_message_path}")
         if not settings.dry_run:
-            gate_rc = run_validation_gate(project_root=settings.project_root)
+            gate_rc = run_validation_gate(
+                project_root=settings.project_root,
+                next_action=plan.next_action,
+            )
             if gate_rc != 0:
                 print(
                     f"[cycle {cycle_index}] validation gate failed; "

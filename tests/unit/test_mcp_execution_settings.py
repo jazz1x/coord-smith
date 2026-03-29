@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from ez_ax.adapters.execution.mcp_settings import McpExecutionAdapterSettings, RetryPolicy
+from ez_ax.adapters.execution.mcp_settings import (
+    McpExecutionAdapterSettings,
+    RetryPolicy,
+)
 from ez_ax.models.errors import ConfigError
 
 
