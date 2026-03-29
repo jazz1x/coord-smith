@@ -263,6 +263,13 @@ class TestPhaseR60HeuristicGapVerification:
                 f"lacks next_slice_hint"
             )
 
+        # Verify excluded families include an explicit reason.
+        for family in excluded:
+            assert family.get("evidence_or_reason"), (
+                f"Excluded family {family.get('family')} "
+                f"lacks evidence_or_reason"
+            )
+
     def test_phase_r60_no_new_uncovered_clauses_in_prd(self) -> None:
         """Final verification: No new uncovered PRD clauses discovered.
 

@@ -14,8 +14,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 
 class TestPythonFirstOrchestrationRuntime:
     """Tests verifying that ez-ax is fundamentally a Python-first orchestration runtime."""

@@ -27,12 +27,12 @@
     }
   },
   "current": {
-    "goal": "FINAL_STOP — Phase R62 complete. All released-scope clauses below pageReadyObserved verified with dedicated unit test coverage, including previously uncovered Purpose clause. No uncovered clauses remaining. System ready for release verification.",
-    "phase": "Phase R62 — heuristic scan complete",
-    "milestone": "Phase R62 final PRD clause verification complete",
-    "anchor": "r62HeuristicScanBound",
+    "goal": "Establish a runnable released-path E2E scaffold that verifies intentional stop at pageReadyObserved and preserves comparable action-log artifacts through the OpenClaw adapter boundary.",
+    "phase": "Phase R63 — heuristic gap scan and released-path E2E scaffold hardening",
+    "milestone": "Phase R63 initial synthetic E2E verification complete",
+    "anchor": "r63ReleasedPathE2E",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains pageReadyObserved. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-    "next_action": "Phase R63 heuristic gap scan",
+    "next_action": "Phase R63 heuristic gap scan — add a real-environment released-path E2E lane that preserves the same release-ceiling stop bundle and comparable artifact checks without widening above pageReadyObserved.",
     "approved_scope_ceiling": "pageReadyObserved",
     "references": [
       "docs/prd.md",
@@ -59,6 +59,22 @@
     ]
   },
   "history": [
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R63 — released-path E2E scaffold hardening",
+      "milestone": "Phase R63 initial synthetic E2E verification complete",
+      "anchor": "r63ReleasedPathE2E",
+      "summary": "Added the first runnable tests/e2e suite for the released path. The new synthetic E2E coverage drives the stdio-backed OpenClaw adapter boundary with the fake MCP SDK, then verifies intentional stop at pageReadyObserved, the presence and typed contents of artifacts/action-log/release-ceiling-stop.jsonl, and repeated-run comparability of the action-log layout. Validation now includes a real pytest target under tests/e2e. Also repaired two pre-existing ruff failures in unit tests so the canonical lint command can pass again.",
+      "evidence": [
+        "tests/e2e/test_released_path_e2e.py",
+        "tests/e2e/README.md",
+        "./.venv/bin/pytest tests/e2e -q",
+        "./.venv/bin/pytest -q",
+        "./.venv/bin/mypy src",
+        "./.venv/bin/ruff check src tests"
+      ],
+      "recorded_at": "2026-03-29T03:00:00.000000Z"
+    },
     {
       "kind": "phase_summary",
       "phase": "Phases R3-R53 — Foundation through Iterative Exhaustion Verification (Compressed History)",

@@ -14,14 +14,14 @@ It is intentionally changeable and subordinate to:
 
 ## Current Phase Snapshot
 
-- phase: `Phase R53 — heuristic gap scan complete`
-- milestone: `Phase R53 comprehensive final gap scan verified`
-- anchor: `r53HeuristicScanBound`
+- phase: `Phase R63 — heuristic gap scan and released-path E2E scaffold hardening`
+- milestone: `Phase R63 initial synthetic E2E verification complete`
+- anchor: `r63ReleasedPathE2E`
 - invariant: `ez-ax` runtime graph contains no LLM inference. `ez-ax` remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains `pageReadyObserved`. Canonical continuation memory remains two-tiered: `work-rag` for current state, `rag` for durable lessons.
 
 ## Current Interpretation
 
-Phase R62 — heuristic scan complete. Phase transition in progress: `Phase R63 heuristic gap scan` is the active task.
+Phase R63 now combines the heuristic gap-scan continuation with released-path E2E hardening at the current ceiling. The first runnable synthetic E2E lane exists under `tests/e2e/` and verifies deterministic stop-proof artifacts at `pageReadyObserved` through the stdio-backed OpenClaw adapter boundary without widening scope.
 
 ## What Is Already Established
 
@@ -113,7 +113,7 @@ Phase R6 complete:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current next action is: `Phase R63 heuristic gap scan`
+The current next action is: `Phase R63 heuristic gap scan — add a real-environment released-path E2E lane that preserves the same release-ceiling stop bundle and comparable artifact checks without widening above pageReadyObserved.`
 
 ## Active Anchor Coverage Ledger
 
