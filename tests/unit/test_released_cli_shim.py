@@ -50,8 +50,48 @@ class FakeExecutionAdapter:
                 mission_name="page_ready_observation",
                 evidence_refs=(
                     "evidence://dom/page-shell-ready",
-                    "evidence://action-log/release-ceiling-stop",
+                    "evidence://action-log/page-ready-observed",
                 ),
+            )
+        if request.mission_name == "sync_observation":
+            return ExecutionResult(
+                mission_name="sync_observation",
+                evidence_refs=("evidence://action-log/sync-observed",),
+            )
+        if request.mission_name == "target_actionability_observation":
+            return ExecutionResult(
+                mission_name="target_actionability_observation",
+                evidence_refs=("evidence://action-log/target-actionable-observed",),
+            )
+        if request.mission_name == "armed_state_entry":
+            return ExecutionResult(
+                mission_name="armed_state_entry",
+                evidence_refs=("evidence://action-log/armed-state",),
+            )
+        if request.mission_name == "trigger_wait":
+            return ExecutionResult(
+                mission_name="trigger_wait",
+                evidence_refs=("evidence://action-log/trigger-wait-complete",),
+            )
+        if request.mission_name == "click_dispatch":
+            return ExecutionResult(
+                mission_name="click_dispatch",
+                evidence_refs=("evidence://action-log/click-dispatched",),
+            )
+        if request.mission_name == "click_completion":
+            return ExecutionResult(
+                mission_name="click_completion",
+                evidence_refs=("evidence://action-log/click-completed",),
+            )
+        if request.mission_name == "success_observation":
+            return ExecutionResult(
+                mission_name="success_observation",
+                evidence_refs=("evidence://action-log/success-observation",),
+            )
+        if request.mission_name == "run_completion":
+            return ExecutionResult(
+                mission_name="run_completion",
+                evidence_refs=("evidence://action-log/release-ceiling-stop",),
             )
         raise AssertionError(f"Unexpected mission: {request.mission_name}")
 
@@ -91,6 +131,14 @@ async def test_released_cli_shim_prefers_cli_args_over_env(tmp_path: Path) -> No
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     ]
     attach_payload = adapter.requests[0].payload
     assert attach_payload["session_ref"] == "cli-session"

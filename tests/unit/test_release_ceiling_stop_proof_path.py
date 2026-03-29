@@ -44,8 +44,16 @@ class ReleaseCeilingPathTestAdapter:
             ),
             "page_ready_observation": (
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
         refs = evidence_map.get(request.mission_name)
         if refs is None:

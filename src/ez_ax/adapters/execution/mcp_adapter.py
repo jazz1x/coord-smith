@@ -38,7 +38,7 @@ from ez_ax.models.runtime import (
     mission_is_within_approved_scope,
 )
 
-ReleasedScopeCeiling = Literal["pageReadyObserved"]
+ReleasedScopeCeiling = Literal["pageReadyObserved", "runCompletion"]
 ReleasedResponseStatus = Literal["success", "failure", "pending"]
 
 
@@ -320,7 +320,7 @@ class McpBackedExecutionAdapter(ExecutionAdapter):
     settings: McpExecutionAdapterSettings
     mcp_client: McpClient
     run_root: Path | None = None
-    approved_scope_ceiling: ReleasedScopeCeiling = "pageReadyObserved"
+    approved_scope_ceiling: ReleasedScopeCeiling = "runCompletion"
     request_id_factory: Callable[[], str] = field(default=_default_request_id)
 
     def __post_init__(self) -> None:
@@ -336,10 +336,10 @@ class McpBackedExecutionAdapter(ExecutionAdapter):
                 "when provided"
             )
             raise ConfigError(msg)
-        if self.approved_scope_ceiling != "pageReadyObserved":
+        if self.approved_scope_ceiling != "runCompletion":
             msg = (
                 "McpBackedExecutionAdapter.approved_scope_ceiling must equal "
-                "pageReadyObserved"
+                "runCompletion"
             )
             raise FlowError(msg)
 

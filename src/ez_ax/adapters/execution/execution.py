@@ -281,7 +281,7 @@ def validate_release_ceiling_stop_action_log(
             continue
         if payload.get("event") != "release-ceiling-stop":
             continue
-        if payload.get("mission_name") != "page_ready_observation":
+        if payload.get("mission_name") != "run_completion":
             continue
         ts = payload.get("ts")
         if isinstance(ts, str) and _is_iso8601_timestamp(ts):
@@ -290,7 +290,7 @@ def validate_release_ceiling_stop_action_log(
     msg = (
         "Release ceiling stop action-log artifact did not contain a confirming event: "
         "expected at least one JSON line with "
-        "event='release-ceiling-stop', mission_name='page_ready_observation', and "
+        "event='release-ceiling-stop', mission_name='run_completion', and "
         "ISO-8601 ts; "
         f"path='{path}'; "
         "see docs/product/prd-openclaw-e2e-validation.md, "

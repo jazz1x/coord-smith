@@ -1,7 +1,7 @@
 """Test that released-scope graph enforces release-ceiling-stop proof validation.
 
 PRD requirement (Release-Ceiling Stop Proof section, lines 92-109):
-'Stopping at pageReadyObserved must be provable by typed action-log evidence.
+'Stopping at runCompletion must be provable by typed action-log evidence.
 If this artifact cannot be resolved or the typed fields are missing, the system
 must not claim a correct released-ceiling stop.'
 
@@ -50,8 +50,16 @@ class StopProofValidationAdapter:
             "page_ready_observation": (
                 # Required primary evidence for page_ready_observation
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
@@ -68,7 +76,7 @@ async def test_released_scope_graph_creates_stop_proof_artifact(
     """Verify that the released-scope graph produces a valid release-ceiling-stop proof.
 
     PRD requirement (Release-Ceiling Stop Proof section, lines 92-109):
-    'Stopping at pageReadyObserved must be provable by typed action-log evidence.
+    'Stopping at runCompletion must be provable by typed action-log evidence.
     If this artifact cannot be resolved or the typed fields are missing, the
     system must not claim a correct released-ceiling stop.'
 
@@ -78,11 +86,11 @@ async def test_released_scope_graph_creates_stop_proof_artifact(
     3. The artifact can be validated using the standard validator
 
     This test verifies that when the released-scope graph completes at
-    page_ready_observation, the stop proof artifact exists and is valid.
+    run_completion, the stop proof artifact exists and is valid.
     """
     adapter = StopProofValidationAdapter()
 
-    # Run the released-scope graph through page_ready_observation
+    # Run the released-scope graph through run_completion
     result = await run_released_scope_via_langgraph(
         adapter=adapter,
         session_ref="test-session",
@@ -102,7 +110,7 @@ async def test_released_scope_graph_creates_stop_proof_artifact(
     assert stop_proof_path.exists(), (
         "Release-ceiling-stop proof artifact must exist. "
         f"Expected: {stop_proof_path}\n"
-        f"PRD requirement (lines 92-109): 'Stopping at pageReadyObserved must be "
+        f"PRD requirement (lines 92-109): 'Stopping at runCompletion must be "
         f"provable by typed action-log evidence.'"
     )
 
@@ -114,7 +122,7 @@ async def test_released_scope_graph_creates_stop_proof_artifact(
             f"Stop proof artifact failed validation: {exc}\n"
             f"PRD requirement: Release-ceiling-stop artifact must contain:\n"
             f"  - event: 'release-ceiling-stop'\n"
-            f"  - mission_name: 'page_ready_observation'\n"
+            f"  - mission_name: 'run_completion'\n"
             f"  - ts: ISO-8601 timestamp"
         ) from exc
 
@@ -132,7 +140,7 @@ async def test_released_scope_graph_validates_stop_proof_required_fields(
     - ts'
 
     This test verifies that when the released-scope graph completes at
-    page_ready_observation, the stop proof artifact contains all required fields
+    run_completion, the stop proof artifact contains all required fields
     with proper types.
     """
     adapter = StopProofValidationAdapter()
@@ -169,8 +177,8 @@ async def test_released_scope_graph_validates_stop_proof_required_fields(
     )
 
     assert "mission_name" in entry, "Stop proof must contain 'mission_name' field"
-    assert entry["mission_name"] == "page_ready_observation", (
-        "Stop proof mission_name must be 'page_ready_observation'"
+    assert entry["mission_name"] == "run_completion", (
+        "Stop proof mission_name must be 'run_completion'"
     )
 
     assert "ts" in entry, "Stop proof must contain 'ts' (timestamp) field"

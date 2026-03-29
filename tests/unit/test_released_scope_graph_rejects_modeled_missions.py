@@ -24,12 +24,14 @@ def test_released_scope_graph_contains_only_released_mission_nodes(
     tmp_path: Path,
 ) -> None:
     """Verify released-scope graph only adds released missions as nodes."""
-    # PRD Release Boundary (lines 47-53): Only these 4 missions are released:
-    # attach, prepareSession, benchmark validation, pageReadyObserved
+    # PRD Release Boundary (lines 47-61): All 12 missions are released:
+    # attach, prepareSession, benchmark validation, pageReadyObserved,
+    # syncObservation, targetActionabilityObservation, armedStateEntry,
+    # triggerWait, clickDispatch, clickCompletion, successObservation, runCompletion
 
     run = ReleasedRunContext(
         run_root=tmp_path,
-        approved_scope_ceiling="pageReadyObserved",
+        approved_scope_ceiling="runCompletion",
     )
     adapter = FakeExecutionAdapter()
 
@@ -49,9 +51,17 @@ def test_released_scope_graph_contains_only_released_mission_nodes(
         "prepare_session_node",
         "benchmark_validation_node",
         "page_ready_observation_node",
+        "sync_observation_node",
+        "target_actionability_observation_node",
+        "armed_state_entry_node",
+        "trigger_wait_node",
+        "click_dispatch_node",
+        "click_completion_node",
+        "success_observation_node",
+        "run_completion_node",
     ]
 
-    # The compiled graph structure should only include these 4 nodes
+    # The compiled graph structure should only include these 12 nodes
     # (plus implicit START and END nodes handled by LangGraph)
     actual_nodes = list(graph.nodes.keys())
 
@@ -62,7 +72,7 @@ def test_released_scope_graph_contains_only_released_mission_nodes(
             f"Actual nodes: {actual_nodes}"
         )
 
-    # Verify NO modeled missions are present
+    # Verify NO modeled missions are present (should be empty now)
     for modeled_mission in MODELED_MISSIONS:
         # Modeled missions would appear as nodes like "sync_observation_node", etc.
         modeled_node_name = f"{modeled_mission}_node"
@@ -81,11 +91,19 @@ def test_released_scope_graph_enforces_correct_mission_sequence(
     # 1. attach_session (attach)
     # 2. prepare_session (prepareSession)
     # 3. benchmark_validation (benchmark validation)
-    # 4. page_ready_observation (pageReadyObserved) - release ceiling
+    # 4. page_ready_observation (pageReadyObserved)
+    # 5. sync_observation (syncObservation)
+    # 6. target_actionability_observation (targetActionabilityObservation)
+    # 7. armed_state_entry (armedStateEntry)
+    # 8. trigger_wait (triggerWait)
+    # 9. click_dispatch (clickDispatch)
+    # 10. click_completion (clickCompletion)
+    # 11. success_observation (successObservation)
+    # 12. run_completion (runCompletion) - release ceiling
 
     run = ReleasedRunContext(
         run_root=tmp_path,
-        approved_scope_ceiling="pageReadyObserved",
+        approved_scope_ceiling="runCompletion",
     )
     adapter = FakeExecutionAdapter()
 
@@ -107,6 +125,14 @@ def test_released_scope_graph_enforces_correct_mission_sequence(
         "prepare_session_node",
         "benchmark_validation_node",
         "page_ready_observation_node",
+        "sync_observation_node",
+        "target_actionability_observation_node",
+        "armed_state_entry_node",
+        "trigger_wait_node",
+        "click_dispatch_node",
+        "click_completion_node",
+        "success_observation_node",
+        "run_completion_node",
     ]
 
     # Get the actual edges from the underlying graph
@@ -173,15 +199,15 @@ def test_released_scope_missions_match_prd_definition(
 def test_released_scope_execution_graph_edges_final_mission_to_end(
     tmp_path: Path,
 ) -> None:
-    """Verify released-scope execution graph edges page_ready_observation to END.
+    """Verify released-scope execution graph edges run_completion to END.
 
-    PRD Release Boundary (line 53): "intentional stop at the released ceiling"
+    PRD Release Boundary (line 61): "intentional stop at the released ceiling"
     This test verifies that the graph structure enforces this stop by having
-    page_ready_observation_node edge to END (__end__), not to any other mission.
+    run_completion_node edge to END (__end__), not to any other mission.
     """
     run = ReleasedRunContext(
         run_root=tmp_path,
-        approved_scope_ceiling="pageReadyObserved",
+        approved_scope_ceiling="runCompletion",
     )
     adapter = FakeExecutionAdapter()
 
@@ -200,25 +226,25 @@ def test_released_scope_execution_graph_edges_final_mission_to_end(
     # Collect edges from the graph
     edges = graph.edges
 
-    # Find outgoing edges from page_ready_observation_node
+    # Find outgoing edges from run_completion_node
     outgoing_edges = [
-        edge for edge in edges if str(edge[0]) == "page_ready_observation_node"
+        edge for edge in edges if str(edge[0]) == "run_completion_node"
     ]
 
     assert len(outgoing_edges) > 0, (
-        "page_ready_observation_node has no outgoing edges. "
+        "run_completion_node has no outgoing edges. "
         "This violates PRD Release Boundary: intentional stop at released ceiling."
     )
 
     assert len(outgoing_edges) == 1, (
-        f"page_ready_observation_node has {len(outgoing_edges)} outgoing edges. "
+        f"run_completion_node has {len(outgoing_edges)} outgoing edges. "
         f"Should have exactly 1 edge to END. Actual edges: {outgoing_edges}. "
-        f"This violates PRD Release Boundary: page_ready_observation is the final mission."
+        f"This violates PRD Release Boundary: run_completion is the final mission."
     )
 
     # Verify the single outgoing edge goes to END (__end__)
     target_node = outgoing_edges[0][1]
     assert str(target_node) == "__end__", (
-        f"page_ready_observation_node edges to {target_node}, not __end__. "
+        f"run_completion_node edges to {target_node}, not __end__. "
         f"This violates PRD Release Boundary: intentional stop at released ceiling."
     )

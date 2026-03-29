@@ -25,7 +25,7 @@ class ReleasedRunContext:
     """Minimal released-scope run context owned by the orchestrator/graph."""
 
     run_root: Path
-    approved_scope_ceiling: Literal["pageReadyObserved"] = "pageReadyObserved"
+    approved_scope_ceiling: Literal["pageReadyObserved", "runCompletion"] = "runCompletion"
 
     def __post_init__(self) -> None:
         if not isinstance(self.run_root, Path):
@@ -42,9 +42,9 @@ class ReleasedRunContext:
                 f"run_root='{self.run_root}'"
             )
             raise ConfigError(msg)
-        if self.approved_scope_ceiling != "pageReadyObserved":
+        if self.approved_scope_ceiling not in ("pageReadyObserved", "runCompletion"):
             msg = (
-                "ReleasedRunContext.approved_scope_ceiling must equal pageReadyObserved"
+                "ReleasedRunContext.approved_scope_ceiling must be pageReadyObserved or runCompletion"
             )
             raise FlowError(msg)
 
@@ -190,7 +190,7 @@ async def execute_page_ready_observation_node(
     adapter: ExecutionAdapter,
     run: ReleasedRunContext,
 ) -> ExecutionResult:
-    """Execute the released page_ready_observation node and stop at the ceiling."""
+    """Execute the released page_ready_observation node and continue to sync observation."""
 
     require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("page_ready_observation")
@@ -198,12 +198,236 @@ async def execute_page_ready_observation_node(
     seed_action_log_marker(
         run_root=run.run_root,
         mission_name="page_ready_observation",
-        key="release-ceiling-stop",
+        key="page-ready-observed",
     )
 
     result = await execute_within_scope(
         adapter=adapter,
         mission_name="page_ready_observation",
+        payload={},
+        approved_scope_ceiling=run.approved_scope_ceiling,
+        run_root=run.run_root,
+    )
+    state.mission_state.evidence_refs = result.evidence_refs
+    return result
+
+
+async def execute_sync_observation_node(
+    *,
+    state: RuntimeState,
+    adapter: ExecutionAdapter,
+    run: ReleasedRunContext,
+) -> ExecutionResult:
+    """Execute the released sync_observation node."""
+
+    require_existing_run_root(run_root=run.run_root)
+    state.set_current_mission("sync_observation")
+
+    seed_action_log_marker(
+        run_root=run.run_root,
+        mission_name="sync_observation",
+        key="sync-observed",
+    )
+
+    result = await execute_within_scope(
+        adapter=adapter,
+        mission_name="sync_observation",
+        payload={},
+        approved_scope_ceiling=run.approved_scope_ceiling,
+        run_root=run.run_root,
+    )
+    state.mission_state.evidence_refs = result.evidence_refs
+    return result
+
+
+async def execute_target_actionability_observation_node(
+    *,
+    state: RuntimeState,
+    adapter: ExecutionAdapter,
+    run: ReleasedRunContext,
+) -> ExecutionResult:
+    """Execute the released target_actionability_observation node."""
+
+    require_existing_run_root(run_root=run.run_root)
+    state.set_current_mission("target_actionability_observation")
+
+    seed_action_log_marker(
+        run_root=run.run_root,
+        mission_name="target_actionability_observation",
+        key="target-actionable-observed",
+    )
+
+    result = await execute_within_scope(
+        adapter=adapter,
+        mission_name="target_actionability_observation",
+        payload={},
+        approved_scope_ceiling=run.approved_scope_ceiling,
+        run_root=run.run_root,
+    )
+    state.mission_state.evidence_refs = result.evidence_refs
+    return result
+
+
+async def execute_armed_state_entry_node(
+    *,
+    state: RuntimeState,
+    adapter: ExecutionAdapter,
+    run: ReleasedRunContext,
+) -> ExecutionResult:
+    """Execute the released armed_state_entry node."""
+
+    require_existing_run_root(run_root=run.run_root)
+    state.set_current_mission("armed_state_entry")
+
+    seed_action_log_marker(
+        run_root=run.run_root,
+        mission_name="armed_state_entry",
+        key="armed-state",
+    )
+
+    result = await execute_within_scope(
+        adapter=adapter,
+        mission_name="armed_state_entry",
+        payload={},
+        approved_scope_ceiling=run.approved_scope_ceiling,
+        run_root=run.run_root,
+    )
+    state.mission_state.evidence_refs = result.evidence_refs
+    return result
+
+
+async def execute_trigger_wait_node(
+    *,
+    state: RuntimeState,
+    adapter: ExecutionAdapter,
+    run: ReleasedRunContext,
+) -> ExecutionResult:
+    """Execute the released trigger_wait node."""
+
+    require_existing_run_root(run_root=run.run_root)
+    state.set_current_mission("trigger_wait")
+
+    seed_action_log_marker(
+        run_root=run.run_root,
+        mission_name="trigger_wait",
+        key="trigger-wait-complete",
+    )
+
+    result = await execute_within_scope(
+        adapter=adapter,
+        mission_name="trigger_wait",
+        payload={},
+        approved_scope_ceiling=run.approved_scope_ceiling,
+        run_root=run.run_root,
+    )
+    state.mission_state.evidence_refs = result.evidence_refs
+    return result
+
+
+async def execute_click_dispatch_node(
+    *,
+    state: RuntimeState,
+    adapter: ExecutionAdapter,
+    run: ReleasedRunContext,
+) -> ExecutionResult:
+    """Execute the released click_dispatch node."""
+
+    require_existing_run_root(run_root=run.run_root)
+    state.set_current_mission("click_dispatch")
+
+    seed_action_log_marker(
+        run_root=run.run_root,
+        mission_name="click_dispatch",
+        key="click-dispatched",
+    )
+
+    result = await execute_within_scope(
+        adapter=adapter,
+        mission_name="click_dispatch",
+        payload={},
+        approved_scope_ceiling=run.approved_scope_ceiling,
+        run_root=run.run_root,
+    )
+    state.mission_state.evidence_refs = result.evidence_refs
+    return result
+
+
+async def execute_click_completion_node(
+    *,
+    state: RuntimeState,
+    adapter: ExecutionAdapter,
+    run: ReleasedRunContext,
+) -> ExecutionResult:
+    """Execute the released click_completion node."""
+
+    require_existing_run_root(run_root=run.run_root)
+    state.set_current_mission("click_completion")
+
+    seed_action_log_marker(
+        run_root=run.run_root,
+        mission_name="click_completion",
+        key="click-completed",
+    )
+
+    result = await execute_within_scope(
+        adapter=adapter,
+        mission_name="click_completion",
+        payload={},
+        approved_scope_ceiling=run.approved_scope_ceiling,
+        run_root=run.run_root,
+    )
+    state.mission_state.evidence_refs = result.evidence_refs
+    return result
+
+
+async def execute_success_observation_node(
+    *,
+    state: RuntimeState,
+    adapter: ExecutionAdapter,
+    run: ReleasedRunContext,
+) -> ExecutionResult:
+    """Execute the released success_observation node."""
+
+    require_existing_run_root(run_root=run.run_root)
+    state.set_current_mission("success_observation")
+
+    seed_action_log_marker(
+        run_root=run.run_root,
+        mission_name="success_observation",
+        key="success-observation",
+    )
+
+    result = await execute_within_scope(
+        adapter=adapter,
+        mission_name="success_observation",
+        payload={},
+        approved_scope_ceiling=run.approved_scope_ceiling,
+        run_root=run.run_root,
+    )
+    state.mission_state.evidence_refs = result.evidence_refs
+    return result
+
+
+async def execute_run_completion_node(
+    *,
+    state: RuntimeState,
+    adapter: ExecutionAdapter,
+    run: ReleasedRunContext,
+) -> ExecutionResult:
+    """Execute the released run_completion node and stop at the ceiling."""
+
+    require_existing_run_root(run_root=run.run_root)
+    state.set_current_mission("run_completion")
+
+    seed_action_log_marker(
+        run_root=run.run_root,
+        mission_name="run_completion",
+        key="release-ceiling-stop",
+    )
+
+    result = await execute_within_scope(
+        adapter=adapter,
+        mission_name="run_completion",
         payload={},
         approved_scope_ceiling=run.approved_scope_ceiling,
         run_root=run.run_root,

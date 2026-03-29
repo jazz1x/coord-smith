@@ -441,7 +441,7 @@ def test_build_execution_result_within_scope_rejects_modeled() -> None:
     try:
         build_execution_result_within_scope(
             mission_name="sync_observation",
-            evidence_refs=("evidence://clock/server-time",),
+            evidence_refs=("evidence://action-log/sync-observed",),
             approved_scope_ceiling="pageReadyObserved",
         )
     except ValueError as exc:
@@ -737,7 +737,7 @@ def test_validate_execution_result_accepts_page_ready_primary_minimum() -> (
         mission_name="page_ready_observation",
         evidence_refs=(
             "evidence://dom/page-shell-ready",
-            "evidence://action-log/release-ceiling-stop",
+            "evidence://action-log/page-ready-observed",
         ),
     )
 
@@ -751,7 +751,7 @@ def test_validate_execution_result_accepts_page_ready_minimum_with_optional_extr
         mission_name="page_ready_observation",
         evidence_refs=(
             "evidence://dom/page-shell-ready",
-            "evidence://action-log/release-ceiling-stop",
+            "evidence://action-log/page-ready-observed",
             "evidence://clock/server-time",
         ),
     )
@@ -767,7 +767,7 @@ def test_validate_execution_result_accepts_page_ready_fallback_minimum() -> (
         evidence_refs=(
             "evidence://screenshot/page-shell-ready-fallback",
             "evidence://text/fallback-reason",
-            "evidence://action-log/release-ceiling-stop",
+            "evidence://action-log/page-ready-observed",
         ),
     )
 
@@ -881,7 +881,7 @@ def test_validate_execution_result_within_scope_rejects_page_ready_under_prepare
         mission_name="page_ready_observation",
         evidence_refs=(
             "evidence://dom/page-shell-ready",
-            "evidence://action-log/release-ceiling-stop",
+            "evidence://action-log/page-ready-observed",
         ),
     )
 
@@ -1140,7 +1140,7 @@ def test_validate_execution_result_within_scope_accepts_page_ready_under_page_re
         mission_name="page_ready_observation",
         evidence_refs=(
             "evidence://dom/page-shell-ready",
-            "evidence://action-log/release-ceiling-stop",
+            "evidence://action-log/page-ready-observed",
         ),
     )
 
@@ -1184,7 +1184,7 @@ def test_validate_execution_result_within_scope_accepts_attach_under_prepare_ses
 
 def test_validate_execution_result_within_scope_rejects_modeled() -> None:
     result = ExecutionResult(
-        mission_name="sync_observation", evidence_refs=("evidence://clock/server-time",)
+        mission_name="sync_observation", evidence_refs=("evidence://action-log/sync-observed",)
     )
 
     try:
@@ -1202,7 +1202,7 @@ def test_validate_execution_result_within_scope_accepts_released_under_default_c
     None
 ):
     result = ExecutionResult(
-        mission_name="sync_observation", evidence_refs=("evidence://clock/server-time",)
+        mission_name="sync_observation", evidence_refs=("evidence://action-log/sync-observed",)
     )
 
     # sync_observation is now released and within default runCompletion ceiling

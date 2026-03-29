@@ -11,10 +11,18 @@ from ez_ax.adapters.execution.client import (
 )
 from ez_ax.graph.released_call_site import (
     ReleasedRunContext,
+    execute_armed_state_entry_node,
     execute_attach_session_node,
     execute_benchmark_validation_node,
+    execute_click_completion_node,
+    execute_click_dispatch_node,
     execute_page_ready_observation_node,
     execute_prepare_session_node,
+    execute_run_completion_node,
+    execute_success_observation_node,
+    execute_sync_observation_node,
+    execute_target_actionability_observation_node,
+    execute_trigger_wait_node,
     seed_action_log_marker,
 )
 from ez_ax.models.errors import ConfigError, FlowError, ValidationError
@@ -79,7 +87,7 @@ async def test_execute_prepare_session_node_wires_execution_wrapper(
 ) -> None:
     run_root = tmp_path
     run = ReleasedRunContext(
-        run_root=run_root, approved_scope_ceiling="pageReadyObserved"
+        run_root=run_root, approved_scope_ceiling="runCompletion"
     )
 
     result = ExecutionResult(
@@ -112,7 +120,7 @@ async def test_execute_benchmark_validation_node_wires_execution_wrapper(
 ) -> None:
     run_root = tmp_path
     run = ReleasedRunContext(
-        run_root=run_root, approved_scope_ceiling="pageReadyObserved"
+        run_root=run_root, approved_scope_ceiling="runCompletion"
     )
 
     result = ExecutionResult(
@@ -144,7 +152,7 @@ async def test_execute_attach_session_node_wires_execution_wrapper(
 ) -> None:
     run_root = tmp_path
     run = ReleasedRunContext(
-        run_root=run_root, approved_scope_ceiling="pageReadyObserved"
+        run_root=run_root, approved_scope_ceiling="runCompletion"
     )
 
     result = ExecutionResult(
@@ -192,14 +200,14 @@ async def test_execute_page_ready_observation_node_wires_execution_wrapper(
 ) -> None:
     run_root = tmp_path
     run = ReleasedRunContext(
-        run_root=run_root, approved_scope_ceiling="pageReadyObserved"
+        run_root=run_root, approved_scope_ceiling="runCompletion"
     )
 
     result = ExecutionResult(
         mission_name="page_ready_observation",
         evidence_refs=(
             "evidence://dom/page-shell-ready",
-            "evidence://action-log/release-ceiling-stop",
+            "evidence://action-log/page-ready-observed",
         ),
     )
     adapter = FakeExecutionAdapter(result=result)
@@ -215,5 +223,78 @@ async def test_execute_page_ready_observation_node_wires_execution_wrapper(
     assert state.current_mission == "page_ready_observation"
     assert state.mission_state.evidence_refs == result.evidence_refs
     assert (
+        run_root / "artifacts" / "action-log" / "page-ready-observed.jsonl"
+    ).exists()
+
+
+@pytest.mark.asyncio
+async def test_execute_sync_observation_node_wires_execution_wrapper(
+    tmp_path: Path,
+) -> None:
+    run_root = tmp_path
+    run = ReleasedRunContext(
+        run_root=run_root, approved_scope_ceiling="runCompletion"
+    )
+
+    result = ExecutionResult(
+        mission_name="sync_observation",
+        evidence_refs=(
+            "evidence://dom/sync-check",
+            "evidence://action-log/sync-observed",
+        ),
+    )
+    adapter = FakeExecutionAdapter(result=result)
+    state = RuntimeState(run_id="test-run")
+
+    observed = await execute_sync_observation_node(
+        state=state,
+        adapter=adapter,
+        run=run,
+    )
+
+    assert observed == result
+    assert state.current_mission == "sync_observation"
+    assert state.mission_state.evidence_refs == result.evidence_refs
+    assert (
+        run_root / "artifacts" / "action-log" / "sync-observed.jsonl"
+    ).exists()
+
+
+@pytest.mark.asyncio
+async def test_execute_run_completion_node_seeds_release_ceiling_stop(
+    tmp_path: Path,
+) -> None:
+    """Verify run_completion_node seeds the release-ceiling-stop marker."""
+    run_root = tmp_path
+    run = ReleasedRunContext(
+        run_root=run_root, approved_scope_ceiling="runCompletion"
+    )
+
+    result = ExecutionResult(
+        mission_name="run_completion",
+        evidence_refs=(
+            "evidence://action-log/release-ceiling-stop",
+        ),
+    )
+    adapter = FakeExecutionAdapter(result=result)
+    state = RuntimeState(run_id="test-run")
+
+    observed = await execute_run_completion_node(
+        state=state,
+        adapter=adapter,
+        run=run,
+    )
+
+    assert observed == result
+    assert state.current_mission == "run_completion"
+    assert state.mission_state.evidence_refs == result.evidence_refs
+    assert (
         run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
     ).exists()
+    payload = json.loads(
+        (run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()[0]
+    )
+    assert payload["event"] == "release-ceiling-stop"
+    assert payload["mission_name"] == "run_completion"

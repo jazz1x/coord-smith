@@ -236,10 +236,90 @@ def validate_execution_result(result: ExecutionResult) -> None:
     elif result.mission_name == "page_ready_observation":
         primary = {
             "evidence://dom/page-shell-ready",
-            "evidence://action-log/release-ceiling-stop",
+            "evidence://action-log/page-ready-observed",
         }
         fallback = {
             "evidence://screenshot/page-shell-ready-fallback",
+            "evidence://text/fallback-reason",
+            "evidence://action-log/page-ready-observed",
+        }
+        required_sets = (primary, fallback)
+    elif result.mission_name == "sync_observation":
+        primary = {
+            "evidence://action-log/sync-observed",
+        }
+        fallback = {
+            "evidence://screenshot/sync-observed-fallback",
+            "evidence://text/fallback-reason",
+            "evidence://action-log/sync-observed",
+        }
+        required_sets = (primary, fallback)
+    elif result.mission_name == "target_actionability_observation":
+        primary = {
+            "evidence://action-log/target-actionable-observed",
+        }
+        fallback = {
+            "evidence://screenshot/target-actionable-fallback",
+            "evidence://text/fallback-reason",
+            "evidence://action-log/target-actionable-observed",
+        }
+        required_sets = (primary, fallback)
+    elif result.mission_name == "armed_state_entry":
+        primary = {
+            "evidence://action-log/armed-state",
+        }
+        fallback = {
+            "evidence://screenshot/armed-state-fallback",
+            "evidence://text/fallback-reason",
+            "evidence://action-log/armed-state",
+        }
+        required_sets = (primary, fallback)
+    elif result.mission_name == "trigger_wait":
+        primary = {
+            "evidence://action-log/trigger-wait-complete",
+        }
+        fallback = {
+            "evidence://screenshot/trigger-wait-fallback",
+            "evidence://text/fallback-reason",
+            "evidence://action-log/trigger-wait-complete",
+        }
+        required_sets = (primary, fallback)
+    elif result.mission_name == "click_dispatch":
+        primary = {
+            "evidence://action-log/click-dispatched",
+        }
+        fallback = {
+            "evidence://screenshot/click-dispatched-fallback",
+            "evidence://text/fallback-reason",
+            "evidence://action-log/click-dispatched",
+        }
+        required_sets = (primary, fallback)
+    elif result.mission_name == "click_completion":
+        primary = {
+            "evidence://action-log/click-completed",
+        }
+        fallback = {
+            "evidence://screenshot/click-completed-fallback",
+            "evidence://text/fallback-reason",
+            "evidence://action-log/click-completed",
+        }
+        required_sets = (primary, fallback)
+    elif result.mission_name == "success_observation":
+        primary = {
+            "evidence://action-log/success-observation",
+        }
+        fallback = {
+            "evidence://screenshot/success-observation-fallback",
+            "evidence://text/fallback-reason",
+            "evidence://action-log/success-observation",
+        }
+        required_sets = (primary, fallback)
+    elif result.mission_name == "run_completion":
+        primary = {
+            "evidence://action-log/release-ceiling-stop",
+        }
+        fallback = {
+            "evidence://screenshot/run-completion-fallback",
             "evidence://text/fallback-reason",
             "evidence://action-log/release-ceiling-stop",
         }
@@ -634,7 +714,7 @@ def validate_release_ceiling_stop_action_log(
             continue
         if payload.get("event") != "release-ceiling-stop":
             continue
-        if payload.get("mission_name") != "page_ready_observation":
+        if payload.get("mission_name") != "run_completion":
             continue
         ts = payload.get("ts")
         if isinstance(ts, str) and _is_iso8601_timestamp(ts):
@@ -643,7 +723,7 @@ def validate_release_ceiling_stop_action_log(
     msg = (
         "Release ceiling stop action-log artifact did not contain a confirming event: "
         "expected at least one JSON line with "
-        "event='release-ceiling-stop', mission_name='page_ready_observation', and "
+        "event='release-ceiling-stop', mission_name='run_completion', and "
         "ISO-8601 ts; "
         f"path='{path}'; "
         "see docs/product/prd-openclaw-e2e-validation.md, "

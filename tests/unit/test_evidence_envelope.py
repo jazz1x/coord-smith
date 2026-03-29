@@ -219,7 +219,7 @@ def test_validate_release_ceiling_stop_proof_accepts_valid_artifact() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         artifact_path = Path(tmpdir) / "release-ceiling-stop.jsonl"
         artifact_path.write_text(
-            '{"event": "release-ceiling-stop", "mission_name": "page_ready_observation", "ts": "2026-03-27T10:00:00Z"}\n'
+            '{"event": "release-ceiling-stop", "mission_name": "run_completion", "ts": "2026-03-27T10:00:00Z"}\n'
         )
         validate_release_ceiling_stop_proof(artifact_path)
 
@@ -266,7 +266,7 @@ def test_validate_release_ceiling_stop_proof_rejects_missing_timestamp() -> None
     with tempfile.TemporaryDirectory() as tmpdir:
         artifact_path = Path(tmpdir) / "no-ts.jsonl"
         artifact_path.write_text(
-            '{"event": "release-ceiling-stop", "mission_name": "page_ready_observation"}\n'
+            '{"event": "release-ceiling-stop", "mission_name": "run_completion"}\n'
         )
         try:
             validate_release_ceiling_stop_proof(artifact_path)
@@ -281,7 +281,7 @@ def test_validate_release_ceiling_stop_proof_accepts_artifact_with_extra_lines()
         artifact_path = Path(tmpdir) / "with-context.jsonl"
         artifact_path.write_text(
             '{"event": "action", "mission_name": "prepare_session", "ts": "2026-03-27T10:00:00Z"}\n'
-            '{"event": "release-ceiling-stop", "mission_name": "page_ready_observation", "ts": "2026-03-27T10:00:01Z"}\n'
+            '{"event": "release-ceiling-stop", "mission_name": "run_completion", "ts": "2026-03-27T10:00:01Z"}\n'
         )
         validate_release_ceiling_stop_proof(artifact_path)
 

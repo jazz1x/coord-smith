@@ -115,7 +115,7 @@ async def test_mcp_adapter_happy_path_returns_execution_result(tmp_path: Path) -
     assert client.last_tool_name == "openclaw.execute"
     assert client.last_tool_input is not None
     assert client.last_tool_input["mission_name"] == "prepare_session"
-    assert client.last_tool_input["scope_ceiling"] == "pageReadyObserved"
+    assert client.last_tool_input["scope_ceiling"] == "runCompletion"
     assert client.last_tool_input["request_id"] == "req-1"
     assert client.last_tool_input["run_root"] == str(tmp_path)
 
@@ -210,20 +210,34 @@ async def test_mcp_adapter_rejects_non_directory_run_root(tmp_path: Path) -> Non
 
 
 @pytest.mark.asyncio
-async def test_mcp_adapter_rejects_mission_above_scope_ceiling(tmp_path: Path) -> None:
-    client = FakeMcpClient(tool_output={})
+async def test_mcp_adapter_accepts_all_released_scope_missions(tmp_path: Path) -> None:
+    """Verify MCP adapter accepts all 12 released scope missions up to run_completion.
+
+    With the expanded ceiling to runCompletion, all 12 missions including
+    sync_observation are now within the released scope and should be accepted.
+    """
+    evidence_refs = ["evidence://action-log/sync-observed"]
+    tool_output = {
+        "mission_name": "sync_observation",
+        "status": "success",
+        "evidence_refs": evidence_refs,
+        "observations": {
+            evidence_refs[0]: _observation(ref=evidence_refs[0], value={"synced": True}),
+        },
+        "request_id": "req-1",
+    }
+    client = FakeMcpClient(tool_output=tool_output)
     adapter = McpBackedExecutionAdapter(
-        settings=_settings(), mcp_client=client, run_root=tmp_path
+        settings=_settings(), mcp_client=client, run_root=tmp_path,
+        request_id_factory=lambda: "req-1",
     )
 
     request = ExecutionRequest(mission_name="sync_observation", payload={})
+    result = await adapter.execute(request)
 
-    try:
-        await adapter.execute(request)
-    except FlowError as exc:
-        assert "outside approved scope ceiling" in str(exc) or "outside" in str(exc)
-    else:
-        raise AssertionError("Expected mission above ceiling to raise FlowError")
+    # Verify sync_observation (previously modeled-only) is now accepted in released scope
+    assert result.mission_name == "sync_observation"
+    assert result.evidence_refs == tuple(evidence_refs)
 
 
 @pytest.mark.asyncio

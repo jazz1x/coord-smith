@@ -111,7 +111,7 @@ class RuntimeState:
     current_mission: str = ALL_MISSIONS[0]
     current_anchor: str = "pythonRuntimeBootstrapCreated"
     highest_reached_stage: str = "none"
-    approved_scope_ceiling: str = "pageReadyObserved"
+    approved_scope_ceiling: str = "runCompletion"
     release_status: ReleaseStatus = "released"
     session_ref: str | None = None
     site_identity: str | None = None

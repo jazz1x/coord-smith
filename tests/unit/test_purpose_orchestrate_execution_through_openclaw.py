@@ -54,8 +54,16 @@ class ExecutionTrackingAdapter:
             ),
             "page_ready_observation": (
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
@@ -89,10 +97,10 @@ async def test_released_scope_delegates_all_execution_to_adapter(
         base_dir=tmp_path,
     )
 
-    # Verify all four missions were orchestrated through OpenClaw
-    assert adapter.call_count == 4, (
-        f"All 4 released missions must be orchestrated through OpenClaw. "
-        f"Expected 4 calls, got {adapter.call_count}"
+    # Verify all twelve missions were orchestrated through OpenClaw
+    assert adapter.call_count == 12, (
+        f"All 12 released missions must be orchestrated through OpenClaw. "
+        f"Expected 12 calls, got {adapter.call_count}"
     )
 
     # Verify the missions were called in the correct order
@@ -102,6 +110,14 @@ async def test_released_scope_delegates_all_execution_to_adapter(
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     ]
     assert executed_missions == expected_sequence, (
         f"Missions must be orchestrated in correct order through OpenClaw. "
@@ -171,6 +187,13 @@ async def test_each_released_mission_execution_goes_through_execution_adapter(
         "page_ready_observation orchestration must have empty payload"
     )
 
+    # Verify remaining missions have empty payloads as well
+    for i in range(4, 12):
+        call = adapter.calls[i]
+        assert call.payload == {}, (
+            f"Mission {call.mission_name} at index {i} must have empty payload"
+        )
+
 
 @pytest.mark.asyncio
 async def test_released_scope_execution_graph_wires_to_execution_adapter(
@@ -202,6 +225,14 @@ async def test_released_scope_execution_graph_wires_to_execution_adapter(
                 "prepare_session",
                 "benchmark_validation",
                 "page_ready_observation",
+                "sync_observation",
+                "target_actionability_observation",
+                "armed_state_entry",
+                "trigger_wait",
+                "click_dispatch",
+                "click_completion",
+                "success_observation",
+                "run_completion",
             ]:
                 raise AssertionError(
                     f"Adapter received unexpected mission: {request.mission_name}"
@@ -223,8 +254,16 @@ async def test_released_scope_execution_graph_wires_to_execution_adapter(
                 ),
                 "page_ready_observation": (
                     "evidence://dom/page-shell-ready",
-                    "evidence://action-log/release-ceiling-stop",
+                    "evidence://action-log/page-ready-observed",
                 ),
+                "sync_observation": ("evidence://action-log/sync-observed",),
+                "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+                "armed_state_entry": ("evidence://action-log/armed-state",),
+                "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+                "click_dispatch": ("evidence://action-log/click-dispatched",),
+                "click_completion": ("evidence://action-log/click-completed",),
+                "success_observation": ("evidence://action-log/success-observation",),
+                "run_completion": ("evidence://action-log/release-ceiling-stop",),
             }
             refs = evidence_map.get(request.mission_name, ())
             return ExecutionResult(
@@ -242,8 +281,8 @@ async def test_released_scope_execution_graph_wires_to_execution_adapter(
         base_dir=tmp_path,
     )
 
-    # Verify the graph called the adapter exactly 4 times (once per mission)
-    assert adapter.call_count == 4, (
-        f"Released-scope graph must orchestrate exactly 4 missions through OpenClaw. "
+    # Verify the graph called the adapter exactly 12 times (once per mission)
+    assert adapter.call_count == 12, (
+        f"Released-scope graph must orchestrate exactly 12 missions through OpenClaw. "
         f"Got {adapter.call_count} calls"
     )

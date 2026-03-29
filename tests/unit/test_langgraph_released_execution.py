@@ -59,6 +59,69 @@ class FakeExecutionAdapter:
                 mission_name="page_ready_observation",
                 evidence_refs=(
                     "evidence://dom/page-shell-ready",
+                    "evidence://action-log/page-ready-observed",
+                ),
+            )
+        if request.mission_name == "sync_observation":
+            return ExecutionResult(
+                mission_name="sync_observation",
+                evidence_refs=(
+                    "evidence://dom/sync-check",
+                    "evidence://action-log/sync-observed",
+                ),
+            )
+        if request.mission_name == "target_actionability_observation":
+            return ExecutionResult(
+                mission_name="target_actionability_observation",
+                evidence_refs=(
+                    "evidence://dom/target-actionable",
+                    "evidence://action-log/target-actionable-observed",
+                ),
+            )
+        if request.mission_name == "armed_state_entry":
+            return ExecutionResult(
+                mission_name="armed_state_entry",
+                evidence_refs=(
+                    "evidence://dom/armed-state",
+                    "evidence://action-log/armed-state",
+                ),
+            )
+        if request.mission_name == "trigger_wait":
+            return ExecutionResult(
+                mission_name="trigger_wait",
+                evidence_refs=(
+                    "evidence://dom/trigger-fired",
+                    "evidence://action-log/trigger-wait-complete",
+                ),
+            )
+        if request.mission_name == "click_dispatch":
+            return ExecutionResult(
+                mission_name="click_dispatch",
+                evidence_refs=(
+                    "evidence://dom/click-sent",
+                    "evidence://action-log/click-dispatched",
+                ),
+            )
+        if request.mission_name == "click_completion":
+            return ExecutionResult(
+                mission_name="click_completion",
+                evidence_refs=(
+                    "evidence://dom/click-done",
+                    "evidence://action-log/click-completed",
+                ),
+            )
+        if request.mission_name == "success_observation":
+            return ExecutionResult(
+                mission_name="success_observation",
+                evidence_refs=(
+                    "evidence://dom/success",
+                    "evidence://action-log/success-observation",
+                ),
+            )
+        if request.mission_name == "run_completion":
+            return ExecutionResult(
+                mission_name="run_completion",
+                evidence_refs=(
                     "evidence://action-log/release-ceiling-stop",
                 ),
             )
@@ -108,20 +171,28 @@ async def test_run_released_scope_via_langgraph_sequences_to_ceiling(
         base_dir=tmp_path,
     )
 
-    assert result.state.current_mission == "page_ready_observation"
+    assert result.state.current_mission == "run_completion"
     run_root = Path(result.state.final_artifact_bundle_ref or "")
     assert run_root.exists()
 
     stop_path = run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
     stop_payload = json.loads(stop_path.read_text(encoding="utf-8").splitlines()[0])
     assert stop_payload["event"] == "release-ceiling-stop"
-    assert stop_payload["mission_name"] == "page_ready_observation"
+    assert stop_payload["mission_name"] == "run_completion"
 
     assert [req.mission_name for req in adapter.requests] == [
         "attach_session",
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     ]
 
 
@@ -223,7 +294,7 @@ async def test_released_scope_graph_rejects_missing_runtime_state(
     adapter = FakeExecutionAdapter()
     run = ReleasedRunContext(
         run_root=tmp_path,
-        approved_scope_ceiling="pageReadyObserved",
+        approved_scope_ceiling="runCompletion",
     )
     compiled = build_released_scope_execution_graph(
         adapter=adapter,
@@ -252,7 +323,7 @@ def test_build_released_scope_graph_rejects_whitespace_session_ref(
     adapter = FakeExecutionAdapter()
     run = ReleasedRunContext(
         run_root=tmp_path,
-        approved_scope_ceiling="pageReadyObserved",
+        approved_scope_ceiling="runCompletion",
     )
 
     with pytest.raises(ConfigError) as excinfo:
@@ -297,7 +368,7 @@ def test_build_released_scope_graph_rejects_adapter_without_execute(
 
     run = ReleasedRunContext(
         run_root=tmp_path,
-        approved_scope_ceiling="pageReadyObserved",
+        approved_scope_ceiling="runCompletion",
     )
 
     with pytest.raises(ConfigError) as excinfo:

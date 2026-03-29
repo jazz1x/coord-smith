@@ -52,8 +52,16 @@ class TransitionTrackingAdapter:
             ),
             "page_ready_observation": (
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
 
         refs = evidence_map.get(request.mission_name)
@@ -89,6 +97,14 @@ async def test_released_scope_defines_proper_state_transition_sequence(
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     ]
     assert adapter.executed_missions == expected_sequence
 
@@ -115,7 +131,7 @@ async def test_state_transitions_are_deterministic(tmp_path: Path) -> None:
 
     # Both runs should have identical transition sequences
     assert sequences[0] == sequences[1]
-    assert len(sequences[0]) == 4  # All 4 missions in sequence
+    assert len(sequences[0]) == 12  # All 12 missions in sequence
 
 
 @pytest.mark.asyncio
@@ -168,9 +184,17 @@ async def test_graph_transitions_follow_released_mission_definition(
         base_dir=tmp_path,
     )
 
-    # Released scope manages state transitions through all 4 released missions
-    assert len(adapter.executed_missions) == 4
+    # Released scope manages state transitions through all 12 released missions
+    assert len(adapter.executed_missions) == 12
     assert adapter.executed_missions[0] == "attach_session"
     assert adapter.executed_missions[1] == "prepare_session"
     assert adapter.executed_missions[2] == "benchmark_validation"
     assert adapter.executed_missions[3] == "page_ready_observation"
+    assert adapter.executed_missions[4] == "sync_observation"
+    assert adapter.executed_missions[5] == "target_actionability_observation"
+    assert adapter.executed_missions[6] == "armed_state_entry"
+    assert adapter.executed_missions[7] == "trigger_wait"
+    assert adapter.executed_missions[8] == "click_dispatch"
+    assert adapter.executed_missions[9] == "click_completion"
+    assert adapter.executed_missions[10] == "success_observation"
+    assert adapter.executed_missions[11] == "run_completion"

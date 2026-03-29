@@ -47,8 +47,16 @@ class TrackingExecutionAdapter:
             ),
             "page_ready_observation": (
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
         refs = evidence_map.get(request.mission_name)
         if refs is None:
@@ -80,13 +88,13 @@ async def test_released_scope_delegates_all_browser_ops_to_execution_adapter(
         base_dir=tmp_path,
     )
 
-    # Verify OpenClaw adapter was called for missions up to pageReadyObserved ceiling
-    # pageReadyObserved is at index 3 in RELEASED_MISSIONS, so 4 missions total
-    assert len(adapter.requests) == 4
+    # Verify OpenClaw adapter was called for missions up to runCompletion ceiling
+    # runCompletion is at index 11 in RELEASED_MISSIONS, so 12 missions total
+    assert len(adapter.requests) == 12
 
     # Verify missions up to ceiling were delegated to OpenClaw
     called_missions = [request.mission_name for request in adapter.requests]
-    expected_missions = list(RELEASED_MISSIONS[:4])  # Only first 4: up to pageReadyObserved
+    expected_missions = list(RELEASED_MISSIONS[:12])  # All 12: up to runCompletion
     assert called_missions == expected_missions
 
 
@@ -123,7 +131,7 @@ async def test_released_scope_creates_only_execution_requests(
     )
 
     # Verify correct number of requests
-    assert len(adapter.requests) == 4
+    assert len(adapter.requests) == 12
 
 
 @pytest.mark.asyncio
@@ -157,4 +165,4 @@ async def test_released_scope_never_calls_other_adapters(tmp_path) -> None:
         mock_pyautogui_click.assert_not_called()
 
     # Verify OpenClaw was called exactly as expected
-    assert len(adapter.requests) == 4
+    assert len(adapter.requests) == 12

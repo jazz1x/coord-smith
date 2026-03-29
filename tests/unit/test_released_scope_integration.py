@@ -1,4 +1,4 @@
-"""Integration test: full released-scope graph from attach through pageReadyObserved."""
+"""Integration test: full released-scope graph from attach through runCompletion."""
 
 from __future__ import annotations
 
@@ -38,8 +38,16 @@ class FakeExecutionAdapter:
             ),
             "page_ready_observation": (
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
         refs = evidence_map.get(request.mission_name)
         if refs is None:
@@ -50,7 +58,7 @@ class FakeExecutionAdapter:
 
 
 @pytest.mark.asyncio
-async def test_full_released_scope_graph_runs_all_four_missions(
+async def test_full_released_scope_graph_runs_all_twelve_missions(
     tmp_path: Path,
 ) -> None:
     adapter = FakeExecutionAdapter()
@@ -70,11 +78,19 @@ async def test_full_released_scope_graph_runs_all_four_missions(
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     ]
 
 
 @pytest.mark.asyncio
-async def test_full_released_scope_graph_stops_at_page_ready_observed(
+async def test_full_released_scope_graph_stops_at_run_completion(
     tmp_path: Path,
 ) -> None:
     adapter = FakeExecutionAdapter()
@@ -88,7 +104,7 @@ async def test_full_released_scope_graph_stops_at_page_ready_observed(
         base_dir=tmp_path,
     )
 
-    assert result.state.current_mission == "page_ready_observation"
+    assert result.state.current_mission == "run_completion"
     assert "evidence://action-log/release-ceiling-stop" in (
         result.state.mission_state.evidence_refs or ()
     )
@@ -115,7 +131,7 @@ async def test_full_released_scope_graph_creates_action_log_artifact(
 
     content = json.loads(release_ceiling_stop.read_text(encoding="utf-8").strip())
     assert content["event"] == "release-ceiling-stop"
-    assert content["mission_name"] == "page_ready_observation"
+    assert content["mission_name"] == "run_completion"
     assert "ts" in content
 
 
@@ -134,4 +150,4 @@ async def test_full_released_scope_graph_run_context_has_correct_ceiling(
         base_dir=tmp_path,
     )
 
-    assert result.run.approved_scope_ceiling == "pageReadyObserved"
+    assert result.run.approved_scope_ceiling == "runCompletion"

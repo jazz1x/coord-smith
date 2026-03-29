@@ -1,15 +1,15 @@
 """Phase R51 — Heuristic gap scan: Released-scope clause verification.
 
 This test performs a fresh heuristic gap scan to verify all released-scope
-implementation clauses (below pageReadyObserved) have corresponding unit test
+implementation clauses (up to runCompletion) have corresponding unit test
 coverage and are executed correctly.
 
 Phase R51 verifies:
-1. All 4 released missions execute in correct sequence
+1. All 12 released missions execute in correct sequence
 2. Each released mission has proper evidence specification
 3. The release-ceiling-stop proof is generated correctly
 4. No modeled-only missions execute in released scope
-5. The released ceiling (pageReadyObserved) is enforced
+5. The released ceiling (runCompletion) is enforced
 """
 
 from __future__ import annotations
@@ -54,8 +54,16 @@ class ReleasedScopeTestAdapter:
             ),
             "page_ready_observation": (
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
 
         refs = evidence_map.get(request.mission_name)
@@ -100,6 +108,14 @@ async def test_phase_r51_released_scope_missions_execute_in_sequence(
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     )
     assert adapter.executed_missions == list(expected_sequence), (
         f"Missions must execute in sequence {expected_sequence}, "
@@ -107,17 +123,17 @@ async def test_phase_r51_released_scope_missions_execute_in_sequence(
     )
 
     # Verify final state is at the released ceiling
-    assert result.state.current_mission == "page_ready_observation"
+    assert result.state.current_mission == "run_completion"
 
 
 @pytest.mark.asyncio
 async def test_phase_r51_released_ceiling_stop_proof_creation(
     tmp_path: Path,
 ) -> None:
-    """Phase R51: Verify release-ceiling-stop proof is created at pageReadyObserved.
+    """Phase R51: Verify release-ceiling-stop proof is created at runCompletion.
 
     PRD Release-Ceiling Stop Proof (lines 92-109):
-    'Stopping at pageReadyObserved must be provable by typed action-log evidence.
+    'Stopping at runCompletion must be provable by typed action-log evidence.
     Required evidence ref: evidence://action-log/release-ceiling-stop
     Required artifact: artifacts/action-log/release-ceiling-stop.jsonl
     Required typed fields: event, mission_name, ts'
@@ -150,7 +166,7 @@ async def test_phase_r51_released_ceiling_stop_proof_creation(
     assert "event" in entry, "Stop proof must contain 'event' field"
     assert entry["event"] == "release-ceiling-stop"
     assert "mission_name" in entry, "Stop proof must contain 'mission_name' field"
-    assert entry["mission_name"] == "page_ready_observation"
+    assert entry["mission_name"] == "run_completion"
     assert "ts" in entry, "Stop proof must contain 'ts' field"
     assert isinstance(entry["ts"], str) and entry["ts"], "Stop proof 'ts' must be non-empty string"
 
@@ -159,12 +175,12 @@ async def test_phase_r51_released_ceiling_stop_proof_creation(
 async def test_phase_r51_released_scope_ceiling_enforcement(
     tmp_path: Path,
 ) -> None:
-    """Phase R51: Verify released scope ceiling is pageReadyObserved.
+    """Phase R51: Verify released scope ceiling is runCompletion.
 
     PRD Release Boundary (lines 43-45):
-    'Current released ceiling: pageReadyObserved'
+    'Current released ceiling: runCompletion'
 
-    The released-scope graph must stop execution at pageReadyObserved
+    The released-scope graph must stop execution at runCompletion
     and not attempt any missions beyond the ceiling.
     """
     adapter = ReleasedScopeTestAdapter()
@@ -179,20 +195,28 @@ async def test_phase_r51_released_scope_ceiling_enforcement(
     )
 
     # Verify execution stopped at the ceiling mission
-    assert result.state.current_mission == "page_ready_observation"
-    assert result.run.approved_scope_ceiling == "pageReadyObserved"
+    assert result.state.current_mission == "run_completion"
+    assert result.run.approved_scope_ceiling == "runCompletion"
 
-    # Verify only the 4 released missions executed
+    # Verify all 12 released missions executed
     expected_missions = {
         "attach_session",
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     }
     assert set(adapter.executed_missions) == expected_missions, (
-        f"Only the 4 released missions should execute, but got {adapter.executed_missions}"
+        f"All 12 released missions should execute, but got {adapter.executed_missions}"
     )
-    assert len(adapter.executed_missions) == 4
+    assert len(adapter.executed_missions) == 12
 
 
 @pytest.mark.asyncio
@@ -219,12 +243,12 @@ async def test_phase_r51_released_missions_have_primary_evidence(
         base_dir=tmp_path,
     )
 
-    # Verify all 4 released missions were executed with evidence
-    assert len(adapter.executed_missions) == 4, (
-        f"All 4 released missions must be executed. Got: {adapter.executed_missions}"
+    # Verify all 12 released missions were executed with evidence
+    assert len(adapter.executed_missions) == 12, (
+        f"All 12 released missions must be executed. Got: {adapter.executed_missions}"
     )
 
     # Verify the state reached the ceiling mission
-    assert result.state.current_mission == "page_ready_observation", (
-        f"Final mission must be page_ready_observation, got {result.state.current_mission}"
+    assert result.state.current_mission == "run_completion", (
+        f"Final mission must be run_completion, got {result.state.current_mission}"
     )

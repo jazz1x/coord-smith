@@ -52,8 +52,16 @@ class BoundaryEnforcingAdapter:
             ),
             "page_ready_observation": (
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
 
         refs = evidence_map.get(request.mission_name)
@@ -90,6 +98,14 @@ async def test_released_scope_executes_only_released_missions(
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     }
     assert set(adapter.executed_missions) == released_missions
 
@@ -113,28 +129,31 @@ async def test_released_scope_stops_at_page_ready_observed_boundary(
         base_dir=tmp_path,
     )
 
-    # The last mission executed must be page_ready_observation (the ceiling)
-    assert adapter.executed_missions[-1] == "page_ready_observation"
+    # The last mission executed must be run_completion (the ceiling)
+    assert adapter.executed_missions[-1] == "run_completion"
 
     # No mission beyond the ceiling should be executed
-    assert len(adapter.executed_missions) == 4
+    assert len(adapter.executed_missions) == 12
 
 
 @pytest.mark.asyncio
 async def test_released_scope_does_not_execute_modeled_only_stages(
     tmp_path: Path,
 ) -> None:
-    """Verify modeled-only stages are never part of released execution.
+    """Verify that released scope includes 12 missions up to run_completion.
 
-    PRD specifies these are modeled-only:
-    - syncToServerTime
-    - armed state
-    - trigger wait
-    - click dispatch
-    - success completion
-    - post-ready workflow stages
+    With the expanded ceiling to runCompletion, the released scope now includes
+    all 12 missions including:
+    - sync_observation
+    - target_actionability_observation
+    - armed_state_entry
+    - trigger_wait
+    - click_dispatch
+    - click_completion
+    - success_observation
+    - run_completion
 
-    None of these should appear in released scope execution.
+    These are now part of the released scope (not modeled-only anymore).
     """
     adapter = BoundaryEnforcingAdapter()
     await run_released_scope_via_langgraph(
@@ -146,20 +165,25 @@ async def test_released_scope_does_not_execute_modeled_only_stages(
         base_dir=tmp_path,
     )
 
-    # Define modeled-only stages that must never be executed
-    modeled_only_stages = {
-        "sync_to_server_time",
-        "armed_state",
+    # Verify all 12 released missions are executed
+    expected_missions = {
+        "attach_session",
+        "prepare_session",
+        "benchmark_validation",
+        "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
         "trigger_wait",
         "click_dispatch",
-        "success_completion",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     }
-
-    # Verify NO modeled-only stages are in the executed missions
-    for mission in adapter.executed_missions:
-        assert mission not in modeled_only_stages, (
-            f"Modeled-only stage '{mission}' should not be in released scope execution"
-        )
+    assert set(adapter.executed_missions) == expected_missions, (
+        f"Released scope should execute all 12 missions. Got: {adapter.executed_missions}"
+    )
+    assert len(adapter.executed_missions) == 12
 
 
 @pytest.mark.asyncio
@@ -187,8 +211,16 @@ async def test_released_scope_enforces_exact_boundary_at_page_ready(
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     ]
     assert adapter.executed_missions == expected_sequence
 
     # No additional missions should be attempted
-    assert len(adapter.executed_missions) == 4
+    assert len(adapter.executed_missions) == 12

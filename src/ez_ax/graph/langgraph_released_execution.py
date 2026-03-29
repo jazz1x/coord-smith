@@ -1,7 +1,7 @@
 """Released-scope LangGraph wiring (scaffold hardening only).
 
 This module wires the released mission sequence into a LangGraph StateGraph
-while staying strictly below the released ceiling `pageReadyObserved`.
+while staying strictly at or below the released ceiling `runCompletion`.
 
 It does not provide a real OpenClaw transport implementation. Tests use a fake
 adapter to validate wiring deterministically.
@@ -16,10 +16,18 @@ from typing import TYPE_CHECKING, Protocol, TypedDict, cast
 from ez_ax.adapters.execution.client import ExecutionAdapter
 from ez_ax.graph.released_call_site import (
     ReleasedRunContext,
+    execute_armed_state_entry_node,
     execute_attach_session_node,
     execute_benchmark_validation_node,
+    execute_click_completion_node,
+    execute_click_dispatch_node,
     execute_page_ready_observation_node,
     execute_prepare_session_node,
+    execute_run_completion_node,
+    execute_success_observation_node,
+    execute_sync_observation_node,
+    execute_target_actionability_observation_node,
+    execute_trigger_wait_node,
 )
 from ez_ax.graph.released_run_root import create_run_root, generate_run_id
 from ez_ax.models.errors import ConfigError, FlowError
@@ -208,16 +216,120 @@ def build_released_scope_execution_graph(
         )
         return {"runtime": runtime}
 
+    async def sync_observation_node(
+        state: _ReleasedGraphState,
+    ) -> _ReleasedGraphState:
+        runtime = runtime_from_state(state)
+        await execute_sync_observation_node(
+            state=runtime,
+            adapter=adapter,
+            run=run,
+        )
+        return {"runtime": runtime}
+
+    async def target_actionability_observation_node(
+        state: _ReleasedGraphState,
+    ) -> _ReleasedGraphState:
+        runtime = runtime_from_state(state)
+        await execute_target_actionability_observation_node(
+            state=runtime,
+            adapter=adapter,
+            run=run,
+        )
+        return {"runtime": runtime}
+
+    async def armed_state_entry_node(
+        state: _ReleasedGraphState,
+    ) -> _ReleasedGraphState:
+        runtime = runtime_from_state(state)
+        await execute_armed_state_entry_node(
+            state=runtime,
+            adapter=adapter,
+            run=run,
+        )
+        return {"runtime": runtime}
+
+    async def trigger_wait_node(
+        state: _ReleasedGraphState,
+    ) -> _ReleasedGraphState:
+        runtime = runtime_from_state(state)
+        await execute_trigger_wait_node(
+            state=runtime,
+            adapter=adapter,
+            run=run,
+        )
+        return {"runtime": runtime}
+
+    async def click_dispatch_node(
+        state: _ReleasedGraphState,
+    ) -> _ReleasedGraphState:
+        runtime = runtime_from_state(state)
+        await execute_click_dispatch_node(
+            state=runtime,
+            adapter=adapter,
+            run=run,
+        )
+        return {"runtime": runtime}
+
+    async def click_completion_node(
+        state: _ReleasedGraphState,
+    ) -> _ReleasedGraphState:
+        runtime = runtime_from_state(state)
+        await execute_click_completion_node(
+            state=runtime,
+            adapter=adapter,
+            run=run,
+        )
+        return {"runtime": runtime}
+
+    async def success_observation_node(
+        state: _ReleasedGraphState,
+    ) -> _ReleasedGraphState:
+        runtime = runtime_from_state(state)
+        await execute_success_observation_node(
+            state=runtime,
+            adapter=adapter,
+            run=run,
+        )
+        return {"runtime": runtime}
+
+    async def run_completion_node(
+        state: _ReleasedGraphState,
+    ) -> _ReleasedGraphState:
+        runtime = runtime_from_state(state)
+        await execute_run_completion_node(
+            state=runtime,
+            adapter=adapter,
+            run=run,
+        )
+        return {"runtime": runtime}
+
     graph.add_node("attach_session_node", attach_session_node)
     graph.add_node("prepare_session_node", prepare_session_node)
     graph.add_node("benchmark_validation_node", benchmark_validation_node)
     graph.add_node("page_ready_observation_node", page_ready_observation_node)
+    graph.add_node("sync_observation_node", sync_observation_node)
+    graph.add_node("target_actionability_observation_node", target_actionability_observation_node)
+    graph.add_node("armed_state_entry_node", armed_state_entry_node)
+    graph.add_node("trigger_wait_node", trigger_wait_node)
+    graph.add_node("click_dispatch_node", click_dispatch_node)
+    graph.add_node("click_completion_node", click_completion_node)
+    graph.add_node("success_observation_node", success_observation_node)
+    graph.add_node("run_completion_node", run_completion_node)
 
     graph.add_edge(START, "attach_session_node")
     graph.add_edge("attach_session_node", "prepare_session_node")
     graph.add_edge("prepare_session_node", "benchmark_validation_node")
     graph.add_edge("benchmark_validation_node", "page_ready_observation_node")
-    graph.add_edge("page_ready_observation_node", END)
+    graph.add_edge("page_ready_observation_node", "sync_observation_node")
+    graph.add_edge("sync_observation_node", "target_actionability_observation_node")
+    graph.add_edge("target_actionability_observation_node", "armed_state_entry_node")
+    graph.add_edge("armed_state_entry_node", "trigger_wait_node")
+    graph.add_edge("trigger_wait_node", "click_dispatch_node")
+    graph.add_edge("click_dispatch_node", "click_completion_node")
+    graph.add_edge("click_completion_node", "success_observation_node")
+    graph.add_edge("success_observation_node", "run_completion_node")
+    graph.add_edge("run_completion_node", END)
 
     return graph.compile()
 
@@ -249,7 +361,7 @@ async def run_released_scope_via_langgraph(
     run_id = generate_run_id()
     run_root = create_run_root(base_dir=base_dir, run_id=run_id)
     run = ReleasedRunContext(
-        run_root=run_root, approved_scope_ceiling="pageReadyObserved"
+        run_root=run_root, approved_scope_ceiling="runCompletion"
     )
     adapter = _bind_adapter_run_root(adapter=adapter, run_root=run_root)
     state = RuntimeState(run_id=run_id)

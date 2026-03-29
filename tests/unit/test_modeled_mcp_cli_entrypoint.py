@@ -55,5 +55,5 @@ async def test_modeled_mcp_cli_entrypoint_writes_summary_under_run_root(
     assert payload["kind"] == "modeled-mcp-cli-run-summary"
     assert payload["run_id"] == summary.run_id
     assert payload["run_root"] == str(run_root)
-    assert payload["approved_scope_ceiling"] == "pageReadyObserved"
+    assert payload["approved_scope_ceiling"] == "runCompletion"
     assert payload["stopped_at_release_ceiling"] is True

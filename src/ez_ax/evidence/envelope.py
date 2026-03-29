@@ -177,7 +177,7 @@ def validate_release_ceiling_stop_proof(
 
     The release-ceiling-stop proof must contain at least one JSON line with:
     - event: "release-ceiling-stop"
-    - mission_name: "page_ready_observation"
+    - mission_name: "run_completion"
     - ts: ISO-8601 timestamp
 
     Args:
@@ -226,7 +226,7 @@ def validate_release_ceiling_stop_proof(
 
         if (
             event == "release-ceiling-stop"
-            and mission == "page_ready_observation"
+            and mission == "run_completion"
             and isinstance(ts, str)
             and ts
         ):
@@ -236,7 +236,7 @@ def validate_release_ceiling_stop_proof(
         f"Release-ceiling-stop artifact {path} missing required entry.\n"
         f"Expected at least one JSON line with:\n"
         f"  event: 'release-ceiling-stop'\n"
-        f"  mission_name: 'page_ready_observation'\n"
+        f"  mission_name: 'run_completion'\n"
         f"  ts: ISO-8601 timestamp\n"
         f"References: docs/product/prd-openclaw-e2e-validation.md, "
         f"prd-openclaw-computer-use-runtime.md, "

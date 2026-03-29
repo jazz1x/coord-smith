@@ -762,14 +762,13 @@ async def test_execute_within_scope_confirms_release_ceiling_stop_from_action_lo
     artifact = action_log_artifact_path(run_root=run_root, key="release-ceiling-stop")
     artifact.parent.mkdir(parents=True, exist_ok=True)
     artifact.write_text(
-        '{"ts":"2026-03-21T00:00:00+09:00","mission_name":"page_ready_observation","event":"release-ceiling-stop"}\n',
+        '{"ts":"2026-03-21T00:00:00+09:00","mission_name":"run_completion","event":"release-ceiling-stop"}\n',
         encoding="utf-8",
     )
 
     result = ExecutionResult(
-        mission_name="page_ready_observation",
+        mission_name="run_completion",
         evidence_refs=(
-            "evidence://dom/page-shell-ready",
             "evidence://action-log/release-ceiling-stop",
         ),
     )
@@ -777,9 +776,9 @@ async def test_execute_within_scope_confirms_release_ceiling_stop_from_action_lo
 
     observed = await execute_within_scope(
         adapter=adapter,
-        mission_name="page_ready_observation",
+        mission_name="run_completion",
         payload={},
-        approved_scope_ceiling="pageReadyObserved",
+        approved_scope_ceiling="runCompletion",
         run_root=run_root,
     )
 
@@ -814,15 +813,14 @@ async def test_execute_within_scope_accepts_release_ceiling_stop_with_eventual_c
     artifact.write_text(
         "\n"
         "not-json\n"
-        '{"ts":"2026-03-21T00:00:00+09:00","mission_name":"page_ready_observation","event":"not-the-marker"}\n'
-        '{"ts":"2026-03-21T00:00:00+09:00","mission_name":"page_ready_observation","event":"release-ceiling-stop"}\n',
+        '{"ts":"2026-03-21T00:00:00+09:00","mission_name":"run_completion","event":"not-the-marker"}\n'
+        '{"ts":"2026-03-21T00:00:00+09:00","mission_name":"run_completion","event":"release-ceiling-stop"}\n',
         encoding="utf-8",
     )
 
     result = ExecutionResult(
-        mission_name="page_ready_observation",
+        mission_name="run_completion",
         evidence_refs=(
-            "evidence://dom/page-shell-ready",
             "evidence://action-log/release-ceiling-stop",
         ),
     )
@@ -830,9 +828,9 @@ async def test_execute_within_scope_accepts_release_ceiling_stop_with_eventual_c
 
     observed = await execute_within_scope(
         adapter=adapter,
-        mission_name="page_ready_observation",
+        mission_name="run_completion",
         payload={},
-        approved_scope_ceiling="pageReadyObserved",
+        approved_scope_ceiling="runCompletion",
         run_root=run_root,
     )
 
@@ -847,14 +845,13 @@ async def test_execute_within_scope_rejects_release_ceiling_stop_without_confirm
     artifact = action_log_artifact_path(run_root=run_root, key="release-ceiling-stop")
     artifact.parent.mkdir(parents=True, exist_ok=True)
     artifact.write_text(
-        '{"ts":"2026-03-21T00:00:00+09:00","mission_name":"page_ready_observation","event":"not-the-marker"}\n',
+        '{"ts":"2026-03-21T00:00:00+09:00","mission_name":"run_completion","event":"not-the-marker"}\n',
         encoding="utf-8",
     )
 
     result = ExecutionResult(
-        mission_name="page_ready_observation",
+        mission_name="run_completion",
         evidence_refs=(
-            "evidence://dom/page-shell-ready",
             "evidence://action-log/release-ceiling-stop",
         ),
     )
@@ -863,9 +860,9 @@ async def test_execute_within_scope_rejects_release_ceiling_stop_without_confirm
     try:
         await execute_within_scope(
             adapter=adapter,
-            mission_name="page_ready_observation",
+            mission_name="run_completion",
             payload={},
-            approved_scope_ceiling="pageReadyObserved",
+            approved_scope_ceiling="runCompletion",
             run_root=run_root,
         )
     except ValidationError as exc:
@@ -1217,7 +1214,7 @@ def test_validate_release_ceiling_stop_action_log_error_mentions_expected_fields
 
     message = str(excinfo.value)
     assert "event='release-ceiling-stop'" in message
-    assert "mission_name='page_ready_observation'" in message
+    assert "mission_name='run_completion'" in message
     assert str(expected_path) in message
     assert "ts" in message
     assert "prd-openclaw-e2e-validation.md" in message
@@ -1278,7 +1275,7 @@ def test_validate_release_ceiling_stop_action_log_accepts_zulu_timestamp(
     artifact = action_log_artifact_path(run_root=tmp_path, key="release-ceiling-stop")
     artifact.parent.mkdir(parents=True, exist_ok=True)
     artifact.write_text(
-        '{"ts":"2026-03-21T00:00:00Z","mission_name":"page_ready_observation","event":"release-ceiling-stop"}\n',
+        '{"ts":"2026-03-21T00:00:00Z","mission_name":"run_completion","event":"release-ceiling-stop"}\n',
         encoding="utf-8",
     )
 

@@ -49,8 +49,16 @@ class ComparableRunAdapter:
             ),
             "page_ready_observation": (
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
@@ -209,13 +217,13 @@ async def test_runs_with_identical_inputs_are_comparable_for_verification(
         "Runs with identical inputs must have the same approved scope ceiling"
     )
 
-    # Both runs must stop at the same mission (page_ready_observation)
-    assert result1.state.current_mission == "page_ready_observation"
-    assert result2.state.current_mission == "page_ready_observation"
+    # Both runs must stop at the same mission (run_completion)
+    assert result1.state.current_mission == "run_completion"
+    assert result2.state.current_mission == "run_completion"
 
     # Both must have the same ceiling value
-    assert result1.run.approved_scope_ceiling == "pageReadyObserved"
-    assert result2.run.approved_scope_ceiling == "pageReadyObserved"
+    assert result1.run.approved_scope_ceiling == "runCompletion"
+    assert result2.run.approved_scope_ceiling == "runCompletion"
 
 
 @pytest.mark.asyncio

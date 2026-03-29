@@ -37,8 +37,16 @@ class FakeExecutionAdapter:
             ),
             "page_ready_observation": (
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
@@ -78,9 +86,9 @@ async def test_released_scope_released_missions_are_deterministic(
         base_dir=tmp_path / "run2",
     )
 
-    # Both should reach the same final mission (pageReadyObserved)
+    # Both should reach the same final mission (runCompletion)
     assert result1.state.current_mission == result2.state.current_mission
-    assert result1.state.current_mission == "page_ready_observation"
+    assert result1.state.current_mission == "run_completion"
     # Both should have the release ceiling stop proof
     assert "evidence://action-log/release-ceiling-stop" in (
         result1.state.mission_state.evidence_refs or ()

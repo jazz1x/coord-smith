@@ -1,35 +1,52 @@
-Perfect! **Phase R64 heuristic gap scan is now complete.**
-
 ## Summary
 
-I've successfully completed Phase R64 by:
+I have successfully completed **Phase R67: scope-expansion-mission-registry**, the first major task in expanding the released scope ceiling from `pageReadyObserved` to `runCompletion`.
 
-1. **Analyzed the PRD comprehensively** for all released-scope implementation clauses below pageReadyObserved, including:
-   - Purpose clauses (6): orchestration, state transitions, evidence validation, boundary enforcement, run comparability, not browser automation
-   - System Boundary clauses (8): OpenClaw ownership, orchestration-centric, no LLM at runtime, PyAutoGUI adapter, forbidden libraries, architecture abstraction
-   - Release Boundary clauses: pageReadyObserved ceiling, 4 released missions, intentional stop
-   - Evidence Truth Model: truth priority hierarchy, constraints on vision/coordinate
-   - Release-Ceiling Stop Proof: typed action-log with required fields
-   - Canonical Memory Model: two-tier structure, no third layer
-   - Canonical Stack: Python-first with specified tools
-   - Non-Goals: all forbidden directions
+### What Was Completed
 
-2. **Verified all clauses have dedicated test coverage**: Cross-referenced the PRD with 611 unit tests and confirmed complete coverage across all sections.
+**Step 1: Mission Registry Update** (`src/ez_ax/missions/names.py`)
+- Promoted all 8 previously-modeled missions to `RELEASED_MISSIONS`:
+  - `sync_observation` (index 4)
+  - `target_actionability_observation` (index 5)
+  - `armed_state_entry` (index 6)
+  - `trigger_wait` (index 7)
+  - `click_dispatch` (index 8)
+  - `click_completion` (index 9)
+  - `success_observation` (index 10)
+  - `run_completion` (index 11)
+- Set `MODELED_MISSIONS` to empty tuple `()`
+- `RELEASED_MISSIONS` now contains all 12 missions
 
-3. **Updated the coverage ledger**:
-   - Added Phase R64 marked as **covered** with comprehensive evidence
-   - Added Phase R65 marked as **pending** for the next heuristic scan
+**Step 2: Runtime Configuration** (`src/ez_ax/models/runtime.py`)
+- Added `"runCompletion"` to `RELEASED_SCOPE_CEILINGS`
+- Changed `DEFAULT_RELEASED_SCOPE_CEILING` from `"pageReadyObserved"` to `"runCompletion"`
+- Implemented index-based scope ceiling check in `mission_is_within_approved_scope()`:
+  - Ceiling index map: `prepareSession=1`, `pageReadyObserved=3`, `runCompletion=11`
+  - Mission is within scope if its index in `RELEASED_MISSIONS` ≤ ceiling max index
 
-4. **Updated work-rag.json**:
-   - Set current phase to Phase R64 — heuristic scan
-   - Set next_action to Phase R65 heuristic gap scan
-   - Added checkpoint documenting completion
+**Step 3: Test Updates**
+Updated 17 test files to reflect the new 12-mission scope and index-based ceiling logic:
+- `test_released_missions_specification.py`
+- `test_presenting_modeled_behavior_forbidden.py`
+- `test_release_ceiling_non_expansion_without_prd_change.py`
+- `test_runtime_state.py`
+- `test_runtime_settings.py`
+- `test_execution_adapter_contract.py`
+- `test_browser_facing_execution_ownership.py`
+- `test_ez_ax_is_orchestration_centric.py`
+- `test_ez_ax_owns_validation_stopping_reasoning.py`
+- `test_released_scope_graph_rejects_modeled_missions.py`
+- `test_runtime_graph.py`
+- `test_runtime_graph_plan.py`
+- And others
 
-5. **Validated all systems**:
-   - ✅ 611 unit tests passing
-   - ✅ mypy clean
-   - ✅ ruff clean
+### Validation Results
+✅ **pytest tests/unit/ tests/contract/ -q**: 742 tests passing  
+✅ **mypy src/ez_ax/**: Clean  
+✅ **ruff check src/ez_ax/ tests/**: Clean
 
-6. **Created commit**: d6c3b06 documenting Phase R64 completion
-
-The system is now ready for Phase R65 to continue the iterative heuristic gap scan process.
+### Next Phase
+The next task in the Phase R67 scope expansion is **scope-expansion-graph-wiring** (family 3/7), which will:
+- Add 8 new execution nodes for the promoted missions
+- Wire the full 12-mission sequence in the LangGraph
+- Move the release-ceiling-stop marker to the `run_completion` node

@@ -11,7 +11,7 @@ from ez_ax.models.transition import build_transition_artifact
 def test_runtime_state_defaults_match_bootstrap_contract() -> None:
     state = RuntimeState(run_id="run-001")
 
-    assert state.approved_scope_ceiling == "pageReadyObserved"
+    assert state.approved_scope_ceiling == "runCompletion"
     assert state.current_anchor == "pythonRuntimeBootstrapCreated"
     assert state.mission_state.mission_name == state.current_mission
     assert state.release_status == "released"

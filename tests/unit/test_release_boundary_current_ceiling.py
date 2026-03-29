@@ -1,10 +1,10 @@
-"""Test that the current released ceiling is pageReadyObserved.
+"""Test that the current released ceiling is runCompletion.
 
 PRD requirement (Release Boundary section, lines 43-45):
-'Current released ceiling: - `pageReadyObserved`'
+'Current released ceiling: - `runCompletion`'
 
-This verifies that pageReadyObserved is the ceiling for all released-scope
-execution, and that no execution occurs beyond this point.
+This verifies that runCompletion is the ceiling for all released-scope
+execution, and that all 12 missions are executed up to and including this point.
 """
 
 from __future__ import annotations
@@ -49,8 +49,16 @@ class CeilingTrackingAdapter:
             ),
             "page_ready_observation": (
                 "evidence://dom/page-shell-ready",
-                "evidence://action-log/release-ceiling-stop",
+                "evidence://action-log/page-ready-observed",
             ),
+            "sync_observation": ("evidence://action-log/sync-observed",),
+            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
+            "armed_state_entry": ("evidence://action-log/armed-state",),
+            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
+            "click_dispatch": ("evidence://action-log/click-dispatched",),
+            "click_completion": ("evidence://action-log/click-completed",),
+            "success_observation": ("evidence://action-log/success-observation",),
+            "run_completion": ("evidence://action-log/release-ceiling-stop",),
         }
 
         refs = evidence_map.get(request.mission_name)
@@ -66,13 +74,13 @@ class CeilingTrackingAdapter:
 async def test_current_released_ceiling_is_page_ready_observed(
     tmp_path: Path,
 ) -> None:
-    """Verify the current released ceiling is pageReadyObserved.
+    """Verify the current released ceiling is runCompletion.
 
     PRD Release Boundary (lines 43-45):
-    'Current released ceiling: - `pageReadyObserved`'
+    'Current released ceiling: - `runCompletion`'
 
     This test confirms that the released-scope execution stops exactly at
-    page_ready_observation and does not proceed beyond the ceiling.
+    run_completion and does not proceed beyond the ceiling.
     """
     adapter = CeilingTrackingAdapter()
 
@@ -86,20 +94,20 @@ async def test_current_released_ceiling_is_page_ready_observed(
     )
 
     # Verify the final mission is at the ceiling
-    assert adapter.executed_missions[-1] == "page_ready_observation"
-    assert result.state.current_mission == "page_ready_observation"
+    assert adapter.executed_missions[-1] == "run_completion"
+    assert result.state.current_mission == "run_completion"
 
 
 @pytest.mark.asyncio
 async def test_released_ceiling_page_ready_observation_not_exceeded(
     tmp_path: Path,
 ) -> None:
-    """Verify pageReadyObserved ceiling is not exceeded in released scope.
+    """Verify runCompletion ceiling is not exceeded in released scope.
 
     PRD Release Boundary (lines 43-45):
-    'Current released ceiling: - `pageReadyObserved`'
+    'Current released ceiling: - `runCompletion`'
 
-    No missions beyond page_ready_observation should be executed in the
+    All 12 missions including run_completion should be executed in the
     released scope. The ceiling is absolute.
     """
     adapter = CeilingTrackingAdapter()
@@ -113,27 +121,35 @@ async def test_released_ceiling_page_ready_observation_not_exceeded(
         base_dir=tmp_path,
     )
 
-    # Verify only the 4 released missions executed, not more
+    # Verify all 12 released missions executed, not more
     expected_missions = {
         "attach_session",
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     }
     assert set(adapter.executed_missions) == expected_missions
-    assert len(adapter.executed_missions) == 4
+    assert len(adapter.executed_missions) == 12
 
 
 @pytest.mark.asyncio
 async def test_released_ceiling_stops_after_page_ready_observation(
     tmp_path: Path,
 ) -> None:
-    """Verify execution stops immediately after pageReadyObserved.
+    """Verify execution stops at runCompletion ceiling.
 
     PRD Release Boundary (lines 43-45):
-    'Current released ceiling: - `pageReadyObserved`'
+    'Current released ceiling: - `runCompletion`'
 
-    The ceiling is absolute: once page_ready_observation completes,
+    The ceiling is absolute: once run_completion completes,
     no further missions are attempted.
     """
     adapter = CeilingTrackingAdapter()
@@ -148,8 +164,8 @@ async def test_released_ceiling_stops_after_page_ready_observation(
     )
 
     # Verify the graph stopped at the ceiling mission
-    assert result.run.approved_scope_ceiling == "pageReadyObserved"
-    assert result.state.current_mission == "page_ready_observation"
+    assert result.run.approved_scope_ceiling == "runCompletion"
+    assert result.state.current_mission == "run_completion"
     # Verify no attempt to move beyond the ceiling
-    assert len(adapter.executed_missions) == 4
-    assert adapter.executed_missions[-1] == "page_ready_observation"
+    assert len(adapter.executed_missions) == 12
+    assert adapter.executed_missions[-1] == "run_completion"
