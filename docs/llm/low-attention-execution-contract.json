@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R63 — heuristic gap scan and released-path E2E scaffold hardening",
-  "active_milestone": "Phase R63 initial synthetic E2E verification complete",
-  "active_anchor": "r63ReleasedPathE2E",
+  "active_phase": "Phase R65 — heuristic scan",
+  "active_milestone": "Phase R65 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r65HeuristicScanBound",
   "active_invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains pageReadyObserved. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
   "scope_ceiling": "pageReadyObserved",
   "canonical_inputs": [
@@ -23,7 +23,7 @@
     "tests/e2e/README.md"
   ],
   "anchor_contract_families": [
-    "Phase R63 heuristic gap scan"
+    "Phase R65 heuristic gap scan"
   ],
   "heuristic_family_ladder": [
     "same-file failing validation artifact",

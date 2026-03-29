@@ -21,7 +21,7 @@ It is intentionally changeable and subordinate to:
 
 ## Current Interpretation
 
-Phase R63 now combines the heuristic gap-scan continuation with released-path E2E hardening at the current ceiling. The first runnable synthetic E2E lane exists under `tests/e2e/` and verifies deterministic stop-proof artifacts at `pageReadyObserved` through the stdio-backed OpenClaw adapter boundary without widening scope.
+Phase R64 — heuristic scan complete. Phase transition in progress: `Phase R65 heuristic gap scan` is the active task.
 
 ## What Is Already Established
 
@@ -113,7 +113,7 @@ Phase R6 complete:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current next action is: `Phase R63 heuristic gap scan — add a real-environment released-path E2E lane that preserves the same release-ceiling stop bundle and comparable artifact checks without widening above pageReadyObserved.`
+The current next action is: `Phase R65 heuristic gap scan`
 
 ## Active Anchor Coverage Ledger
 
