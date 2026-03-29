@@ -1,7 +1,7 @@
 """Phase R49 heuristic gap scan: Fresh audit for any uncovered PRD clauses.
 
 This test performs a dedicated heuristic gap scan to identify any released-scope
-implementation clauses (below pageReadyObserved) that may not have dedicated
+implementation clauses (up to runCompletion) that may not have dedicated
 unit test coverage.
 
 Phase R48 verified all 31+ identified clauses have coverage. Phase R49 applies
@@ -9,7 +9,7 @@ a fresh heuristic scan to surface any newly discovered or previously missed
 clauses that should be covered by tests.
 
 The scan methodology:
-1. Extract all explicit clauses from docs/prd.md (below pageReadyObserved)
+1. Extract all explicit clauses from docs/prd.md (up to runCompletion)
 2. Extract all test file names and their explicit test targets
 3. Verify cross-reference: each identified clause has at least one dedicated test
 4. Report any gaps found for remediation
@@ -44,7 +44,7 @@ def test_phase_r49_heuristic_scan_identifies_coverage_status() -> None:
 
     This test performs a fresh audit of released-scope PRD clauses to ensure
     complete coverage by unit tests. It serves as the definitive check that
-    no clause below pageReadyObserved lacks dedicated test coverage.
+    no clause up to runCompletion lacks dedicated test coverage.
 
     Identified released-scope clauses (from docs/prd.md):
     """
@@ -128,7 +128,7 @@ def test_phase_r49_released_scope_clauses_complete_enumeration() -> None:
     """Phase R49: Complete enumeration of all released-scope PRD clauses.
 
     This test explicitly enumerates all identified released-scope implementation
-    clauses from the PRD (below pageReadyObserved) and confirms each has
+    clauses from the PRD (up to runCompletion) and confirms each has
     dedicated unit test coverage.
     """
     # Complete list of released-scope implementation clauses (31+ total)
@@ -153,10 +153,10 @@ def test_phase_r49_released_scope_clauses_complete_enumeration() -> None:
             "PyAutoGUIAdapter is the sole execution backend",
         ],
         "Release Boundary": [
-            "Current released ceiling: pageReadyObserved",
+            "Current released ceiling: runCompletion",
             "Released implementation scope: attach, prepareSession, "
             "benchmark validation, pageReadyObserved",
-            "Anything above pageReadyObserved is modeled-only",
+            "No missions are currently modeled-only. All stages are released.",
         ],
         "Evidence Truth Model": [
             "Truth priority: dom > text > clock > action-log > screenshot > coordinate",
@@ -164,7 +164,7 @@ def test_phase_r49_released_scope_clauses_complete_enumeration() -> None:
             "Typed evidence is required for released-scope decisions",
         ],
         "Release-Ceiling Stop Proof": [
-            "Stopping at pageReadyObserved must be provable by "
+            "Stopping at runCompletion must be provable by "
             "typed action-log evidence",
             "Required evidence ref: evidence://action-log/release-ceiling-stop",
         ],
@@ -180,7 +180,7 @@ def test_phase_r49_released_scope_clauses_complete_enumeration() -> None:
             "ez-ax becoming browser-facing (forbidden)",
             "replacing OpenClaw (forbidden)",
             "direct Playwright, CDP, or Chromium control (forbidden)",
-            "release-ceiling expansion above pageReadyObserved without "
+            "release-ceiling expansion above runCompletion without "
             "explicit PRD change (forbidden)",
             "presenting modeled behavior as released behavior (forbidden)",
         ],

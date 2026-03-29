@@ -1,7 +1,7 @@
 """Phase R47 heuristic gap scan: Verification that all PRD clauses remain covered.
 
 This test performs a heuristic gap scan to verify that all released-scope
-implementation clauses (below pageReadyObserved) continue to have dedicated
+implementation clauses (up to runCompletion) continue to have dedicated
 unit test coverage, and no new uncovered clauses have emerged since Phase R46.
 
 Phase R46 confirmed all 31+ clauses are covered. This test re-verifies this
@@ -33,7 +33,7 @@ def test_phase_r47_all_prd_clauses_remain_covered() -> None:
     """Phase R47: Re-verify all PRD clauses continue to have dedicated tests.
 
     This test confirms that since Phase R46's comprehensive verification, all
-    31+ released-scope PRD clauses below pageReadyObserved continue to have
+    31+ released-scope PRD clauses up to runCompletion continue to have
     dedicated unit test coverage, and no new uncovered clauses have emerged.
 
     The verification cross-references the PRD against the test suite and
@@ -153,10 +153,10 @@ def test_phase_r47_no_new_uncovered_clauses_identified() -> None:
             "PyAutoGUIAdapter is the sole execution backend",
         ],
         "Release Boundary": [
-            "Current released ceiling: pageReadyObserved",
+            "Current released ceiling: runCompletion",
             "Released implementation scope: attach, prepareSession, "
             "benchmark validation, pageReadyObserved",
-            "Anything above pageReadyObserved is modeled-only",
+            "No missions are currently modeled-only. All stages are released.",
         ],
         "Evidence Truth Model": [
             "Truth priority: dom > text > clock > action-log > screenshot > coordinate",
@@ -164,7 +164,7 @@ def test_phase_r47_no_new_uncovered_clauses_identified() -> None:
             "Typed evidence is required for released-scope decisions",
         ],
         "Release-Ceiling Stop Proof": [
-            "Stopping at pageReadyObserved must be provable by "
+            "Stopping at runCompletion must be provable by "
             "typed action-log evidence",
             "Required evidence ref: evidence://action-log/release-ceiling-stop",
         ],
@@ -180,7 +180,7 @@ def test_phase_r47_no_new_uncovered_clauses_identified() -> None:
             "ez-ax becoming browser-facing (forbidden)",
             "replacing OpenClaw (forbidden)",
             "direct Playwright, CDP, or Chromium control (forbidden)",
-            "release-ceiling expansion above pageReadyObserved without "
+            "release-ceiling expansion above runCompletion without "
             "explicit PRD change (forbidden)",
             "presenting modeled behavior as released behavior (forbidden)",
         ],
