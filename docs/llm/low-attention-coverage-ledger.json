@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R62 — heuristic scan",
-  "active_milestone": "Phase R62 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r62HeuristicScanBound",
+  "active_phase": "Phase R63 — heuristic scan",
+  "active_milestone": "Phase R63 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r63HeuristicScanBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1049,6 +1049,23 @@
         "at least one new pytest function added for an uncovered PRD clause",
         "pytest tests/unit/ -q passes",
         "coverage-ledger.json 'Phase R62 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R63 heuristic gap scan",
+      "status": "pending",
+      "evidence_or_reason": "Phase R62 — heuristic scan complete; Phase R63 heuristic scan needed.",
+      "next_slice_hint": "Read docs/prd.md and list all released-scope implementation clauses (below pageReadyObserved). Cross-reference with tests/unit/ to find the first clause that has no dedicated unit test. Write one focused pytest function for it, run pytest to confirm it passes, mark this family covered in docs/llm/low-attention-coverage-ledger.json, update docs/product/work-rag.json current.next_action to the next pending family (or 'FINAL_STOP — Phase R63 complete' if none remain), and commit.",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "at least one new pytest function added for an uncovered PRD clause",
+        "pytest tests/unit/ -q passes",
+        "coverage-ledger.json 'Phase R63 heuristic gap scan' status set to covered",
         "work-rag.json next_action updated",
         "committed"
       ],
