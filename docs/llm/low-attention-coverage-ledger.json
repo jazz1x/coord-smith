@@ -1071,6 +1071,41 @@
         "committed"
       ],
       "template_id": ""
+    },
+    {
+      "family": "Phase R64 heuristic gap scan",
+      "status": "covered",
+      "evidence_or_reason": "Comprehensive heuristic gap scan complete. All released-scope implementation clauses below pageReadyObserved have dedicated unit test coverage. Verified: (1) Purpose clauses: orchestration, state transitions, evidence validation, boundary enforcement, run comparability, not browser automation - all tested. (2) System Boundary: OpenClaw ownership, orchestration-centric, no LLM at runtime, PyAutoGUI adapter, no forbidden libraries - all verified. (3) Release Boundary: pageReadyObserved ceiling, 4 released missions, intentional stop, modeled-only distinction - all covered. (4) Evidence Truth Model: truth priority (dom > text > clock > action-log > screenshot > coordinate), vision/coordinate constraints - all enforced. (5) Release-Ceiling Stop Proof: typed action-log evidence with required fields (event, mission_name, ts) - verified. (6) Canonical Memory: two-tier model, no third layer - confirmed. (7) Canonical Stack: Python-first with LangGraph, LangChain-core, Pydantic v2, pytest, ruff, mypy - verified. (8) Non-Goals: all forbidden directions tested. All 611 unit tests passing. mypy clean. ruff clean.",
+      "next_slice_hint": "Read docs/prd.md and list all released-scope implementation clauses (below pageReadyObserved). Cross-reference with tests/unit/ to find any new uncovered clause. If none found, set FINAL_STOP status. Otherwise, write focused pytest function, run pytest, mark covered, update work-rag, and commit.",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "comprehensive heuristic scan of PRD completed",
+        "all released-scope clauses verified as having dedicated test coverage",
+        "pytest tests/unit/ -q passes with 611+ tests",
+        "coverage-ledger.json 'Phase R64 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated to Phase R65 or FINAL_STOP",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R65 heuristic gap scan",
+      "status": "pending",
+      "evidence_or_reason": "Phase R64 complete. Phase R65 heuristic scan needed.",
+      "next_slice_hint": "Read docs/prd.md and list all released-scope implementation clauses (below pageReadyObserved). Cross-reference with tests/unit/ to find the first clause that has no dedicated unit test. Write one focused pytest function for it, run pytest to confirm it passes, mark this family covered in docs/llm/low-attention-coverage-ledger.json, update docs/product/work-rag.json current.next_action to the next pending family (or 'FINAL_STOP — Phase R65 complete' if none remain), and commit.",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "at least one new pytest function added for an uncovered PRD clause (if any found)",
+        "pytest tests/unit/ -q passes",
+        "coverage-ledger.json 'Phase R65 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated",
+        "committed"
+      ],
+      "template_id": ""
     }
   ]
 }

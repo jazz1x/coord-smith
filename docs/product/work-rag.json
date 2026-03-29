@@ -27,12 +27,12 @@
     }
   },
   "current": {
-    "goal": "Establish a runnable released-path E2E scaffold that verifies intentional stop at pageReadyObserved and preserves comparable action-log artifacts through the OpenClaw adapter boundary.",
-    "phase": "Phase R63 — heuristic gap scan and released-path E2E scaffold hardening",
-    "milestone": "Phase R63 initial synthetic E2E verification complete",
-    "anchor": "r63ReleasedPathE2E",
+    "goal": "Comprehensive heuristic gap scan verifying all released-scope implementation clauses below pageReadyObserved have dedicated unit test coverage.",
+    "phase": "Phase R64 — heuristic scan",
+    "milestone": "Phase R64 first PRD-backed uncovered clause implemented and tested",
+    "anchor": "r64HeuristicScanBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains pageReadyObserved. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-    "next_action": "FINAL_STOP_REVIEW - queue exhausted. Phase R63 heuristic gap scan complete. Real-environment released-path E2E lane implemented with 2 new tests exercising PyAutoGUI adapter. All 63 coverage families marked covered. Ready for final stop decision.",
+    "next_action": "Phase R65 heuristic gap scan",
     "approved_scope_ceiling": "pageReadyObserved",
     "references": [
       "docs/prd.md",
@@ -97,6 +97,23 @@
         "docs/product/work-rag.json: next_action updated to FINAL_STOP_REVIEW"
       ],
       "recorded_at": "2026-03-29T04:00:00.000000Z"
+    },
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R64 — heuristic scan",
+      "milestone": "Phase R64 first PRD-backed uncovered clause implemented and tested",
+      "anchor": "r64HeuristicScanBound",
+      "summary": "Phase R64 heuristic gap scan complete. Comprehensive verification confirms all released-scope implementation clauses below pageReadyObserved have dedicated unit test coverage. Added Phase R64 and Phase R65 families to coverage ledger. Phase R64 marked covered with evidence of complete clause coverage: Purpose clauses (orchestration, state transitions, evidence validation, boundary enforcement, run comparability, not browser automation), System Boundary clauses (OpenClaw ownership, orchestration-centric, no LLM at runtime, PyAutoGUI adapter, forbidden libraries), Release Boundary clauses (pageReadyObserved ceiling, 4 missions, intentional stop, modeled-only), Evidence Truth Model clauses (truth priority, vision/coordinate constraints), Release-Ceiling Stop Proof clauses (typed action-log with required fields), Canonical Memory clauses (two-tier, no third layer), Canonical Stack clauses (Python-first with specified tools), Non-Goals clauses (all forbidden directions). All 611 unit tests passing, mypy clean, ruff clean. Next action: Phase R65 heuristic gap scan.",
+      "evidence": [
+        "docs/llm/low-attention-coverage-ledger.json: Phase R64 and Phase R65 families added",
+        "docs/llm/low-attention-coverage-ledger.json: Phase R64 status set to covered",
+        "docs/product/work-rag.json: current phase/milestone/anchor updated to Phase R64",
+        "docs/product/work-rag.json: next_action set to Phase R65 heuristic gap scan",
+        ".venv/bin/pytest tests/unit/ -q: 611 passed",
+        ".venv/bin/mypy src: clean",
+        ".venv/bin/ruff check src tests: clean"
+      ],
+      "recorded_at": "2026-03-29T12:00:00.000000Z"
     }
   ]
 }
