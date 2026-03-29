@@ -59,42 +59,66 @@ class FakeExecutionAdapter:
         if request.mission_name == "sync_observation":
             return ExecutionResult(
                 mission_name="sync_observation",
-                evidence_refs=("evidence://action-log/sync-observed",),
+                evidence_refs=(
+                    "evidence://clock/server-time-synced",
+                    "evidence://action-log/sync-observed",
+                ),
             )
         if request.mission_name == "target_actionability_observation":
             return ExecutionResult(
                 mission_name="target_actionability_observation",
-                evidence_refs=("evidence://action-log/target-actionable-observed",),
+                evidence_refs=(
+                    "evidence://dom/target-actionable",
+                    "evidence://action-log/target-actionable-observed",
+                ),
             )
         if request.mission_name == "armed_state_entry":
             return ExecutionResult(
                 mission_name="armed_state_entry",
-                evidence_refs=("evidence://action-log/armed-state",),
+                evidence_refs=(
+                    "evidence://text/armed-state-entered",
+                    "evidence://action-log/armed-state",
+                ),
             )
         if request.mission_name == "trigger_wait":
             return ExecutionResult(
                 mission_name="trigger_wait",
-                evidence_refs=("evidence://action-log/trigger-wait-complete",),
+                evidence_refs=(
+                    "evidence://clock/trigger-received",
+                    "evidence://action-log/trigger-wait-complete",
+                ),
             )
         if request.mission_name == "click_dispatch":
             return ExecutionResult(
                 mission_name="click_dispatch",
-                evidence_refs=("evidence://action-log/click-dispatched",),
+                evidence_refs=(
+                    "evidence://action-log/click-dispatched",
+                    "evidence://dom/click-target-clicked",
+                ),
             )
         if request.mission_name == "click_completion":
             return ExecutionResult(
                 mission_name="click_completion",
-                evidence_refs=("evidence://action-log/click-completed",),
+                evidence_refs=(
+                    "evidence://dom/click-effect-confirmed",
+                    "evidence://action-log/click-completed",
+                ),
             )
         if request.mission_name == "success_observation":
             return ExecutionResult(
                 mission_name="success_observation",
-                evidence_refs=("evidence://action-log/success-observation",),
+                evidence_refs=(
+                    "evidence://dom/success-observed",
+                    "evidence://action-log/success-observation",
+                ),
             )
         if request.mission_name == "run_completion":
             return ExecutionResult(
                 mission_name="run_completion",
-                evidence_refs=("evidence://action-log/release-ceiling-stop",),
+                evidence_refs=(
+                    "evidence://action-log/run-completed",
+                    "evidence://text/run-summary",
+                ),
             )
         raise AssertionError(f"Unexpected mission: {request.mission_name}")
 

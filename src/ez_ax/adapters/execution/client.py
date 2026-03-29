@@ -246,16 +246,18 @@ def validate_execution_result(result: ExecutionResult) -> None:
         required_sets = (primary, fallback)
     elif result.mission_name == "sync_observation":
         primary = {
+            "evidence://clock/server-time-synced",
             "evidence://action-log/sync-observed",
         }
         fallback = {
-            "evidence://screenshot/sync-observed-fallback",
+            "evidence://screenshot/sync-fallback",
             "evidence://text/fallback-reason",
             "evidence://action-log/sync-observed",
         }
         required_sets = (primary, fallback)
     elif result.mission_name == "target_actionability_observation":
         primary = {
+            "evidence://dom/target-actionable",
             "evidence://action-log/target-actionable-observed",
         }
         fallback = {
@@ -266,6 +268,7 @@ def validate_execution_result(result: ExecutionResult) -> None:
         required_sets = (primary, fallback)
     elif result.mission_name == "armed_state_entry":
         primary = {
+            "evidence://text/armed-state-entered",
             "evidence://action-log/armed-state",
         }
         fallback = {
@@ -276,6 +279,7 @@ def validate_execution_result(result: ExecutionResult) -> None:
         required_sets = (primary, fallback)
     elif result.mission_name == "trigger_wait":
         primary = {
+            "evidence://clock/trigger-received",
             "evidence://action-log/trigger-wait-complete",
         }
         fallback = {
@@ -287,6 +291,7 @@ def validate_execution_result(result: ExecutionResult) -> None:
     elif result.mission_name == "click_dispatch":
         primary = {
             "evidence://action-log/click-dispatched",
+            "evidence://dom/click-target-clicked",
         }
         fallback = {
             "evidence://screenshot/click-dispatched-fallback",
@@ -296,32 +301,35 @@ def validate_execution_result(result: ExecutionResult) -> None:
         required_sets = (primary, fallback)
     elif result.mission_name == "click_completion":
         primary = {
+            "evidence://dom/click-effect-confirmed",
             "evidence://action-log/click-completed",
         }
         fallback = {
-            "evidence://screenshot/click-completed-fallback",
+            "evidence://screenshot/click-completion-fallback",
             "evidence://text/fallback-reason",
             "evidence://action-log/click-completed",
         }
         required_sets = (primary, fallback)
     elif result.mission_name == "success_observation":
         primary = {
+            "evidence://dom/success-observed",
             "evidence://action-log/success-observation",
         }
         fallback = {
-            "evidence://screenshot/success-observation-fallback",
+            "evidence://screenshot/success-fallback",
             "evidence://text/fallback-reason",
             "evidence://action-log/success-observation",
         }
         required_sets = (primary, fallback)
     elif result.mission_name == "run_completion":
         primary = {
-            "evidence://action-log/release-ceiling-stop",
+            "evidence://action-log/run-completed",
+            "evidence://text/run-summary",
         }
         fallback = {
+            "evidence://action-log/run-completed",
             "evidence://screenshot/run-completion-fallback",
             "evidence://text/fallback-reason",
-            "evidence://action-log/release-ceiling-stop",
         }
         required_sets = (primary, fallback)
     elif result.mission_name == "attach_session":
@@ -684,17 +692,17 @@ def validate_release_ceiling_stop_action_log(
 ) -> None:
     """Validate the released ceiling stop marker is confirmed by action-log content."""
 
-    if "evidence://action-log/release-ceiling-stop" not in evidence_refs:
+    if "evidence://action-log/run-completed" not in evidence_refs:
         return
 
     run_root = _require_run_root_dir(run_root=run_root)
 
-    path = action_log_artifact_path(run_root=run_root, key="release-ceiling-stop")
+    path = action_log_artifact_path(run_root=run_root, key="run-completed")
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
     except OSError as exc:
         msg = (
-            f"Failed to read release ceiling stop action-log artifact: path='{path}'; "
+            f"Failed to read run completion action-log artifact: path='{path}'; "
             "expected typed fields event/mission_name/ts; "
             "see docs/product/prd-openclaw-e2e-validation.md, "
             "docs/product/prd-openclaw-computer-use-runtime.md, "
@@ -712,7 +720,7 @@ def validate_release_ceiling_stop_action_log(
             continue
         if not isinstance(payload, dict):
             continue
-        if payload.get("event") != "release-ceiling-stop":
+        if payload.get("event") != "run-completed":
             continue
         if payload.get("mission_name") != "run_completion":
             continue
@@ -721,9 +729,9 @@ def validate_release_ceiling_stop_action_log(
             return
 
     msg = (
-        "Release ceiling stop action-log artifact did not contain a confirming event: "
+        "Run completion action-log artifact did not contain a confirming event: "
         "expected at least one JSON line with "
-        "event='release-ceiling-stop', mission_name='run_completion', and "
+        "event='run-completed', mission_name='run_completion', and "
         "ISO-8601 ts; "
         f"path='{path}'; "
         "see docs/product/prd-openclaw-e2e-validation.md, "

@@ -66,7 +66,7 @@ class FakeExecutionAdapter:
             return ExecutionResult(
                 mission_name="sync_observation",
                 evidence_refs=(
-                    "evidence://dom/sync-check",
+                    "evidence://clock/server-time-synced",
                     "evidence://action-log/sync-observed",
                 ),
             )
@@ -82,7 +82,7 @@ class FakeExecutionAdapter:
             return ExecutionResult(
                 mission_name="armed_state_entry",
                 evidence_refs=(
-                    "evidence://dom/armed-state",
+                    "evidence://text/armed-state-entered",
                     "evidence://action-log/armed-state",
                 ),
             )
@@ -90,7 +90,7 @@ class FakeExecutionAdapter:
             return ExecutionResult(
                 mission_name="trigger_wait",
                 evidence_refs=(
-                    "evidence://dom/trigger-fired",
+                    "evidence://clock/trigger-received",
                     "evidence://action-log/trigger-wait-complete",
                 ),
             )
@@ -98,15 +98,15 @@ class FakeExecutionAdapter:
             return ExecutionResult(
                 mission_name="click_dispatch",
                 evidence_refs=(
-                    "evidence://dom/click-sent",
                     "evidence://action-log/click-dispatched",
+                    "evidence://dom/click-target-clicked",
                 ),
             )
         if request.mission_name == "click_completion":
             return ExecutionResult(
                 mission_name="click_completion",
                 evidence_refs=(
-                    "evidence://dom/click-done",
+                    "evidence://dom/click-effect-confirmed",
                     "evidence://action-log/click-completed",
                 ),
             )
@@ -114,7 +114,7 @@ class FakeExecutionAdapter:
             return ExecutionResult(
                 mission_name="success_observation",
                 evidence_refs=(
-                    "evidence://dom/success",
+                    "evidence://dom/success-observed",
                     "evidence://action-log/success-observation",
                 ),
             )
@@ -122,7 +122,8 @@ class FakeExecutionAdapter:
             return ExecutionResult(
                 mission_name="run_completion",
                 evidence_refs=(
-                    "evidence://action-log/release-ceiling-stop",
+                    "evidence://action-log/run-completed",
+                    "evidence://text/run-summary",
                 ),
             )
         raise AssertionError(f"Unexpected mission: {request.mission_name}")

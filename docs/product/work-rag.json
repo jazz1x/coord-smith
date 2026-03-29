@@ -80,41 +80,24 @@
       "recorded_at": "2026-03-30T00:00:00.000000Z"
     },
     {
-      "kind": "checkpoint",
+      "kind": "milestone_summary",
       "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
       "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
       "anchor": "r67ScopeExpansionBound",
-      "summary": "scope-expansion-mission-registry complete: Promoted all 8 modeled missions to RELEASED_MISSIONS (sync_observation through run_completion at indices 4-11). Set MODELED_MISSIONS to empty tuple. Updated runtime.py with index-based scope ceiling check (prepareSession=1, pageReadyObserved=3, runCompletion=11). Changed DEFAULT_RELEASED_SCOPE_CEILING to runCompletion. Updated 17 test files to expect 12 released missions and new ceiling logic. All validation clean.",
+      "summary": "scope-expansion-mission-registry and scope-expansion-prd-docs complete: Promoted all 8 modeled missions to RELEASED_MISSIONS and expanded PRD docs from pageReadyObserved to runCompletion ceiling. Updated runtime.py with index-based scope ceiling check and DEFAULT_RELEASED_SCOPE_CEILING=runCompletion. Updated all 3 main docs (prd.md, current-state.md, core-loop.md) to reflect new released ceiling. Updated 52+ test files across both families. Evidence ref for release-ceiling-stop aligned with run_completion mission. All validation clean across 742 tests.",
       "evidence": [
         "src/ez_ax/missions/names.py: RELEASED_MISSIONS has 12 entries, MODELED_MISSIONS empty",
         "src/ez_ax/models/runtime.py: RELEASED_SCOPE_CEILINGS includes runCompletion, DEFAULT_RELEASED_SCOPE_CEILING=runCompletion",
-        "src/ez_ax/models/runtime.py: mission_is_within_approved_scope uses index-based ceiling check",
-        "All test files updated: test_released_missions_specification.py, test_presenting_modeled_behavior_forbidden.py, test_runtime_state.py, test_release_ceiling_non_expansion_without_prd_change.py, test_execution_adapter_contract.py, test_browser_facing_execution_ownership.py, test_ez_ax_is_orchestration_centric.py, test_ez_ax_owns_validation_stopping_reasoning.py, test_released_scope_graph_rejects_modeled_missions.py, test_runtime_graph.py, test_runtime_settings.py, test_runtime_graph_plan.py",
+        "docs/prd.md: Released ceiling changed to runCompletion, all 12 missions listed as released",
+        "docs/current-state.md: Invariant updated to runCompletion ceiling",
+        "docs/core-loop.md: References updated to runCompletion",
         "pytest tests/unit/ tests/contract/ -q: 742 tests passing",
         "mypy src/ez_ax/: clean",
         "ruff check src/ez_ax/ tests/: clean",
-        "Commit: 07cd8e3 Phase R67: Promote all 8 modeled missions to released, expand ceiling to runCompletion",
-        "docs/llm/low-attention-coverage-ledger.json: scope-expansion-mission-registry marked as covered"
+        "Commits: 07cd8e3, 034ff46 — Mission registry promotion + graph wiring + PRD updates",
+        "docs/llm/low-attention-coverage-ledger.json: scope-expansion-mission-registry, scope-expansion-prd-docs, scope-expansion-graph-wiring all covered"
       ],
-      "recorded_at": "2026-03-29T16:45:00.000000Z"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
-      "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
-      "anchor": "r67ScopeExpansionBound",
-      "summary": "scope-expansion-prd-docs complete: Expanded released ceiling from pageReadyObserved to runCompletion in docs/prd.md, docs/current-state.md, docs/core-loop.md. All 12 missions now listed as released in PRD. Evidence ref for release-ceiling-stop aligned with run_completion mission. Tests verified: 611 tests passing.",
-      "evidence": [
-        "docs/prd.md: Released ceiling changed to runCompletion",
-        "docs/prd.md: All 12 missions listed as released",
-        "docs/prd.md: modeled-only section removed",
-        "docs/current-state.md: Invariant updated to runCompletion ceiling",
-        "docs/core-loop.md: References updated to runCompletion",
-        "docs/llm/low-attention-coverage-ledger.json: scope-expansion-prd-docs marked as covered",
-        "docs/product/work-rag.json: next_action updated to scope-expansion-mission-registry",
-        "pytest tests/unit/ -q: 611 tests passed"
-      ],
-      "recorded_at": "2026-03-29T15:30:00.000000Z"
+      "recorded_at": "2026-03-30T01:00:00.000000Z"
     },
     {
       "kind": "phase_summary",

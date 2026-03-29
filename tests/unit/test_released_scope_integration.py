@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -15,8 +16,29 @@ from ez_ax.graph.langgraph_released_execution import run_released_scope_via_lang
 
 
 class FakeExecutionAdapter:
-    def __init__(self) -> None:
+    def __init__(self, run_root: Path | None = None) -> None:
         self.requests: list[ExecutionRequest] = []
+        self._run_root = run_root
+
+    def with_run_root(self, *, run_root: Path) -> FakeExecutionAdapter:
+        """Bind run_root for artifact creation."""
+        self._run_root = run_root
+        return self
+
+    def _write_action_log(self, *, key: str, mission_name: str) -> None:
+        """Write action-log artifact to disk."""
+        if self._run_root is None:
+            return
+        ts = datetime.now(tz=UTC).isoformat()
+        entry: dict[str, object] = {
+            "ts": ts,
+            "mission_name": mission_name,
+            "event": key,
+        }
+        path = self._run_root / "artifacts" / "action-log" / f"{key}.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
 
     async def execute(
         self, request: ExecutionRequest
@@ -40,18 +62,47 @@ class FakeExecutionAdapter:
                 "evidence://dom/page-shell-ready",
                 "evidence://action-log/page-ready-observed",
             ),
-            "sync_observation": ("evidence://action-log/sync-observed",),
-            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
-            "armed_state_entry": ("evidence://action-log/armed-state",),
-            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
-            "click_dispatch": ("evidence://action-log/click-dispatched",),
-            "click_completion": ("evidence://action-log/click-completed",),
-            "success_observation": ("evidence://action-log/success-observation",),
-            "run_completion": ("evidence://action-log/release-ceiling-stop",),
+            "sync_observation": (
+                "evidence://clock/server-time-synced",
+                "evidence://action-log/sync-observed",
+            ),
+            "target_actionability_observation": (
+                "evidence://dom/target-actionable",
+                "evidence://action-log/target-actionable-observed",
+            ),
+            "armed_state_entry": (
+                "evidence://text/armed-state-entered",
+                "evidence://action-log/armed-state",
+            ),
+            "trigger_wait": (
+                "evidence://clock/trigger-received",
+                "evidence://action-log/trigger-wait-complete",
+            ),
+            "click_dispatch": (
+                "evidence://action-log/click-dispatched",
+                "evidence://dom/click-target-clicked",
+            ),
+            "click_completion": (
+                "evidence://dom/click-effect-confirmed",
+                "evidence://action-log/click-completed",
+            ),
+            "success_observation": (
+                "evidence://dom/success-observed",
+                "evidence://action-log/success-observation",
+            ),
+            "run_completion": (
+                "evidence://action-log/run-completed",
+                "evidence://text/run-summary",
+            ),
         }
         refs = evidence_map.get(request.mission_name)
         if refs is None:
             raise AssertionError(f"Unexpected mission: {request.mission_name}")
+        # Write action-log artifacts for each action-log ref
+        for ref in refs:
+            if ref.startswith("evidence://action-log/"):
+                action_key = ref[len("evidence://action-log/") :]
+                self._write_action_log(key=action_key, mission_name=request.mission_name)
         return ExecutionResult(
             mission_name=request.mission_name, evidence_refs=refs
         )
@@ -105,7 +156,7 @@ async def test_full_released_scope_graph_stops_at_run_completion(
     )
 
     assert result.state.current_mission == "run_completion"
-    assert "evidence://action-log/release-ceiling-stop" in (
+    assert "evidence://action-log/run-completed" in (
         result.state.mission_state.evidence_refs or ()
     )
 
@@ -126,11 +177,11 @@ async def test_full_released_scope_graph_creates_action_log_artifact(
     )
 
     action_log_dir = result.run.run_root / "artifacts" / "action-log"
-    release_ceiling_stop = action_log_dir / "release-ceiling-stop.jsonl"
-    assert release_ceiling_stop.exists()
+    run_completed = action_log_dir / "run-completed.jsonl"
+    assert run_completed.exists()
 
-    content = json.loads(release_ceiling_stop.read_text(encoding="utf-8").strip())
-    assert content["event"] == "release-ceiling-stop"
+    content = json.loads(run_completed.read_text(encoding="utf-8").strip())
+    assert content["event"] == "run-completed"
     assert content["mission_name"] == "run_completion"
     assert "ts" in content
 
