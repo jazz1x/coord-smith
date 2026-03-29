@@ -153,7 +153,7 @@ async def test_released_scope_produces_verifiable_run_result(
         "attach-session.jsonl",
         "prepare-session.jsonl",
         "enter-target-page.jsonl",
-        "release-ceiling-stop.jsonl",
+        "run-completed.jsonl",
     }
     for artifact_name in expected_artifacts:
         artifact_path = action_log_dir / artifact_name

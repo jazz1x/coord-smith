@@ -95,7 +95,7 @@ def test_page_ready_observation_primary_evidence_specification() -> None:
     # Primary evidence spec from client.py line 237-239
     primary = {
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/release-ceiling-stop",
+        "evidence://action-log/run-completed",
     }
 
     result = ExecutionResult(
@@ -104,7 +104,7 @@ def test_page_ready_observation_primary_evidence_specification() -> None:
     )
     assert result.mission_name == "page_ready_observation"
     assert len(result.evidence_refs) == 2
-    assert "evidence://action-log/release-ceiling-stop" in result.evidence_refs
+    assert "evidence://action-log/run-completed" in result.evidence_refs
 
 
 def test_released_missions_use_primary_truth_types_only() -> None:
@@ -134,7 +134,7 @@ def test_released_missions_use_primary_truth_types_only() -> None:
         },
         "page_ready_observation": {
             "evidence://dom/page-shell-ready",
-            "evidence://action-log/release-ceiling-stop",
+            "evidence://action-log/run-completed",
         },
     }
 

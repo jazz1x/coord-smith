@@ -175,7 +175,7 @@ async def test_phase_r51_released_ceiling_stop_proof_creation(
 
     # Verify the stop proof artifact exists
     stop_proof_path = (
-        result.run.run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
+        result.run.run_root / "artifacts" / "action-log" / "run-completed.jsonl"
     )
     assert stop_proof_path.exists(), (
         f"Release-ceiling-stop artifact must exist at {stop_proof_path}"
@@ -188,7 +188,7 @@ async def test_phase_r51_released_ceiling_stop_proof_creation(
     entry = json.loads(content)
 
     assert "event" in entry, "Stop proof must contain 'event' field"
-    assert entry["event"] == "release-ceiling-stop"
+    assert entry["event"] == "run-completed"
     assert "mission_name" in entry, "Stop proof must contain 'mission_name' field"
     assert entry["mission_name"] == "run_completion"
     assert "ts" in entry, "Stop proof must contain 'ts' field"

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -24,14 +25,40 @@ from ez_ax.models.runtime import RuntimeState
 
 
 class FakeExecutionAdapter:
-    def __init__(self, *, result: ExecutionResult) -> None:
+    def __init__(self, *, result: ExecutionResult, run_root: Path | None = None) -> None:
         self._result = result
         self.last_request: ExecutionRequest | None = None
+        self._run_root = run_root
+
+    def with_run_root(self, *, run_root: Path) -> FakeExecutionAdapter:
+        """Bind run_root for artifact creation."""
+        self._run_root = run_root
+        return self
+
+    def _write_action_log(self, *, key: str, mission_name: str) -> None:
+        """Write action-log artifact to disk."""
+        if self._run_root is None:
+            return
+        ts = datetime.now(tz=UTC).isoformat()
+        entry: dict[str, object] = {
+            "ts": ts,
+            "mission_name": mission_name,
+            "event": key,
+        }
+        path = self._run_root / "artifacts" / "action-log" / f"{key}.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
 
     async def execute(
         self, request: ExecutionRequest
     ) -> ExecutionResult:
         self.last_request = request
+        # Write action-log artifacts for each action-log ref
+        for ref in self._result.evidence_refs:
+            if ref.startswith("evidence://action-log/"):
+                action_key = ref[len("evidence://action-log/") :]
+                self._write_action_log(key=action_key, mission_name=self._result.mission_name)
         return self._result
 
 

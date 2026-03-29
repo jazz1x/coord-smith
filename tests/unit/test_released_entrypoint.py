@@ -184,16 +184,16 @@ async def test_run_released_scope_sequences_released_missions_and_creates_run_ro
     assert (run_root / "artifacts" / "action-log" / "click-completed.jsonl").exists()
     assert (run_root / "artifacts" / "action-log" / "success-observation.jsonl").exists()
     assert (
-        run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
+        run_root / "artifacts" / "action-log" / "run-completed.jsonl"
     ).exists()
 
     release_stop_payload = (
-        run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
+        run_root / "artifacts" / "action-log" / "run-completed.jsonl"
     ).read_text(encoding="utf-8")
     assert release_stop_payload
     first_line = release_stop_payload.splitlines()[0]
     stop_event = json.loads(first_line)
-    assert stop_event["event"] == "release-ceiling-stop"
+    assert stop_event["event"] == "run-completed"
     assert stop_event["mission_name"] == "run_completion"
     assert isinstance(stop_event["ts"], str) and stop_event["ts"]
 
