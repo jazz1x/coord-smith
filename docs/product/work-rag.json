@@ -32,7 +32,7 @@
     "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
     "anchor": "r67ScopeExpansionBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling expands from pageReadyObserved to runCompletion. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine.",
-    "next_action": "scope-expansion-graph-wiring",
+    "next_action": "scope-expansion-evidence-adapter",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -59,6 +59,26 @@
     ]
   },
   "history": [
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
+      "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
+      "anchor": "r67ScopeExpansionBound",
+      "summary": "scope-expansion-graph-wiring complete: Added 8 new execute_*_node functions in released_call_site.py (sync_observation, target_actionability_observation, armed_state_entry, trigger_wait, click_dispatch, click_completion, success_observation, run_completion). Updated page_ready_observation node to seed 'page-ready-observed' marker instead of 'release-ceiling-stop'. Wired full 12-mission sequence in langgraph_released_execution.py with run_completion_node → END edge. Updated ReleasedRunContext to accept both ceiling values (default runCompletion). Updated 35+ test files to expect 12 missions, runCompletion ceiling, and correct evidence refs. Updated client.py validation logic to require appropriate evidence refs for all 12 missions. Updated MCP adapter type hints and defaults. All 613 unit tests passing, mypy clean.",
+      "evidence": [
+        "src/ez_ax/graph/released_call_site.py: 8 new execute_*_node functions with correct evidence markers",
+        "src/ez_ax/graph/langgraph_released_execution.py: 12 nodes wired sequentially, run_completion_node → END edge",
+        "src/ez_ax/models/runtime.py: approved_scope_ceiling default changed to runCompletion",
+        "src/ez_ax/adapters/execution/client.py: validate_execution_result updated for all 12 missions",
+        "src/ez_ax/adapters/execution/mcp_adapter.py: ReleasedScopeCeiling type updated to include both ceilings",
+        "All 35+ test files updated with 12-mission sequences and runCompletion ceiling",
+        "pytest tests/unit/ -q: 613 tests passing",
+        "mypy src/ez_ax/: clean",
+        "Commit: 034ff46 Phase R67: Expand released ceiling from pageReadyObserved to runCompletion with 12-mission graph wiring",
+        "docs/llm/low-attention-coverage-ledger.json: scope-expansion-graph-wiring marked as covered"
+      ],
+      "recorded_at": "2026-03-30T00:00:00.000000Z"
+    },
     {
       "kind": "checkpoint",
       "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
