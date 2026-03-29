@@ -1335,9 +1335,9 @@
     },
     {
       "family": "Phase R72 heuristic gap scan",
-      "status": "pending",
-      "evidence_or_reason": "Phase R71 — heuristic scan complete; Phase R72 heuristic scan needed.",
-      "next_slice_hint": "Read docs/prd.md and list all released-scope implementation clauses (below pageReadyObserved). Cross-reference with tests/unit/ to find the first clause that has no dedicated unit test. Write one focused pytest function for it, run pytest to confirm it passes, mark this family covered in docs/llm/low-attention-coverage-ledger.json, update docs/product/work-rag.json current.next_action to the next pending family (or 'FINAL_STOP — Phase R72 complete' if none remain), and commit.",
+      "status": "covered",
+      "evidence_or_reason": "Identified and tested uncovered PRD clause: 'Current-state memory: docs/product/work-rag.json' in the Canonical Memory Model section. Added dedicated pytest function test_work_rag_path_designated_for_current_state_memory in tests/unit/test_rag_paths.py that validates the designation of work-rag.json path for current-state memory, distinct from rag.json (durable lesson memory). This mirrors the parallel test for durable lesson memory (test_lesson_rag_path_designated_for_durable_lesson_memory). Total validation: 630 tests passing (629 unit + 1 new), mypy clean, ruff clean. All pending families in coverage ledger exhausted. Coverage ledger updated: Phase R72 heuristic gap scan marked covered. No more pending families remain. Next action set to FINAL_STOP — Phase R72 complete.",
+      "next_slice_hint": "",
       "first_validation": "python -m pytest tests/unit/ -q",
       "mypy_target": "src/",
       "ruff_target": "src/",

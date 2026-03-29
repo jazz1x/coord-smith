@@ -51,19 +51,44 @@ def test_no_third_canonical_memory_layer_exists() -> None:
     assert set(memory_paths) == {"WORK_RAG_PATH", "LESSON_RAG_PATH"}
 
 
+def test_work_rag_path_designated_for_current_state_memory() -> None:
+    """Verify WORK_RAG_PATH is designated for current-state memory per PRD.
+
+    PRD Canonical Memory Model section (lines 113-115):
+    'Current-state memory:
+
+    - `docs/product/work-rag.json`'
+
+    This test explicitly validates the PRD clause that designates
+    `docs/product/work-rag.json` as the canonical path for current-state memory,
+    as distinct from durable lesson memory (rag.json).
+
+    The current-state memory holds the active state of autonomous continuation:
+    the current phase, milestone, anchor, goal, invariant, and next action.
+    """
+    # Verify WORK_RAG_PATH is set to the work-rag.json file for current-state
+    assert WORK_RAG_PATH == Path("docs/product/work-rag.json"), (
+        "WORK_RAG_PATH must be 'docs/product/work-rag.json' per PRD Canonical Memory Model"
+    )
+
+    # Verify the path follows the naming convention for current-state memory
+    assert WORK_RAG_PATH.name == "work-rag.json", (
+        "Current-state memory path must be named 'work-rag.json' per PRD specification"
+    )
+
+    # Verify it's distinct from rag.json (durable lesson memory)
+    assert WORK_RAG_PATH != LESSON_RAG_PATH, (
+        "Current-state memory (work-rag.json) must be separate from durable lesson memory (rag.json)"
+    )
+
+
 def test_lesson_rag_path_designated_for_durable_lesson_memory() -> None:
     """Verify LESSON_RAG_PATH is designated for durable lesson memory per PRD.
 
-    PRD Canonical Memory Model section (lines 109-123):
-    'Only two canonical memory layers exist.
+    PRD Canonical Memory Model section (lines 117-119):
+    'Durable lesson memory:
 
-    Current-state memory:
-    - `docs/product/work-rag.json`
-
-    Durable lesson memory:
-    - `docs/product/rag.json`
-
-    No third canonical memory layer exists.'
+    - `docs/product/rag.json`'
 
     This test explicitly validates the PRD clause that designates
     `docs/product/rag.json` as the canonical path for durable lesson memory,
