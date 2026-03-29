@@ -1126,7 +1126,7 @@
     },
     {
       "family": "scope-expansion-prd-docs",
-      "status": "pending",
+      "status": "covered",
       "evidence_or_reason": "Phase R67 family 1/7: PRD and documentation ceiling expansion authorization.",
       "next_slice_hint": "Update docs/prd.md: (1) Change line ~45 released ceiling from pageReadyObserved to runCompletion. (2) Expand \"Released implementation scope\" (lines ~49-53) to list all 12 missions: attach, prepareSession, benchmark validation, pageReadyObserved, syncObservation, targetActionabilityObservation, armedStateEntry, triggerWait, clickDispatch, clickCompletion, successObservation, runCompletion, intentional stop at the released ceiling. (3) Replace \"Examples of modeled-only stages\" section (lines ~59-65) with: \"No missions are currently modeled-only. All stages are released.\" (4) In \"Release-Ceiling Stop Proof\" section (lines ~92-109), change mission_name from page_ready_observation to run_completion. (5) In \"Non-Goals\" (line ~146), change pageReadyObserved to runCompletion. Then update docs/current-state.md: change invariant text pageReadyObserved to runCompletion. Update docs/core-loop.md: change pageReadyObserved references to runCompletion. Update AGENTS.md: change pageReadyObserved references to runCompletion. Run: .venv/bin/python -m pytest tests/unit/ -q to verify no tests break from doc changes alone.",
       "first_validation": ".venv/bin/python -m pytest tests/unit/ -q",

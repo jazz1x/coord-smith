@@ -42,7 +42,7 @@ Runtime inference boundary:
 
 Current released ceiling:
 
-- `pageReadyObserved`
+- `runCompletion`
 
 Released implementation scope:
 
@@ -50,19 +50,17 @@ Released implementation scope:
 - prepareSession
 - benchmark validation
 - pageReadyObserved
+- syncObservation
+- targetActionabilityObservation
+- armedStateEntry
+- triggerWait
+- clickDispatch
+- clickCompletion
+- successObservation
+- runCompletion
 - intentional stop at the released ceiling
 
-Anything above `pageReadyObserved` is modeled-only and must not be treated as
-released behavior.
-
-Examples of modeled-only stages:
-
-- `syncToServerTime`
-- armed state
-- trigger wait
-- click dispatch
-- success completion
-- post-ready workflow stages
+No missions are currently modeled-only. All stages are released.
 
 ## Evidence Truth Model
 
@@ -89,7 +87,7 @@ Rules:
 
 ## Release-Ceiling Stop Proof
 
-Stopping at `pageReadyObserved` must be provable by typed action-log evidence.
+Stopping at `runCompletion` must be provable by typed action-log evidence.
 
 Required evidence ref:
 
@@ -143,7 +141,7 @@ The following are not in scope for casual change:
 - `ez-ax` becoming browser-facing
 - replacing `OpenClaw`
 - direct Playwright, CDP, or Chromium control as product architecture
-- release-ceiling expansion above `pageReadyObserved` without explicit PRD
+- release-ceiling expansion above `runCompletion` without explicit PRD
   change
 - presenting modeled behavior as released behavior
 - TypeScript runtime revival under the active runtime path

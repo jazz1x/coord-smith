@@ -9,7 +9,7 @@ and exhaustion protocols, see `docs/execution-model.md`.
 Before starting, verify from `docs/current-state.md`:
 
 - phase / milestone / anchor / invariant / next action
-- the task stays below `pageReadyObserved`
+- the task stays at or below `runCompletion`
 - the task is one-commit safe
 
 If the working tree is dirty (uncommitted changes present):
@@ -55,7 +55,7 @@ If validation fails and cannot be fixed in one commit:
 ## Rules
 
 - One task per commit — no mixed-purpose commits
-- Stay at or below `pageReadyObserved`
+- Stay at or below `runCompletion`
 - OpenClaw is the only browser-facing actor
 - Typed evidence required for released-scope decisions
 - `work-rag.json` = current state, `rag.json` = durable lessons only

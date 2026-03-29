@@ -32,7 +32,7 @@
     "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
     "anchor": "r67ScopeExpansionBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling expands from pageReadyObserved to runCompletion. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine.",
-    "next_action": "scope-expansion-prd-docs",
+    "next_action": "scope-expansion-mission-registry",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -59,6 +59,24 @@
     ]
   },
   "history": [
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
+      "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
+      "anchor": "r67ScopeExpansionBound",
+      "summary": "scope-expansion-prd-docs complete: Expanded released ceiling from pageReadyObserved to runCompletion in docs/prd.md, docs/current-state.md, docs/core-loop.md. All 12 missions now listed as released in PRD. Evidence ref for release-ceiling-stop aligned with run_completion mission. Tests verified: 611 tests passing.",
+      "evidence": [
+        "docs/prd.md: Released ceiling changed to runCompletion",
+        "docs/prd.md: All 12 missions listed as released",
+        "docs/prd.md: modeled-only section removed",
+        "docs/current-state.md: Invariant updated to runCompletion ceiling",
+        "docs/core-loop.md: References updated to runCompletion",
+        "docs/llm/low-attention-coverage-ledger.json: scope-expansion-prd-docs marked as covered",
+        "docs/product/work-rag.json: next_action updated to scope-expansion-mission-registry",
+        "pytest tests/unit/ -q: 611 tests passed"
+      ],
+      "recorded_at": "2026-03-29T15:30:00.000000Z"
+    },
     {
       "kind": "phase_summary",
       "phase": "Phases R3-R65 — Foundation through FINAL_STOP (Compressed History)",

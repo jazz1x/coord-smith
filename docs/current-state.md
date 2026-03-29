@@ -17,11 +17,11 @@ It is intentionally changeable and subordinate to:
 - phase: `Phase R63 — heuristic gap scan and released-path E2E scaffold hardening`
 - milestone: `Phase R63 initial synthetic E2E verification complete`
 - anchor: `r63ReleasedPathE2E`
-- invariant: `ez-ax` runtime graph contains no LLM inference. `ez-ax` remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains `pageReadyObserved`. Canonical continuation memory remains two-tiered: `work-rag` for current state, `rag` for durable lessons.
+- invariant: `ez-ax` runtime graph contains no LLM inference. `ez-ax` remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling expands from pageReadyObserved to runCompletion. Canonical continuation memory remains two-tiered: `work-rag` for current state, `rag` for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).
 
 ## Current Interpretation
 
-Phase R64 — heuristic scan complete. Phase transition in progress: `Phase R65 heuristic gap scan` is the active task.
+Phase R65 complete. Phase transition in progress: `Phase R66 heuristic gap scan` is the active task.
 
 ## What Is Already Established
 
@@ -113,7 +113,7 @@ Phase R6 complete:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current next action is: `Phase R65 heuristic gap scan`
+The current next action is: `Phase R66 heuristic gap scan`
 
 ## Active Anchor Coverage Ledger
 
