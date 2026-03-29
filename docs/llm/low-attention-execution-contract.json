@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R59 — heuristic scan complete",
-  "active_milestone": "Phase R59 comprehensive heuristic gap scan verification complete",
-  "active_anchor": "r59HeuristicScanBound",
+  "active_phase": "Phase R61 — heuristic scan",
+  "active_milestone": "Phase R61 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r61HeuristicScanBound",
   "active_invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains pageReadyObserved. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
   "scope_ceiling": "pageReadyObserved",
   "canonical_inputs": [
@@ -19,7 +19,7 @@
     "docs/llm/low-attention-execution-contract.json"
   ],
   "anchor_contract_families": [
-    "Phase R59 heuristic gap scan"
+    "Phase R61 heuristic gap scan"
   ],
   "heuristic_family_ladder": [
     "same-file failing validation artifact",
