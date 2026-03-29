@@ -32,7 +32,7 @@
     "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
     "anchor": "r67ScopeExpansionBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling expands from pageReadyObserved to runCompletion. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine.",
-    "next_action": "scope-expansion-heuristic-test-cleanup",
+    "next_action": "scope-expansion-final-validation",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -59,6 +59,25 @@
     ]
   },
   "history": [
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
+      "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
+      "anchor": "r67ScopeExpansionBound",
+      "summary": "scope-expansion-heuristic-test-cleanup complete: Updated all heuristic phase tests (R44, R47-R50) to check for updated PRD content reflecting 12-mission released scope with runCompletion ceiling. Updated test docstrings and PRD clause definitions to reference the new ceiling and all 12 missions. Total 5 test files updated with focused replacements to change 'pageReadyObserved' → 'runCompletion' in test data. All 748 tests passing (4 E2E, 744 unit), mypy clean, ruff clean. Ready for final validation phase.",
+      "evidence": [
+        "test_phase_r44_comprehensive_prd_clause_audit.py: Updated Release Boundary, Stop Proof, Non-Goals clauses",
+        "test_phase_r47_heuristic_gap_verification.py: Updated ceiling references and docstrings",
+        "test_phase_r48_heuristic_gap_verification.py: Updated ceiling references and docstrings",
+        "test_phase_r49_heuristic_gap_verification.py: Updated ceiling references and docstrings",
+        "test_phase_r50_heuristic_gap_verification.py: Updated ceiling references and docstrings",
+        "pytest tests/ -q: 748 tests passing",
+        "mypy src/ez_ax/: clean",
+        "ruff check src/ tests/: clean",
+        "Commit: 9e120d0 Phase R67: Complete scope-expansion-heuristic-test-cleanup"
+      ],
+      "recorded_at": "2026-03-30T06:00:00.000000Z"
+    },
     {
       "kind": "checkpoint",
       "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",

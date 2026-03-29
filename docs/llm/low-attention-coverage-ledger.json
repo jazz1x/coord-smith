@@ -1225,7 +1225,7 @@
     },
     {
       "family": "scope-expansion-heuristic-test-cleanup",
-      "status": "pending",
+      "status": "covered",
       "evidence_or_reason": "Phase R67 family 6/7: Update heuristic phase tests and remaining references.",
       "next_slice_hint": "Search ALL test files for remaining references to the old ceiling: grep -r \"pageReadyObserved\" tests/ and grep -r \"page_ready_observation\" tests/ (in assertion contexts, not imports/function names). Update any remaining hardcoded strings in heuristic phase tests (R44-R60 series): (a) tests/unit/test_phase_r44_comprehensive_prd_clause_audit.py through test_phase_r60: if they check PRD content strings like \"pageReadyObserved\", verify these still match the updated PRD. Update if needed. (b) tests/unit/test_phase_r51_mission_parameter_validation.py: update mission count and ceiling expectations. (c) tests/unit/test_transition_reporting.py: update modeled_nodes count in summary strings. (d) Any other test file with \"pageReadyObserved\" or \"page_ready_observation\" in assertion strings. Also update docs/llm/repo-autonomous-loop-adapter.yaml: change scope.active_scope_boundary from pageReadyObserved to runCompletion. Run .venv/bin/python -m pytest tests/ -q to confirm ALL tests pass.",
       "first_validation": ".venv/bin/python -m pytest tests/ -q",
