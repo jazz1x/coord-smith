@@ -49,3 +49,37 @@ def test_no_third_canonical_memory_layer_exists() -> None:
 
     # Verify the two paths are WORK_RAG_PATH and LESSON_RAG_PATH
     assert set(memory_paths) == {"WORK_RAG_PATH", "LESSON_RAG_PATH"}
+
+
+def test_lesson_rag_path_designated_for_durable_lesson_memory() -> None:
+    """Verify LESSON_RAG_PATH is designated for durable lesson memory per PRD.
+
+    PRD Canonical Memory Model section (lines 109-123):
+    'Only two canonical memory layers exist.
+
+    Current-state memory:
+    - `docs/product/work-rag.json`
+
+    Durable lesson memory:
+    - `docs/product/rag.json`
+
+    No third canonical memory layer exists.'
+
+    This test explicitly validates the PRD clause that designates
+    `docs/product/rag.json` as the canonical path for durable lesson memory,
+    as distinct from current-state memory (work-rag.json).
+    """
+    # Verify LESSON_RAG_PATH is set to the rag.json file for durable lessons
+    assert LESSON_RAG_PATH == Path("docs/product/rag.json"), (
+        "LESSON_RAG_PATH must be 'docs/product/rag.json' per PRD Canonical Memory Model"
+    )
+
+    # Verify the path follows the naming convention for durable lesson memory
+    assert LESSON_RAG_PATH.name == "rag.json", (
+        "Durable lesson memory path must be named 'rag.json' per PRD specification"
+    )
+
+    # Verify it's distinct from work-rag (current-state memory)
+    assert LESSON_RAG_PATH != WORK_RAG_PATH, (
+        "Durable lesson memory (rag.json) must be separate from current-state memory (work-rag.json)"
+    )
