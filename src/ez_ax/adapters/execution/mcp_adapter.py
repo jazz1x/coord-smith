@@ -1,6 +1,6 @@
 """Modeled MCP-backed OpenClaw adapter (scaffold hardening only).
 
-This module implements a concrete OpenClawAdapter that invokes OpenClaw through
+This module implements a concrete ExecutionAdapter that invokes OpenClaw through
 an injected MCP client. It enforces the released-scope envelope contracts from:
 
 - docs/product/prd-openclaw-computer-use-runtime.md
@@ -18,14 +18,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal, Protocol, cast
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawAdapter,
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
-    validate_openclaw_execution_request,
-    validate_openclaw_execution_result,
+from ez_ax.adapters.execution.client import (
+    ExecutionAdapter,
+    ExecutionRequest,
+    ExecutionResult,
+    validate_execution_request,
+    validate_execution_result,
 )
-from ez_ax.adapters.openclaw.mcp_settings import McpOpenClawAdapterSettings
+from ez_ax.adapters.execution.mcp_settings import McpExecutionAdapterSettings
 from ez_ax.evidence.envelope import parse_released_evidence_ref
 from ez_ax.models.errors import (
     ConfigError,
@@ -239,7 +239,7 @@ def _parse_observations(
 
 
 @dataclass(frozen=True, slots=True)
-class McpOpenClawResponseEnvelope:
+class McpExecutionResponseEnvelope:
     mission_name: str
     status: ReleasedResponseStatus
     evidence_refs: tuple[str, ...]
@@ -249,12 +249,12 @@ class McpOpenClawResponseEnvelope:
     request_id: str | None = None
 
 
-def parse_mcp_openclaw_response_envelope(
+def parse_mcp_execution_response_envelope(
     *,
     payload: object,
     expected_mission_name: str,
     expected_request_id: str,
-) -> McpOpenClawResponseEnvelope:
+) -> McpExecutionResponseEnvelope:
     if not isinstance(payload, dict):
         msg = "MCP OpenClaw tool output must be an object"
         raise ExecutionTransportError(msg)
@@ -298,7 +298,7 @@ def parse_mcp_openclaw_response_envelope(
         msg = "MCP OpenClaw tool output must be JSON-serializable"
         raise ExecutionTransportError(msg) from exc
 
-    return McpOpenClawResponseEnvelope(
+    return McpExecutionResponseEnvelope(
         mission_name=mission_name,
         status=status,
         evidence_refs=evidence_refs,
@@ -314,38 +314,42 @@ def _default_request_id() -> str:
 
 
 @dataclass(frozen=True, slots=True)
-class McpBackedOpenClawAdapter(OpenClawAdapter):
-    """Concrete OpenClawAdapter that invokes OpenClaw via an injected MCP client."""
+class McpBackedExecutionAdapter(ExecutionAdapter):
+    """Concrete ExecutionAdapter that invokes OpenClaw via an injected MCP client."""
 
-    settings: McpOpenClawAdapterSettings
+    settings: McpExecutionAdapterSettings
     mcp_client: McpClient
     run_root: Path | None = None
     approved_scope_ceiling: ReleasedScopeCeiling = "pageReadyObserved"
     request_id_factory: Callable[[], str] = field(default=_default_request_id)
 
     def __post_init__(self) -> None:
-        if not isinstance(self.settings, McpOpenClawAdapterSettings):
-            msg = "McpBackedOpenClawAdapter.settings must be McpOpenClawAdapterSettings"
+        if not isinstance(self.settings, McpExecutionAdapterSettings):
+            msg = (
+                "McpBackedExecutionAdapter.settings must be "
+                "McpExecutionAdapterSettings"
+            )
             raise ConfigError(msg)
         if self.run_root is not None and not isinstance(self.run_root, Path):
             msg = (
-                "McpBackedOpenClawAdapter.run_root must be a pathlib.Path when provided"
+                "McpBackedExecutionAdapter.run_root must be a pathlib.Path "
+                "when provided"
             )
             raise ConfigError(msg)
         if self.approved_scope_ceiling != "pageReadyObserved":
             msg = (
-                "McpBackedOpenClawAdapter.approved_scope_ceiling must equal "
+                "McpBackedExecutionAdapter.approved_scope_ceiling must equal "
                 "pageReadyObserved"
             )
             raise FlowError(msg)
 
-    def with_run_root(self, *, run_root: Path) -> McpBackedOpenClawAdapter:
+    def with_run_root(self, *, run_root: Path) -> McpBackedExecutionAdapter:
         """Return a copy of this adapter bound to a released-scope run root."""
 
         if not isinstance(run_root, Path):
-            msg = "McpBackedOpenClawAdapter.with_run_root expects a pathlib.Path"
+            msg = "McpBackedExecutionAdapter.with_run_root expects a pathlib.Path"
             raise ConfigError(msg)
-        return McpBackedOpenClawAdapter(
+        return McpBackedExecutionAdapter(
             settings=self.settings,
             mcp_client=self.mcp_client,
             run_root=run_root,
@@ -354,14 +358,14 @@ class McpBackedOpenClawAdapter(OpenClawAdapter):
         )
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Execute OpenClaw through MCP with released-scope envelope validation."""
 
         try:
-            validate_openclaw_execution_request(request)
+            validate_execution_request(request)
         except (TypeError, ValueError) as exc:
-            msg = f"Invalid OpenClawExecutionRequest at MCP boundary: {exc}"
+            msg = f"Invalid ExecutionRequest at MCP boundary: {exc}"
             raise ValidationError(msg) from exc
 
         ceiling = effective_scope_ceiling(self.approved_scope_ceiling)
@@ -425,18 +429,18 @@ class McpBackedOpenClawAdapter(OpenClawAdapter):
             msg = "MCP OpenClaw invocation did not return a tool output"
             raise ExecutionTransportError(msg)
 
-        envelope = parse_mcp_openclaw_response_envelope(
+        envelope = parse_mcp_execution_response_envelope(
             payload=tool_output,
             expected_mission_name=request.mission_name,
             expected_request_id=request_id,
         )
-        result = OpenClawExecutionResult(
+        result = ExecutionResult(
             mission_name=envelope.mission_name,
             evidence_refs=envelope.evidence_refs,
         )
         try:
-            validate_openclaw_execution_result(result)
+            validate_execution_result(result)
         except (TypeError, ValueError) as exc:
-            msg = f"Invalid OpenClawExecutionResult at MCP boundary: {exc}"
+            msg = f"Invalid ExecutionResult at MCP boundary: {exc}"
             raise ValidationError(msg) from exc
         return result

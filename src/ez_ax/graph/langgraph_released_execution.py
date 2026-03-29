@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, TypedDict, cast
 
-from ez_ax.adapters.openclaw.client import OpenClawAdapter
+from ez_ax.adapters.execution.client import ExecutionAdapter
 from ez_ax.graph.released_call_site import (
     ReleasedRunContext,
     execute_attach_session_node,
@@ -45,24 +45,24 @@ class _ReleasedGraphState(TypedDict):
 
 
 def _bind_adapter_run_root(
-    *, adapter: OpenClawAdapter, run_root: Path
-) -> OpenClawAdapter:
+    *, adapter: ExecutionAdapter, run_root: Path
+) -> ExecutionAdapter:
     with_run_root: object = getattr(adapter, "with_run_root", None)
     if with_run_root is None:
         return adapter
     if not callable(with_run_root):
-        msg = "OpenClawAdapter.with_run_root must be callable when present"
+        msg = "ExecutionAdapter.with_run_root must be callable when present"
         raise ConfigError(msg)
     try:
         bound = cast(_WithRunRoot, with_run_root)(run_root=run_root)
     except TypeError as exc:
-        msg = "OpenClawAdapter.with_run_root must accept keyword argument 'run_root'"
+        msg = "ExecutionAdapter.with_run_root must accept keyword argument 'run_root'"
         raise ConfigError(msg) from exc
 
     if not callable(getattr(bound, "execute", None)):
-        msg = "OpenClawAdapter.with_run_root must return an OpenClawAdapter"
+        msg = "ExecutionAdapter.with_run_root must return an ExecutionAdapter"
         raise ConfigError(msg)
-    return cast(OpenClawAdapter, bound)
+    return cast(ExecutionAdapter, bound)
 
 
 def _require_released_attach_inputs(
@@ -121,7 +121,7 @@ def _require_released_prepare_inputs(
 
 def build_released_scope_execution_graph(
     *,
-    adapter: OpenClawAdapter,
+    adapter: ExecutionAdapter,
     run: ReleasedRunContext,
     session_ref: str,
     expected_auth_state: str,
@@ -224,7 +224,7 @@ def build_released_scope_execution_graph(
 
 async def run_released_scope_via_langgraph(
     *,
-    adapter: OpenClawAdapter,
+    adapter: ExecutionAdapter,
     session_ref: str,
     expected_auth_state: str,
     target_page_url: str,

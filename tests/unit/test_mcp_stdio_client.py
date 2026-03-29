@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from ez_ax.adapters.openclaw.mcp_stdio_client import open_mcp_stdio_openclaw_adapter
+from ez_ax.adapters.execution.mcp_stdio_client import open_mcp_stdio_execution_adapter
 from ez_ax.config.mcp_stdio import (
     McpStdioConstructorConfig,
     resolve_mcp_stdio_constructor_config,
@@ -127,9 +127,9 @@ async def test_resolve_mcp_stdio_constructor_config_allows_empty_env_values() ->
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_fails_fast_on_missing_inputs() -> None:
+async def test_open_mcp_stdio_execution_adapter_fails_fast_on_missing_inputs() -> None:
     try:
-        async with open_mcp_stdio_openclaw_adapter():
+        async with open_mcp_stdio_execution_adapter():
             raise AssertionError("unexpected")
     except ConfigError as exc:
         assert "Missing required MCP stdio constructor input" in str(exc)
@@ -138,9 +138,9 @@ async def test_open_mcp_stdio_openclaw_adapter_fails_fast_on_missing_inputs() ->
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_requires_explicit_server_name() -> None:
+async def test_open_mcp_stdio_execution_adapter_requires_explicit_server_name() -> None:
     try:
-        async with open_mcp_stdio_openclaw_adapter(
+        async with open_mcp_stdio_execution_adapter(
             command="uv",
             args=["run", "server"],
             env={},
@@ -158,7 +158,7 @@ async def test_open_mcp_stdio_openclaw_adapter_requires_explicit_server_name() -
 async def test_open_mcp_stdio_adapter_import_error_maps_to_transport_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import ez_ax.adapters.openclaw.mcp_stdio_client as mcp_stdio_client_mod
+    import ez_ax.adapters.execution.mcp_stdio_client as mcp_stdio_client_mod
 
     original_import_module = mcp_stdio_client_mod.importlib.import_module
 
@@ -174,7 +174,7 @@ async def test_open_mcp_stdio_adapter_import_error_maps_to_transport_error(
     )
 
     try:
-        async with open_mcp_stdio_openclaw_adapter(
+        async with open_mcp_stdio_execution_adapter(
             command="uv",
             args=["run", "server"],
             env={},
@@ -193,13 +193,13 @@ async def test_open_mcp_stdio_adapter_import_error_maps_to_transport_error(
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_builds_session_and_wraps_tool_calls(
+async def test_open_mcp_stdio_execution_adapter_builds_session_and_wraps_tool_calls(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     stdio = FakeStdioClient()
     install_fake_mcp_sdk(monkeypatch, stdio=stdio, client_session_cls=FakeClientSession)
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         command="uv",
         args=["run", "server", "openclaw", "stdio"],
         env={"X": ""},
@@ -239,7 +239,7 @@ async def test_open_mcp_stdio_openclaw_adapter_builds_session_and_wraps_tool_cal
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_uses_root_stdio_server_parameters(
+async def test_open_mcp_stdio_execution_adapter_uses_root_stdio_server_parameters(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     stdio_client = FakeStdioClient()
@@ -260,7 +260,7 @@ async def test_open_mcp_stdio_openclaw_adapter_uses_root_stdio_server_parameters
     monkeypatch.setitem(sys.modules, "mcp.client.stdio", stdio_mod)
     monkeypatch.setitem(sys.modules, "mcp.client.session", session_mod)
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         command="uv",
         args=["run", "server", "openclaw", "stdio"],
         env={"X": ""},
@@ -281,7 +281,7 @@ async def test_open_mcp_stdio_openclaw_adapter_uses_root_stdio_server_parameters
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_supports_positional_server_params_ctor(
+async def test_open_mcp_stdio_execution_adapter_supports_positional_server_params_ctor(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class PositionalStdioServerParameters:
@@ -306,7 +306,7 @@ async def test_open_mcp_stdio_openclaw_adapter_supports_positional_server_params
     monkeypatch.setitem(sys.modules, "mcp.client.stdio", stdio_mod)
     monkeypatch.setitem(sys.modules, "mcp.client.session", session_mod)
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         command="uv",
         args=["run", "server", "openclaw", "stdio"],
         env={"X": ""},
@@ -328,7 +328,7 @@ async def test_open_mcp_stdio_openclaw_adapter_supports_positional_server_params
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_supports_positional_call_tool_signature(
+async def test_open_mcp_stdio_execution_adapter_supports_positional_call_tool_signature(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     stdio = FakeStdioClient()
@@ -336,7 +336,7 @@ async def test_open_mcp_stdio_openclaw_adapter_supports_positional_call_tool_sig
         monkeypatch, stdio=stdio, client_session_cls=FakeClientSessionPositional
     )
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         command="uv",
         args=["run", "server", "openclaw", "stdio"],
         env={},
@@ -358,7 +358,7 @@ async def test_open_mcp_stdio_openclaw_adapter_supports_positional_call_tool_sig
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_passes_through_unstructured_tool_result(
+async def test_open_mcp_stdio_execution_adapter_passes_through_unstructured_tool_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     stdio = FakeStdioClient()
@@ -368,7 +368,7 @@ async def test_open_mcp_stdio_openclaw_adapter_passes_through_unstructured_tool_
         client_session_cls=FakeClientSessionNoStructuredAttr,
     )
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         command="uv",
         args=["run", "server", "openclaw", "stdio"],
         env={},
@@ -387,12 +387,12 @@ async def test_open_mcp_stdio_openclaw_adapter_passes_through_unstructured_tool_
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_maps_tool_timeout_to_transport_error(
+async def test_open_mcp_stdio_execution_adapter_maps_tool_timeout_to_transport_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     install_fake_mcp_sdk(monkeypatch, client_session_cls=FakeClientSessionNeverReturns)
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         command="uv",
         args=["run", "server", "openclaw", "stdio"],
         env={},
@@ -416,13 +416,13 @@ async def test_open_mcp_stdio_openclaw_adapter_maps_tool_timeout_to_transport_er
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_maps_initialize_failure(
+async def test_open_mcp_stdio_execution_adapter_maps_initialize_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     install_fake_mcp_sdk(monkeypatch, client_session_cls=FakeClientSessionInitFails)
 
     try:
-        async with open_mcp_stdio_openclaw_adapter(
+        async with open_mcp_stdio_execution_adapter(
             command="uv",
             args=["run", "server", "openclaw", "stdio"],
             env={},
@@ -441,10 +441,10 @@ async def test_open_mcp_stdio_openclaw_adapter_maps_initialize_failure(
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_maps_missing_stdio_module(
+async def test_open_mcp_stdio_execution_adapter_maps_missing_stdio_module(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import ez_ax.adapters.openclaw.mcp_stdio_client as mcp_stdio_client_mod
+    import ez_ax.adapters.execution.mcp_stdio_client as mcp_stdio_client_mod
 
     original_import_module = mcp_stdio_client_mod.importlib.import_module
 
@@ -462,7 +462,7 @@ async def test_open_mcp_stdio_openclaw_adapter_maps_missing_stdio_module(
     )
 
     try:
-        async with open_mcp_stdio_openclaw_adapter(
+        async with open_mcp_stdio_execution_adapter(
             command="uv",
             args=["run", "server", "openclaw", "stdio"],
             env={},
@@ -482,14 +482,14 @@ async def test_open_mcp_stdio_openclaw_adapter_maps_missing_stdio_module(
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_maps_stdio_client_failure(
+async def test_open_mcp_stdio_execution_adapter_maps_stdio_client_failure(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     stdio = FakeStdioClientRaises()
     install_fake_mcp_sdk(monkeypatch, stdio=stdio, client_session_cls=FakeClientSession)
 
     try:
-        async with open_mcp_stdio_openclaw_adapter(
+        async with open_mcp_stdio_execution_adapter(
             command="uv",
             args=["run", "server", "openclaw", "stdio"],
             env={},
@@ -509,7 +509,7 @@ async def test_open_mcp_stdio_openclaw_adapter_maps_stdio_client_failure(
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_rejects_missing_structured_content(
+async def test_open_mcp_stdio_execution_adapter_rejects_missing_structured_content(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class FakeClientSessionMissingStructured(FakeClientSession):
@@ -525,7 +525,7 @@ async def test_open_mcp_stdio_openclaw_adapter_rejects_missing_structured_conten
         client_session_cls=FakeClientSessionMissingStructured,
     )
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         command="uv",
         args=["run", "server", "openclaw", "stdio"],
         env={"X": "Y"},
@@ -585,7 +585,7 @@ async def test_open_mcp_stdio_adapter_missing_sdk_symbols_maps_to_transport_erro
     _install_broken_mcp_sdk(monkeypatch, missing=missing)
 
     try:
-        async with open_mcp_stdio_openclaw_adapter(
+        async with open_mcp_stdio_execution_adapter(
             command="uv",
             args=["run", "server", "openclaw", "stdio"],
             env={},
@@ -606,7 +606,7 @@ async def test_open_mcp_stdio_adapter_missing_sdk_symbols_maps_to_transport_erro
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_uses_root_client_session(
+async def test_open_mcp_stdio_execution_adapter_uses_root_client_session(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     stdio_client = FakeStdioClient()
@@ -624,7 +624,7 @@ async def test_open_mcp_stdio_openclaw_adapter_uses_root_client_session(
     monkeypatch.setitem(sys.modules, "mcp.client.stdio", stdio_mod)
     monkeypatch.delitem(sys.modules, "mcp.client.session", raising=False)
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         command="uv",
         args=["run", "server", "openclaw", "stdio"],
         env={},
@@ -643,7 +643,7 @@ async def test_open_mcp_stdio_openclaw_adapter_uses_root_client_session(
 
 
 @pytest.mark.asyncio
-async def test_open_mcp_stdio_openclaw_adapter_maps_server_params_error(
+async def test_open_mcp_stdio_execution_adapter_maps_server_params_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class RaisingStdioServerParameters:
@@ -671,7 +671,7 @@ async def test_open_mcp_stdio_openclaw_adapter_maps_server_params_error(
     monkeypatch.setitem(sys.modules, "mcp.client.session", session_mod)
 
     try:
-        async with open_mcp_stdio_openclaw_adapter(
+        async with open_mcp_stdio_execution_adapter(
             command="uv",
             args=["run", "server", "openclaw", "stdio"],
             env={},

@@ -16,9 +16,9 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.released_entrypoint import (
     ReleasedEntrypointResult,
@@ -30,8 +30,8 @@ class VerifiableRunAdapter:
     """Adapter that provides complete evidence for all missions."""
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Execute mission with complete evidence refs."""
         evidence_map: dict[str, tuple[str, ...]] = {
             "attach_session": (
@@ -55,7 +55,7 @@ class VerifiableRunAdapter:
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
             raise AssertionError(f"Unexpected mission: {request.mission_name}")
-        return OpenClawExecutionResult(
+        return ExecutionResult(
             mission_name=request.mission_name, evidence_refs=refs
         )
 

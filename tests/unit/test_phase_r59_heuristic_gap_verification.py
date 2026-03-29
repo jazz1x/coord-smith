@@ -257,7 +257,7 @@ class TestPhaseR59HeuristicGapVerification:
             "test_released_mission_evidence_specs.py": (
                 "mission evidence specifications"
             ),
-            "test_openclaw_adapter_contract.py": (
+            "test_execution_adapter_contract.py": (
                 "vision/coordinate fallback enforcement"
             ),
         }
@@ -450,13 +450,13 @@ class TestPhaseR59HeuristicGapVerification:
             "test_ez_ax_must_not_become_browser_facing.py": (
                 "browser-facing boundary"
             ),
-            "test_openclaw_owns_browser_facing_execution.py": (
+            "test_browser_facing_execution_ownership.py": (
                 "OpenClaw authority"
             ),
             "test_ez_ax_owns_validation_stopping_reasoning.py": (
                 "ez-ax authority"
             ),
-            "test_openclaw_architecture_abstraction.py": (
+            "test_execution_architecture_abstraction.py": (
                 "architecture abstraction"
             ),
         }

@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from ez_ax.adapters.openclaw.client import OpenClawAdapter
+from ez_ax.adapters.execution.client import ExecutionAdapter
 from ez_ax.config.released_inputs import (
     ReleasedScopeInputs,
     resolve_released_scope_inputs,
@@ -30,7 +30,7 @@ def resolve_inputs_for_released_scope(
 
 async def run_released_scope_from_argv_env(
     *,
-    adapter: OpenClawAdapter,
+    adapter: ExecutionAdapter,
     argv: Sequence[str] | None = None,
     env: Mapping[str, str] | None = None,
     base_dir: Path = Path("."),

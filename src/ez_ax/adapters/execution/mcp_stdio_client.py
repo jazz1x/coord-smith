@@ -17,8 +17,14 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Any
 
-from ez_ax.adapters.openclaw.mcp_adapter import McpBackedOpenClawAdapter, McpClient
-from ez_ax.adapters.openclaw.mcp_settings import McpOpenClawAdapterSettings, RetryPolicy
+from ez_ax.adapters.execution.mcp_adapter import (
+    McpBackedExecutionAdapter,
+    McpClient,
+)
+from ez_ax.adapters.execution.mcp_settings import (
+    McpExecutionAdapterSettings,
+    RetryPolicy,
+)
 from ez_ax.config.mcp_stdio import (
     McpStdioConstructorConfig,
     require_normalized_str,
@@ -128,7 +134,7 @@ class _McpStdioSessionClient(McpClient):
 
 
 @asynccontextmanager
-async def open_mcp_stdio_openclaw_adapter(
+async def open_mcp_stdio_execution_adapter(
     *,
     command: str | None = None,
     args: Sequence[str] | None = None,
@@ -139,7 +145,7 @@ async def open_mcp_stdio_openclaw_adapter(
     config: McpStdioConstructorConfig | None = None,
     mcp_server_name: str | None = None,
     session_label: str | None = None,
-) -> AsyncIterator[McpBackedOpenClawAdapter]:
+) -> AsyncIterator[McpBackedExecutionAdapter]:
     """Acquire an stdio-backed MCP session and yield an MCP-backed OpenClaw adapter."""
 
     resolved = resolve_mcp_stdio_constructor_config(
@@ -180,7 +186,7 @@ async def open_mcp_stdio_openclaw_adapter(
     normalized_server_name = require_normalized_str(
         label="mcp_server_name", value=mcp_server_name
     )
-    settings = McpOpenClawAdapterSettings(
+    settings = McpExecutionAdapterSettings(
         mcp_server_name=normalized_server_name,
         tool_name=resolved.tool_name,
         default_timeout_seconds=resolved.timeout_seconds,
@@ -196,7 +202,9 @@ async def open_mcp_stdio_openclaw_adapter(
                     session=session,
                     expected_server_name=normalized_server_name,
                 )
-                yield McpBackedOpenClawAdapter(settings=settings, mcp_client=mcp_client)
+                yield McpBackedExecutionAdapter(
+                    settings=settings, mcp_client=mcp_client
+                )
     except ExecutionTransportError:
         raise
     except Exception as exc:  # noqa: BLE001

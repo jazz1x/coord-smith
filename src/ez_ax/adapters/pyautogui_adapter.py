@@ -1,4 +1,4 @@
-"""PyAutoGUI OS-level coordinate-click adapter implementing OpenClawAdapter."""
+"""PyAutoGUI OS-level coordinate-click adapter implementing ExecutionAdapter."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pyautogui
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 
 # Fallback evidence ref sets per mission (screenshot path; no DOM access at OS level).
@@ -41,7 +41,7 @@ _GENERIC_ACTION_LOG_REF = "evidence://action-log/pyautogui-executed"
 
 
 class PyAutoGUIAdapter:
-    """OS-level coordinate-click adapter implementing OpenClawAdapter protocol.
+    """OS-level coordinate-click adapter implementing ExecutionAdapter protocol.
 
     Uses pyautogui.click() and pyautogui.screenshot() exclusively.
     Contains no LLM inference; all navigation is coordinate-driven.
@@ -95,8 +95,8 @@ class PyAutoGUIAdapter:
         return mission_refs
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Execute a mission using OS-level coordinate click and screenshot."""
         mission = request.mission_name
         payload = request.payload
@@ -107,7 +107,7 @@ class PyAutoGUIAdapter:
             pyautogui.click(int(x), int(y))
 
         evidence_refs = self._gather_evidence(mission)
-        return OpenClawExecutionResult(
+        return ExecutionResult(
             mission_name=mission,
             evidence_refs=evidence_refs,
         )

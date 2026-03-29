@@ -22,9 +22,9 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
 
@@ -33,11 +33,11 @@ class ParameterTrackingAdapter:
     """Adapter that tracks parameters passed to each mission."""
 
     def __init__(self) -> None:
-        self.requests: list[OpenClawExecutionRequest] = []
+        self.requests: list[ExecutionRequest] = []
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Track the request and return appropriate evidence."""
         self.requests.append(request)
 
@@ -62,7 +62,7 @@ class ParameterTrackingAdapter:
         }
 
         refs = evidence_map.get(request.mission_name, ())
-        return OpenClawExecutionResult(
+        return ExecutionResult(
             mission_name=request.mission_name,
             evidence_refs=refs,
         )

@@ -7,20 +7,20 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
 
 
-class FakeOpenClawAdapter:
+class FakeExecutionAdapter:
     def __init__(self) -> None:
-        self.requests: list[OpenClawExecutionRequest] = []
+        self.requests: list[ExecutionRequest] = []
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         self.requests.append(request)
         evidence_map: dict[str, tuple[str, ...]] = {
             "attach_session": (
@@ -44,7 +44,7 @@ class FakeOpenClawAdapter:
         refs = evidence_map.get(request.mission_name)
         if refs is None:
             raise AssertionError(f"Unexpected mission: {request.mission_name}")
-        return OpenClawExecutionResult(
+        return ExecutionResult(
             mission_name=request.mission_name, evidence_refs=refs
         )
 
@@ -53,7 +53,7 @@ class FakeOpenClawAdapter:
 async def test_full_released_scope_graph_runs_all_four_missions(
     tmp_path: Path,
 ) -> None:
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     await run_released_scope_via_langgraph(
         adapter=adapter,
@@ -77,7 +77,7 @@ async def test_full_released_scope_graph_runs_all_four_missions(
 async def test_full_released_scope_graph_stops_at_page_ready_observed(
     tmp_path: Path,
 ) -> None:
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     result = await run_released_scope_via_langgraph(
         adapter=adapter,
@@ -98,7 +98,7 @@ async def test_full_released_scope_graph_stops_at_page_ready_observed(
 async def test_full_released_scope_graph_creates_action_log_artifact(
     tmp_path: Path,
 ) -> None:
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     result = await run_released_scope_via_langgraph(
         adapter=adapter,
@@ -123,7 +123,7 @@ async def test_full_released_scope_graph_creates_action_log_artifact(
 async def test_full_released_scope_graph_run_context_has_correct_ceiling(
     tmp_path: Path,
 ) -> None:
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     result = await run_released_scope_via_langgraph(
         adapter=adapter,

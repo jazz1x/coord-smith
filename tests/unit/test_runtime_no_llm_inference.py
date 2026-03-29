@@ -7,19 +7,19 @@ from unittest.mock import patch
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
 
 
-class FakeOpenClawAdapter:
+class FakeExecutionAdapter:
     """Stub adapter for testing released scope without external dependencies."""
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Return predetermined evidence for each mission."""
         evidence_map: dict[str, tuple[str, ...]] = {
             "attach_session": (
@@ -43,7 +43,7 @@ class FakeOpenClawAdapter:
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
             raise AssertionError(f"Unexpected mission: {request.mission_name}")
-        return OpenClawExecutionResult(mission_name=request.mission_name, evidence_refs=refs)
+        return ExecutionResult(mission_name=request.mission_name, evidence_refs=refs)
 
 
 @pytest.mark.asyncio
@@ -57,7 +57,7 @@ async def test_released_scope_released_missions_are_deterministic(
      All graph traversal, evidence validation, and stopping decisions are
      deterministic Python; no model calls are made during a run.'
     """
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     result1 = await run_released_scope_via_langgraph(
         adapter=adapter,
@@ -121,7 +121,7 @@ async def test_released_scope_execution_makes_no_llm_client_calls(
      traversal, evidence validation, and stopping decisions are deterministic Python;
      no model calls are made during a run.'
     """
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     # Patch anthropic.Anthropic to detect any instantiation attempts
     with patch("anthropic.Anthropic") as mock_anthropic:

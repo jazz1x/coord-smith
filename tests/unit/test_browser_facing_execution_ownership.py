@@ -12,23 +12,23 @@ from __future__ import annotations
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
 from ez_ax.missions.names import RELEASED_MISSIONS
 
 
-class TrackingOpenClawAdapter:
+class TrackingExecutionAdapter:
     """Adapter that tracks which browser operations (missions) are delegated to it."""
 
     def __init__(self) -> None:
-        self.requests: list[OpenClawExecutionRequest] = []
+        self.requests: list[ExecutionRequest] = []
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Track the request and return valid evidence."""
         self.requests.append(request)
         evidence_map: dict[str, tuple[str, ...]] = {
@@ -53,11 +53,11 @@ class TrackingOpenClawAdapter:
         refs = evidence_map.get(request.mission_name)
         if refs is None:
             raise AssertionError(f"Unexpected mission: {request.mission_name}")
-        return OpenClawExecutionResult(mission_name=request.mission_name, evidence_refs=refs)
+        return ExecutionResult(mission_name=request.mission_name, evidence_refs=refs)
 
 
 @pytest.mark.asyncio
-async def test_released_scope_delegates_all_browser_ops_to_openclaw(
+async def test_released_scope_delegates_all_browser_ops_to_execution_adapter(
     tmp_path,
 ) -> None:
     """Verify that released-scope graph ONLY calls OpenClaw for browser operations.
@@ -68,7 +68,7 @@ async def test_released_scope_delegates_all_browser_ops_to_openclaw(
     delegated exclusively to the OpenClaw adapter. No other component should
     perform browser operations.
     """
-    adapter = TrackingOpenClawAdapter()
+    adapter = TrackingExecutionAdapter()
 
     # Run the released-scope graph
     await run_released_scope_via_langgraph(
@@ -89,17 +89,17 @@ async def test_released_scope_delegates_all_browser_ops_to_openclaw(
 
 
 @pytest.mark.asyncio
-async def test_released_scope_creates_only_openclaw_requests(
+async def test_released_scope_creates_only_execution_requests(
     tmp_path,
 ) -> None:
-    """Verify that only OpenClawExecutionRequest objects are created for browser ops.
+    """Verify that only ExecutionRequest objects are created for browser ops.
 
     PRD System Boundary (line 27): 'OpenClaw owns browser-facing execution'
 
-    The released-scope graph should only create OpenClawExecutionRequest instances
+    The released-scope graph should only create ExecutionRequest instances
     for browser-facing operations, not other adapter types or direct browser calls.
     """
-    adapter = TrackingOpenClawAdapter()
+    adapter = TrackingExecutionAdapter()
 
     # Run released-scope
     await run_released_scope_via_langgraph(
@@ -111,12 +111,12 @@ async def test_released_scope_creates_only_openclaw_requests(
         base_dir=tmp_path,
     )
 
-    # Verify all requests were OpenClawExecutionRequest instances
+    # Verify all requests were ExecutionRequest instances
     request_types = [type(req).__name__ for req in adapter.requests]
     assert all(
-        req_type == "OpenClawExecutionRequest" for req_type in request_types
+        req_type == "ExecutionRequest" for req_type in request_types
     ), (
-        f"Expected only OpenClawExecutionRequest instances, but found: "
+        f"Expected only ExecutionRequest instances, but found: "
         f"{set(request_types)}"
     )
 
@@ -135,7 +135,7 @@ async def test_released_scope_never_calls_other_adapters(tmp_path) -> None:
     """
     from unittest.mock import patch
 
-    adapter = TrackingOpenClawAdapter()
+    adapter = TrackingExecutionAdapter()
 
     # Patch any potential non-OpenClaw adapters to ensure they're never called
     with patch("pyautogui.click") as mock_pyautogui_click:

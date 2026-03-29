@@ -4,19 +4,19 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.mcp_stdio_client import open_mcp_stdio_openclaw_adapter
+from ez_ax.adapters.execution.mcp_stdio_client import open_mcp_stdio_execution_adapter
 from ez_ax.graph.released_entrypoint import run_released_scope
 from tests.fixtures.fake_mcp_sdk import install_fake_mcp_sdk
 
 
 @pytest.mark.asyncio
-async def test_stdio_mcp_openclaw_adapter_runs_released_scope_and_stops_at_ceiling(
+async def test_stdio_mcp_execution_adapter_runs_released_scope_and_stops_at_ceiling(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     install_fake_mcp_sdk(monkeypatch)
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         command="uv",
         args=["run", "openclaw", "stdio"],
         env={},

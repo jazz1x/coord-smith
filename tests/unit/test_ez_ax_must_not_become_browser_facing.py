@@ -66,21 +66,21 @@ def test_ez_ax_cannot_perform_browser_operations_without_adapter() -> None:
     mediated by the adapter protocol. There should be no code path in ez-ax
     that performs browser operations independently.
 
-    This test verifies that the OpenClawAdapter is the mandatory boundary.
+    This test verifies that the ExecutionAdapter is the mandatory boundary.
     """
-    from ez_ax.adapters.openclaw.client import OpenClawAdapter
+    from ez_ax.adapters.execution.client import ExecutionAdapter
 
     # The only way to perform browser operations is through this adapter
-    assert hasattr(OpenClawAdapter, "execute"), (
-        "All browser operations must go through OpenClawAdapter.execute()"
+    assert hasattr(ExecutionAdapter, "execute"), (
+        "All browser operations must go through ExecutionAdapter.execute()"
     )
 
-    # Verify the adapter signature requires an OpenClawExecutionRequest
-    sig = inspect.signature(OpenClawAdapter.execute)
+    # Verify the adapter signature requires an ExecutionRequest
+    sig = inspect.signature(ExecutionAdapter.execute)
     params = list(sig.parameters.keys())
 
     assert "request" in params or "self" in params, (
-        "OpenClawAdapter.execute must accept execution requests "
+        "ExecutionAdapter.execute must accept execution requests "
         "(PRD clause: 'ez-ax must not become browser-facing')"
     )
 
@@ -109,9 +109,9 @@ def test_released_scope_graph_cannot_perform_browser_operations_directly() -> No
 
         class MinimalAdapter:
             async def execute(self, request):
-                from ez_ax.adapters.openclaw.client import OpenClawExecutionResult
+                from ez_ax.adapters.execution.client import ExecutionResult
 
-                return OpenClawExecutionResult(
+                return ExecutionResult(
                     mission_name=request.mission_name,
                     evidence_refs=("evidence://dom/stub",),
                 )
@@ -157,11 +157,11 @@ def test_ez_ax_design_prevents_browser_facing_expansion() -> None:
 
     This test verifies the architectural constraint is in place.
     """
-    from ez_ax.adapters.openclaw.client import OpenClawAdapter
+    from ez_ax.adapters.execution.client import ExecutionAdapter
 
-    # OpenClawAdapter is a protocol/interface that must be implemented
+    # ExecutionAdapter is a protocol/interface that must be implemented
     # Any browser operation attempt must go through this boundary
-    assert hasattr(OpenClawAdapter, "execute"), (
+    assert hasattr(ExecutionAdapter, "execute"), (
         "Adapter protocol exists to enforce separation"
     )
 

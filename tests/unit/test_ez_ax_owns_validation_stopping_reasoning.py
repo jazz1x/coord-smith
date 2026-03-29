@@ -159,7 +159,7 @@ def test_ez_ax_owns_reasoning_logic() -> None:
     )
 
 
-def test_openclaw_does_not_own_validation_stopping_reasoning() -> None:
+def test_execution_adapter_does_not_own_validation_stopping_reasoning() -> None:
     """Verify that OpenClaw is NOT responsible for validation, stopping, reasoning.
 
     PRD System Boundary (line 27-28):
@@ -174,28 +174,28 @@ def test_openclaw_does_not_own_validation_stopping_reasoning() -> None:
     - Stopping/ceiling enforcement
     - Mission reasoning or transition evaluation
     """
-    from ez_ax.adapters.openclaw.client import OpenClawAdapter, OpenClawExecutionRequest
+    from ez_ax.adapters.execution.client import ExecutionAdapter, ExecutionRequest
 
-    # Verify OpenClawAdapter protocol is execution-only
+    # Verify ExecutionAdapter protocol is execution-only
     # It should only have the execute() method, not validation/stopping/reasoning
     protocol_methods = {
         name
-        for name in dir(OpenClawAdapter)
-        if not name.startswith("_") and callable(getattr(OpenClawAdapter, name))
+        for name in dir(ExecutionAdapter)
+        if not name.startswith("_") and callable(getattr(ExecutionAdapter, name))
     }
 
     # Verify execute() is the primary method
     assert "execute" in protocol_methods, (
-        "OpenClawAdapter protocol should have execute() method"
+        "ExecutionAdapter protocol should have execute() method"
     )
 
-    # Verify OpenClawExecutionRequest doesn't contain validation/stopping logic
+    # Verify ExecutionRequest doesn't contain validation/stopping logic
     # (it's just a data structure for execution parameters)
-    request_attrs = set(OpenClawExecutionRequest.__annotations__.keys())
+    request_attrs = set(ExecutionRequest.__annotations__.keys())
 
     # It should contain execution params (mission, request), not validation rules
     assert "mission_name" in request_attrs or "request" in request_attrs, (
-        "OpenClawExecutionRequest contains execution parameters"
+        "ExecutionRequest contains execution parameters"
     )
 
     # It should NOT contain stopping logic or validation rules
@@ -203,4 +203,4 @@ def test_openclaw_does_not_own_validation_stopping_reasoning() -> None:
     found_forbidden = request_attrs & forbidden_attrs
     assert (
         not found_forbidden
-    ), f"OpenClawExecutionRequest must not own stopping logic: {found_forbidden}"
+    ), f"ExecutionRequest must not own stopping logic: {found_forbidden}"

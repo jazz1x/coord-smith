@@ -7,9 +7,9 @@ from typing import cast
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.langgraph_released_execution import (
     _ReleasedGraphState,
@@ -21,16 +21,16 @@ from ez_ax.models.errors import ConfigError, FlowError
 from ez_ax.models.runtime import RuntimeState
 
 
-class FakeOpenClawAdapter:
+class FakeExecutionAdapter:
     def __init__(self) -> None:
-        self.requests: list[OpenClawExecutionRequest] = []
+        self.requests: list[ExecutionRequest] = []
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         self.requests.append(request)
         if request.mission_name == "attach_session":
-            return OpenClawExecutionResult(
+            return ExecutionResult(
                 mission_name="attach_session",
                 evidence_refs=(
                     "evidence://text/session-attached",
@@ -39,7 +39,7 @@ class FakeOpenClawAdapter:
                 ),
             )
         if request.mission_name == "prepare_session":
-            return OpenClawExecutionResult(
+            return ExecutionResult(
                 mission_name="prepare_session",
                 evidence_refs=(
                     "evidence://text/session-viable",
@@ -47,7 +47,7 @@ class FakeOpenClawAdapter:
                 ),
             )
         if request.mission_name == "benchmark_validation":
-            return OpenClawExecutionResult(
+            return ExecutionResult(
                 mission_name="benchmark_validation",
                 evidence_refs=(
                     "evidence://action-log/enter-target-page",
@@ -55,7 +55,7 @@ class FakeOpenClawAdapter:
                 ),
             )
         if request.mission_name == "page_ready_observation":
-            return OpenClawExecutionResult(
+            return ExecutionResult(
                 mission_name="page_ready_observation",
                 evidence_refs=(
                     "evidence://dom/page-shell-ready",
@@ -65,7 +65,7 @@ class FakeOpenClawAdapter:
         raise AssertionError(f"Unexpected mission: {request.mission_name}")
 
 
-class FakeOpenClawAdapterWithRunRoot(FakeOpenClawAdapter):
+class FakeExecutionAdapterWithRunRoot(FakeExecutionAdapter):
     def __init__(self) -> None:
         super().__init__()
         self.bound_run_root: Path | None = None
@@ -74,16 +74,16 @@ class FakeOpenClawAdapterWithRunRoot(FakeOpenClawAdapter):
         self,
         *,
         run_root: Path,
-    ) -> FakeOpenClawAdapterWithRunRoot:
+    ) -> FakeExecutionAdapterWithRunRoot:
         self.bound_run_root = run_root
         return self
 
 
-class FakeOpenClawAdapterWithNonCallableRunRoot(FakeOpenClawAdapter):
+class FakeExecutionAdapterWithNonCallableRunRoot(FakeExecutionAdapter):
     with_run_root = "not-callable"
 
 
-class FakeOpenClawAdapterWithBadRunRootReturn(FakeOpenClawAdapter):
+class FakeExecutionAdapterWithBadRunRootReturn(FakeExecutionAdapter):
     def with_run_root(
         self,
         *,
@@ -97,7 +97,7 @@ async def test_run_released_scope_via_langgraph_sequences_to_ceiling(
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     result = await run_released_scope_via_langgraph(
         adapter=adapter,
@@ -128,7 +128,7 @@ async def test_run_released_scope_via_langgraph_sequences_to_ceiling(
 @pytest.mark.asyncio
 async def test_run_released_scope_via_langgraph_rejects_non_path_base_dir() -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     try:
         await run_released_scope_via_langgraph(
@@ -150,7 +150,7 @@ async def test_run_released_scope_via_langgraph_binds_run_root_when_adapter_supp
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapterWithRunRoot()
+    adapter = FakeExecutionAdapterWithRunRoot()
 
     result = await run_released_scope_via_langgraph(
         adapter=adapter,
@@ -170,7 +170,7 @@ async def test_run_released_scope_via_langgraph_rejects_non_callable_with_run_ro
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapterWithNonCallableRunRoot()
+    adapter = FakeExecutionAdapterWithNonCallableRunRoot()
 
     try:
         await run_released_scope_via_langgraph(
@@ -194,7 +194,7 @@ async def test_run_released_scope_rejects_with_run_root_return_without_execute(
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapterWithBadRunRootReturn()
+    adapter = FakeExecutionAdapterWithBadRunRootReturn()
 
     try:
         await run_released_scope_via_langgraph(
@@ -220,7 +220,7 @@ async def test_released_scope_graph_rejects_missing_runtime_state(
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
     run = ReleasedRunContext(
         run_root=tmp_path,
         approved_scope_ceiling="pageReadyObserved",
@@ -249,7 +249,7 @@ def test_build_released_scope_graph_rejects_whitespace_session_ref(
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
     run = ReleasedRunContext(
         run_root=tmp_path,
         approved_scope_ceiling="pageReadyObserved",
@@ -272,7 +272,7 @@ def test_build_released_scope_graph_rejects_non_context_run(
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     with pytest.raises(ConfigError) as excinfo:
         build_released_scope_execution_graph(
@@ -319,7 +319,7 @@ async def test_run_released_scope_via_langgraph_rejects_missing_runtime_output(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     class FakeCompiled:
         async def ainvoke(
@@ -354,7 +354,7 @@ async def test_run_released_scope_via_langgraph_rejects_whitespace_session_ref(
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     try:
         await run_released_scope_via_langgraph(
@@ -380,7 +380,7 @@ async def test_run_released_scope_rejects_whitespace_target_page_url_before_arti
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     try:
         await run_released_scope_via_langgraph(
@@ -406,7 +406,7 @@ async def test_run_released_scope_rejects_whitespace_site_identity_before_artifa
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     try:
         await run_released_scope_via_langgraph(
@@ -446,7 +446,7 @@ async def test_run_released_scope_rejects_whitespace_wrapped_inputs_before_artif
     expected_label: str,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     session_ref = kwargs.get("session_ref", "operator-prepared-session")
     expected_auth_state = kwargs.get("expected_auth_state", "authenticated")

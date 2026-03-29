@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from ez_ax.adapters.openclaw.client import OpenClawExecutionRequest
+from ez_ax.adapters.execution.client import ExecutionRequest
 from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
 
 
@@ -23,7 +23,7 @@ async def test_execute_prepare_session_returns_fallback_evidence_refs(
         patch("pyautogui.screenshot", return_value=mock_screenshot),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        request = OpenClawExecutionRequest(
+        request = ExecutionRequest(
             mission_name="prepare_session",
             payload={
                 "target_page_url": "https://example.com",
@@ -45,7 +45,7 @@ async def test_execute_clicks_when_coordinates_given(tmp_path: Path) -> None:
         patch("pyautogui.screenshot", return_value=mock_screenshot),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        request = OpenClawExecutionRequest(
+        request = ExecutionRequest(
             mission_name="prepare_session",
             payload={
                 "target_page_url": "https://example.com",
@@ -66,7 +66,7 @@ async def test_execute_skips_click_without_coordinates(tmp_path: Path) -> None:
         patch("pyautogui.screenshot", return_value=mock_screenshot),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        request = OpenClawExecutionRequest(
+        request = ExecutionRequest(
             mission_name="prepare_session",
             payload={
                 "target_page_url": "https://example.com",
@@ -85,7 +85,7 @@ async def test_execute_writes_action_log_artifact(tmp_path: Path) -> None:
         patch("pyautogui.screenshot", return_value=mock_screenshot),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        request = OpenClawExecutionRequest(
+        request = ExecutionRequest(
             mission_name="prepare_session",
             payload={
                 "target_page_url": "https://example.com",
@@ -111,7 +111,7 @@ async def test_execute_page_ready_observation_writes_release_ceiling_stop(
         patch("pyautogui.screenshot", return_value=mock_screenshot),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        request = OpenClawExecutionRequest(
+        request = ExecutionRequest(
             mission_name="page_ready_observation",
             payload={},
         )
@@ -165,7 +165,7 @@ async def test_pyautogui_adapter_uses_only_click_and_screenshot(tmp_path: Path) 
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
 
         # Test with coordinates to trigger click
-        request_with_coords = OpenClawExecutionRequest(
+        request_with_coords = ExecutionRequest(
             mission_name="prepare_session",
             payload={
                 "target_page_url": "https://example.com",
@@ -177,7 +177,7 @@ async def test_pyautogui_adapter_uses_only_click_and_screenshot(tmp_path: Path) 
         await adapter.execute(request_with_coords)
 
         # Test without coordinates
-        request_without_coords = OpenClawExecutionRequest(
+        request_without_coords = ExecutionRequest(
             mission_name="page_ready_observation",
             payload={},
         )

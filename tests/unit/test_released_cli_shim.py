@@ -5,23 +5,23 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.released_cli_shim import run_released_scope_from_argv_env
 
 
-class FakeOpenClawAdapter:
+class FakeExecutionAdapter:
     def __init__(self) -> None:
-        self.requests: list[OpenClawExecutionRequest] = []
+        self.requests: list[ExecutionRequest] = []
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         self.requests.append(request)
         if request.mission_name == "attach_session":
-            return OpenClawExecutionResult(
+            return ExecutionResult(
                 mission_name="attach_session",
                 evidence_refs=(
                     "evidence://text/session-attached",
@@ -30,7 +30,7 @@ class FakeOpenClawAdapter:
                 ),
             )
         if request.mission_name == "prepare_session":
-            return OpenClawExecutionResult(
+            return ExecutionResult(
                 mission_name="prepare_session",
                 evidence_refs=(
                     "evidence://text/session-viable",
@@ -38,7 +38,7 @@ class FakeOpenClawAdapter:
                 ),
             )
         if request.mission_name == "benchmark_validation":
-            return OpenClawExecutionResult(
+            return ExecutionResult(
                 mission_name="benchmark_validation",
                 evidence_refs=(
                     "evidence://action-log/enter-target-page",
@@ -46,7 +46,7 @@ class FakeOpenClawAdapter:
                 ),
             )
         if request.mission_name == "page_ready_observation":
-            return OpenClawExecutionResult(
+            return ExecutionResult(
                 mission_name="page_ready_observation",
                 evidence_refs=(
                     "evidence://dom/page-shell-ready",
@@ -59,7 +59,7 @@ class FakeOpenClawAdapter:
 @pytest.mark.asyncio
 async def test_released_cli_shim_prefers_cli_args_over_env(tmp_path: Path) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     argv = [
         "--session-ref",
@@ -105,7 +105,7 @@ async def test_released_cli_shim_rejects_missing_inputs_before_artifacts(
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     try:
         await run_released_scope_from_argv_env(
@@ -128,7 +128,7 @@ async def test_released_cli_shim_rejects_whitespace_wrapped_inputs_before_artifa
     tmp_path: Path,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     argv = [
         "--session-ref",
@@ -209,7 +209,7 @@ async def test_released_cli_shim_rejects_whitespace_wrapped_fields_before_artifa
     expected_label: str,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     try:
         await run_released_scope_from_argv_env(
@@ -244,7 +244,7 @@ async def test_released_cli_shim_rejects_whitespace_wrapped_env_values_before_ar
     expected_label: str,
 ) -> None:
     warnings.filterwarnings("ignore", message="Core Pydantic V1 functionality*")
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     full_env = {
         "EZAX_SESSION_REF": "cli-session",

@@ -9,11 +9,11 @@ from pathlib import Path
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawAdapter,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionAdapter,
+    ExecutionResult,
     action_log_artifact_path,
-    execute_openclaw_within_scope,
+    execute_within_scope,
 )
 from ez_ax.missions.names import ALL_MISSIONS
 from ez_ax.models.errors import ConfigError, FlowError
@@ -95,11 +95,11 @@ def seed_action_log_marker(*, run_root: Path, mission_name: str, key: str) -> Pa
 async def execute_prepare_session_node(
     *,
     state: RuntimeState,
-    adapter: OpenClawAdapter,
+    adapter: ExecutionAdapter,
     run: ReleasedRunContext,
     target_page_url: str,
     site_identity: str,
-) -> OpenClawExecutionResult:
+) -> ExecutionResult:
     """Execute the released prepare_session node with strict ceiling enforcement."""
 
     require_existing_run_root(run_root=run.run_root)
@@ -111,7 +111,7 @@ async def execute_prepare_session_node(
         run_root=run.run_root, mission_name="prepare_session", key="prepare-session"
     )
 
-    result = await execute_openclaw_within_scope(
+    result = await execute_within_scope(
         adapter=adapter,
         mission_name="prepare_session",
         payload={"target_page_url": target_page_url, "site_identity": site_identity},
@@ -125,11 +125,11 @@ async def execute_prepare_session_node(
 async def execute_attach_session_node(
     *,
     state: RuntimeState,
-    adapter: OpenClawAdapter,
+    adapter: ExecutionAdapter,
     run: ReleasedRunContext,
     session_ref: str,
     expected_auth_state: str,
-) -> OpenClawExecutionResult:
+) -> ExecutionResult:
     """Execute the released attach_session node with strict ceiling enforcement."""
 
     require_existing_run_root(run_root=run.run_root)
@@ -140,7 +140,7 @@ async def execute_attach_session_node(
         run_root=run.run_root, mission_name="attach_session", key="attach-session"
     )
 
-    result = await execute_openclaw_within_scope(
+    result = await execute_within_scope(
         adapter=adapter,
         mission_name="attach_session",
         payload={
@@ -157,10 +157,10 @@ async def execute_attach_session_node(
 async def execute_benchmark_validation_node(
     *,
     state: RuntimeState,
-    adapter: OpenClawAdapter,
+    adapter: ExecutionAdapter,
     run: ReleasedRunContext,
     target_page_url: str,
-) -> OpenClawExecutionResult:
+) -> ExecutionResult:
     """Execute benchmark_validation with strict ceiling enforcement."""
 
     require_existing_run_root(run_root=run.run_root)
@@ -173,7 +173,7 @@ async def execute_benchmark_validation_node(
         key="enter-target-page",
     )
 
-    result = await execute_openclaw_within_scope(
+    result = await execute_within_scope(
         adapter=adapter,
         mission_name="benchmark_validation",
         payload={"target_page_url": target_page_url},
@@ -187,9 +187,9 @@ async def execute_benchmark_validation_node(
 async def execute_page_ready_observation_node(
     *,
     state: RuntimeState,
-    adapter: OpenClawAdapter,
+    adapter: ExecutionAdapter,
     run: ReleasedRunContext,
-) -> OpenClawExecutionResult:
+) -> ExecutionResult:
     """Execute the released page_ready_observation node and stop at the ceiling."""
 
     require_existing_run_root(run_root=run.run_root)
@@ -201,7 +201,7 @@ async def execute_page_ready_observation_node(
         key="release-ceiling-stop",
     )
 
-    result = await execute_openclaw_within_scope(
+    result = await execute_within_scope(
         adapter=adapter,
         mission_name="page_ready_observation",
         payload={},

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from ez_ax.adapters.openclaw.client import OpenClawAdapter
+from ez_ax.adapters.execution.client import ExecutionAdapter
 from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
 from ez_ax.graph.released_call_site import ReleasedRunContext
 from ez_ax.models.runtime import RuntimeState
@@ -19,7 +19,7 @@ class ReleasedEntrypointResult:
 
 async def run_released_scope(
     *,
-    adapter: OpenClawAdapter,
+    adapter: ExecutionAdapter,
     session_ref: str,
     expected_auth_state: str,
     target_page_url: str,

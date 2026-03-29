@@ -148,13 +148,13 @@ async def test_evidence_validation_in_adapter_contract() -> None:
     The OpenClaw adapter result validation must enforce typed evidence
     schema for all execution results.
     """
-    from ez_ax.adapters.openclaw.client import (
-        OpenClawExecutionResult,
-        validate_openclaw_execution_result,
+    from ez_ax.adapters.execution.client import (
+        ExecutionResult,
+        validate_execution_result,
     )
 
     # Valid evidence refs should be accepted
-    valid_result = OpenClawExecutionResult(
+    valid_result = ExecutionResult(
         mission_name="attach_session",
         evidence_refs=(
             "evidence://text/session-attached",
@@ -164,16 +164,16 @@ async def test_evidence_validation_in_adapter_contract() -> None:
     )
 
     # Should not raise
-    validate_openclaw_execution_result(valid_result)
+    validate_execution_result(valid_result)
 
     # Invalid evidence refs should be rejected
-    invalid_result = OpenClawExecutionResult(
+    invalid_result = ExecutionResult(
         mission_name="attach_session",
         evidence_refs=("not-a-valid-evidence-ref",),
     )
 
     try:
-        validate_openclaw_execution_result(invalid_result)
+        validate_execution_result(invalid_result)
     except ValueError as exc:
         assert "schema" in str(exc)
     else:

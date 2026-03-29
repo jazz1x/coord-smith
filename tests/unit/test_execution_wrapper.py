@@ -6,13 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
-from ez_ax.adapters.openclaw.execution import (
+from ez_ax.adapters.execution.execution import (
     action_log_artifact_path,
-    execute_openclaw_within_scope,
+    execute_within_scope,
     validate_action_log_artifacts_contain_ref_events,
     validate_action_log_artifacts_have_minimum_schema,
     validate_action_log_evidence_refs_resolvable,
@@ -21,14 +21,14 @@ from ez_ax.adapters.openclaw.execution import (
 from ez_ax.models.errors import ExecutionTransportError, ValidationError
 
 
-class FakeOpenClawAdapter:
-    def __init__(self, *, result: OpenClawExecutionResult) -> None:
+class FakeExecutionAdapter:
+    def __init__(self, *, result: ExecutionResult) -> None:
         self._result = result
-        self.last_request: OpenClawExecutionRequest | None = None
+        self.last_request: ExecutionRequest | None = None
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         self.last_request = request
         return self._result
 
@@ -134,7 +134,7 @@ def test_validate_action_log_artifacts_contain_ref_events_rejects_missing_second
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_resolves_action_log_refs(
+async def test_execute_within_scope_resolves_action_log_refs(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -145,16 +145,16 @@ async def test_execute_openclaw_within_scope_resolves_action_log_refs(
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
-    observed = await execute_openclaw_within_scope(
+    observed = await execute_within_scope(
         adapter=adapter,
         mission_name="prepare_session",
         payload={
@@ -171,7 +171,7 @@ async def test_execute_openclaw_within_scope_resolves_action_log_refs(
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_accepts_benchmark_validation_action_log(
+async def test_execute_within_scope_accepts_benchmark_validation_action_log(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -182,16 +182,16 @@ async def test_execute_openclaw_within_scope_accepts_benchmark_validation_action
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="benchmark_validation",
         evidence_refs=(
             "evidence://dom/target-page-entered",
             "evidence://action-log/enter-target-page",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
-    observed = await execute_openclaw_within_scope(
+    observed = await execute_within_scope(
         adapter=adapter,
         mission_name="benchmark_validation",
         payload={
@@ -206,7 +206,7 @@ async def test_execute_openclaw_within_scope_accepts_benchmark_validation_action
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_accepts_attach_session_action_log(
+async def test_execute_within_scope_accepts_attach_session_action_log(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -217,7 +217,7 @@ async def test_execute_openclaw_within_scope_accepts_attach_session_action_log(
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="attach_session",
         evidence_refs=(
             "evidence://text/session-attached",
@@ -225,9 +225,9 @@ async def test_execute_openclaw_within_scope_accepts_attach_session_action_log(
             "evidence://action-log/attach-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
-    observed = await execute_openclaw_within_scope(
+    observed = await execute_within_scope(
         adapter=adapter,
         mission_name="attach_session",
         payload={
@@ -242,7 +242,7 @@ async def test_execute_openclaw_within_scope_accepts_attach_session_action_log(
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_action_log_mission_mismatch(
+async def test_execute_within_scope_rejects_action_log_mission_mismatch(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -253,17 +253,17 @@ async def test_execute_openclaw_within_scope_rejects_action_log_mission_mismatch
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -281,21 +281,21 @@ async def test_execute_openclaw_within_scope_rejects_action_log_mission_mismatch
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_missing_action_log_artifact(
+async def test_execute_within_scope_rejects_missing_action_log_artifact(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -313,7 +313,7 @@ async def test_execute_openclaw_within_scope_rejects_missing_action_log_artifact
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_action_log_missing_minimum_schema(
+async def test_execute_within_scope_rejects_action_log_missing_minimum_schema(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -324,17 +324,17 @@ async def test_execute_openclaw_within_scope_rejects_action_log_missing_minimum_
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -352,7 +352,7 @@ async def test_execute_openclaw_within_scope_rejects_action_log_missing_minimum_
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_empty_action_log_artifact(
+async def test_execute_within_scope_rejects_empty_action_log_artifact(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -360,17 +360,17 @@ async def test_execute_openclaw_within_scope_rejects_empty_action_log_artifact(
     artifact.parent.mkdir(parents=True, exist_ok=True)
     artifact.write_text("", encoding="utf-8")
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -388,7 +388,7 @@ async def test_execute_openclaw_within_scope_rejects_empty_action_log_artifact(
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_action_log_with_non_iso8601_ts(
+async def test_execute_within_scope_rejects_action_log_with_non_iso8601_ts(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -399,17 +399,17 @@ async def test_execute_openclaw_within_scope_rejects_action_log_with_non_iso8601
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -426,7 +426,7 @@ async def test_execute_openclaw_within_scope_rejects_action_log_with_non_iso8601
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_accepts_action_log_with_zulu_ts(
+async def test_execute_within_scope_accepts_action_log_with_zulu_ts(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -437,16 +437,16 @@ async def test_execute_openclaw_within_scope_accepts_action_log_with_zulu_ts(
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
-    observed = await execute_openclaw_within_scope(
+    observed = await execute_within_scope(
         adapter=adapter,
         mission_name="prepare_session",
         payload={
@@ -461,7 +461,7 @@ async def test_execute_openclaw_within_scope_accepts_action_log_with_zulu_ts(
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_action_log_with_non_kebab_event(
+async def test_execute_within_scope_rejects_action_log_with_non_kebab_event(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -472,17 +472,17 @@ async def test_execute_openclaw_within_scope_rejects_action_log_with_non_kebab_e
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -499,7 +499,7 @@ async def test_execute_openclaw_within_scope_rejects_action_log_with_non_kebab_e
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_action_log_with_unknown_mission_name(  # noqa: E501
+async def test_execute_within_scope_rejects_action_log_with_unknown_mission_name(  # noqa: E501
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -510,17 +510,17 @@ async def test_execute_openclaw_within_scope_rejects_action_log_with_unknown_mis
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -537,7 +537,7 @@ async def test_execute_openclaw_within_scope_rejects_action_log_with_unknown_mis
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_action_log_with_whitespace_wrapped_mission_name(  # noqa: E501
+async def test_execute_within_scope_rejects_action_log_with_whitespace_wrapped_mission_name(  # noqa: E501
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -550,17 +550,17 @@ async def test_execute_openclaw_within_scope_rejects_action_log_with_whitespace_
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -577,7 +577,7 @@ async def test_execute_openclaw_within_scope_rejects_action_log_with_whitespace_
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_action_log_with_whitespace_wrapped_event(  # noqa: E501
+async def test_execute_within_scope_rejects_action_log_with_whitespace_wrapped_event(  # noqa: E501
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -590,17 +590,17 @@ async def test_execute_openclaw_within_scope_rejects_action_log_with_whitespace_
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -617,7 +617,7 @@ async def test_execute_openclaw_within_scope_rejects_action_log_with_whitespace_
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_action_log_without_matching_event(
+async def test_execute_within_scope_rejects_action_log_without_matching_event(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -628,17 +628,17 @@ async def test_execute_openclaw_within_scope_rejects_action_log_without_matching
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -656,7 +656,7 @@ async def test_execute_openclaw_within_scope_rejects_action_log_without_matching
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_accepts_action_log_with_eventual_matching_event(  # noqa: E501
+async def test_execute_within_scope_accepts_action_log_with_eventual_matching_event(  # noqa: E501
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -670,16 +670,16 @@ async def test_execute_openclaw_within_scope_accepts_action_log_with_eventual_ma
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
-    observed = await execute_openclaw_within_scope(
+    observed = await execute_within_scope(
         adapter=adapter,
         mission_name="prepare_session",
         payload={
@@ -694,7 +694,7 @@ async def test_execute_openclaw_within_scope_accepts_action_log_with_eventual_ma
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_accepts_action_log_with_eventual_valid_line(  # noqa: E501
+async def test_execute_within_scope_accepts_action_log_with_eventual_valid_line(  # noqa: E501
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -707,16 +707,16 @@ async def test_execute_openclaw_within_scope_accepts_action_log_with_eventual_va
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
-    observed = await execute_openclaw_within_scope(
+    observed = await execute_within_scope(
         adapter=adapter,
         mission_name="prepare_session",
         payload={
@@ -731,17 +731,17 @@ async def test_execute_openclaw_within_scope_accepts_action_log_with_eventual_va
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_does_not_require_run_root() -> None:
-    result = OpenClawExecutionResult(
+async def test_execute_within_scope_does_not_require_run_root() -> None:
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
-    observed = await execute_openclaw_within_scope(
+    observed = await execute_within_scope(
         adapter=adapter,
         mission_name="prepare_session",
         payload={
@@ -755,7 +755,7 @@ async def test_execute_openclaw_within_scope_does_not_require_run_root() -> None
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_confirms_release_ceiling_stop_from_action_log(  # noqa: E501
+async def test_execute_within_scope_confirms_release_ceiling_stop_from_action_log(  # noqa: E501
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -766,16 +766,16 @@ async def test_execute_openclaw_within_scope_confirms_release_ceiling_stop_from_
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="page_ready_observation",
         evidence_refs=(
             "evidence://dom/page-shell-ready",
             "evidence://action-log/release-ceiling-stop",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
-    observed = await execute_openclaw_within_scope(
+    observed = await execute_within_scope(
         adapter=adapter,
         mission_name="page_ready_observation",
         payload={},
@@ -805,7 +805,7 @@ def test_release_ceiling_action_log_asserts_fields(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_accepts_release_ceiling_stop_with_eventual_confirming_line(  # noqa: E501
+async def test_execute_within_scope_accepts_release_ceiling_stop_with_eventual_confirming_line(  # noqa: E501
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -819,16 +819,16 @@ async def test_execute_openclaw_within_scope_accepts_release_ceiling_stop_with_e
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="page_ready_observation",
         evidence_refs=(
             "evidence://dom/page-shell-ready",
             "evidence://action-log/release-ceiling-stop",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
-    observed = await execute_openclaw_within_scope(
+    observed = await execute_within_scope(
         adapter=adapter,
         mission_name="page_ready_observation",
         payload={},
@@ -840,7 +840,7 @@ async def test_execute_openclaw_within_scope_accepts_release_ceiling_stop_with_e
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_release_ceiling_stop_without_confirming_event(  # noqa: E501
+async def test_execute_within_scope_rejects_release_ceiling_stop_without_confirming_event(  # noqa: E501
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -851,17 +851,17 @@ async def test_execute_openclaw_within_scope_rejects_release_ceiling_stop_withou
         encoding="utf-8",
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="page_ready_observation",
         evidence_refs=(
             "evidence://dom/page-shell-ready",
             "evidence://action-log/release-ceiling-stop",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     try:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="page_ready_observation",
             payload={},
@@ -876,14 +876,14 @@ async def test_execute_openclaw_within_scope_rejects_release_ceiling_stop_withou
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_wraps_invalid_result_as_typed_validation_error(  # noqa: E501
+async def test_execute_within_scope_wraps_invalid_result_as_typed_validation_error(  # noqa: E501
 ) -> None:
-    adapter = FakeOpenClawAdapter(
-        result=OpenClawExecutionResult(mission_name="prepare_session", evidence_refs=())
+    adapter = FakeExecutionAdapter(
+        result=ExecutionResult(mission_name="prepare_session", evidence_refs=())
     )
 
     with pytest.raises(ValidationError) as excinfo:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -898,7 +898,7 @@ async def test_execute_openclaw_within_scope_wraps_invalid_result_as_typed_valid
 
 class FakeInvalidReturnAdapter:
     async def execute(  # noqa: D102
-        self, request: OpenClawExecutionRequest
+        self, request: ExecutionRequest
     ) -> object:
         return {
             "mission_name": request.mission_name,
@@ -910,11 +910,11 @@ class FakeInvalidReturnAdapter:
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_non_openclaw_result_type() -> None:
+async def test_execute_within_scope_rejects_non_execution_result_type() -> None:
     adapter = FakeInvalidReturnAdapter()
 
     with pytest.raises(ValidationError) as excinfo:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -929,17 +929,17 @@ async def test_execute_openclaw_within_scope_rejects_non_openclaw_result_type() 
 
 class FakeExplodingAdapter:
     async def execute(  # noqa: D102
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         raise RuntimeError("boom")
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_wraps_untyped_adapter_errors() -> None:
+async def test_execute_within_scope_wraps_untyped_adapter_errors() -> None:
     adapter = FakeExplodingAdapter()
 
     with pytest.raises(ExecutionTransportError) as excinfo:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -1296,21 +1296,21 @@ def test_validate_release_ceiling_stop_action_log_noops_without_marker() -> None
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_nonexistent_run_root(
+async def test_execute_within_scope_rejects_nonexistent_run_root(
     tmp_path: Path,
 ) -> None:
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
     missing = tmp_path / "missing-run-root"
 
     with pytest.raises(ValidationError) as excinfo:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -1325,23 +1325,23 @@ async def test_execute_openclaw_within_scope_rejects_nonexistent_run_root(
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_run_root_file(
+async def test_execute_within_scope_rejects_run_root_file(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path / "run-root.txt"
     run_root.write_text("not-a-dir", encoding="utf-8")
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     with pytest.raises(ValidationError) as excinfo:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={
@@ -1356,20 +1356,20 @@ async def test_execute_openclaw_within_scope_rejects_run_root_file(
 
 
 @pytest.mark.asyncio
-async def test_execute_openclaw_within_scope_rejects_non_path_run_root(
+async def test_execute_within_scope_rejects_non_path_run_root(
     tmp_path: Path,
 ) -> None:
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
 
     with pytest.raises(ValidationError) as excinfo:
-        await execute_openclaw_within_scope(
+        await execute_within_scope(
             adapter=adapter,
             mission_name="prepare_session",
             payload={

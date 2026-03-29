@@ -72,13 +72,13 @@ def test_released_scope_execution_delegates_to_adapter() -> None:
     This test verifies the separation: orchestration owns sequencing, the adapter
     owns execution.
     """
-    from ez_ax.adapters.openclaw.client import (
-        OpenClawAdapter,
+    from ez_ax.adapters.execution.client import (
+        ExecutionAdapter,
     )
 
-    # OpenClawAdapter protocol defines the execution boundary
-    assert hasattr(OpenClawAdapter, "execute"), (
-        "Execution is delegated through OpenClawAdapter protocol"
+    # ExecutionAdapter protocol defines the execution boundary
+    assert hasattr(ExecutionAdapter, "execute"), (
+        "Execution is delegated through ExecutionAdapter protocol"
     )
 
     # Verify that langgraph_released_execution accepts an adapter parameter

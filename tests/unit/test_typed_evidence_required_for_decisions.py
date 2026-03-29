@@ -15,19 +15,19 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
 
 
-class TypedEvidenceFakeOpenClawAdapter:
+class TypedEvidenceFakeExecutionAdapter:
     """Stub adapter that provides valid typed evidence for each mission."""
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Return typed evidence matching the truth hierarchy.
 
         Evidence types (PRD lines 71-83):
@@ -67,7 +67,7 @@ class TypedEvidenceFakeOpenClawAdapter:
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
             raise AssertionError(f"Unexpected mission: {request.mission_name}")
-        return OpenClawExecutionResult(
+        return ExecutionResult(
             mission_name=request.mission_name, evidence_refs=refs
         )
 
@@ -116,7 +116,7 @@ async def test_released_scope_uses_typed_evidence_in_all_missions(
     2. All evidence types are valid according to the truth hierarchy
     3. The graph's decision logic operates on typed evidence
     """
-    adapter = TypedEvidenceFakeOpenClawAdapter()
+    adapter = TypedEvidenceFakeExecutionAdapter()
 
     result = await run_released_scope_via_langgraph(
         adapter=adapter,
@@ -171,7 +171,7 @@ async def test_released_scope_primary_evidence_types_in_decision_path(
     Released-scope transitions should be decided using primary truth types,
     not fallback or last-resort types (screenshot, vision, coordinate).
     """
-    adapter = TypedEvidenceFakeOpenClawAdapter()
+    adapter = TypedEvidenceFakeExecutionAdapter()
 
     result = await run_released_scope_via_langgraph(
         adapter=adapter,

@@ -16,9 +16,9 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
 
@@ -27,12 +27,12 @@ class ExecutionTrackingAdapter:
     """Adapter that tracks all OpenClaw execution calls."""
 
     def __init__(self) -> None:
-        self.calls: list[OpenClawExecutionRequest] = []
+        self.calls: list[ExecutionRequest] = []
         self.call_count = 0
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Track each execution and provide evidence."""
         self.calls.append(request)
         self.call_count += 1
@@ -60,13 +60,13 @@ class ExecutionTrackingAdapter:
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
             raise AssertionError(f"Unexpected mission: {request.mission_name}")
-        return OpenClawExecutionResult(
+        return ExecutionResult(
             mission_name=request.mission_name, evidence_refs=refs
         )
 
 
 @pytest.mark.asyncio
-async def test_released_scope_delegates_all_execution_to_openclaw(
+async def test_released_scope_delegates_all_execution_to_adapter(
     tmp_path: Path,
 ) -> None:
     """Verify that released-scope orchestrates all mission execution through OpenClaw.
@@ -110,14 +110,14 @@ async def test_released_scope_delegates_all_execution_to_openclaw(
 
 
 @pytest.mark.asyncio
-async def test_each_released_mission_execution_goes_through_openclaw_adapter(
+async def test_each_released_mission_execution_goes_through_execution_adapter(
     tmp_path: Path,
 ) -> None:
     """Verify that each released mission execution delegates to OpenClaw.execute().
 
     PRD Purpose (line 9): 'orchestrate execution through `OpenClaw`'
 
-    This test verifies that the OpenClawExecutionRequest is properly formed
+    This test verifies that the ExecutionRequest is properly formed
     and passed to the adapter for each mission.
     """
     adapter = ExecutionTrackingAdapter()
@@ -133,8 +133,8 @@ async def test_each_released_mission_execution_goes_through_openclaw_adapter(
 
     # Verify each call has a properly formed request
     for i, call in enumerate(adapter.calls):
-        assert isinstance(call, OpenClawExecutionRequest), (
-            f"Call {i} must be an OpenClawExecutionRequest. Got {type(call)}"
+        assert isinstance(call, ExecutionRequest), (
+            f"Call {i} must be an ExecutionRequest. Got {type(call)}"
         )
         assert call.mission_name is not None, (
             f"Call {i} must have a mission_name"
@@ -173,7 +173,7 @@ async def test_each_released_mission_execution_goes_through_openclaw_adapter(
 
 
 @pytest.mark.asyncio
-async def test_released_scope_execution_graph_wires_to_openclaw_adapter(
+async def test_released_scope_execution_graph_wires_to_execution_adapter(
     tmp_path: Path,
 ) -> None:
     """Verify that the released-scope execution graph is wired to use the OpenClaw adapter.
@@ -193,8 +193,8 @@ async def test_released_scope_execution_graph_wires_to_openclaw_adapter(
             self.call_count = 0
 
         async def execute(
-            self, request: OpenClawExecutionRequest
-        ) -> OpenClawExecutionResult:
+            self, request: ExecutionRequest
+        ) -> ExecutionResult:
             """Increment counter and return evidence."""
             self.call_count += 1
             if request.mission_name not in [
@@ -227,7 +227,7 @@ async def test_released_scope_execution_graph_wires_to_openclaw_adapter(
                 ),
             }
             refs = evidence_map.get(request.mission_name, ())
-            return OpenClawExecutionResult(
+            return ExecutionResult(
                 mission_name=request.mission_name, evidence_refs=refs
             )
 

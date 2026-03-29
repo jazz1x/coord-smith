@@ -59,10 +59,10 @@ def test_phase_r44_comprehensive_prd_audit_all_clauses_covered() -> None:
         "test_purpose_preserve_run_comparability.py",
         "test_purpose_not_browser_automation_engine.py",
         # System Boundary clauses
-        "test_openclaw_owns_browser_facing_execution.py",
+        "test_browser_facing_execution_ownership.py",
         "test_ez_ax_is_orchestration_centric.py",
         "test_ez_ax_must_not_become_browser_facing.py",
-        "test_openclaw_architecture_abstraction.py",
+        "test_execution_architecture_abstraction.py",
         "test_no_browser_control_libraries.py",
         "test_ez_ax_owns_validation_stopping_reasoning.py",
         "test_runtime_no_llm_inference.py",
@@ -73,7 +73,7 @@ def test_phase_r44_comprehensive_prd_audit_all_clauses_covered() -> None:
         "test_released_scope_graph_rejects_modeled_missions.py",
         # Evidence Truth Model clauses
         "test_evidence_envelope.py",
-        "test_openclaw_adapter_contract.py",
+        "test_execution_adapter_contract.py",
         "test_typed_evidence_required_for_decisions.py",
         # Release-Ceiling Stop Proof clauses
         "test_release_ceiling_stop_proof_enforcement.py",
@@ -84,7 +84,7 @@ def test_phase_r44_comprehensive_prd_audit_all_clauses_covered() -> None:
         "test_canonical_stack_specification.py",
         # Non-Goals clauses
         "test_non_goals_forbidden_directions.py",
-        "test_openclaw_non_replaceable.py",
+        "test_execution_non_replaceable.py",
         "test_release_ceiling_non_expansion_without_prd_change.py",
         "test_presenting_modeled_behavior_forbidden.py",
     ]

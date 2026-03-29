@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.mcp_stdio_client import open_mcp_stdio_openclaw_adapter
+from ez_ax.adapters.execution.mcp_stdio_client import open_mcp_stdio_execution_adapter
 from ez_ax.graph.released_entrypoint import ReleasedEntrypointResult, run_released_scope
 from tests.fixtures.fake_mcp_sdk import install_fake_mcp_sdk
 
@@ -29,7 +29,7 @@ async def _run_released_path_e2e(
 ) -> ReleasedEntrypointResult:
     install_fake_mcp_sdk(monkeypatch)
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         command="uv",
         args=["run", "openclaw", "stdio"],
         env={},

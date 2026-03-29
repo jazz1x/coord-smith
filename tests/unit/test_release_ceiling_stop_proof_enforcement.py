@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.evidence.envelope import validate_release_ceiling_stop_proof
 from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
@@ -27,8 +27,8 @@ class StopProofValidationAdapter:
     """Adapter that provides valid evidence refs for all missions."""
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Execute mission and provide required evidence refs."""
         evidence_map: dict[str, tuple[str, ...]] = {
             "attach_session": (
@@ -56,7 +56,7 @@ class StopProofValidationAdapter:
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
             raise AssertionError(f"Unexpected mission: {request.mission_name}")
-        return OpenClawExecutionResult(
+        return ExecutionResult(
             mission_name=request.mission_name, evidence_refs=refs
         )
 

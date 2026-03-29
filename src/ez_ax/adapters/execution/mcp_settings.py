@@ -46,7 +46,7 @@ class RetryPolicy:
 
 
 @dataclass(frozen=True, slots=True)
-class McpOpenClawAdapterSettings:
+class McpExecutionAdapterSettings:
     """Required construction inputs for a modeled MCP-backed OpenClaw adapter."""
 
     mcp_server_name: str

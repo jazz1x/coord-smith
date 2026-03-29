@@ -10,7 +10,7 @@ Each mission must have defined primary and fallback evidence requirements
 per the Evidence Truth Model (lines 69-83) priority hierarchy.
 """
 
-from ez_ax.adapters.openclaw.client import OpenClawExecutionResult
+from ez_ax.adapters.execution.client import ExecutionResult
 
 
 def test_attach_session_primary_evidence_specification() -> None:
@@ -28,12 +28,12 @@ def test_attach_session_primary_evidence_specification() -> None:
     }
 
     # Verify validation accepts primary minimum
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="attach_session",
         evidence_refs=tuple(primary),
     )
     # If this passes validation, primary spec is correct
-    # (validate_openclaw_execution_result is called by the graph)
+    # (validate_execution_result is called by the graph)
     assert result.mission_name == "attach_session"
     assert len(result.evidence_refs) == 3
     assert "evidence://text/session-attached" in result.evidence_refs
@@ -51,7 +51,7 @@ def test_prepare_session_primary_evidence_specification() -> None:
         "evidence://action-log/prepare-session",
     }
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=tuple(primary),
     )
@@ -73,7 +73,7 @@ def test_benchmark_validation_primary_evidence_specification() -> None:
         "evidence://dom/target-page-entered",
     }
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="benchmark_validation",
         evidence_refs=tuple(primary),
     )
@@ -98,7 +98,7 @@ def test_page_ready_observation_primary_evidence_specification() -> None:
         "evidence://action-log/release-ceiling-stop",
     }
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="page_ready_observation",
         evidence_refs=tuple(primary),
     )

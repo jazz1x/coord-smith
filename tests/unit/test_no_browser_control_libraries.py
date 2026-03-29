@@ -104,13 +104,13 @@ def test_ez_ax_adapter_abstraction_prevents_direct_browser_control() -> None:
     PRD System Boundary (line 19): 'OpenClaw is the only browser-facing
     execution actor'
 
-    The OpenClawAdapter protocol defines the boundary. Verify that adapter
+    The ExecutionAdapter protocol defines the boundary. Verify that adapter
     implementations are the only runtime code touching browser-specific APIs.
     """
-    from ez_ax.adapters.openclaw.client import OpenClawAdapter
+    from ez_ax.adapters.execution.client import ExecutionAdapter
 
     # Verify the adapter protocol exists and is protocol-based
-    assert hasattr(OpenClawAdapter, "execute")
+    assert hasattr(ExecutionAdapter, "execute")
 
     # Verify it's abstract/protocol (must not reference browser libs directly)
     from ez_ax.adapters import pyautogui_adapter

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ez_ax.adapters.openclaw.client import OpenClawExecutionResult
+from ez_ax.adapters.execution.client import ExecutionResult
 from ez_ax.graph.langgraph_released_execution import (
     build_released_scope_execution_graph,
 )
@@ -12,10 +12,10 @@ from ez_ax.graph.released_call_site import ReleasedRunContext
 from ez_ax.missions.names import MODELED_MISSIONS, RELEASED_MISSIONS
 
 
-class FakeOpenClawAdapter:
+class FakeExecutionAdapter:
     """Minimal adapter for testing graph structure."""
 
-    async def execute(self, request: object) -> OpenClawExecutionResult:
+    async def execute(self, request: object) -> ExecutionResult:
         """Should not be called in structural tests."""
         raise AssertionError("Adapter.execute should not be called in structural tests")
 
@@ -31,7 +31,7 @@ def test_released_scope_graph_contains_only_released_mission_nodes(
         run_root=tmp_path,
         approved_scope_ceiling="pageReadyObserved",
     )
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     graph = build_released_scope_execution_graph(
         adapter=adapter,
@@ -87,7 +87,7 @@ def test_released_scope_graph_enforces_correct_mission_sequence(
         run_root=tmp_path,
         approved_scope_ceiling="pageReadyObserved",
     )
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     compiled_graph = build_released_scope_execution_graph(
         adapter=adapter,
@@ -174,7 +174,7 @@ def test_released_scope_execution_graph_edges_final_mission_to_end(
         run_root=tmp_path,
         approved_scope_ceiling="pageReadyObserved",
     )
-    adapter = FakeOpenClawAdapter()
+    adapter = FakeExecutionAdapter()
 
     compiled_graph = build_released_scope_execution_graph(
         adapter=adapter,

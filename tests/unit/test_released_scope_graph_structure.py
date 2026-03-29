@@ -16,9 +16,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.langgraph_released_execution import (
     build_released_scope_execution_graph,
@@ -26,14 +26,14 @@ from ez_ax.graph.langgraph_released_execution import (
 from ez_ax.graph.released_call_site import ReleasedRunContext
 
 
-class StubOpenClawAdapter:
+class StubExecutionAdapter:
     """Minimal adapter for graph structure testing."""
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Return stub evidence."""
-        return OpenClawExecutionResult(
+        return ExecutionResult(
             mission_name=request.mission_name,
             evidence_refs=("evidence://dom/stub",),
         )
@@ -51,7 +51,7 @@ def test_released_scope_graph_has_exactly_four_released_missions(
     This test validates the compiled graph's nodes correspond to these
     4 released missions.
     """
-    adapter = StubOpenClawAdapter()
+    adapter = StubExecutionAdapter()
     run = ReleasedRunContext(
         run_root=tmp_path,
         approved_scope_ceiling="pageReadyObserved",
@@ -101,7 +101,7 @@ def test_released_scope_graph_enforces_intentional_stop_at_ceiling(
     This validates that page_ready_observation mission edges to END,
     preventing any further mission execution beyond the released ceiling.
     """
-    adapter = StubOpenClawAdapter()
+    adapter = StubExecutionAdapter()
     run = ReleasedRunContext(
         run_root=tmp_path,
         approved_scope_ceiling="pageReadyObserved",
@@ -141,7 +141,7 @@ def test_released_scope_graph_sequences_missions_correctly(
 
     This test validates edges reflect this sequence.
     """
-    adapter = StubOpenClawAdapter()
+    adapter = StubExecutionAdapter()
     run = ReleasedRunContext(
         run_root=tmp_path,
         approved_scope_ceiling="pageReadyObserved",

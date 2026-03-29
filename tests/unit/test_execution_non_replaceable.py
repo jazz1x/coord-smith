@@ -14,7 +14,7 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 
-from ez_ax.adapters.openclaw.client import OpenClawInvocationBoundary
+from ez_ax.adapters.execution.client import ExecutionBoundary
 from ez_ax.graph.langgraph_released_execution import (
     build_released_scope_execution_graph,
 )
@@ -22,13 +22,13 @@ from ez_ax.graph.released_call_site import ReleasedRunContext
 from ez_ax.graph.released_entrypoint import run_released_scope
 
 
-def test_released_scope_graph_requires_openclaw_adapter(tmp_path: Path) -> None:
-    """Verify released-scope graph construction requires OpenClawAdapter, not a generic adapter.
+def test_released_scope_graph_requires_execution_adapter(tmp_path: Path) -> None:
+    """Verify released-scope graph construction requires ExecutionAdapter, not a generic adapter.
 
     PRD Non-Goals constraint (line 144):
     "replacing `OpenClaw`"
 
-    The graph constructor must accept only OpenClawAdapter, preventing replacement
+    The graph constructor must accept only ExecutionAdapter, preventing replacement
     with alternative implementations.
     """
     run = ReleasedRunContext(
@@ -36,15 +36,15 @@ def test_released_scope_graph_requires_openclaw_adapter(tmp_path: Path) -> None:
         approved_scope_ceiling="pageReadyObserved",
     )
 
-    # Create a minimal mock adapter that conforms to OpenClawInvocationBoundary
-    class MockOpenClawAdapter:
+    # Create a minimal mock adapter that conforms to ExecutionBoundary
+    class MockExecutionAdapter:
         async def execute(self, request: object) -> object:
             """Mock execute method."""
             return object()
 
-    adapter: OpenClawInvocationBoundary = MockOpenClawAdapter()  # type: ignore
+    adapter: ExecutionBoundary = MockExecutionAdapter()  # type: ignore
 
-    # This should succeed with OpenClawAdapter
+    # This should succeed with ExecutionAdapter
     graph = build_released_scope_execution_graph(
         adapter=adapter,
         run=run,
@@ -53,10 +53,10 @@ def test_released_scope_graph_requires_openclaw_adapter(tmp_path: Path) -> None:
         target_page_url="https://example.com/target",
         site_identity="example.com",
     )
-    assert graph is not None, "Graph construction with OpenClawAdapter failed"
+    assert graph is not None, "Graph construction with ExecutionAdapter failed"
 
 
-def test_released_scope_entrypoint_hardcodes_openclaw_not_generic_adapter() -> None:
+def test_released_scope_entrypoint_hardcodes_execution_not_generic_adapter() -> None:
     """Verify the released scope entrypoint is hardcoded to use OpenClaw infrastructure.
 
     PRD Non-Goals constraint (line 144):
@@ -68,10 +68,10 @@ def test_released_scope_entrypoint_hardcodes_openclaw_not_generic_adapter() -> N
     # Get the source code of the released scope entrypoint
     source = inspect.getsource(run_released_scope)
 
-    # Verify OpenClaw references are present in the released scope
+    # Verify execution adapter references are present in the released scope
     assert (
-        "OpenClaw" in source or "openclaw" in source.lower()
-    ), "Released scope does not reference OpenClaw; could support swappable adapters"
+        "ExecutionAdapter" in source or "execution" in source.lower()
+    ), "Released scope does not reference ExecutionAdapter; could support swappable adapters"
 
     # Verify no generic adapter factory or swappable client pattern that would
     # allow replacing OpenClaw with another implementation
@@ -94,7 +94,7 @@ def test_released_scope_adapter_param_does_not_allow_generic_swapping() -> None:
     PRD Non-Goals constraint (line 144):
     "replacing `OpenClaw`"
 
-    While the function accepts OpenClawInvocationBoundary (for testability),
+    While the function accepts ExecutionBoundary (for testability),
     the released scope must not support arbitrary adapter swapping in production.
     """
     # Get the signature of run_released_scope
@@ -106,12 +106,12 @@ def test_released_scope_adapter_param_does_not_allow_generic_swapping() -> None:
         adapter_param is not None
     ), "run_released_scope has no 'adapter' parameter"
 
-    # The parameter type should be OpenClawInvocationBoundary or OpenClawAdapter
+    # The parameter type should be ExecutionBoundary or ExecutionAdapter
     # (not a generic "Adapter" or "ExecutionAdapter" that could be swapped)
     param_annotation = adapter_param.annotation
     annotation_str = str(param_annotation)
 
-    # Verify the type is OpenClaw-specific
+    # Verify the type is execution-adapter-specific
     assert (
-        "OpenClaw" in annotation_str
-    ), f"Adapter parameter type {annotation_str} is too generic; allows replacement of OpenClaw"
+        "ExecutionAdapter" in annotation_str
+    ), f"Adapter parameter type {annotation_str} is too generic; allows replacement of execution adapter"

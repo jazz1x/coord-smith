@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from ez_ax.adapters.openclaw.mcp_settings import McpOpenClawAdapterSettings, RetryPolicy
+from ez_ax.adapters.execution.mcp_settings import McpExecutionAdapterSettings, RetryPolicy
 from ez_ax.models.errors import ConfigError
 
 
@@ -13,7 +13,7 @@ def test_retry_policy_rejects_zero_attempts() -> None:
 
 def test_adapter_settings_rejects_empty_mcp_server_name() -> None:
     with pytest.raises(ConfigError):
-        McpOpenClawAdapterSettings(
+        McpExecutionAdapterSettings(
             mcp_server_name="",
             tool_name="openclaw.execute",
             default_timeout_seconds=5,
@@ -23,7 +23,7 @@ def test_adapter_settings_rejects_empty_mcp_server_name() -> None:
 
 def test_adapter_settings_rejects_whitespace_wrapped_tool_name() -> None:
     with pytest.raises(ConfigError):
-        McpOpenClawAdapterSettings(
+        McpExecutionAdapterSettings(
             mcp_server_name="openclaw",
             tool_name=" openclaw.execute ",
             default_timeout_seconds=5,
@@ -33,7 +33,7 @@ def test_adapter_settings_rejects_whitespace_wrapped_tool_name() -> None:
 
 def test_adapter_settings_rejects_non_positive_timeout() -> None:
     with pytest.raises(ConfigError):
-        McpOpenClawAdapterSettings(
+        McpExecutionAdapterSettings(
             mcp_server_name="openclaw",
             tool_name="openclaw.execute",
             default_timeout_seconds=0,

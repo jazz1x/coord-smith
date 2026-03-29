@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import OpenClawExecutionRequest
-from ez_ax.adapters.openclaw.mcp_adapter import McpBackedOpenClawAdapter
-from ez_ax.adapters.openclaw.mcp_settings import McpOpenClawAdapterSettings, RetryPolicy
+from ez_ax.adapters.execution.client import ExecutionRequest
+from ez_ax.adapters.execution.mcp_adapter import McpBackedExecutionAdapter
+from ez_ax.adapters.execution.mcp_settings import McpExecutionAdapterSettings, RetryPolicy
 from ez_ax.models.errors import (
     ConfigError,
     ExecutionTransportError,
@@ -52,8 +52,8 @@ class FakeMcpClient:
         return self.tool_output
 
 
-def _settings(*, max_attempts: int = 1) -> McpOpenClawAdapterSettings:
-    return McpOpenClawAdapterSettings(
+def _settings(*, max_attempts: int = 1) -> McpExecutionAdapterSettings:
+    return McpExecutionAdapterSettings(
         mcp_server_name="openclaw-mcp",
         tool_name="openclaw.execute",
         default_timeout_seconds=1.0,
@@ -90,14 +90,14 @@ async def test_mcp_adapter_happy_path_returns_execution_result(tmp_path: Path) -
         "request_id": "req-1",
     }
     client = FakeMcpClient(tool_output=tool_output)
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="prepare_session",
         payload={
             "target_page_url": "https://tickets.interpark.com/goods/26003199",
@@ -137,14 +137,14 @@ async def test_mcp_adapter_rejects_evidence_contract_violation_without_retry(
         "request_id": "req-1",
     }
     client = FakeMcpClient(side_effects=[tool_output, tool_output, tool_output])
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="prepare_session",
         payload={
             "target_page_url": "https://tickets.interpark.com/goods/26003199",
@@ -155,7 +155,7 @@ async def test_mcp_adapter_rejects_evidence_contract_violation_without_retry(
     try:
         await adapter.execute(request)
     except ValidationError as exc:
-        assert "OpenClawExecutionResult" in str(exc)
+        assert "ExecutionResult" in str(exc)
         assert client.call_count == 1
     else:
         raise AssertionError(
@@ -166,9 +166,9 @@ async def test_mcp_adapter_rejects_evidence_contract_violation_without_retry(
 @pytest.mark.asyncio
 async def test_mcp_adapter_rejects_missing_run_root() -> None:
     client = FakeMcpClient(tool_output={})
-    adapter = McpBackedOpenClawAdapter(settings=_settings(), mcp_client=client)
+    adapter = McpBackedExecutionAdapter(settings=_settings(), mcp_client=client)
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -186,11 +186,11 @@ async def test_mcp_adapter_rejects_non_directory_run_root(tmp_path: Path) -> Non
     run_root.write_text("not a directory")
 
     client = FakeMcpClient(tool_output={})
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(), mcp_client=client, run_root=run_root
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -209,11 +209,11 @@ async def test_mcp_adapter_rejects_non_directory_run_root(tmp_path: Path) -> Non
 @pytest.mark.asyncio
 async def test_mcp_adapter_rejects_mission_above_scope_ceiling(tmp_path: Path) -> None:
     client = FakeMcpClient(tool_output={})
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(), mcp_client=client, run_root=tmp_path
     )
 
-    request = OpenClawExecutionRequest(mission_name="sync_observation", payload={})
+    request = ExecutionRequest(mission_name="sync_observation", payload={})
 
     try:
         await adapter.execute(request)
@@ -228,11 +228,11 @@ async def test_mcp_adapter_maps_transport_exception_to_execution_transport_error
     tmp_path: Path,
 ) -> None:
     client = FakeMcpClient(raise_exc=RuntimeError("boom"))
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(), mcp_client=client, run_root=tmp_path
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -264,14 +264,14 @@ async def test_mcp_adapter_retries_transient_invocation_failure(tmp_path: Path) 
         },
     }
     client = FakeMcpClient(side_effects=[RuntimeError("boom"), tool_output])
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=2),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="prepare_session",
         payload={
             "target_page_url": "https://tickets.interpark.com/goods/26003199",
@@ -304,14 +304,14 @@ async def test_mcp_adapter_retries_execution_transport_error(tmp_path: Path) -> 
     client = FakeMcpClient(
         side_effects=[ExecutionTransportError("boom"), tool_output],
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=2),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="prepare_session",
         payload={
             "target_page_url": "https://tickets.interpark.com/goods/26003199",
@@ -334,14 +334,14 @@ async def test_mcp_adapter_exhausts_retries_for_execution_transport_error(
             ExecutionTransportError("boom-2"),
         ],
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=2),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -363,14 +363,14 @@ async def test_mcp_adapter_wraps_unknown_exception_after_max_attempts(
     client = FakeMcpClient(
         side_effects=[RuntimeError("boom-1"), RuntimeError("boom-2")]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=2),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -408,13 +408,13 @@ async def test_mcp_adapter_does_not_retry_on_mcp_client_typed_errors(
 
     for exc_type in (ConfigError, FlowError, ValidationError):
         client = FakeMcpClient(side_effects=[exc_type("boom"), tool_output])
-        adapter = McpBackedOpenClawAdapter(
+        adapter = McpBackedExecutionAdapter(
             settings=_settings(max_attempts=2),
             mcp_client=client,
             run_root=tmp_path,
             request_id_factory=lambda: "req-1",
         )
-        request = OpenClawExecutionRequest(
+        request = ExecutionRequest(
             mission_name="prepare_session",
             payload={
                 "target_page_url": "https://tickets.interpark.com/goods/26003199",
@@ -435,14 +435,14 @@ async def test_mcp_adapter_rejects_whitespace_request_id_before_calling_tool(
     tmp_path: Path,
 ) -> None:
     client = FakeMcpClient(tool_output={})
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: " bad ",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -461,7 +461,7 @@ def test_mcp_adapter_rejects_non_page_ready_observed_scope_ceiling(
 ) -> None:
     client = FakeMcpClient(tool_output={})
     try:
-        McpBackedOpenClawAdapter(
+        McpBackedExecutionAdapter(
             settings=_settings(),
             mcp_client=client,
             run_root=tmp_path,
@@ -476,11 +476,11 @@ def test_mcp_adapter_rejects_non_page_ready_observed_scope_ceiling(
 @pytest.mark.asyncio
 async def test_mcp_adapter_rejects_non_object_tool_output(tmp_path: Path) -> None:
     client = FakeMcpClient(tool_output="not-a-dict")
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(), mcp_client=client, run_root=tmp_path
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -515,11 +515,11 @@ async def test_mcp_adapter_rejects_failure_status_without_failure(
             },
         }
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(), mcp_client=client, run_root=tmp_path
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -552,14 +552,14 @@ async def test_mcp_adapter_rejects_request_id_mismatch(tmp_path: Path) -> None:
             "request_id": "req-2",
         }
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -588,14 +588,14 @@ async def test_mcp_adapter_does_not_retry_on_response_schema_validation_failure(
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -623,11 +623,11 @@ async def test_mcp_adapter_rejects_missing_observations(tmp_path: Path) -> None:
             "evidence_refs": evidence_refs,
         }
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(), mcp_client=client, run_root=tmp_path
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -660,14 +660,14 @@ async def test_mcp_adapter_rejects_missing_required_status_field(
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -696,11 +696,11 @@ async def test_mcp_adapter_rejects_observations_key_mismatch(tmp_path: Path) -> 
             },
         }
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(), mcp_client=client, run_root=tmp_path
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -741,14 +741,14 @@ async def test_mcp_adapter_rejects_observations_ref_field_mismatch(
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -782,14 +782,14 @@ async def test_mcp_adapter_rejects_duplicate_evidence_refs_without_retry(
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -827,14 +827,14 @@ async def test_mcp_adapter_rejects_invalid_status_without_retry(
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -873,14 +873,14 @@ async def test_mcp_adapter_rejects_whitespace_evidence_ref_without_retry(
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -923,14 +923,14 @@ async def test_mcp_adapter_rejects_observations_kind_mismatch_without_retry(
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -967,14 +967,14 @@ async def test_mcp_adapter_rejects_non_json_serializable_observation_value(
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -1017,14 +1017,14 @@ async def test_mcp_adapter_rejects_observations_key_mismatch_without_retry(
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -1067,14 +1067,14 @@ async def test_mcp_adapter_rejects_invalid_observations_ts_without_retry(
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 
@@ -1111,14 +1111,14 @@ async def test_mcp_adapter_accepts_zulu_observations_ts(tmp_path: Path) -> None:
         "request_id": "req-1",
     }
     client = FakeMcpClient(tool_output=tool_output)
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="prepare_session",
         payload={
             "target_page_url": "https://tickets.interpark.com/goods/26003199",
@@ -1136,7 +1136,7 @@ async def test_mcp_adapter_rejects_non_path_run_root() -> None:
     client = FakeMcpClient(tool_output={})
 
     with pytest.raises(ConfigError) as excinfo:
-        McpBackedOpenClawAdapter(
+        McpBackedExecutionAdapter(
             settings=_settings(),
             mcp_client=client,
             run_root="not-a-path",  # type: ignore[arg-type]
@@ -1150,14 +1150,14 @@ async def test_mcp_adapter_rejects_non_path_run_root() -> None:
 async def test_mcp_adapter_rejects_nonexistent_run_root(tmp_path: Path) -> None:
     missing = tmp_path / "missing-run-root"
     client = FakeMcpClient(tool_output={})
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(),
         mcp_client=client,
         run_root=missing,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="prepare_session",
         payload={
             "target_page_url": "https://tickets.interpark.com/goods/26003199",
@@ -1195,14 +1195,14 @@ async def test_mcp_adapter_rejects_non_json_serializable_tool_output_without_ret
     client = FakeMcpClient(
         side_effects=[invalid_output, invalid_output, invalid_output]
     )
-    adapter = McpBackedOpenClawAdapter(
+    adapter = McpBackedExecutionAdapter(
         settings=_settings(max_attempts=3),
         mcp_client=client,
         run_root=tmp_path,
         request_id_factory=lambda: "req-1",
     )
 
-    request = OpenClawExecutionRequest(
+    request = ExecutionRequest(
         mission_name="page_ready_observation", payload={}
     )
 

@@ -7,11 +7,11 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawAdapter,
-    OpenClawExecutionResult,
-    build_openclaw_execution_request_within_scope,
-    validate_openclaw_execution_roundtrip_within_scope,
+from ez_ax.adapters.execution.client import (
+    ExecutionAdapter,
+    ExecutionResult,
+    build_execution_request_within_scope,
+    validate_execution_roundtrip_within_scope,
 )
 from ez_ax.evidence.envelope import parse_released_evidence_ref
 from ez_ax.missions.names import ALL_MISSIONS
@@ -301,14 +301,14 @@ def validate_release_ceiling_stop_action_log(
     raise ValidationError(msg)
 
 
-async def execute_openclaw_within_scope(
+async def execute_within_scope(
     *,
-    adapter: OpenClawAdapter,
+    adapter: ExecutionAdapter,
     mission_name: str,
     payload: dict[str, object],
     approved_scope_ceiling: str,
     run_root: Path | None = None,
-) -> OpenClawExecutionResult:
+) -> ExecutionResult:
     """Execute OpenClaw with released-scope boundary validation.
 
     This wrapper hardens request/result contracts and optionally validates action-log
@@ -316,7 +316,7 @@ async def execute_openclaw_within_scope(
     """
 
     try:
-        request = build_openclaw_execution_request_within_scope(
+        request = build_execution_request_within_scope(
             mission_name=mission_name,
             payload=payload,
             approved_scope_ceiling=approved_scope_ceiling,
@@ -333,16 +333,16 @@ async def execute_openclaw_within_scope(
         msg = f"OpenClaw adapter execution failed: {exc}"
         raise ExecutionTransportError(msg) from exc
 
-    if not isinstance(candidate, OpenClawExecutionResult):
+    if not isinstance(candidate, ExecutionResult):
         msg = (
             "OpenClaw adapter returned an invalid result type: "
-            f"expected OpenClawExecutionResult, got {type(candidate)!r}"
+            f"expected ExecutionResult, got {type(candidate)!r}"
         )
         raise ValidationError(msg)
 
     result = candidate
     try:
-        validate_openclaw_execution_roundtrip_within_scope(
+        validate_execution_roundtrip_within_scope(
             request=request,
             result=result,
             approved_scope_ceiling=approved_scope_ceiling,

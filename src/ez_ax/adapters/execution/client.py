@@ -20,7 +20,7 @@ from ez_ax.models.runtime import (
 
 
 @dataclass(frozen=True, slots=True)
-class OpenClawExecutionRequest:
+class ExecutionRequest:
     """Typed execution request passed to OpenClaw."""
 
     mission_name: str
@@ -28,26 +28,26 @@ class OpenClawExecutionRequest:
 
 
 @dataclass(frozen=True, slots=True)
-class OpenClawExecutionResult:
+class ExecutionResult:
     """Typed execution result returned by OpenClaw."""
 
     mission_name: str
     evidence_refs: tuple[str, ...]
 
 
-class OpenClawInvocationBoundary(Protocol):
+class ExecutionBoundary(Protocol):
     """Transport-neutral injected boundary for OpenClaw execution."""
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult: ...
+        self, request: ExecutionRequest
+    ) -> ExecutionResult: ...
 
 
-class OpenClawAdapter(OpenClawInvocationBoundary, Protocol):
+class ExecutionAdapter(ExecutionBoundary, Protocol):
     """Canonical alias for the injected OpenClaw execution boundary."""
 
 
-def validate_openclaw_mission_name(mission_name: str) -> None:
+def validate_execution_mission_name(mission_name: str) -> None:
     """Reject non-browser-facing missions for OpenClaw execution requests."""
 
     if not isinstance(mission_name, str):
@@ -72,10 +72,10 @@ def validate_openclaw_mission_name(mission_name: str) -> None:
         raise ValueError(msg)
 
 
-def validate_openclaw_execution_request(request: OpenClawExecutionRequest) -> None:
+def validate_execution_request(request: ExecutionRequest) -> None:
     """Validate an execution request before handing it to OpenClaw."""
 
-    validate_openclaw_mission_name(request.mission_name)
+    validate_execution_mission_name(request.mission_name)
     if not isinstance(request.payload, dict):
         msg = "OpenClaw execution request payload must be a dict"
         raise TypeError(msg)
@@ -146,12 +146,12 @@ def validate_openclaw_execution_request(request: OpenClawExecutionRequest) -> No
             raise ValueError(msg)
 
 
-def validate_openclaw_execution_request_within_scope(
-    request: OpenClawExecutionRequest, approved_scope_ceiling: str
+def validate_execution_request_within_scope(
+    request: ExecutionRequest, approved_scope_ceiling: str
 ) -> None:
     """Validate an execution request against the approved scope ceiling."""
 
-    validate_openclaw_execution_request(request)
+    validate_execution_request(request)
     effective_ceiling = effective_scope_ceiling(approved_scope_ceiling)
     if not mission_is_within_approved_scope(
         request.mission_name, approved_scope_ceiling=effective_ceiling
@@ -164,10 +164,10 @@ def validate_openclaw_execution_request_within_scope(
         raise ValueError(msg)
 
 
-def validate_openclaw_execution_result(result: OpenClawExecutionResult) -> None:
+def validate_execution_result(result: ExecutionResult) -> None:
     """Validate a typed execution result returned by OpenClaw."""
 
-    validate_openclaw_mission_name(result.mission_name)
+    validate_execution_mission_name(result.mission_name)
     if not isinstance(result.evidence_refs, tuple):
         msg = "OpenClaw execution result evidence_refs must be a tuple"
         raise TypeError(msg)
@@ -280,12 +280,12 @@ def validate_openclaw_execution_result(result: OpenClawExecutionResult) -> None:
         raise ValueError(msg)
 
 
-def validate_openclaw_execution_result_within_scope(
-    result: OpenClawExecutionResult, approved_scope_ceiling: str
+def validate_execution_result_within_scope(
+    result: ExecutionResult, approved_scope_ceiling: str
 ) -> None:
     """Validate an execution result against the approved scope ceiling."""
 
-    validate_openclaw_execution_result(result)
+    validate_execution_result(result)
     effective_ceiling = effective_scope_ceiling(approved_scope_ceiling)
     if not mission_is_within_approved_scope(
         result.mission_name, approved_scope_ceiling=effective_ceiling
@@ -298,18 +298,18 @@ def validate_openclaw_execution_result_within_scope(
         raise ValueError(msg)
 
 
-def validate_openclaw_execution_roundtrip_within_scope(
+def validate_execution_roundtrip_within_scope(
     *,
-    request: OpenClawExecutionRequest,
-    result: OpenClawExecutionResult,
+    request: ExecutionRequest,
+    result: ExecutionResult,
     approved_scope_ceiling: str,
 ) -> None:
     """Validate an OpenClaw request/result pair for comparable typed evidence."""
 
-    validate_openclaw_execution_request_within_scope(
+    validate_execution_request_within_scope(
         request, approved_scope_ceiling=approved_scope_ceiling
     )
-    validate_openclaw_execution_result_within_scope(
+    validate_execution_result_within_scope(
         result, approved_scope_ceiling=approved_scope_ceiling
     )
     if request.mission_name != result.mission_name:
@@ -320,49 +320,49 @@ def validate_openclaw_execution_roundtrip_within_scope(
         raise ValueError(msg)
 
 
-def build_openclaw_execution_request(
+def build_execution_request(
     *, mission_name: str, payload: dict[str, object]
-) -> OpenClawExecutionRequest:
+) -> ExecutionRequest:
     """Build a validated OpenClaw execution request."""
 
-    request = OpenClawExecutionRequest(mission_name=mission_name, payload=payload)
-    validate_openclaw_execution_request(request)
+    request = ExecutionRequest(mission_name=mission_name, payload=payload)
+    validate_execution_request(request)
     return request
 
 
-def build_openclaw_execution_request_within_scope(
+def build_execution_request_within_scope(
     *, mission_name: str, payload: dict[str, object], approved_scope_ceiling: str
-) -> OpenClawExecutionRequest:
+) -> ExecutionRequest:
     """Build a validated OpenClaw execution request constrained to released scope."""
 
-    request = OpenClawExecutionRequest(mission_name=mission_name, payload=payload)
-    validate_openclaw_execution_request_within_scope(
+    request = ExecutionRequest(mission_name=mission_name, payload=payload)
+    validate_execution_request_within_scope(
         request, approved_scope_ceiling=approved_scope_ceiling
     )
     return request
 
 
-def build_openclaw_execution_result(
+def build_execution_result(
     *, mission_name: str, evidence_refs: tuple[str, ...]
-) -> OpenClawExecutionResult:
+) -> ExecutionResult:
     """Build a validated OpenClaw execution result."""
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name=mission_name, evidence_refs=evidence_refs
     )
-    validate_openclaw_execution_result(result)
+    validate_execution_result(result)
     return result
 
 
-def build_openclaw_execution_result_within_scope(
+def build_execution_result_within_scope(
     *, mission_name: str, evidence_refs: tuple[str, ...], approved_scope_ceiling: str
-) -> OpenClawExecutionResult:
+) -> ExecutionResult:
     """Build a validated OpenClaw execution result constrained to released scope."""
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name=mission_name, evidence_refs=evidence_refs
     )
-    validate_openclaw_execution_result_within_scope(
+    validate_execution_result_within_scope(
         result, approved_scope_ceiling=approved_scope_ceiling
     )
     return result
@@ -654,14 +654,14 @@ def validate_release_ceiling_stop_action_log(
     raise ValidationError(msg)
 
 
-async def execute_openclaw_within_scope(
+async def execute_within_scope(
     *,
-    adapter: OpenClawAdapter,
+    adapter: ExecutionAdapter,
     mission_name: str,
     payload: dict[str, object],
     approved_scope_ceiling: str,
     run_root: Path | None = None,
-) -> OpenClawExecutionResult:
+) -> ExecutionResult:
     """Execute OpenClaw with released-scope boundary validation.
 
     This wrapper hardens request/result contracts and optionally validates action-log
@@ -669,7 +669,7 @@ async def execute_openclaw_within_scope(
     """
 
     try:
-        request = build_openclaw_execution_request_within_scope(
+        request = build_execution_request_within_scope(
             mission_name=mission_name,
             payload=payload,
             approved_scope_ceiling=approved_scope_ceiling,
@@ -686,16 +686,16 @@ async def execute_openclaw_within_scope(
         msg = f"OpenClaw adapter execution failed: {exc}"
         raise ExecutionTransportError(msg) from exc
 
-    if not isinstance(candidate, OpenClawExecutionResult):
+    if not isinstance(candidate, ExecutionResult):
         msg = (
             "OpenClaw adapter returned an invalid result type: "
-            f"expected OpenClawExecutionResult, got {type(candidate)!r}"
+            f"expected ExecutionResult, got {type(candidate)!r}"
         )
         raise ValidationError(msg)
 
     result = candidate
     try:
-        validate_openclaw_execution_roundtrip_within_scope(
+        validate_execution_roundtrip_within_scope(
             request=request,
             result=result,
             approved_scope_ceiling=approved_scope_ceiling,

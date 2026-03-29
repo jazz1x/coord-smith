@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.released_call_site import (
     ReleasedRunContext,
@@ -21,14 +21,14 @@ from ez_ax.models.errors import ConfigError, FlowError, ValidationError
 from ez_ax.models.runtime import RuntimeState
 
 
-class FakeOpenClawAdapter:
-    def __init__(self, *, result: OpenClawExecutionResult) -> None:
+class FakeExecutionAdapter:
+    def __init__(self, *, result: ExecutionResult) -> None:
         self._result = result
-        self.last_request: OpenClawExecutionRequest | None = None
+        self.last_request: ExecutionRequest | None = None
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         self.last_request = request
         return self._result
 
@@ -74,7 +74,7 @@ def test_seed_action_log_marker_rejects_unknown_mission(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_execute_prepare_session_node_wires_openclaw_wrapper(
+async def test_execute_prepare_session_node_wires_execution_wrapper(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -82,14 +82,14 @@ async def test_execute_prepare_session_node_wires_openclaw_wrapper(
         run_root=run_root, approved_scope_ceiling="pageReadyObserved"
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
     state = RuntimeState(run_id="test-run")
 
     observed = await execute_prepare_session_node(
@@ -107,7 +107,7 @@ async def test_execute_prepare_session_node_wires_openclaw_wrapper(
 
 
 @pytest.mark.asyncio
-async def test_execute_benchmark_validation_node_wires_openclaw_wrapper(
+async def test_execute_benchmark_validation_node_wires_execution_wrapper(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -115,14 +115,14 @@ async def test_execute_benchmark_validation_node_wires_openclaw_wrapper(
         run_root=run_root, approved_scope_ceiling="pageReadyObserved"
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="benchmark_validation",
         evidence_refs=(
             "evidence://action-log/enter-target-page",
             "evidence://dom/target-page-entered",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
     state = RuntimeState(run_id="test-run")
 
     observed = await execute_benchmark_validation_node(
@@ -139,7 +139,7 @@ async def test_execute_benchmark_validation_node_wires_openclaw_wrapper(
 
 
 @pytest.mark.asyncio
-async def test_execute_attach_session_node_wires_openclaw_wrapper(
+async def test_execute_attach_session_node_wires_execution_wrapper(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -147,7 +147,7 @@ async def test_execute_attach_session_node_wires_openclaw_wrapper(
         run_root=run_root, approved_scope_ceiling="pageReadyObserved"
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="attach_session",
         evidence_refs=(
             "evidence://text/session-attached",
@@ -155,7 +155,7 @@ async def test_execute_attach_session_node_wires_openclaw_wrapper(
             "evidence://action-log/attach-session",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
     state = RuntimeState(run_id="test-run")
 
     observed = await execute_attach_session_node(
@@ -187,7 +187,7 @@ async def test_execute_attach_session_node_wires_openclaw_wrapper(
 
 
 @pytest.mark.asyncio
-async def test_execute_page_ready_observation_node_wires_openclaw_wrapper(
+async def test_execute_page_ready_observation_node_wires_execution_wrapper(
     tmp_path: Path,
 ) -> None:
     run_root = tmp_path
@@ -195,14 +195,14 @@ async def test_execute_page_ready_observation_node_wires_openclaw_wrapper(
         run_root=run_root, approved_scope_ceiling="pageReadyObserved"
     )
 
-    result = OpenClawExecutionResult(
+    result = ExecutionResult(
         mission_name="page_ready_observation",
         evidence_refs=(
             "evidence://dom/page-shell-ready",
             "evidence://action-log/release-ceiling-stop",
         ),
     )
-    adapter = FakeOpenClawAdapter(result=result)
+    adapter = FakeExecutionAdapter(result=result)
     state = RuntimeState(run_id="test-run")
 
     observed = await execute_page_ready_observation_node(

@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from pathlib import Path
 
-from ez_ax.adapters.openclaw.mcp_stdio_client import open_mcp_stdio_openclaw_adapter
+from ez_ax.adapters.execution.mcp_stdio_client import open_mcp_stdio_execution_adapter
 from ez_ax.config.mcp_stdio import McpStdioConstructorConfig
 from ez_ax.config.mcp_stdio_cli import (
     resolve_mcp_stdio_constructor_config_from_argv,
@@ -40,7 +40,7 @@ async def run_released_scope_via_mcp_stdio(
 ) -> ReleasedEntrypointResult:
     """Acquire an MCP stdio-backed adapter and run released scope up to the ceiling."""
 
-    async with open_mcp_stdio_openclaw_adapter(
+    async with open_mcp_stdio_execution_adapter(
         config=mcp_stdio,
         mcp_server_name=mcp_server_name,
     ) as adapter:

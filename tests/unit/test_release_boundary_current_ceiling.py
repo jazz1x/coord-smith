@@ -13,9 +13,9 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.openclaw.client import (
-    OpenClawExecutionRequest,
-    OpenClawExecutionResult,
+from ez_ax.adapters.execution.client import (
+    ExecutionRequest,
+    ExecutionResult,
 )
 from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
 
@@ -27,8 +27,8 @@ class CeilingTrackingAdapter:
         self.executed_missions: list[str] = []
 
     async def execute(
-        self, request: OpenClawExecutionRequest
-    ) -> OpenClawExecutionResult:
+        self, request: ExecutionRequest
+    ) -> ExecutionResult:
         """Execute mission and track execution."""
         self.executed_missions.append(request.mission_name)
 
@@ -56,7 +56,7 @@ class CeilingTrackingAdapter:
         refs = evidence_map.get(request.mission_name)
         if refs is None:
             raise AssertionError(f"Unexpected mission: {request.mission_name}")
-        return OpenClawExecutionResult(
+        return ExecutionResult(
             mission_name=request.mission_name,
             evidence_refs=refs,
         )
