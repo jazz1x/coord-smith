@@ -146,11 +146,20 @@ def test_released_scope_missions_match_prd_definition(
     # - benchmark validation (benchmark_validation)
     # - pageReadyObserved (page_ready_observation)
 
+    # All 12 missions are now released (ceiling expands to runCompletion)
     expected_missions = {
         "attach_session",
         "prepare_session",
         "benchmark_validation",
         "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
     }
 
     actual_missions = set(RELEASED_MISSIONS)

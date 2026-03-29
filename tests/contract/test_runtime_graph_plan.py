@@ -12,16 +12,18 @@ from ez_ax.models.runtime import RuntimeState
 from ez_ax.models.transition import build_transition_artifact
 
 
-def test_graph_plan_keeps_released_path_before_modeled_path() -> None:
+def test_graph_plan_includes_all_released_missions() -> None:
     plan = build_runtime_graph_plan()
 
-    assert plan.released_nodes == (
-        "attach_session_node",
-        "prepare_session_node",
-        "benchmark_validation_node",
-        "page_ready_observation_node",
-    )
-    assert plan.modeled_nodes[0] == "sync_observation_node"
+    # All 12 missions are now released (pageReadyObserved is still the graph plan ceiling,
+    # but RELEASED_MISSIONS includes all 12)
+    assert "attach_session_node" in plan.released_nodes
+    assert "page_ready_observation_node" in plan.released_nodes
+    assert "sync_observation_node" in plan.released_nodes
+    assert "run_completion_node" in plan.released_nodes
+
+    # No modeled-only missions exist
+    assert len(plan.modeled_nodes) == 0
     assert plan.approved_scope_ceiling == "pageReadyObserved"
 
 
@@ -83,9 +85,10 @@ def test_forward_transition_allows_prepare_session_under_prepare_session_ceiling
     assert decision.detail is None
 
 
-def test_forward_transition_rejects_modeled_mission_under_unknown_scope_ceiling() -> (
+def test_forward_transition_accepts_released_under_default_ceiling() -> (
     None
 ):
+    # unknownCeiling now defaults to runCompletion, so sync_observation is allowed
     decision = evaluate_forward_transition(
         current_mission="page_ready_observation",
         target_mission="sync_observation",
@@ -93,14 +96,9 @@ def test_forward_transition_rejects_modeled_mission_under_unknown_scope_ceiling(
         required_evidence_ready=True,
     )
 
-    assert decision.allowed is False
-    assert decision.stop_reason == "mission_out_of_scope"
-    assert decision.failure_code == "GRAPH_MISSION_OUT_OF_SCOPE"
-    assert (
-        decision.detail
-        == "Target mission 'sync_observation' is outside approved scope ceiling "
-        "'pageReadyObserved' (input 'unknownCeiling' defaulted to 'pageReadyObserved')"
-    )
+    assert decision.allowed is True
+    assert decision.stop_reason == "none"
+    assert decision.failure_code == "NONE"
 
 
 def test_forward_transition_rejects_benchmark_validation_under_prepare_session_ceiling() -> (

@@ -15,8 +15,12 @@ from ez_ax.models.transition import TransitionArtifact
 RunStatus = Literal["idle", "running", "stopped", "completed", "escalated"]
 ReleaseStatus = Literal["released", "modeled", "control-only"]
 
-RELEASED_SCOPE_CEILINGS: tuple[str, ...] = ("prepareSession", "pageReadyObserved")
-DEFAULT_RELEASED_SCOPE_CEILING: Literal["pageReadyObserved"] = "pageReadyObserved"
+RELEASED_SCOPE_CEILINGS: tuple[str, ...] = (
+    "prepareSession",
+    "pageReadyObserved",
+    "runCompletion",
+)
+DEFAULT_RELEASED_SCOPE_CEILING: Literal["runCompletion"] = "runCompletion"
 
 
 def effective_scope_ceiling(approved_scope_ceiling: str) -> str:
@@ -77,10 +81,24 @@ def mission_is_within_approved_scope(
     if mission_name in MODELED_MISSIONS:
         return False
 
+    if mission_name not in RELEASED_MISSIONS:
+        return False
+
     approved_scope_ceiling = effective_scope_ceiling(approved_scope_ceiling)
-    if approved_scope_ceiling == "prepareSession":
-        return mission_name in ("attach_session", "prepare_session")
-    return mission_name in RELEASED_MISSIONS
+
+    # Index-based scope ceiling check
+    ceiling_index_map = {
+        "prepareSession": 1,
+        "pageReadyObserved": 3,
+        "runCompletion": 11,
+    }
+
+    if approved_scope_ceiling not in ceiling_index_map:
+        return False
+
+    max_index = ceiling_index_map[approved_scope_ceiling]
+    mission_index = RELEASED_MISSIONS.index(mission_name)
+    return mission_index <= max_index
 
 
 @dataclass(slots=True)

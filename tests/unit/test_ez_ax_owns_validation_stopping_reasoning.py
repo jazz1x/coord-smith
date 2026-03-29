@@ -126,12 +126,10 @@ def test_ez_ax_owns_reasoning_logic() -> None:
     - RuntimeState.transition_checkpoints: checkpoints of reasoning history
     """
     # Verify mission sequence is owned by ez-ax (reasoning about order)
-    assert RELEASED_MISSIONS == (
-        "attach_session",
-        "prepare_session",
-        "benchmark_validation",
-        "page_ready_observation",
-    ), "RELEASED_MISSIONS sequence is ez-ax reasoning about execution order"
+    # All 12 missions are now released (ceiling expands to runCompletion)
+    assert len(RELEASED_MISSIONS) == 12, "Mission sequence includes all 12 released missions"
+    assert RELEASED_MISSIONS[0] == "attach_session", "Sequence starts with attach_session"
+    assert RELEASED_MISSIONS[-1] == "run_completion", "Sequence ends with runCompletion"
 
     # Verify transition evaluation logic (core reasoning) is owned by ez-ax
     import inspect

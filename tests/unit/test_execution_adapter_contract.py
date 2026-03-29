@@ -476,19 +476,15 @@ def test_build_execution_request_within_scope_rejects_modeled_mission() -> None:
         raise AssertionError("Expected modeled mission to be rejected under ceiling")
 
 
-def test_build_execution_request_within_scope_rejects_modeled_unknown_ceiling() -> None:
-    try:
-        build_execution_request_within_scope(
-            mission_name="sync_observation",
-            payload={"target_page_url": "https://tickets.interpark.com/goods/26003199"},
-            approved_scope_ceiling="syncEstablished",
-        )
-    except ValueError as exc:
-        assert "outside approved scope ceiling" in str(exc)
-    else:
-        raise AssertionError(
-            "Expected modeled mission to be rejected under unknown ceiling"
-        )
+def test_build_execution_request_within_scope_accepts_released_under_default_ceiling() -> None:
+    # sync_observation is now released and within default runCompletion ceiling
+    request = build_execution_request_within_scope(
+        mission_name="sync_observation",
+        payload={"target_page_url": "https://tickets.interpark.com/goods/26003199"},
+        approved_scope_ceiling="syncEstablished",  # unknown ceiling defaults to runCompletion
+    )
+
+    assert request.mission_name == "sync_observation"
 
 
 def test_build_execution_request_within_scope_rejects_unknown_mission() -> None:
@@ -604,23 +600,16 @@ def test_validate_execution_request_within_scope_rejects_modeled_mission() -> No
         raise AssertionError("Expected modeled mission to be rejected under ceiling")
 
 
-def test_execution_request_within_scope_rejects_modeled_unknown_ceiling() -> None:
+def test_execution_request_within_scope_accepts_released_under_default_ceiling() -> None:
     request = ExecutionRequest(
         mission_name="sync_observation",
         payload={"target_page_url": "https://tickets.interpark.com/goods/26003199"},
     )
 
-    try:
-        validate_execution_request_within_scope(
-            request, approved_scope_ceiling="syncEstablished"
-        )
-    except ValueError as exc:
-        assert "outside approved scope ceiling" in str(exc)
-        assert "defaulted to 'pageReadyObserved'" in str(exc)
-    else:
-        raise AssertionError(
-            "Expected modeled mission to be rejected under unknown ceiling"
-        )
+    # sync_observation is now released and within default runCompletion ceiling
+    validate_execution_request_within_scope(
+        request, approved_scope_ceiling="syncEstablished"
+    )
 
 
 def test_validate_execution_result_accepts_tuple_refs() -> None:
@@ -1209,24 +1198,17 @@ def test_validate_execution_result_within_scope_rejects_modeled() -> None:
         raise AssertionError("Expected modeled mission to be rejected under ceiling")
 
 
-def test_validate_execution_result_within_scope_unknown_ceiling_defaults() -> (
+def test_validate_execution_result_within_scope_accepts_released_under_default_ceiling() -> (
     None
 ):
     result = ExecutionResult(
         mission_name="sync_observation", evidence_refs=("evidence://clock/server-time",)
     )
 
-    try:
-        validate_execution_result_within_scope(
-            result, approved_scope_ceiling="syncEstablished"
-        )
-    except ValueError as exc:
-        assert "outside approved scope ceiling" in str(exc)
-        assert "defaulted to 'pageReadyObserved'" in str(exc)
-    else:
-        raise AssertionError(
-            "Expected modeled mission to be rejected under unknown ceiling"
-        )
+    # sync_observation is now released and within default runCompletion ceiling
+    validate_execution_result_within_scope(
+        result, approved_scope_ceiling="syncEstablished"
+    )
 
 
 def test_validate_execution_roundtrip_within_scope_accepts_matching_mission() -> None:

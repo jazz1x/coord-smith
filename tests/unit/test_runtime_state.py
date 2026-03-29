@@ -27,31 +27,29 @@ def test_set_current_mission_updates_release_status_for_control_mission() -> Non
     assert state.mission_state.mission_name == "python_validation_execution"
 
 
-def test_set_current_mission_rejects_modeled_mission_under_released_ceiling() -> None:
+def test_set_current_mission_accepts_sync_observation_under_run_completion_ceiling() -> None:
     state = RuntimeState(run_id="run-001")
+    state.approved_scope_ceiling = "runCompletion"
 
-    try:
-        state.set_current_mission("sync_observation")
-    except ValueError as exc:
-        assert "outside approved scope ceiling" in str(exc)
-        assert "defaulted to 'pageReadyObserved'" not in str(exc)
-    else:
-        raise AssertionError("Expected modeled mission to be rejected")
+    # sync_observation is now released and within runCompletion ceiling
+    state.set_current_mission("sync_observation")
+
+    assert state.current_mission == "sync_observation"
+    assert state.release_status == "released"
+    assert state.mission_state.mission_name == "sync_observation"
 
 
-def test_set_current_mission_rejects_modeled_mission_under_unknown_scope_ceiling() -> (
+def test_set_current_mission_defaults_unknown_ceiling_to_run_completion() -> (
     None
 ):
     state = RuntimeState(run_id="run-001")
     state.approved_scope_ceiling = "unknownCeiling"
 
-    try:
-        state.set_current_mission("sync_observation")
-    except ValueError as exc:
-        assert "outside approved scope ceiling" in str(exc)
-        assert "defaulted to 'pageReadyObserved'" in str(exc)
-    else:
-        raise AssertionError("Expected modeled mission to be rejected")
+    # With unknown ceiling, defaults to runCompletion, allowing all released missions
+    state.set_current_mission("sync_observation")
+
+    assert state.current_mission == "sync_observation"
+    assert state.release_status == "released"
 
 
 def test_set_current_mission_allows_page_ready_observation() -> None:
@@ -75,7 +73,7 @@ def test_set_current_mission_rejects_unknown_mission_name() -> None:
         raise AssertionError("Expected unknown mission to be rejected")
 
 
-def test_mission_is_within_scope_defaults_unknown_ceiling_to_released_guard() -> None:
+def test_mission_is_within_scope_defaults_unknown_ceiling_to_run_completion() -> None:
     assert (
         mission_is_within_approved_scope(
             mission_name="attach_session",
@@ -83,12 +81,21 @@ def test_mission_is_within_scope_defaults_unknown_ceiling_to_released_guard() ->
         )
         is True
     )
+    # sync_observation is now released and within runCompletion default ceiling
     assert (
         mission_is_within_approved_scope(
             mission_name="sync_observation",
             approved_scope_ceiling="unknownCeiling",
         )
-        is False
+        is True
+    )
+    # run_completion is also within default runCompletion ceiling
+    assert (
+        mission_is_within_approved_scope(
+            mission_name="run_completion",
+            approved_scope_ceiling="unknownCeiling",
+        )
+        is True
     )
 
 
@@ -133,18 +140,21 @@ def test_mission_is_within_approved_scope_rejects_unknown_mission_name() -> None
     )
 
 
-def test_effective_scope_ceiling_defaults_unknown_to_released() -> None:
+def test_effective_scope_ceiling_defaults_unknown_to_run_completion() -> None:
     assert effective_scope_ceiling("pageReadyObserved") == "pageReadyObserved"
     assert effective_scope_ceiling("prepareSession") == "prepareSession"
-    assert effective_scope_ceiling("syncEstablished") == "pageReadyObserved"
+    assert effective_scope_ceiling("runCompletion") == "runCompletion"
+    assert effective_scope_ceiling("syncEstablished") == "runCompletion"
+    assert effective_scope_ceiling("unknownCeiling") == "runCompletion"
 
 
 def test_format_scope_ceiling_detail_includes_defaulting_diagnostics() -> None:
     assert format_scope_ceiling_detail("pageReadyObserved") == "'pageReadyObserved'"
     assert format_scope_ceiling_detail("prepareSession") == "'prepareSession'"
+    assert format_scope_ceiling_detail("runCompletion") == "'runCompletion'"
     assert (
         format_scope_ceiling_detail("syncEstablished")
-        == "'pageReadyObserved' (input 'syncEstablished' defaulted to 'pageReadyObserved')"
+        == "'runCompletion' (input 'syncEstablished' defaulted to 'runCompletion')"
     )
 
 
@@ -206,15 +216,16 @@ def test_mission_lifecycle_classifies_released_missions() -> None:
     assert mission_lifecycle("page_ready_observation") == "released"
 
 
-def test_mission_lifecycle_classifies_modeled_missions() -> None:
-    assert mission_lifecycle("sync_observation") == "modeled"
-    assert mission_lifecycle("target_actionability_observation") == "modeled"
-    assert mission_lifecycle("armed_state_entry") == "modeled"
-    assert mission_lifecycle("trigger_wait") == "modeled"
-    assert mission_lifecycle("click_dispatch") == "modeled"
-    assert mission_lifecycle("click_completion") == "modeled"
-    assert mission_lifecycle("success_observation") == "modeled"
-    assert mission_lifecycle("run_completion") == "modeled"
+def test_mission_lifecycle_classifies_additional_released_missions() -> None:
+    # All previously-modeled missions are now released
+    assert mission_lifecycle("sync_observation") == "released"
+    assert mission_lifecycle("target_actionability_observation") == "released"
+    assert mission_lifecycle("armed_state_entry") == "released"
+    assert mission_lifecycle("trigger_wait") == "released"
+    assert mission_lifecycle("click_dispatch") == "released"
+    assert mission_lifecycle("click_completion") == "released"
+    assert mission_lifecycle("success_observation") == "released"
+    assert mission_lifecycle("run_completion") == "released"
 
 
 def test_mission_lifecycle_classifies_control_only_missions() -> None:

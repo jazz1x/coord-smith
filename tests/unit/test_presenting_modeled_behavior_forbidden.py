@@ -87,21 +87,21 @@ def test_released_missions_are_strictly_separated_from_modeled(
         f"PRD Non-Goals (line 148) forbids presenting modeled behavior as released."
     )
 
-    # Verify modeled missions are a separate, non-overlapping set
-    assert len(released_set) == 4, "Released scope must have exactly 4 missions"
-    assert len(modeled_set) > 0, "Modeled missions must exist (for full lifecycle)"
-    assert len(released_set) + len(modeled_set) >= 4, "Total missions must cover released + modeled"
+    # Verify all missions are released (no modeled-only missions)
+    assert len(released_set) == 12, "Released scope must have all 12 missions"
+    assert len(modeled_set) == 0, "No modeled-only missions remain (all promoted to released)"
+    assert len(released_set) + len(modeled_set) == 12, "Total missions equals 12 released missions"
 
 
 def test_approved_scope_ceiling_prevents_modeled_mission_exposure(
     tmp_path: Path,
 ) -> None:
-    """Verify approved_scope_ceiling prevents modeled missions from being exposed.
+    """Verify approved_scope_ceiling prevents missions above ceiling from being exposed.
 
     PRD Non-Goals (line 148): 'presenting modeled behavior as released behavior'
 
     The approved_scope_ceiling setting must enforce that no mission above
-    the ceiling (modeled missions) is ever exposed or presented as released.
+    the ceiling is ever exposed or presented as released.
     """
     run = ReleasedRunContext(
         run_root=tmp_path,
@@ -110,23 +110,15 @@ def test_approved_scope_ceiling_prevents_modeled_mission_exposure(
 
     # Verify the ceiling is set to a released mission
     assert run.approved_scope_ceiling == "pageReadyObserved", (
-        f"Ceiling must be a released mission, not modeled behavior. "
+        f"Ceiling must be a released mission. "
         f"Current ceiling: {run.approved_scope_ceiling}"
     )
 
-    # The ceiling ensures no modeled missions above pageReadyObserved
-    # are reachable or presentable in the released-scope graph
-    modeled_above_ceiling = [
-        m for m in MODELED_MISSIONS
-        if m not in ["page_ready_observation"]  # pageReadyObserved is the ceiling
-    ]
-
-    # All modeled missions above pageReadyObserved should not be exposed
-    assert len(modeled_above_ceiling) > 0, (
-        "There should be modeled missions above the released ceiling"
+    # With runCompletion ceiling supported, verify that missions are indexed
+    # and only those at or below ceiling index are exposed
+    assert len(MODELED_MISSIONS) == 0, (
+        "All missions are now released; no modeled-only missions remain"
     )
-    # The fact that there are modeled missions above the ceiling, but they're
-    # not exposed, verifies that modeled behavior is not presented as released.
 
 
 def test_only_released_missions_appear_in_returned_states(

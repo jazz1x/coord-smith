@@ -64,13 +64,13 @@ async def test_released_scope_delegates_all_browser_ops_to_execution_adapter(
 
     PRD System Boundary (line 27): 'OpenClaw owns browser-facing execution'
 
-    All four released missions are browser-facing operations that must be
-    delegated exclusively to the OpenClaw adapter. No other component should
-    perform browser operations.
+    All missions up to the ceiling (pageReadyObserved) are browser-facing
+    operations that must be delegated exclusively to the OpenClaw adapter.
+    No other component should perform browser operations.
     """
     adapter = TrackingExecutionAdapter()
 
-    # Run the released-scope graph
+    # Run the released-scope graph (uses pageReadyObserved ceiling)
     await run_released_scope_via_langgraph(
         adapter=adapter,
         session_ref="test-session",
@@ -80,12 +80,14 @@ async def test_released_scope_delegates_all_browser_ops_to_execution_adapter(
         base_dir=tmp_path,
     )
 
-    # Verify OpenClaw adapter was called exactly once for each released mission
+    # Verify OpenClaw adapter was called for missions up to pageReadyObserved ceiling
+    # pageReadyObserved is at index 3 in RELEASED_MISSIONS, so 4 missions total
     assert len(adapter.requests) == 4
 
-    # Verify all released missions were delegated to OpenClaw
+    # Verify missions up to ceiling were delegated to OpenClaw
     called_missions = [request.mission_name for request in adapter.requests]
-    assert called_missions == list(RELEASED_MISSIONS)
+    expected_missions = list(RELEASED_MISSIONS[:4])  # Only first 4: up to pageReadyObserved
+    assert called_missions == expected_missions
 
 
 @pytest.mark.asyncio

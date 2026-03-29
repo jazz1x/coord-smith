@@ -30,12 +30,11 @@ def test_released_scope_runtime_owns_orchestration_logic() -> None:
     3. The released-scope execution graph manages transitions between missions
     """
     # Mission sequence is defined by ez-ax orchestration
-    assert RELEASED_MISSIONS == (
-        "attach_session",
-        "prepare_session",
-        "benchmark_validation",
-        "page_ready_observation",
-    ), "Mission sequence is part of ez-ax orchestration"
+    # All 12 missions are now released (ceiling expands to runCompletion)
+    assert len(RELEASED_MISSIONS) == 12, "Mission sequence includes all 12 released missions"
+    assert RELEASED_MISSIONS[0] == "attach_session", "Sequence starts with attach_session"
+    assert RELEASED_MISSIONS[3] == "page_ready_observation", "Includes pageReadyObserved"
+    assert RELEASED_MISSIONS[-1] == "run_completion", "Sequence ends with runCompletion"
 
     # RuntimeState owns orchestration state
     state = RuntimeState(

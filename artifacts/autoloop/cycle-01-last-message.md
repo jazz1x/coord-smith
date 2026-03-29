@@ -1,35 +1,33 @@
----
+✅ **Phase R67 — Scope Expansion Complete**
 
-## Stop-State Consistency Gate Results
+**Task**: `scope-expansion-prd-docs`
 
-All validation **clean and passing**:
-- ✅ 746 tests passing (4 E2E: 2 synthetic, 2 real-environment)
-- ✅ mypy: clean (48 source files)
-- ✅ ruff: all checks passed
+**What was completed**:
 
-**Stop-state gate requirements analysis:**
+1. ✅ **docs/prd.md** — Released ceiling and scope expanded:
+   - Changed released ceiling from `pageReadyObserved` to `runCompletion`
+   - Listed all 12 missions as released (attach, prepareSession, benchmark validation, pageReadyObserved, syncObservation, targetActionabilityObservation, armedStateEntry, triggerWait, clickDispatch, clickCompletion, successObservation, runCompletion)
+   - Removed modeled-only stages section (all stages now released)
+   - Updated Release-Ceiling Stop Proof section to reference `runCompletion`
+   - Updated Non-Goals section to reference `runCompletion`
 
-1. ✅ **No pending families** — 0 pending / 63 total (62 covered + 1 excluded)
-2. ✅ **All anchor families covered/excluded** — anchor `r63ReleasedPathE2E` fully covered
-3. ✅ **No concrete next slice named** — current.next_action states `FINAL_STOP_REVIEW`, not a concrete slice
-4. ✅ **Released-path E2E evidence typed and comparable** — all 4 E2E tests passing, including real-environment tests at `pageReadyObserved` ceiling
+2. ✅ **docs/current-state.md** — Invariant updated:
+   - Changed invariant from "released ceiling remains `pageReadyObserved`" to "released ceiling expands from pageReadyObserved to runCompletion"
+   - Added clarity about OpenClaw and CUA engine ownership
 
----
+3. ✅ **docs/core-loop.md** — References updated:
+   - Updated preflight check to "task stays at or below `runCompletion`"
+   - Updated Rules section to reference `runCompletion`
 
-## Final Assessment
+4. ✅ **Validation**:
+   - All 611 unit tests pass (`pytest tests/unit/ -q`)
+   - No test failures from documentation changes
 
-The **stop-state consistency gate is satisfied**. All required conditions for `FINAL_STOP` are met:
+5. ✅ **Coverage ledger and work-rag**:
+   - Marked `scope-expansion-prd-docs` as `covered` in low-attention-coverage-ledger.json
+   - Updated work-rag.json next_action to `scope-expansion-mission-registry`
+   - Added checkpoint documenting completion
 
-- **Coverage ledger exhausted:** All 63 families accounted for (62 covered + 1 excluded)
-- **Queue exhausted:** Documented queue, paused resume-search, heuristic catalog, and continuation-seeding all complete
-- **E2E validation complete:** Released-path E2E scaffold functional with typed, comparable artifacts at `pageReadyObserved`
-- **Scope ceiling honored:** All work remains below or at `pageReadyObserved`; no modeled-stage work claimed as released
+6. ✅ **Committed** — Clean one-commit slice (dbd6585)
 
-**Current canonical state (work-rag.json):**
-```
-"next_action": "FINAL_STOP_REVIEW - queue exhausted. Phase R63 heuristic gap scan complete. Real-environment released-path E2E lane implemented with 2 new tests exercising PyAutoGUI adapter. All 63 coverage families marked covered. Ready for final stop decision."
-```
-
-The system has reached an honest exhaustion point. All 63 coverage families are accounted for, validation passes comprehensively, and no in-bounds PRD gap remains below `pageReadyObserved`. 
-
-**Recommendation:** FINAL_STOP is appropriate and valid.
+**Next action**: `scope-expansion-mission-registry` — Update mission registry and runtime scope ceiling logic to promote all 8 modeled missions to released status.

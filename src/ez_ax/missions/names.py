@@ -7,9 +7,6 @@ RELEASED_MISSIONS: Final[tuple[str, ...]] = (
     "prepare_session",
     "benchmark_validation",
     "page_ready_observation",
-)
-
-MODELED_MISSIONS: Final[tuple[str, ...]] = (
     "sync_observation",
     "target_actionability_observation",
     "armed_state_entry",
@@ -19,6 +16,8 @@ MODELED_MISSIONS: Final[tuple[str, ...]] = (
     "success_observation",
     "run_completion",
 )
+
+MODELED_MISSIONS: Final[tuple[str, ...]] = ()
 
 PRIMARY_CONTROL_MISSIONS: Final[tuple[str, ...]] = (
     "release_gate_evaluation",
