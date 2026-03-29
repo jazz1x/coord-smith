@@ -267,8 +267,9 @@ async def test_execute_run_completion_node_seeds_release_ceiling_stop(
     result = ExecutionResult(
         mission_name="run_completion",
         evidence_refs=(
-            "evidence://action-log/release-ceiling-stop",
-        ),
+                    "evidence://action-log/run-completed",
+                    "evidence://text/run-summary",
+                ),
     )
     adapter = FakeExecutionAdapter(result=result)
     state = RuntimeState(run_id="test-run")

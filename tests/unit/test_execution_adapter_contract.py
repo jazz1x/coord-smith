@@ -441,7 +441,10 @@ def test_build_execution_result_within_scope_rejects_modeled() -> None:
     try:
         build_execution_result_within_scope(
             mission_name="sync_observation",
-            evidence_refs=("evidence://action-log/sync-observed",),
+            evidence_refs=(
+                    "evidence://clock/server-time-synced",
+                    "evidence://action-log/sync-observed",
+                ),
             approved_scope_ceiling="pageReadyObserved",
         )
     except ValueError as exc:
@@ -1184,7 +1187,10 @@ def test_validate_execution_result_within_scope_accepts_attach_under_prepare_ses
 
 def test_validate_execution_result_within_scope_rejects_modeled() -> None:
     result = ExecutionResult(
-        mission_name="sync_observation", evidence_refs=("evidence://action-log/sync-observed",)
+        mission_name="sync_observation", evidence_refs=(
+                    "evidence://clock/server-time-synced",
+                    "evidence://action-log/sync-observed",
+                )
     )
 
     try:
@@ -1202,7 +1208,10 @@ def test_validate_execution_result_within_scope_accepts_released_under_default_c
     None
 ):
     result = ExecutionResult(
-        mission_name="sync_observation", evidence_refs=("evidence://action-log/sync-observed",)
+        mission_name="sync_observation", evidence_refs=(
+                    "evidence://clock/server-time-synced",
+                    "evidence://action-log/sync-observed",
+                )
     )
 
     # sync_observation is now released and within default runCompletion ceiling

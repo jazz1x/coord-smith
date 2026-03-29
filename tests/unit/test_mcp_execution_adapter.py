@@ -216,7 +216,10 @@ async def test_mcp_adapter_accepts_all_released_scope_missions(tmp_path: Path) -
     With the expanded ceiling to runCompletion, all 12 missions including
     sync_observation are now within the released scope and should be accepted.
     """
-    evidence_refs = ["evidence://action-log/sync-observed"]
+    evidence_refs = [
+        "evidence://clock/server-time-synced",
+        "evidence://action-log/sync-observed",
+    ]
     tool_output = {
         "mission_name": "sync_observation",
         "status": "success",

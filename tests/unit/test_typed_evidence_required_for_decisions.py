@@ -63,14 +63,38 @@ class TypedEvidenceFakeExecutionAdapter:
                 "evidence://dom/page-shell-ready",
                 "evidence://action-log/page-ready-observed",
             ),
-            "sync_observation": ("evidence://action-log/sync-observed",),
-            "target_actionability_observation": ("evidence://action-log/target-actionable-observed",),
-            "armed_state_entry": ("evidence://action-log/armed-state",),
-            "trigger_wait": ("evidence://action-log/trigger-wait-complete",),
-            "click_dispatch": ("evidence://action-log/click-dispatched",),
-            "click_completion": ("evidence://action-log/click-completed",),
-            "success_observation": ("evidence://action-log/success-observation",),
-            "run_completion": ("evidence://action-log/release-ceiling-stop",),
+            "sync_observation": (
+                "evidence://clock/server-time-synced",
+                "evidence://action-log/sync-observed",
+            ),
+            "target_actionability_observation": (
+                "evidence://dom/target-actionable",
+                "evidence://action-log/target-actionable-observed",
+            ),
+            "armed_state_entry": (
+                "evidence://text/armed-state-entered",
+                "evidence://action-log/armed-state",
+            ),
+            "trigger_wait": (
+                "evidence://clock/trigger-received",
+                "evidence://action-log/trigger-wait-complete",
+            ),
+            "click_dispatch": (
+                "evidence://action-log/click-dispatched",
+                "evidence://dom/click-target-clicked",
+            ),
+            "click_completion": (
+                "evidence://dom/click-effect-confirmed",
+                "evidence://action-log/click-completed",
+            ),
+            "success_observation": (
+                "evidence://dom/success-observed",
+                "evidence://action-log/success-observation",
+            ),
+            "run_completion": (
+                "evidence://action-log/run-completed",
+                "evidence://text/run-summary",
+            ),
         }
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
