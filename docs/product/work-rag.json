@@ -27,12 +27,12 @@
     }
   },
   "current": {
-    "goal": "FINAL_STOP — Phase R57 complete. All released-scope validation complete and verified exhaustive.",
-    "phase": "Phase R57 — heuristic scan complete",
-    "milestone": "Phase R57 released-scope clause verification complete",
-    "anchor": "r57HeuristicScanBound",
+    "goal": "FINAL_STOP — Phase R58 complete. All released-scope validation complete and verified exhaustive. Coverage ledger: 58 families covered (R1-R58).",
+    "phase": "Phase R58 — heuristic scan complete",
+    "milestone": "Phase R58 comprehensive PRD clause verification complete",
+    "anchor": "r58HeuristicScanBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains pageReadyObserved. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-    "next_action": "FINAL_STOP — Phase R57 complete",
+    "next_action": "FINAL_STOP — Phase R58 complete. All released-scope clauses below pageReadyObserved verified with dedicated test coverage. All 8 PRD sections covered. No pending families remain.",
     "approved_scope_ceiling": "pageReadyObserved",
     "references": [
       "docs/prd.md",
