@@ -28,6 +28,46 @@ _FALLBACK_REFS: dict[str, tuple[str, ...]] = {
     "page_ready_observation": (
         "evidence://screenshot/page-shell-ready-fallback",
         "evidence://text/fallback-reason",
+        "evidence://action-log/page-ready-observed",
+    ),
+    "sync_observation": (
+        "evidence://screenshot/sync-observed-fallback",
+        "evidence://text/fallback-reason",
+        "evidence://action-log/sync-observed",
+    ),
+    "target_actionability_observation": (
+        "evidence://screenshot/target-actionable-fallback",
+        "evidence://text/fallback-reason",
+        "evidence://action-log/target-actionable-observed",
+    ),
+    "armed_state_entry": (
+        "evidence://screenshot/armed-state-fallback",
+        "evidence://text/fallback-reason",
+        "evidence://action-log/armed-state",
+    ),
+    "trigger_wait": (
+        "evidence://screenshot/trigger-wait-fallback",
+        "evidence://text/fallback-reason",
+        "evidence://action-log/trigger-wait-complete",
+    ),
+    "click_dispatch": (
+        "evidence://screenshot/click-dispatched-fallback",
+        "evidence://text/fallback-reason",
+        "evidence://action-log/click-dispatched",
+    ),
+    "click_completion": (
+        "evidence://screenshot/click-completed-fallback",
+        "evidence://text/fallback-reason",
+        "evidence://action-log/click-completed",
+    ),
+    "success_observation": (
+        "evidence://screenshot/success-observation-fallback",
+        "evidence://text/fallback-reason",
+        "evidence://action-log/success-observation",
+    ),
+    "run_completion": (
+        "evidence://screenshot/run-completion-fallback",
+        "evidence://text/fallback-reason",
         "evidence://action-log/release-ceiling-stop",
     ),
     "attach_session": (

@@ -102,7 +102,7 @@ async def test_execute_writes_action_log_artifact(tmp_path: Path) -> None:
     assert "ts" in entry
 
 
-async def test_execute_page_ready_observation_writes_release_ceiling_stop(
+async def test_execute_page_ready_observation_writes_page_ready_observed(
     tmp_path: Path,
 ) -> None:
     mock_screenshot = MagicMock()
@@ -117,11 +117,11 @@ async def test_execute_page_ready_observation_writes_release_ceiling_stop(
         )
         result = await adapter.execute(request)
 
-    assert "evidence://action-log/release-ceiling-stop" in result.evidence_refs
-    log_path = tmp_path / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
+    assert "evidence://action-log/page-ready-observed" in result.evidence_refs
+    log_path = tmp_path / "artifacts" / "action-log" / "page-ready-observed.jsonl"
     assert log_path.exists()
     entry = json.loads(log_path.read_text(encoding="utf-8").splitlines()[0])
-    assert entry["event"] == "release-ceiling-stop"
+    assert entry["event"] == "page-ready-observed"
     assert entry["mission_name"] == "page_ready_observation"
 
 

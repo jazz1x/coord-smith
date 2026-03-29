@@ -1702,7 +1702,7 @@ def test_evaluate_and_record_missing_evidence_after_omitted_success_keeps_contin
 def test_evaluate_and_record_out_of_scope_failure_after_success_keeps_continuity() -> (
     None
 ):
-    state = RuntimeState(run_id="run-001")
+    state = RuntimeState(run_id="run-001", approved_scope_ceiling="pageReadyObserved")
     state.record_transition_artifact(
         build_transition_artifact(
             predecessor_mission=None,
@@ -1766,7 +1766,7 @@ def test_evaluate_and_record_out_of_scope_failure_after_success_keeps_continuity
 
 
 def test_evaluate_and_record_out_of_scope_missing_evidence_stays_out_of_scope() -> None:
-    state = RuntimeState(run_id="run-001")
+    state = RuntimeState(run_id="run-001", approved_scope_ceiling="pageReadyObserved")
     state.record_transition_artifact(
         build_transition_artifact(
             predecessor_mission=None,
@@ -1832,7 +1832,7 @@ def test_evaluate_and_record_out_of_scope_missing_evidence_stays_out_of_scope() 
 def test_evaluate_and_record_out_of_scope_after_omitted_success_keeps_continuity() -> (
     None
 ):
-    state = RuntimeState(run_id="run-001")
+    state = RuntimeState(run_id="run-001", approved_scope_ceiling="pageReadyObserved")
     state.record_transition_artifact(
         build_transition_artifact(
             predecessor_mission=None,
@@ -2151,7 +2151,7 @@ def test_evaluate_and_record_missing_predecessor_after_omitted_success_keeps_con
 
 
 def test_evaluate_and_record_forward_transition_records_out_of_scope_failure() -> None:
-    state = RuntimeState(run_id="run-001")
+    state = RuntimeState(run_id="run-001", approved_scope_ceiling="pageReadyObserved")
     state.record_transition_artifact(
         build_transition_artifact(
             predecessor_mission=None,
@@ -2191,7 +2191,7 @@ def test_evaluate_and_record_forward_transition_records_out_of_scope_failure() -
 def test_evaluate_and_record_forward_transition_records_out_of_scope_with_inferred_predecessor() -> (
     None
 ):
-    state = RuntimeState(run_id="run-001")
+    state = RuntimeState(run_id="run-001", approved_scope_ceiling="pageReadyObserved")
     state.record_transition_artifact(
         build_transition_artifact(
             predecessor_mission=None,
@@ -2232,7 +2232,7 @@ def test_evaluate_and_record_forward_transition_records_out_of_scope_with_inferr
 def test_evaluate_and_record_forward_transition_records_out_of_scope_with_inferred_predecessor_and_missing_evidence() -> (
     None
 ):
-    state = RuntimeState(run_id="run-001")
+    state = RuntimeState(run_id="run-001", approved_scope_ceiling="pageReadyObserved")
     state.record_transition_artifact(
         build_transition_artifact(
             predecessor_mission=None,
@@ -2273,7 +2273,7 @@ def test_evaluate_and_record_forward_transition_records_out_of_scope_with_inferr
 def test_evaluate_and_record_forward_transition_records_out_of_scope_with_inferred_predecessor_after_prepare_session() -> (
     None
 ):
-    state = RuntimeState(run_id="run-001")
+    state = RuntimeState(run_id="run-001", approved_scope_ceiling="pageReadyObserved")
     state.record_transition_artifact(
         build_transition_artifact(
             predecessor_mission=None,
@@ -2322,7 +2322,7 @@ def test_evaluate_and_record_forward_transition_records_out_of_scope_with_inferr
 def test_evaluate_and_record_forward_transition_records_out_of_scope_with_inferred_predecessor_and_missing_evidence_after_prepare_session() -> (
     None
 ):
-    state = RuntimeState(run_id="run-001")
+    state = RuntimeState(run_id="run-001", approved_scope_ceiling="pageReadyObserved")
     state.record_transition_artifact(
         build_transition_artifact(
             predecessor_mission=None,
@@ -2371,7 +2371,7 @@ def test_evaluate_and_record_forward_transition_records_out_of_scope_with_inferr
 def test_evaluate_and_record_forward_transition_records_out_of_scope_with_missing_evidence() -> (
     None
 ):
-    state = RuntimeState(run_id="run-001")
+    state = RuntimeState(run_id="run-001", approved_scope_ceiling="pageReadyObserved")
     state.record_transition_artifact(
         build_transition_artifact(
             predecessor_mission=None,

@@ -309,7 +309,10 @@ def build_released_scope_execution_graph(
     graph.add_node("benchmark_validation_node", benchmark_validation_node)
     graph.add_node("page_ready_observation_node", page_ready_observation_node)
     graph.add_node("sync_observation_node", sync_observation_node)
-    graph.add_node("target_actionability_observation_node", target_actionability_observation_node)
+    graph.add_node(
+        "target_actionability_observation_node",
+        target_actionability_observation_node,
+    )
     graph.add_node("armed_state_entry_node", armed_state_entry_node)
     graph.add_node("trigger_wait_node", trigger_wait_node)
     graph.add_node("click_dispatch_node", click_dispatch_node)

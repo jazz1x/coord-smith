@@ -2,8 +2,8 @@
 
 This suite exercises the released path through the stdio-backed OpenClaw
 adapter boundary while keeping execution deterministic with the fake MCP SDK.
-It is the first runnable E2E scaffold under the current released ceiling:
-`pageReadyObserved`.
+It is the runnable E2E scaffold under the current released ceiling:
+`runCompletion`.
 """
 
 from __future__ import annotations
@@ -57,8 +57,8 @@ async def test_released_path_e2e_emits_release_ceiling_stop_bundle(
 ) -> None:
     result = await _run_released_path_e2e(tmp_path=tmp_path, monkeypatch=monkeypatch)
 
-    assert result.run.approved_scope_ceiling == "pageReadyObserved"
-    assert result.state.current_mission == "page_ready_observation"
+    assert result.run.approved_scope_ceiling == "runCompletion"
+    assert result.state.current_mission == "run_completion"
     assert "evidence://action-log/release-ceiling-stop" in (
         result.state.mission_state.evidence_refs or ()
     )
@@ -69,7 +69,7 @@ async def test_released_path_e2e_emits_release_ceiling_stop_bundle(
 
     release_stop = _load_jsonl_record(release_stop_path)
     assert release_stop["event"] == "release-ceiling-stop"
-    assert release_stop["mission_name"] == "page_ready_observation"
+    assert release_stop["mission_name"] == "run_completion"
     assert isinstance(release_stop["ts"], str)
 
 
@@ -95,6 +95,14 @@ async def test_released_path_e2e_repeated_runs_keep_comparable_action_log_layout
         "attach-session.jsonl",
         "prepare-session.jsonl",
         "enter-target-page.jsonl",
+        "page-ready-observed.jsonl",
+        "sync-observed.jsonl",
+        "target-actionable-observed.jsonl",
+        "armed-state.jsonl",
+        "trigger-wait-complete.jsonl",
+        "click-dispatched.jsonl",
+        "click-completed.jsonl",
+        "success-observation.jsonl",
         "release-ceiling-stop.jsonl",
     }
 
@@ -111,7 +119,7 @@ async def test_released_path_e2e_repeated_runs_keep_comparable_action_log_layout
     assert (
         first_stop["mission_name"]
         == second_stop["mission_name"]
-        == "page_ready_observation"
+        == "run_completion"
     )
 
 
@@ -148,11 +156,11 @@ async def _run_real_environment_e2e(
 async def test_real_environment_released_path_e2e_stops_at_ceiling(
     tmp_path: Path,
 ) -> None:
-    """Verify real-environment E2E stops at pageReadyObserved."""
+    """Verify real-environment E2E stops at runCompletion."""
     result = await _run_real_environment_e2e(tmp_path=tmp_path)
 
-    assert result.run.approved_scope_ceiling == "pageReadyObserved"
-    assert result.state.current_mission == "page_ready_observation"
+    assert result.run.approved_scope_ceiling == "runCompletion"
+    assert result.state.current_mission == "run_completion"
     assert "evidence://action-log/release-ceiling-stop" in (
         result.state.mission_state.evidence_refs or ()
     )
@@ -163,7 +171,7 @@ async def test_real_environment_released_path_e2e_stops_at_ceiling(
 
     release_stop = _load_jsonl_record(release_stop_path)
     assert release_stop["event"] == "release-ceiling-stop"
-    assert release_stop["mission_name"] == "page_ready_observation"
+    assert release_stop["mission_name"] == "run_completion"
     assert isinstance(release_stop["ts"], str)
 
 

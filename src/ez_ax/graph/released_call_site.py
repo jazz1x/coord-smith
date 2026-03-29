@@ -25,7 +25,9 @@ class ReleasedRunContext:
     """Minimal released-scope run context owned by the orchestrator/graph."""
 
     run_root: Path
-    approved_scope_ceiling: Literal["pageReadyObserved", "runCompletion"] = "runCompletion"
+    approved_scope_ceiling: Literal[
+        "pageReadyObserved", "runCompletion"
+    ] = "runCompletion"
 
     def __post_init__(self) -> None:
         if not isinstance(self.run_root, Path):
@@ -44,7 +46,8 @@ class ReleasedRunContext:
             raise ConfigError(msg)
         if self.approved_scope_ceiling not in ("pageReadyObserved", "runCompletion"):
             msg = (
-                "ReleasedRunContext.approved_scope_ceiling must be pageReadyObserved or runCompletion"
+                "ReleasedRunContext.approved_scope_ceiling must be "
+                "pageReadyObserved or runCompletion"
             )
             raise FlowError(msg)
 
@@ -190,7 +193,7 @@ async def execute_page_ready_observation_node(
     adapter: ExecutionAdapter,
     run: ReleasedRunContext,
 ) -> ExecutionResult:
-    """Execute the released page_ready_observation node and continue to sync observation."""
+    """Execute released page_ready_observation node and continue to sync observation."""
 
     require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("page_ready_observation")
