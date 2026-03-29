@@ -10,7 +10,9 @@ decision-making must validate evidence types before transitions/stops occur.
 
 from __future__ import annotations
 
+import json
 import re
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -24,6 +26,29 @@ from ez_ax.graph.langgraph_released_execution import run_released_scope_via_lang
 
 class TypedEvidenceFakeExecutionAdapter:
     """Stub adapter that provides valid typed evidence for each mission."""
+
+    def __init__(self, run_root: Path | None = None) -> None:
+        self._run_root = run_root
+
+    def with_run_root(self, *, run_root: Path) -> TypedEvidenceFakeExecutionAdapter:
+        """Bind run_root for artifact creation."""
+        self._run_root = run_root
+        return self
+
+    def _write_action_log(self, *, key: str, mission_name: str) -> None:
+        """Write action-log artifact to disk."""
+        if self._run_root is None:
+            return
+        ts = datetime.now(tz=UTC).isoformat()
+        entry: dict[str, object] = {
+            "ts": ts,
+            "mission_name": mission_name,
+            "event": key,
+        }
+        path = self._run_root / "artifacts" / "action-log" / f"{key}.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
 
     async def execute(
         self, request: ExecutionRequest
@@ -99,6 +124,11 @@ class TypedEvidenceFakeExecutionAdapter:
         refs = evidence_map.get(request.mission_name, ())
         if not refs:
             raise AssertionError(f"Unexpected mission: {request.mission_name}")
+        # Write action-log artifacts for each action-log ref
+        for ref in refs:
+            if ref.startswith("evidence://action-log/"):
+                action_key = ref[len("evidence://action-log/") :]
+                self._write_action_log(key=action_key, mission_name=request.mission_name)
         return ExecutionResult(
             mission_name=request.mission_name, evidence_refs=refs
         )
@@ -182,7 +212,7 @@ async def test_released_scope_uses_typed_evidence_in_all_missions(
     # The stop proof must be an action-log type (requires proof trail)
     final_evidence_refs = runtime.mission_state.evidence_refs or ()
     stop_proof_present = any(
-        "evidence://action-log/release-ceiling-stop" in ref
+        "evidence://action-log/run-completed" in ref
         for ref in final_evidence_refs
     )
     assert stop_proof_present, (

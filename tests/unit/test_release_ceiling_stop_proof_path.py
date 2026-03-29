@@ -1,8 +1,8 @@
-"""Test that release-ceiling-stop proof artifact is created at the exact PRD-specified path.
+"""Test that run-completed proof artifact is created at the exact PRD-specified path.
 
 PRD requirement (Release-Ceiling Stop Proof section, lines 98-100):
 'Expected artifact example:
-- `artifacts/action-log/release-ceiling-stop.jsonl`'
+- `artifacts/action-log/run-completed.jsonl`'
 
 This ensures the stop proof artifact is located at the exact path specified in the PRD,
 enabling verifiability and repeatability of released-scope runs.
@@ -22,7 +22,7 @@ from ez_ax.graph.langgraph_released_execution import run_released_scope_via_lang
 
 
 class ReleaseCeilingPathTestAdapter:
-    """Adapter that provides valid evidence for testing release-ceiling-stop artifact path."""
+    """Adapter that provides valid evidence for testing run-completed artifact path."""
 
     async def execute(
         self, request: ExecutionRequest
@@ -92,11 +92,11 @@ class ReleaseCeilingPathTestAdapter:
 async def test_release_ceiling_stop_proof_artifact_at_prd_specified_path(
     tmp_path: Path,
 ) -> None:
-    """Verify release-ceiling-stop proof is created at exact PRD-specified path.
+    """Verify run-completed proof is created at exact PRD-specified path.
 
     PRD requirement (Release-Ceiling Stop Proof section, lines 98-100):
     'Expected artifact example:
-    - `artifacts/action-log/release-ceiling-stop.jsonl`'
+    - `artifacts/action-log/run-completed.jsonl`'
 
     This test explicitly validates that when the released-scope graph completes
     at page_ready_observation, the stop proof artifact is created at the exact
@@ -116,7 +116,7 @@ async def test_release_ceiling_stop_proof_artifact_at_prd_specified_path(
 
     # The exact PRD-specified path
     expected_path = (
-        result.run.run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
+        result.run.run_root / "artifacts" / "action-log" / "run-completed.jsonl"
     )
 
     # Verify the artifact exists at the exact PRD-specified path
@@ -129,9 +129,9 @@ async def test_release_ceiling_stop_proof_artifact_at_prd_specified_path(
         f"Release-ceiling-stop artifact must be a file at: {expected_path}"
     )
 
-    # Verify the path structure matches PRD: artifacts/action-log/release-ceiling-stop.jsonl
+    # Verify the path structure matches PRD: artifacts/action-log/run-completed.jsonl
     relative_path = expected_path.relative_to(result.run.run_root)
-    expected_relative = Path("artifacts") / "action-log" / "release-ceiling-stop.jsonl"
+    expected_relative = Path("artifacts") / "action-log" / "run-completed.jsonl"
     assert relative_path == expected_relative, (
         f"Artifact path must match PRD structure.\n"
         f"Expected relative path: {expected_relative}\n"

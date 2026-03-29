@@ -1,4 +1,4 @@
-"""Test that released-scope graph enforces release-ceiling-stop proof validation.
+"""Test that released-scope graph enforces run-completed proof validation.
 
 PRD requirement (Release-Ceiling Stop Proof section, lines 92-109):
 'Stopping at runCompletion must be provable by typed action-log evidence.
@@ -97,7 +97,7 @@ class StopProofValidationAdapter:
 async def test_released_scope_graph_creates_stop_proof_artifact(
     tmp_path: Path,
 ) -> None:
-    """Verify that the released-scope graph produces a valid release-ceiling-stop proof.
+    """Verify that the released-scope graph produces a valid run-completed proof.
 
     PRD requirement (Release-Ceiling Stop Proof section, lines 92-109):
     'Stopping at runCompletion must be provable by typed action-log evidence.
@@ -105,7 +105,7 @@ async def test_released_scope_graph_creates_stop_proof_artifact(
     system must not claim a correct released-ceiling stop.'
 
     The released-scope graph must ensure that:
-    1. The release-ceiling-stop.jsonl artifact is created
+    1. The run-completed.jsonl artifact is created
     2. It contains the required typed fields: event, mission_name, ts
     3. The artifact can be validated using the standard validator
 
@@ -127,7 +127,7 @@ async def test_released_scope_graph_creates_stop_proof_artifact(
     # The released-scope graph must have completed at page_ready_observation.
     # Now verify the stop proof artifact exists.
     stop_proof_path = (
-        result.run.run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
+        result.run.run_root / "artifacts" / "action-log" / "run-completed.jsonl"
     )
 
     # The stop proof artifact MUST exist for the released-ceiling stop to be valid
@@ -145,7 +145,7 @@ async def test_released_scope_graph_creates_stop_proof_artifact(
         raise AssertionError(
             f"Stop proof artifact failed validation: {exc}\n"
             f"PRD requirement: Release-ceiling-stop artifact must contain:\n"
-            f"  - event: 'release-ceiling-stop'\n"
+            f"  - event: 'run-completed'\n"
             f"  - mission_name: 'run_completion'\n"
             f"  - ts: ISO-8601 timestamp"
         ) from exc
@@ -180,7 +180,7 @@ async def test_released_scope_graph_validates_stop_proof_required_fields(
 
     # Verify the stop proof artifact exists
     stop_proof_path = (
-        result.run.run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
+        result.run.run_root / "artifacts" / "action-log" / "run-completed.jsonl"
     )
     assert stop_proof_path.exists(), (
         f"Release-ceiling-stop artifact must exist at: {stop_proof_path}"
@@ -196,8 +196,8 @@ async def test_released_scope_graph_validates_stop_proof_required_fields(
 
     # Verify all required fields are present with correct types
     assert "event" in entry, "Stop proof must contain 'event' field"
-    assert entry["event"] == "release-ceiling-stop", (
-        "Stop proof event must be 'release-ceiling-stop'"
+    assert entry["event"] == "run-completed", (
+        "Stop proof event must be 'run-completed'"
     )
 
     assert "mission_name" in entry, "Stop proof must contain 'mission_name' field"
