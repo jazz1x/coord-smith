@@ -67,6 +67,7 @@ def test_phase_r44_comprehensive_prd_audit_all_clauses_covered() -> None:
         "test_ez_ax_owns_validation_stopping_reasoning.py",
         "test_runtime_no_llm_inference.py",
         "test_pyautogui_adapter.py",
+        "test_system_boundary_openclaw_only_execution_actor.py",
         # Release Boundary clauses
         "test_release_boundary_current_ceiling.py",
         "test_released_missions_specification.py",

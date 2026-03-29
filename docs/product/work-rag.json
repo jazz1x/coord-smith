@@ -27,12 +27,12 @@
     }
   },
   "current": {
-    "goal": "Released scope at runCompletion ceiling with all 12 missions. Phase R75 heuristic gap scan: scan PRD for any remaining uncovered released-scope implementation clauses. Identified and tested uncovered clause 'OpenClaw is the only browser-facing execution actor'. All 634 unit tests pass; Phase R75 complete.",
-    "phase": "Phase R75 — heuristic scan",
-    "milestone": "Phase R75 first PRD-backed uncovered clause implemented and tested",
-    "anchor": "r75HeuristicScanBound",
+    "goal": "Released scope at runCompletion ceiling with all 12 missions with full PRD clause coverage. Phase R76 heuristic gap scan: identified and corrected gap in comprehensive PRD clause audit. Test file test_system_boundary_openclaw_only_execution_actor.py (created in R75) was not included in R44 audit list. Updated test_phase_r44_comprehensive_prd_clause_audit.py to include missing test. Also fixed broken test in test_runtime_no_llm_inference.py for graceful handling of missing anthropic module. All 633 unit tests pass (1 skipped); Phase R76 complete.",
+    "phase": "Phase R76 — heuristic scan",
+    "milestone": "Phase R76 heuristic gap scan complete — all released-scope clauses verified covered",
+    "anchor": "r76HeuristicScanBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
-    "next_action": "FINAL_STOP — Phase R75 complete, all released-scope clauses have dedicated test coverage",
+    "next_action": "FINAL_STOP — Phase R76 complete; all pending families covered; heuristic gap scan series exhausted",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",

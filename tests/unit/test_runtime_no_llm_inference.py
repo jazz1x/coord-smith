@@ -185,6 +185,12 @@ async def test_released_scope_execution_makes_no_llm_client_calls(
     """
     adapter = FakeExecutionAdapter()
 
+    # Check if anthropic is available; skip test if not
+    try:
+        import anthropic  # noqa: F401
+    except ModuleNotFoundError:
+        pytest.skip("anthropic not installed; skipping mock-based verification")
+
     # Patch anthropic.Anthropic to detect any instantiation attempts
     with patch("anthropic.Anthropic") as mock_anthropic:
         await run_released_scope_via_langgraph(
