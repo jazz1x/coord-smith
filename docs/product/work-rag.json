@@ -32,7 +32,7 @@
     "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
     "anchor": "r67ScopeExpansionBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling expands from pageReadyObserved to runCompletion. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine.",
-    "next_action": "scope-expansion-mission-registry",
+    "next_action": "scope-expansion-graph-wiring",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -59,6 +59,25 @@
     ]
   },
   "history": [
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
+      "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
+      "anchor": "r67ScopeExpansionBound",
+      "summary": "scope-expansion-mission-registry complete: Promoted all 8 modeled missions to RELEASED_MISSIONS (sync_observation through run_completion at indices 4-11). Set MODELED_MISSIONS to empty tuple. Updated runtime.py with index-based scope ceiling check (prepareSession=1, pageReadyObserved=3, runCompletion=11). Changed DEFAULT_RELEASED_SCOPE_CEILING to runCompletion. Updated 17 test files to expect 12 released missions and new ceiling logic. All validation clean.",
+      "evidence": [
+        "src/ez_ax/missions/names.py: RELEASED_MISSIONS has 12 entries, MODELED_MISSIONS empty",
+        "src/ez_ax/models/runtime.py: RELEASED_SCOPE_CEILINGS includes runCompletion, DEFAULT_RELEASED_SCOPE_CEILING=runCompletion",
+        "src/ez_ax/models/runtime.py: mission_is_within_approved_scope uses index-based ceiling check",
+        "All test files updated: test_released_missions_specification.py, test_presenting_modeled_behavior_forbidden.py, test_runtime_state.py, test_release_ceiling_non_expansion_without_prd_change.py, test_execution_adapter_contract.py, test_browser_facing_execution_ownership.py, test_ez_ax_is_orchestration_centric.py, test_ez_ax_owns_validation_stopping_reasoning.py, test_released_scope_graph_rejects_modeled_missions.py, test_runtime_graph.py, test_runtime_settings.py, test_runtime_graph_plan.py",
+        "pytest tests/unit/ tests/contract/ -q: 742 tests passing",
+        "mypy src/ez_ax/: clean",
+        "ruff check src/ez_ax/ tests/: clean",
+        "Commit: 07cd8e3 Phase R67: Promote all 8 modeled missions to released, expand ceiling to runCompletion",
+        "docs/llm/low-attention-coverage-ledger.json: scope-expansion-mission-registry marked as covered"
+      ],
+      "recorded_at": "2026-03-29T16:45:00.000000Z"
+    },
     {
       "kind": "checkpoint",
       "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
