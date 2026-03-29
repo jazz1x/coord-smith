@@ -112,3 +112,55 @@ def test_released_scope_includes_intentional_stop_clause() -> None:
         f"Released scope must end with success_observation -> run_completion sequence; "
         f"expected {expected_sequence_end}, got {actual_sequence_end}"
     )
+
+
+def test_released_scope_marks_boundary_at_page_ready_observation() -> None:
+    """Verify page_ready_observation marks the boundary within released scope.
+
+    PRD Release Boundary (lines 47-61): Lists all 12 released missions in order:
+    1. attach
+    2. prepareSession
+    3. benchmark validation
+    4. pageReadyObserved        <- boundary marker
+    5. syncObservation          <- first mission below boundary
+    ... (7 more missions)
+    12. runCompletion
+
+    page_ready_observation is the 4th mission in the released scope and marks
+    the boundary: earlier missions (attach, prepare, benchmark) handle pre-flight
+    setup; later missions (sync onwards) handle execution and observational phases.
+
+    This explicit boundary marking helps structure the released execution pipeline.
+    """
+    # Verify page_ready_observation exists and is at the correct position (index 3)
+    expected_position = 3
+    actual_mission = RELEASED_MISSIONS[expected_position]
+    assert actual_mission == "page_ready_observation", (
+        f"page_ready_observation must be at position {expected_position} "
+        f"(4th in the 1-indexed list); found {actual_mission} instead"
+    )
+
+    # Verify missions before the boundary (setup phase)
+    setup_missions = list(RELEASED_MISSIONS[:expected_position])
+    expected_setup = [
+        "attach_session",
+        "prepare_session",
+        "benchmark_validation",
+    ]
+    assert setup_missions == expected_setup, (
+        f"Missions before page_ready_observation must be setup phase; "
+        f"expected {expected_setup}, got {setup_missions}"
+    )
+
+    # Verify missions after the boundary (execution and observation phase)
+    execution_missions = list(RELEASED_MISSIONS[expected_position + 1 :])
+    expected_execution_start = [
+        "sync_observation",
+        "target_actionability_observation",
+    ]
+    assert (
+        execution_missions[: len(expected_execution_start)] == expected_execution_start
+    ), (
+        f"Missions after page_ready_observation must start with execution phase; "
+        f"expected {expected_execution_start}, got {execution_missions[:2]}"
+    )

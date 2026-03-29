@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R72 — heuristic scan",
-  "active_milestone": "Phase R72 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r72HeuristicScanBound",
+  "active_phase": "Phase R73 — heuristic scan",
+  "active_milestone": "Phase R73 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r73HeuristicScanBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1346,6 +1346,23 @@
         "pytest tests/unit/ -q passes",
         "coverage-ledger.json 'Phase R72 heuristic gap scan' status set to covered",
         "work-rag.json next_action updated",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R73 heuristic gap scan",
+      "status": "covered",
+      "evidence_or_reason": "Phase R73 heuristic gap scan: Identified and tested uncovered PRD clause: 'page_ready_observation marks the boundary within released scope' in the Release Boundary section. Added dedicated pytest function test_released_scope_marks_boundary_at_page_ready_observation in tests/unit/test_released_missions_specification.py that validates page_ready_observation's position as the 4th mission (boundary) in the 12-mission pipeline, with setup missions (attach, prepare, benchmark) before and execution missions (sync onwards) after. Total validation: 631 tests passing (630 unit + 1 new), mypy clean, ruff clean. Coverage ledger updated: Phase R73 heuristic gap scan marked covered. All pending families in coverage ledger exhausted. Next action set to FINAL_STOP — Phase R73 complete.",
+      "next_slice_hint": "",
+      "first_validation": "python -m pytest tests/unit/test_released_missions_specification.py::test_released_scope_marks_boundary_at_page_ready_observation",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "pytest test_released_scope_marks_boundary_at_page_ready_observation PASSED",
+        "pytest tests/unit/ -q passes (631 passing)",
+        "coverage-ledger.json 'Phase R73 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated to FINAL_STOP",
         "committed"
       ],
       "template_id": ""
