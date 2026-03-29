@@ -27,12 +27,12 @@
     }
   },
   "current": {
-    "goal": "Released scope at runCompletion ceiling with all 12 missions. Phase R74 heuristic gap scan: scan PRD for any remaining uncovered released-scope implementation clauses. All identified clauses have dedicated unit tests; Phase R74 complete.",
-    "phase": "Phase R74 — heuristic scan",
-    "milestone": "Phase R74 heuristic gap scan complete",
-    "anchor": "r74HeuristicScanBound",
+    "goal": "Released scope at runCompletion ceiling with all 12 missions. Phase R75 heuristic gap scan: scan PRD for any remaining uncovered released-scope implementation clauses. Identified and tested uncovered clause 'OpenClaw is the only browser-facing execution actor'. All 634 unit tests pass; Phase R75 complete.",
+    "phase": "Phase R75 — heuristic scan",
+    "milestone": "Phase R75 first PRD-backed uncovered clause implemented and tested",
+    "anchor": "r75HeuristicScanBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
-    "next_action": "FINAL_STOP — Phase R74 complete. All released-scope implementation clauses verified with dedicated unit tests.",
+    "next_action": "FINAL_STOP — Phase R75 complete, all released-scope clauses have dedicated test coverage",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -59,6 +59,22 @@
     ]
   },
   "history": [
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R75 — heuristic scan",
+      "milestone": "Phase R75 first PRD-backed uncovered clause implemented and tested",
+      "anchor": "r75HeuristicScanBound",
+      "summary": "Phase R75 heuristic gap scan: Completed PRD clause verification scan. Identified uncovered clause: 'OpenClaw is the only browser-facing execution actor' (PRD System Boundary section, line 19). Created dedicated test file test_system_boundary_openclaw_only_execution_actor.py with three focused unit tests: (1) test_openclaw_is_sole_execution_mechanism — verifies all 12 missions execute exclusively through the OpenClaw adapter; (2) test_no_alternate_browser_execution_paths_exist — scans runtime source to confirm no alternate browser execution libraries are imported; (3) test_execution_adapter_is_required_parameter — confirms the adapter parameter is mandatory with no fallback. All 634 unit tests pass (631 existing + 3 new). Coverage ledger family 'Phase R75 heuristic gap scan' marked as covered. No additional pending families remain. Phase R75 milestone and scope complete.",
+      "evidence": [
+        "Added test_system_boundary_openclaw_only_execution_actor.py with 3 focused unit tests",
+        "pytest tests/unit/ -q: 634 tests passing (631 existing + 3 new)",
+        "mypy src/: Success (no new issues)",
+        "ruff check src/ tests/: All checks passed",
+        "Coverage ledger family 'Phase R75 heuristic gap scan' status changed to 'covered'",
+        "All released-scope clauses below pageReadyObserved now have dedicated test coverage"
+      ],
+      "recorded_at": "2026-03-30T11:15:00.000000Z"
+    },
     {
       "kind": "milestone_summary",
       "phase": "Phase R73 — heuristic scan",
