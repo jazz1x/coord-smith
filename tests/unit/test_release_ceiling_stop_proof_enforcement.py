@@ -81,8 +81,8 @@ class StopProofValidationAdapter:
                 "evidence://action-log/success-observation",
             ),
             "run_completion": (
-                "evidence://action-log/run-completed",
-                "evidence://text/run-summary",
+                "evidence://action-log/release-ceiling-stop",
+                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name, ())
@@ -127,7 +127,7 @@ async def test_released_scope_graph_creates_stop_proof_artifact(
     # The released-scope graph must have completed at page_ready_observation.
     # Now verify the stop proof artifact exists.
     stop_proof_path = (
-        result.run.run_root / "artifacts" / "action-log" / "run-completed.jsonl"
+        result.run.run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
     )
 
     # The stop proof artifact MUST exist for the released-ceiling stop to be valid
@@ -180,7 +180,7 @@ async def test_released_scope_graph_validates_stop_proof_required_fields(
 
     # Verify the stop proof artifact exists
     stop_proof_path = (
-        result.run.run_root / "artifacts" / "action-log" / "run-completed.jsonl"
+        result.run.run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
     )
     assert stop_proof_path.exists(), (
         f"Release-ceiling-stop artifact must exist at: {stop_proof_path}"
@@ -196,8 +196,8 @@ async def test_released_scope_graph_validates_stop_proof_required_fields(
 
     # Verify all required fields are present with correct types
     assert "event" in entry, "Stop proof must contain 'event' field"
-    assert entry["event"] == "run-completed", (
-        "Stop proof event must be 'run-completed'"
+    assert entry["event"] == "release-ceiling-stop", (
+        "Stop proof event must be 'release-ceiling-stop'"
     )
 
     assert "mission_name" in entry, "Stop proof must contain 'mission_name' field"

@@ -85,8 +85,8 @@ class ExecutionTrackingAdapter:
                 "evidence://action-log/success-observation",
             ),
             "run_completion": (
-                "evidence://action-log/run-completed",
-                "evidence://text/run-summary",
+                "evidence://action-log/release-ceiling-stop",
+                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name, ())
@@ -309,8 +309,8 @@ async def test_released_scope_execution_graph_wires_to_execution_adapter(
                 "evidence://action-log/success-observation",
             ),
                 "run_completion": (
-                "evidence://action-log/run-completed",
-                "evidence://text/run-summary",
+                "evidence://action-log/release-ceiling-stop",
+                "evidence://text/fallback-reason",
             ),
             }
             refs = evidence_map.get(request.mission_name, ())

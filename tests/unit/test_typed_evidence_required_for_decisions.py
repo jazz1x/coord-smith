@@ -117,8 +117,8 @@ class TypedEvidenceFakeExecutionAdapter:
                 "evidence://action-log/success-observation",
             ),
             "run_completion": (
-                "evidence://action-log/run-completed",
-                "evidence://text/run-summary",
+                "evidence://action-log/release-ceiling-stop",
+                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name, ())
@@ -212,7 +212,7 @@ async def test_released_scope_uses_typed_evidence_in_all_missions(
     # The stop proof must be an action-log type (requires proof trail)
     final_evidence_refs = runtime.mission_state.evidence_refs or ()
     stop_proof_present = any(
-        "evidence://action-log/run-completed" in ref
+        "evidence://action-log/release-ceiling-stop" in ref
         for ref in final_evidence_refs
     )
     assert stop_proof_present, (

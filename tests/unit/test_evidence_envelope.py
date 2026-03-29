@@ -34,7 +34,7 @@ def test_evidence_kind_taxonomy_excludes_future_kind_vision() -> None:
 
 def test_parse_released_evidence_ref_accepts_valid_ref() -> None:
     kind, key = parse_released_evidence_ref(
-        "evidence://action-log/run-completed"
+        "evidence://action-log/release-ceiling-stop"
     )
 
     assert kind == "action-log"
@@ -64,7 +64,7 @@ def test_parse_released_evidence_ref_accepts_all_released_kinds() -> None:
         "evidence://dom/page-shell-ready",
         "evidence://text/session-viable",
         "evidence://clock/server-time",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
         "evidence://screenshot/page-shell-ready-fallback",
         "evidence://coordinate/click-target",
     )
@@ -217,9 +217,9 @@ def test_enforce_evidence_priority_rejects_invalid_refs() -> None:
 
 def test_validate_release_ceiling_stop_proof_accepts_valid_artifact() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
-        artifact_path = Path(tmpdir) / "run-completed.jsonl"
+        artifact_path = Path(tmpdir) / "release-ceiling-stop.jsonl"
         artifact_path.write_text(
-            '{"event": "run-completed", "mission_name": "run_completion", "ts": "2026-03-27T10:00:00Z"}\n'
+            '{"event": "release-ceiling-stop", "mission_name": "run_completion", "ts": "2026-03-27T10:00:00Z"}\n'
         )
         validate_release_ceiling_stop_proof(artifact_path)
 
@@ -252,7 +252,7 @@ def test_validate_release_ceiling_stop_proof_rejects_wrong_mission() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         artifact_path = Path(tmpdir) / "wrong-mission.jsonl"
         artifact_path.write_text(
-            '{"event": "run-completed", "mission_name": "attach_session", "ts": "2026-03-27T10:00:00Z"}\n'
+            '{"event": "release-ceiling-stop", "mission_name": "attach_session", "ts": "2026-03-27T10:00:00Z"}\n'
         )
         try:
             validate_release_ceiling_stop_proof(artifact_path)
@@ -266,7 +266,7 @@ def test_validate_release_ceiling_stop_proof_rejects_missing_timestamp() -> None
     with tempfile.TemporaryDirectory() as tmpdir:
         artifact_path = Path(tmpdir) / "no-ts.jsonl"
         artifact_path.write_text(
-            '{"event": "run-completed", "mission_name": "run_completion"}\n'
+            '{"event": "release-ceiling-stop", "mission_name": "run_completion"}\n'
         )
         try:
             validate_release_ceiling_stop_proof(artifact_path)
@@ -281,7 +281,7 @@ def test_validate_release_ceiling_stop_proof_accepts_artifact_with_extra_lines()
         artifact_path = Path(tmpdir) / "with-context.jsonl"
         artifact_path.write_text(
             '{"event": "action", "mission_name": "prepare_session", "ts": "2026-03-27T10:00:00Z"}\n'
-            '{"event": "run-completed", "mission_name": "run_completion", "ts": "2026-03-27T10:00:01Z"}\n'
+            '{"event": "release-ceiling-stop", "mission_name": "run_completion", "ts": "2026-03-27T10:00:01Z"}\n'
         )
         validate_release_ceiling_stop_proof(artifact_path)
 

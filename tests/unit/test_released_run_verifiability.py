@@ -80,8 +80,8 @@ class VerifiableRunAdapter:
                 "evidence://action-log/success-observation",
             ),
             "run_completion": (
-                "evidence://action-log/run-completed",
-                "evidence://text/run-summary",
+                "evidence://action-log/release-ceiling-stop",
+                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name, ())
@@ -153,7 +153,7 @@ async def test_released_scope_produces_verifiable_run_result(
         "attach-session.jsonl",
         "prepare-session.jsonl",
         "enter-target-page.jsonl",
-        "run-completed.jsonl",
+        "release-ceiling-stop.jsonl",
     }
     for artifact_name in expected_artifacts:
         artifact_path = action_log_dir / artifact_name

@@ -225,7 +225,8 @@ async def test_mcp_adapter_accepts_all_released_scope_missions(tmp_path: Path) -
         "status": "success",
         "evidence_refs": evidence_refs,
         "observations": {
-            evidence_refs[0]: _observation(ref=evidence_refs[0], value={"synced": True}),
+            ref: _observation(ref=ref, value={"synced": True})
+            for ref in evidence_refs
         },
         "request_id": "req-1",
     }
@@ -520,7 +521,7 @@ async def test_mcp_adapter_rejects_failure_status_without_failure(
 ) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     client = FakeMcpClient(
         tool_output={
@@ -556,7 +557,7 @@ async def test_mcp_adapter_rejects_failure_status_without_failure(
 async def test_mcp_adapter_rejects_request_id_mismatch(tmp_path: Path) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     client = FakeMcpClient(
         tool_output={
@@ -598,7 +599,7 @@ async def test_mcp_adapter_does_not_retry_on_response_schema_validation_failure(
 ) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     invalid_output = {
         "mission_name": "page_ready_observation",
@@ -634,7 +635,7 @@ async def test_mcp_adapter_does_not_retry_on_response_schema_validation_failure(
 async def test_mcp_adapter_rejects_missing_observations(tmp_path: Path) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     client = FakeMcpClient(
         tool_output={
@@ -665,7 +666,7 @@ async def test_mcp_adapter_rejects_missing_required_status_field(
 ) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     invalid_output = {
         "mission_name": "page_ready_observation",
@@ -704,7 +705,7 @@ async def test_mcp_adapter_rejects_missing_required_status_field(
 async def test_mcp_adapter_rejects_observations_key_mismatch(tmp_path: Path) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     client = FakeMcpClient(
         tool_output={
@@ -740,7 +741,7 @@ async def test_mcp_adapter_rejects_observations_ref_field_mismatch(
 ) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     invalid_output = {
         "mission_name": "page_ready_observation",
@@ -831,7 +832,7 @@ async def test_mcp_adapter_rejects_invalid_status_without_retry(
 ) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     invalid_output = {
         "mission_name": "page_ready_observation",
@@ -922,7 +923,7 @@ async def test_mcp_adapter_rejects_observations_kind_mismatch_without_retry(
 ) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     invalid_output = {
         "mission_name": "page_ready_observation",
@@ -971,7 +972,7 @@ async def test_mcp_adapter_rejects_non_json_serializable_observation_value(
 ) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     invalid_output = {
         "mission_name": "page_ready_observation",
@@ -1016,7 +1017,7 @@ async def test_mcp_adapter_rejects_observations_key_mismatch_without_retry(
 ) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     invalid_output = {
         "mission_name": "page_ready_observation",
@@ -1065,7 +1066,7 @@ async def test_mcp_adapter_rejects_invalid_observations_ts_without_retry(
 ) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     invalid_output = {
         "mission_name": "page_ready_observation",
@@ -1198,7 +1199,7 @@ async def test_mcp_adapter_rejects_non_json_serializable_tool_output_without_ret
 ) -> None:
     evidence_refs = [
         "evidence://dom/page-shell-ready",
-        "evidence://action-log/run-completed",
+        "evidence://action-log/release-ceiling-stop",
     ]
     invalid_output = {
         "mission_name": "page_ready_observation",

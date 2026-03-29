@@ -34,9 +34,9 @@ async def test_modeled_mcp_entrypoint_runs_released_scope_and_stops_at_ceiling(
     )
 
     assert (
-        "evidence://action-log/run-completed"
+        "evidence://action-log/release-ceiling-stop"
         in result.state.mission_state.evidence_refs
     )
     assert (
-        result.run.run_root / "artifacts" / "action-log" / "run-completed.jsonl"
+        result.run.run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
     ).exists()

@@ -91,8 +91,8 @@ class FakeExecutionAdapter:
                 "evidence://action-log/success-observation",
             ),
             "run_completion": (
-                "evidence://action-log/run-completed",
-                "evidence://text/run-summary",
+                "evidence://action-log/release-ceiling-stop",
+                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name)
@@ -156,7 +156,7 @@ async def test_full_released_scope_graph_stops_at_run_completion(
     )
 
     assert result.state.current_mission == "run_completion"
-    assert "evidence://action-log/run-completed" in (
+    assert "evidence://action-log/release-ceiling-stop" in (
         result.state.mission_state.evidence_refs or ()
     )
 
@@ -177,11 +177,11 @@ async def test_full_released_scope_graph_creates_action_log_artifact(
     )
 
     action_log_dir = result.run.run_root / "artifacts" / "action-log"
-    run_completed = action_log_dir / "run-completed.jsonl"
+    run_completed = action_log_dir / "release-ceiling-stop.jsonl"
     assert run_completed.exists()
 
-    content = json.loads(run_completed.read_text(encoding="utf-8").strip())
-    assert content["event"] == "run-completed"
+    content = json.loads(run_completed.read_text(encoding="utf-8").splitlines()[0])
+    assert content["event"] == "release-ceiling-stop"
     assert content["mission_name"] == "run_completion"
     assert "ts" in content
 

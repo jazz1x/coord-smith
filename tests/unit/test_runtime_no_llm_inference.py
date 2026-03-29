@@ -93,8 +93,8 @@ class FakeExecutionAdapter:
                 "evidence://action-log/success-observation",
             ),
             "run_completion": (
-                "evidence://action-log/run-completed",
-                "evidence://text/run-summary",
+                "evidence://action-log/release-ceiling-stop",
+                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name, ())
@@ -144,10 +144,10 @@ async def test_released_scope_released_missions_are_deterministic(
     assert result1.state.current_mission == result2.state.current_mission
     assert result1.state.current_mission == "run_completion"
     # Both should have the run completion proof
-    assert "evidence://action-log/run-completed" in (
+    assert "evidence://action-log/release-ceiling-stop" in (
         result1.state.mission_state.evidence_refs or ()
     )
-    assert "evidence://action-log/run-completed" in (
+    assert "evidence://action-log/release-ceiling-stop" in (
         result2.state.mission_state.evidence_refs or ()
     )
 

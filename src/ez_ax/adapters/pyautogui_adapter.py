@@ -56,19 +56,19 @@ _FALLBACK_REFS: dict[str, tuple[str, ...]] = {
         "evidence://action-log/click-dispatched",
     ),
     "click_completion": (
-        "evidence://screenshot/click-completion-fallback",
+        "evidence://screenshot/click-completed-fallback",
         "evidence://text/fallback-reason",
         "evidence://action-log/click-completed",
     ),
     "success_observation": (
-        "evidence://screenshot/success-fallback",
+        "evidence://screenshot/success-observation-fallback",
         "evidence://text/fallback-reason",
         "evidence://action-log/success-observation",
     ),
     "run_completion": (
-        "evidence://action-log/run-completed",
         "evidence://screenshot/run-completion-fallback",
         "evidence://text/fallback-reason",
+        "evidence://action-log/release-ceiling-stop",
     ),
     "attach_session": (
         "evidence://screenshot/attach-session-fallback",

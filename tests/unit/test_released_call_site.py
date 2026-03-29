@@ -260,7 +260,8 @@ async def test_execute_sync_observation_node_wires_execution_wrapper(
     result = ExecutionResult(
         mission_name="sync_observation",
         evidence_refs=(
-            "evidence://dom/sync-check",
+            "evidence://screenshot/sync-fallback",
+            "evidence://text/fallback-reason",
             "evidence://action-log/sync-observed",
         ),
     )
@@ -294,8 +295,8 @@ async def test_execute_run_completion_node_seeds_release_ceiling_stop(
     result = ExecutionResult(
         mission_name="run_completion",
         evidence_refs=(
-                    "evidence://action-log/run-completed",
-                    "evidence://text/run-summary",
+                    "evidence://action-log/release-ceiling-stop",
+                    "evidence://text/fallback-reason",
                 ),
     )
     adapter = FakeExecutionAdapter(result=result)
@@ -311,12 +312,12 @@ async def test_execute_run_completion_node_seeds_release_ceiling_stop(
     assert state.current_mission == "run_completion"
     assert state.mission_state.evidence_refs == result.evidence_refs
     assert (
-        run_root / "artifacts" / "action-log" / "run-completed.jsonl"
+        run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
     ).exists()
     payload = json.loads(
-        (run_root / "artifacts" / "action-log" / "run-completed.jsonl")
+        (run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl")
         .read_text(encoding="utf-8")
         .splitlines()[0]
     )
-    assert payload["event"] == "run-completed"
+    assert payload["event"] == "release-ceiling-stop"
     assert payload["mission_name"] == "run_completion"

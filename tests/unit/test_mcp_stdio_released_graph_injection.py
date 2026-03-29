@@ -34,10 +34,10 @@ async def test_stdio_mcp_execution_adapter_runs_released_scope_and_stops_at_ceil
         )
 
     assert (
-        "evidence://action-log/run-completed"
+        "evidence://action-log/release-ceiling-stop"
         in result.state.mission_state.evidence_refs
     )
     run_root = result.run.run_root
     assert (
-        run_root / "artifacts" / "action-log" / "run-completed.jsonl"
+        run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
     ).exists()

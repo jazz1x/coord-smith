@@ -75,8 +75,8 @@ class ReleaseCeilingPathTestAdapter:
                 "evidence://action-log/success-observation",
             ),
             "run_completion": (
-                "evidence://action-log/run-completed",
-                "evidence://text/run-summary",
+                "evidence://action-log/release-ceiling-stop",
+                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name)
@@ -116,7 +116,7 @@ async def test_release_ceiling_stop_proof_artifact_at_prd_specified_path(
 
     # The exact PRD-specified path
     expected_path = (
-        result.run.run_root / "artifacts" / "action-log" / "run-completed.jsonl"
+        result.run.run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
     )
 
     # Verify the artifact exists at the exact PRD-specified path
@@ -131,7 +131,7 @@ async def test_release_ceiling_stop_proof_artifact_at_prd_specified_path(
 
     # Verify the path structure matches PRD: artifacts/action-log/run-completed.jsonl
     relative_path = expected_path.relative_to(result.run.run_root)
-    expected_relative = Path("artifacts") / "action-log" / "run-completed.jsonl"
+    expected_relative = Path("artifacts") / "action-log" / "release-ceiling-stop.jsonl"
     assert relative_path == expected_relative, (
         f"Artifact path must match PRD structure.\n"
         f"Expected relative path: {expected_relative}\n"

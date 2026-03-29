@@ -769,7 +769,7 @@ async def test_execute_within_scope_confirms_release_ceiling_stop_from_action_lo
     result = ExecutionResult(
         mission_name="run_completion",
         evidence_refs=(
-            "evidence://action-log/run-completed",
+            "evidence://action-log/release-ceiling-stop",
         ),
     )
     adapter = FakeExecutionAdapter(result=result)
@@ -791,14 +791,14 @@ def test_release_ceiling_action_log_asserts_fields(tmp_path: Path) -> None:
     payload = {
         "ts": "2026-03-21T00:00:00+09:00",
         "mission_name": "page_ready_observation",
-        "event": "run-completed",
+        "event": "release-ceiling-stop",
     }
     artifact.write_text(json.dumps(payload) + "\n", encoding="utf-8")
 
     last_line = artifact.read_text(encoding="utf-8").splitlines()[-1]
     data = json.loads(last_line)
 
-    assert data["event"] == "run-completed"
+    assert data["event"] == "release-ceiling-stop"
     assert data["mission_name"] == "page_ready_observation"
     datetime.fromisoformat(data["ts"])
 
@@ -821,7 +821,7 @@ async def test_execute_within_scope_accepts_release_ceiling_stop_with_eventual_c
     result = ExecutionResult(
         mission_name="run_completion",
         evidence_refs=(
-            "evidence://action-log/run-completed",
+            "evidence://action-log/release-ceiling-stop",
         ),
     )
     adapter = FakeExecutionAdapter(result=result)
@@ -852,7 +852,7 @@ async def test_execute_within_scope_rejects_release_ceiling_stop_without_confirm
     result = ExecutionResult(
         mission_name="run_completion",
         evidence_refs=(
-            "evidence://action-log/run-completed",
+            "evidence://action-log/release-ceiling-stop",
         ),
     )
     adapter = FakeExecutionAdapter(result=result)
@@ -867,7 +867,7 @@ async def test_execute_within_scope_rejects_release_ceiling_stop_without_confirm
         )
     except ValidationError as exc:
         assert "did not contain" in str(exc)
-        assert "run-completed" in str(exc)
+        assert "release-ceiling-stop" in str(exc)
     else:
         raise AssertionError("Expected missing confirming event to be rejected")
 
@@ -1147,7 +1147,7 @@ def test_validate_action_log_artifacts_contain_ref_events_rejects_run_root_file(
 def test_validate_release_ceiling_stop_action_log_rejects_non_path_run_root() -> None:
     with pytest.raises(ValidationError) as excinfo:
         validate_release_ceiling_stop_action_log(
-            evidence_refs=("evidence://action-log/run-completed",),
+            evidence_refs=("evidence://action-log/release-ceiling-stop",),
             run_root="not-a-path",  # type: ignore[arg-type]
         )
 
@@ -1162,7 +1162,7 @@ def test_validate_release_ceiling_stop_action_log_rejects_run_root_file(
 
     with pytest.raises(ValidationError) as excinfo:
         validate_release_ceiling_stop_action_log(
-            evidence_refs=("evidence://action-log/run-completed",),
+            evidence_refs=("evidence://action-log/release-ceiling-stop",),
             run_root=run_root,
         )
 
@@ -1177,7 +1177,7 @@ def test_validate_release_ceiling_stop_action_log_rejects_missing_artifact(
     )
     with pytest.raises(ValidationError) as excinfo:
         validate_release_ceiling_stop_action_log(
-            evidence_refs=("evidence://action-log/run-completed",),
+            evidence_refs=("evidence://action-log/release-ceiling-stop",),
             run_root=tmp_path,
         )
 
@@ -1208,12 +1208,12 @@ def test_validate_release_ceiling_stop_action_log_error_mentions_expected_fields
 
     with pytest.raises(ValidationError) as excinfo:
         validate_release_ceiling_stop_action_log(
-            evidence_refs=("evidence://action-log/run-completed",),
+            evidence_refs=("evidence://action-log/release-ceiling-stop",),
             run_root=tmp_path,
         )
 
     message = str(excinfo.value)
-    assert "event='run-completed'" in message
+    assert "event='release-ceiling-stop'" in message
     assert "mission_name='run_completion'" in message
     assert str(expected_path) in message
     assert "ts" in message
@@ -1237,7 +1237,7 @@ def test_validate_release_ceiling_stop_action_log_read_failure_mentions_docs(
     try:
         with pytest.raises(ValidationError) as excinfo:
             validate_release_ceiling_stop_action_log(
-                evidence_refs=("evidence://action-log/run-completed",),
+                evidence_refs=("evidence://action-log/release-ceiling-stop",),
                 run_root=tmp_path,
             )
     finally:
@@ -1262,7 +1262,7 @@ def test_validate_release_ceiling_stop_action_log_rejects_nonexistent_run_root(
 
     with pytest.raises(ValidationError) as excinfo:
         validate_release_ceiling_stop_action_log(
-            evidence_refs=("evidence://action-log/run-completed",),
+            evidence_refs=("evidence://action-log/release-ceiling-stop",),
             run_root=missing,
         )
 
@@ -1280,7 +1280,7 @@ def test_validate_release_ceiling_stop_action_log_accepts_zulu_timestamp(
     )
 
     validate_release_ceiling_stop_action_log(
-        evidence_refs=("evidence://action-log/run-completed",),
+        evidence_refs=("evidence://action-log/release-ceiling-stop",),
         run_root=tmp_path,
     )
 

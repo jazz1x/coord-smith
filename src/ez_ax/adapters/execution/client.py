@@ -305,7 +305,7 @@ def validate_execution_result(result: ExecutionResult) -> None:
             "evidence://action-log/click-completed",
         }
         fallback = {
-            "evidence://screenshot/click-completion-fallback",
+            "evidence://screenshot/click-completed-fallback",
             "evidence://text/fallback-reason",
             "evidence://action-log/click-completed",
         }
@@ -316,20 +316,19 @@ def validate_execution_result(result: ExecutionResult) -> None:
             "evidence://action-log/success-observation",
         }
         fallback = {
-            "evidence://screenshot/success-fallback",
+            "evidence://screenshot/success-observation-fallback",
             "evidence://text/fallback-reason",
             "evidence://action-log/success-observation",
         }
         required_sets = (primary, fallback)
     elif result.mission_name == "run_completion":
         primary = {
-            "evidence://action-log/run-completed",
-            "evidence://text/run-summary",
+            "evidence://action-log/release-ceiling-stop",
         }
         fallback = {
-            "evidence://action-log/run-completed",
             "evidence://screenshot/run-completion-fallback",
             "evidence://text/fallback-reason",
+            "evidence://action-log/release-ceiling-stop",
         }
         required_sets = (primary, fallback)
     elif result.mission_name == "attach_session":
@@ -692,17 +691,17 @@ def validate_release_ceiling_stop_action_log(
 ) -> None:
     """Validate the released ceiling stop marker is confirmed by action-log content."""
 
-    if "evidence://action-log/run-completed" not in evidence_refs:
+    if "evidence://action-log/release-ceiling-stop" not in evidence_refs:
         return
 
     run_root = _require_run_root_dir(run_root=run_root)
 
-    path = action_log_artifact_path(run_root=run_root, key="run-completed")
+    path = action_log_artifact_path(run_root=run_root, key="release-ceiling-stop")
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
     except OSError as exc:
         msg = (
-            f"Failed to read run completion action-log artifact: path='{path}'; "
+            f"Failed to read release-ceiling-stop action-log artifact: path='{path}'; "
             "expected typed fields event/mission_name/ts; "
             "see docs/product/prd-openclaw-e2e-validation.md, "
             "docs/product/prd-openclaw-computer-use-runtime.md, "
@@ -720,7 +719,7 @@ def validate_release_ceiling_stop_action_log(
             continue
         if not isinstance(payload, dict):
             continue
-        if payload.get("event") != "run-completed":
+        if payload.get("event") != "release-ceiling-stop":
             continue
         if payload.get("mission_name") != "run_completion":
             continue
@@ -729,9 +728,9 @@ def validate_release_ceiling_stop_action_log(
             return
 
     msg = (
-        "Run completion action-log artifact did not contain a confirming event: "
+        "Release-ceiling-stop action-log artifact did not contain a confirming event: "
         "expected at least one JSON line with "
-        "event='run-completed', mission_name='run_completion', and "
+        "event='release-ceiling-stop', mission_name='run_completion', and "
         "ISO-8601 ts; "
         f"path='{path}'; "
         "see docs/product/prd-openclaw-e2e-validation.md, "

@@ -122,8 +122,8 @@ class FakeExecutionAdapter:
             return ExecutionResult(
                 mission_name="run_completion",
                 evidence_refs=(
-                    "evidence://action-log/run-completed",
-                    "evidence://text/run-summary",
+                    "evidence://action-log/release-ceiling-stop",
+                    "evidence://text/fallback-reason",
                 ),
             )
         raise AssertionError(f"Unexpected mission: {request.mission_name}")
@@ -176,9 +176,9 @@ async def test_run_released_scope_via_langgraph_sequences_to_ceiling(
     run_root = Path(result.state.final_artifact_bundle_ref or "")
     assert run_root.exists()
 
-    stop_path = run_root / "artifacts" / "action-log" / "run-completed.jsonl"
+    stop_path = run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
     stop_payload = json.loads(stop_path.read_text(encoding="utf-8").splitlines()[0])
-    assert stop_payload["event"] == "run-completed"
+    assert stop_payload["event"] == "release-ceiling-stop"
     assert stop_payload["mission_name"] == "run_completion"
 
     assert [req.mission_name for req in adapter.requests] == [
