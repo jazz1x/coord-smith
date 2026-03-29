@@ -1,17 +1,22 @@
-I can see you're in the middle of the **Phase R66 heuristic gap scan** workflow for the ez-ax project. The system context shows:
+Perfect! Phase R70 heuristic gap scan is complete. Here's a summary of what was accomplished:
 
-- **Current branch**: feature/im
-- **Modified files**: artifacts/, docs/ (including coverage ledger and work-rag)
-- **Next task**: Phase R66 heuristic scan (find uncovered PRD clauses, write pytest, update tracking)
-- **Pending**: work-rag.json compression (4 entries, threshold 3)
+## Phase R70 Completion Summary
 
-Are you ready for me to start the Phase R66 slice? I'll:
+**Uncovered Clause Identified:** The PRD Release Boundary section (lines 47-61) specifies a "Released implementation scope" consisting of 12 missions followed by an "intentional stop at the released ceiling". While tests existed for individual missions and graph structure enforcement, there was no dedicated unit test explicitly documenting this complete scope clause.
 
-1. Read the canonical docs in order (AGENTS.md → prd.md → core-loop.md → current-state.md → work-rag.json → etc.)
-2. Compress work-rag.json history if needed
-3. Identify uncovered implementation clauses from prd.md
-4. Write and test new pytest functions
-5. Update coverage ledger and work-rag.json
-6. Commit
+**Solution Implemented:** Added a new focused pytest function:
+- **Test**: `test_released_scope_includes_intentional_stop_clause` in `tests/unit/test_released_missions_specification.py`
+- **Purpose**: Explicitly documents the PRD Release Boundary clause, verifying that the released scope includes all 12 missions in sequence (attach → run_completion) with an intentional stopping point at the ceiling
+- **Coverage**: References PRD lines 47-61, validates the pipeline structure and stopping condition
 
-Should I proceed?
+**Validation Results:**
+- ✅ pytest tests/unit/ -q: **627 tests passing** (626 existing + 1 new)
+- ✅ test_released_missions_specification.py: all 5 tests pass
+- ✅ ruff check src/: all checks passed
+- ✅ Committed with message referencing PRD requirement
+
+**State Updates:**
+- Coverage ledger: Phase R70 heuristic gap scan → **covered**
+- work-rag.json: next_action → **FINAL_STOP_REVIEW - queue exhausted**
+
+The queue is now exhausted with all coverage families complete.

@@ -32,7 +32,7 @@
     "milestone": "Phase R71 first PRD-backed uncovered clause implemented and tested",
     "anchor": "r71HeuristicScanBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
-    "next_action": "FINAL_STOP — Phase R71 complete. All released-scope PRD clauses have dedicated unit test coverage. Coverage ledger exhausted.",
+    "next_action": "Phase R72 heuristic gap scan",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",

@@ -21,7 +21,7 @@ It is intentionally changeable and subordinate to:
 
 ## Current Interpretation
 
-Phase R69 — heuristic gap scan complete. All released-scope implementation clauses verified with dedicated unit test coverage (both evidence specs and node execution tests). FINAL_STOP decision reached: no further uncovered clauses identified.
+Phase R71 — heuristic scan complete. Phase transition in progress: `Phase R72 heuristic gap scan` is the active task.
 
 ## What Is Already Established
 
@@ -113,7 +113,7 @@ Phase R6 complete:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current next action is: `FINAL_STOP — Phase R69 complete`
+The current next action is: `Phase R72 heuristic gap scan`
 
 ## Active Anchor Coverage Ledger
 
