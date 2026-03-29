@@ -62,3 +62,53 @@ def test_released_missions_not_modeled() -> None:
     assert (
         not intersection
     ), f"Released and modeled missions must be disjoint, but found: {intersection}"
+
+
+def test_released_scope_includes_intentional_stop_clause() -> None:
+    """Verify 'intentional stop at released ceiling' is part of released scope specification.
+
+    PRD Release Boundary (lines 47-61):
+    'Released implementation scope:
+    - attach
+    - prepareSession
+    - benchmark validation
+    - pageReadyObserved
+    - syncObservation
+    - targetActionabilityObservation
+    - armedStateEntry
+    - triggerWait
+    - clickDispatch
+    - clickCompletion
+    - successObservation
+    - runCompletion
+    - intentional stop at the released ceiling'
+
+    The released scope is defined as 12 missions that execute sequentially from
+    attach to runCompletion, followed by an intentional stop (no further execution
+    beyond runCompletion).
+
+    This test documents that the released scope specification includes both:
+    1. All 12 missions executed in sequence
+    2. An intentional stop that prevents execution beyond runCompletion
+    """
+    # The 12 released missions must exist and be in the correct order
+    assert len(RELEASED_MISSIONS) == 12, (
+        "Released scope must contain exactly 12 missions before the intentional stop"
+    )
+
+    # The final mission must be runCompletion (the released ceiling)
+    assert RELEASED_MISSIONS[-1] == "run_completion", (
+        "Released scope final mission must be 'run_completion' at the ceiling"
+    )
+
+    # Verify the missions proceed in the expected order with runCompletion as the final,
+    # establishing the "intentional stop at the released ceiling" requirement
+    expected_sequence_end = [
+        "success_observation",
+        "run_completion",
+    ]
+    actual_sequence_end = list(RELEASED_MISSIONS[-2:])
+    assert actual_sequence_end == expected_sequence_end, (
+        f"Released scope must end with success_observation -> run_completion sequence; "
+        f"expected {expected_sequence_end}, got {actual_sequence_end}"
+    )
