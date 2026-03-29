@@ -263,8 +263,8 @@ class TestPhaseR58HeuristicGapVerification:
     def test_phase_r58_work_rag_consistency(self) -> None:
         """Verify work-rag.json is consistent with Phase R58 expectations.
 
-        Confirms that work-rag.json current state reflects Phase R57 completion
-        and Phase R58 active status.
+        Confirms that work-rag.json current state reflects Phase R58 completion
+        or progression beyond (FINAL_STOP after R58/R59 completion).
         """
         work_rag_path = (
             Path(__file__).parent.parent.parent / "docs/product/work-rag.json"
@@ -274,14 +274,20 @@ class TestPhaseR58HeuristicGapVerification:
 
         current = work_rag.get("current", {})
 
-        # Verify Phase R58 is active
+        # Verify phase indicates R58 or later completion
         phase = current.get("phase", "")
-        assert "R57" in phase or "R58" in phase or "heuristic" in phase, (
-            f"Current phase '{phase}' should reflect R57/R58/heuristic scan status"
+        assert any(
+            x in phase
+            for x in ["R58", "R59", "heuristic", "gap scan"]
+        ), (
+            f"Current phase '{phase}' should reflect R58+ or heuristic scan status"
         )
 
-        # Verify next_action is Phase R58 heuristic gap scan
+        # Verify next_action indicates R58/R59 progression or FINAL_STOP
         next_action = current.get("next_action", "")
-        assert "R58" in next_action or "heuristic" in next_action, (
-            f"next_action '{next_action}' should reference Phase R58 heuristic gap scan"
+        assert any(
+            x in next_action
+            for x in ["R58", "R59", "heuristic", "FINAL_STOP"]
+        ), (
+            f"next_action '{next_action}' should reference R58/R59 or FINAL_STOP"
         )
