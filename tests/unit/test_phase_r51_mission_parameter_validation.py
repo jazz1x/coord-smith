@@ -1,8 +1,10 @@
 """Phase R51 heuristic gap scan: Mission parameter validation.
 
-PRD requirement (Release Boundary, lines 47-53 and System Boundary, lines 25-28):
+PRD requirement (Release Boundary, lines 47-62 and System Boundary, lines 25-28):
 'Released implementation scope: attach, prepareSession, benchmark validation,
-pageReadyObserved. Authority boundary: OpenClaw owns browser-facing execution;
+pageReadyObserved, syncObservation, targetActionabilityObservation,
+armedStateEntry, triggerWait, clickDispatch, clickCompletion,
+successObservation, runCompletion. Authority boundary: OpenClaw owns browser-facing execution;
 ez-ax owns orchestration, validation, stopping, and reasoning.'
 
 This test verifies that each released mission receives and correctly validates
@@ -219,10 +221,11 @@ async def test_benchmark_validation_receives_required_parameters(
 async def test_page_ready_observation_receives_empty_payload(
     tmp_path: Path,
 ) -> None:
-    """Verify page_ready_observation (final mission) receives empty payload.
+    """Verify page_ready_observation receives empty payload.
 
     PRD requirement (System Boundary, OpenClaw adapter contract):
-    page_ready_observation has no required parameters (empty payload)
+    page_ready_observation has no required parameters (empty payload).
+    Note: page_ready_observation is the 4th mission; run_completion is the final mission.
     """
     adapter = ParameterTrackingAdapter()
 

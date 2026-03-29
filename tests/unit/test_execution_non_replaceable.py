@@ -33,7 +33,7 @@ def test_released_scope_graph_requires_execution_adapter(tmp_path: Path) -> None
     """
     run = ReleasedRunContext(
         run_root=tmp_path,
-        approved_scope_ceiling="pageReadyObserved",
+        approved_scope_ceiling="runCompletion",
     )
 
     # Create a minimal mock adapter that conforms to ExecutionBoundary
