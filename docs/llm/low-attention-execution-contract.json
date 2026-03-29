@@ -1,9 +1,9 @@
 {
   "version": 4,
-  "active_phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
+  "active_phase": "Phase R67 — scope expansion complete",
   "active_milestone": "All 8 modeled missions promoted to released, ceiling at runCompletion",
   "active_anchor": "r67ScopeExpansionBound",
-  "active_invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling expands from pageReadyObserved to runCompletion. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
+  "active_invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
   "scope_ceiling": "runCompletion",
   "canonical_inputs": [
     "AGENTS.md",

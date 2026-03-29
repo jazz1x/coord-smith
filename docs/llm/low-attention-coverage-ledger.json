@@ -1244,7 +1244,7 @@
     },
     {
       "family": "scope-expansion-final-validation",
-      "status": "pending",
+      "status": "covered",
       "evidence_or_reason": "Phase R67 family 7/7: Full validation sweep and work-rag update.",
       "next_slice_hint": "Final validation sweep: (1) Run .venv/bin/python -m pytest tests/ -q \u2014 must show 0 failures. (2) Run .venv/bin/python -m mypy src/ez_ax/ \u2014 must show 0 errors. (3) Run .venv/bin/python -m ruff check src/ tests/ \u2014 must show 0 errors. If any failures exist, fix them. Then update docs/product/work-rag.json: Set current.goal to \"Released scope expanded from pageReadyObserved to runCompletion. All 12 missions are now released.\". Set current.phase to \"Phase R67 \u2014 scope expansion complete\". Set current.milestone to \"All 8 modeled missions promoted to released, full 12-mission pipeline\". Set current.anchor to \"r67ScopeExpansionBound\". Set current.invariant to include \"released ceiling is runCompletion\" instead of \"pageReadyObserved\". Set current.approved_scope_ceiling to \"runCompletion\". Set current.next_action to \"FINAL_STOP_REVIEW - Phase R67 scope expansion complete\". Compress history as needed per compression policy. Also update docs/llm/low-attention-execution-contract.json: scope_ceiling to runCompletion, active_invariant to mention runCompletion. Commit once.",
       "first_validation": ".venv/bin/python -m pytest tests/ -q",
