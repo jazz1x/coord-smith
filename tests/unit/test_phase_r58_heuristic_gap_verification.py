@@ -278,7 +278,7 @@ class TestPhaseR58HeuristicGapVerification:
         phase = current.get("phase", "")
         assert any(
             x in phase
-            for x in ["R58", "R59", "heuristic", "gap scan"]
+            for x in ["R58", "R59", "R6", "R7", "heuristic", "gap scan", "scope expansion"]
         ), (
             f"Current phase '{phase}' should reflect R58+ or heuristic scan status"
         )
@@ -287,7 +287,7 @@ class TestPhaseR58HeuristicGapVerification:
         next_action = current.get("next_action", "")
         assert any(
             x in next_action
-            for x in ["R58", "R59", "heuristic", "FINAL_STOP"]
+            for x in ["R58", "R59", "heuristic", "FINAL_STOP", "scope-expansion"]
         ), (
-            f"next_action '{next_action}' should reference R58/R59 or FINAL_STOP"
+            f"next_action '{next_action}' should reference R58/R59, FINAL_STOP, or scope-expansion"
         )

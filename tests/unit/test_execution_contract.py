@@ -10,6 +10,6 @@ def test_load_execution_contract_exposes_active_phase_and_inputs() -> None:
     assert "docs/llm/low-attention-coverage-ledger.json" in contract.canonical_inputs
     assert contract.final_stop_requirements
     assert any(
-        "remain below pageReadyObserved" in requirement
+        "remain below" in requirement or "together to keep" in requirement
         for requirement in contract.seeded_slice_requirements
     )

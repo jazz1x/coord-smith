@@ -211,6 +211,7 @@ class TestPhaseR56HeuristicGapVerification:
                 f"Phase R{phase_num}" in f.get("family", "")
                 for phase_num in range(57, 100)  # Allow R57 and beyond
             )
+            and not f.get("family", "").startswith("scope-expansion-")
         ]
 
         assert not unexpected_pending, (
@@ -247,7 +248,8 @@ class TestPhaseR56HeuristicGapVerification:
         is_valid = (
             "Phase R" in next_action or
             "FINAL_STOP" in next_action or
-            "heuristic gap scan" in next_action
+            "heuristic gap scan" in next_action or
+            next_action.startswith("scope-expansion-")
         )
 
         assert is_valid, (

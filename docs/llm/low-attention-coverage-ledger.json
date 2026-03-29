@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R63 — heuristic scan",
-  "active_milestone": "Phase R63 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r63HeuristicScanBound",
+  "active_phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
+  "active_milestone": "All 8 modeled missions promoted to released, ceiling at runCompletion",
+  "active_anchor": "r67ScopeExpansionBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1103,6 +1103,159 @@
         "pytest tests/unit/ -q passes",
         "coverage-ledger.json 'Phase R65 heuristic gap scan' status set to covered",
         "work-rag.json next_action updated",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R66 heuristic gap scan",
+      "status": "excluded",
+      "evidence_or_reason": "Superseded by Phase R67 scope expansion from pageReadyObserved to runCompletion.",
+      "next_slice_hint": "Read docs/prd.md and list all released-scope implementation clauses (below pageReadyObserved). Cross-reference with tests/unit/ to find the first clause that has no dedicated unit test. Write one focused pytest function for it, run pytest to confirm it passes, mark this family covered in docs/llm/low-attention-coverage-ledger.json, update docs/product/work-rag.json current.next_action to the next pending family (or 'FINAL_STOP — Phase R66 complete' if none remain), and commit.",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "at least one new pytest function added for an uncovered PRD clause",
+        "pytest tests/unit/ -q passes",
+        "coverage-ledger.json 'Phase R66 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "scope-expansion-prd-docs",
+      "status": "pending",
+      "evidence_or_reason": "Phase R67 family 1/7: PRD and documentation ceiling expansion authorization.",
+      "next_slice_hint": "Update docs/prd.md: (1) Change line ~45 released ceiling from pageReadyObserved to runCompletion. (2) Expand \"Released implementation scope\" (lines ~49-53) to list all 12 missions: attach, prepareSession, benchmark validation, pageReadyObserved, syncObservation, targetActionabilityObservation, armedStateEntry, triggerWait, clickDispatch, clickCompletion, successObservation, runCompletion, intentional stop at the released ceiling. (3) Replace \"Examples of modeled-only stages\" section (lines ~59-65) with: \"No missions are currently modeled-only. All stages are released.\" (4) In \"Release-Ceiling Stop Proof\" section (lines ~92-109), change mission_name from page_ready_observation to run_completion. (5) In \"Non-Goals\" (line ~146), change pageReadyObserved to runCompletion. Then update docs/current-state.md: change invariant text pageReadyObserved to runCompletion. Update docs/core-loop.md: change pageReadyObserved references to runCompletion. Update AGENTS.md: change pageReadyObserved references to runCompletion. Run: .venv/bin/python -m pytest tests/unit/ -q to verify no tests break from doc changes alone.",
+      "first_validation": ".venv/bin/python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/ tests/",
+      "done_when": [
+        "docs/prd.md released ceiling says runCompletion",
+        "docs/prd.md lists all 12 released missions",
+        "docs/prd.md modeled-only section is empty or says none",
+        "docs/prd.md stop proof references run_completion not page_ready_observation",
+        "docs/current-state.md invariant updated",
+        "docs/core-loop.md updated",
+        "AGENTS.md updated",
+        "pytest tests/unit/ -q passes",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "scope-expansion-mission-registry",
+      "status": "pending",
+      "evidence_or_reason": "Phase R67 family 2/7: Promote all 8 modeled missions to released, update scope ceiling logic.",
+      "next_slice_hint": "Step 1 — src/ez_ax/missions/names.py: Set RELEASED_MISSIONS to all 12 missions: (\"attach_session\", \"prepare_session\", \"benchmark_validation\", \"page_ready_observation\", \"sync_observation\", \"target_actionability_observation\", \"armed_state_entry\", \"trigger_wait\", \"click_dispatch\", \"click_completion\", \"success_observation\", \"run_completion\"). Set MODELED_MISSIONS to empty tuple: (). Step 2 — src/ez_ax/models/runtime.py: Add \"runCompletion\" to RELEASED_SCOPE_CEILINGS. Implement index-based scope check: mission is within scope if its index in RELEASED_MISSIONS is <= the ceiling max index. Ceiling index map: prepareSession=1, pageReadyObserved=3, runCompletion=11. Change DEFAULT_RELEASED_SCOPE_CEILING from \"pageReadyObserved\" to \"runCompletion\". Step 3 — Update ALL tests that break: (a) tests/unit/test_released_missions_specification.py: expect 12 missions not 4, update expected tuple. (b) tests/unit/test_presenting_modeled_behavior_forbidden.py: MODELED_MISSIONS is now empty, remove/update any assert len(MODELED_MISSIONS) > 0, update loops that iterate over empty set. (c) tests/unit/test_runtime_state.py: sync_observation is now released so tests expecting rejection must change to expect acceptance or test unknown missions instead. Update ceiling defaults from pageReadyObserved to runCompletion. (d) tests/unit/test_release_ceiling_non_expansion_without_prd_change.py: update DEFAULT_RELEASED_SCOPE_CEILING checks to runCompletion, handle empty MODELED_MISSIONS. (e) tests/unit/test_runtime_graph.py: change assert len(plan.modeled_nodes) > 0 to == 0. (f) tests/contract/test_runtime_graph_plan.py: update ALL pageReadyObserved ceiling assertions to runCompletion (~40+ occurrences, use find-replace). Update sync_observation rejection tests (sync_observation is now valid under runCompletion). Update plan.modeled_nodes[0] assertions. Run .venv/bin/python -m pytest tests/unit/ tests/contract/ -q and .venv/bin/python -m mypy src/ez_ax/",
+      "first_validation": ".venv/bin/python -m pytest tests/unit/ tests/contract/ -q",
+      "mypy_target": "src/ez_ax/",
+      "ruff_target": "src/ez_ax/ tests/",
+      "done_when": [
+        "RELEASED_MISSIONS has 12 entries",
+        "MODELED_MISSIONS is empty tuple",
+        "mission_is_within_approved_scope handles runCompletion ceiling",
+        "DEFAULT_RELEASED_SCOPE_CEILING is runCompletion",
+        "all test files updated to expect 12 missions and runCompletion ceiling",
+        "pytest tests/unit/ tests/contract/ -q passes",
+        "mypy src/ez_ax/ clean",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "scope-expansion-graph-wiring",
+      "status": "pending",
+      "evidence_or_reason": "Phase R67 family 3/7: Add 8 new execution nodes and wire the full 12-mission graph.",
+      "next_slice_hint": "Step 1 — src/ez_ax/graph/released_call_site.py: (a) Change ReleasedRunContext.approved_scope_ceiling Literal to include \"runCompletion\", change default to \"runCompletion\". (b) Update __post_init__ to accept both \"pageReadyObserved\" and \"runCompletion\". (c) In execute_page_ready_observation_node: change seed_action_log_marker key from \"release-ceiling-stop\" to \"page-ready-observed\". Remove evidence ref for release-ceiling-stop from this node. (d) Add 8 new async functions following EXACT same pattern as execute_page_ready_observation_node: execute_sync_observation_node (key=\"sync-observed\"), execute_target_actionability_observation_node (key=\"target-actionable-observed\"), execute_armed_state_entry_node (key=\"armed-state\"), execute_trigger_wait_node (key=\"trigger-wait-complete\"), execute_click_dispatch_node (key=\"click-dispatched\"), execute_click_completion_node (key=\"click-completed\"), execute_success_observation_node (key=\"success-observation\"), execute_run_completion_node (key=\"release-ceiling-stop\" AND evidence ref \"evidence://action-log/release-ceiling-stop\"). Step 2 — src/ez_ax/graph/langgraph_released_execution.py: Import all 8 new execute functions. Add 8 new async node wrappers. Wire edges: page_ready_observation_node → sync_observation_node → target_actionability_observation_node → armed_state_entry_node → trigger_wait_node → click_dispatch_node → click_completion_node → success_observation_node → run_completion_node → END. Remove old edge page_ready_observation_node → END. Step 3 — Update tests: (a) tests/unit/test_released_scope_graph_structure.py: expect 12 nodes, run_completion_node → END. (b) tests/unit/test_released_scope_graph_rejects_modeled_missions.py: 12 nodes, empty modeled set, run_completion_node → __end__. (c) tests/unit/test_langgraph_released_execution.py: update FakeExecutionAdapter to handle all 12 missions with correct evidence refs. Update ceiling to runCompletion. Expect current_mission=run_completion. (d) tests/unit/test_released_call_site.py: update ReleasedRunContext to use runCompletion. Run .venv/bin/python -m pytest tests/unit/ -q and mypy src/ez_ax/",
+      "first_validation": ".venv/bin/python -m pytest tests/unit/ -q",
+      "mypy_target": "src/ez_ax/",
+      "ruff_target": "src/ez_ax/ tests/",
+      "done_when": [
+        "8 new execute_*_node functions in released_call_site.py",
+        "release-ceiling-stop marker moved to run_completion node",
+        "12 nodes wired sequentially in langgraph_released_execution.py",
+        "run_completion_node → END edge exists",
+        "all graph structure tests updated and passing",
+        "pytest tests/unit/ -q passes",
+        "mypy clean",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "scope-expansion-evidence-adapter",
+      "status": "pending",
+      "evidence_or_reason": "Phase R67 family 4/7: Define evidence sets for 8 new missions and update adapter.",
+      "next_slice_hint": "Step 1 — src/ez_ax/adapters/execution/client.py: In validate_execution_result, add elif branches for 8 new missions with primary+fallback evidence sets: sync_observation primary: {clock/server-time-synced, action-log/sync-observed}, fallback: {screenshot/sync-fallback, text/fallback-reason, action-log/sync-observed}. target_actionability_observation primary: {dom/target-actionable, action-log/target-actionable-observed}, fallback: {screenshot/target-actionable-fallback, text/fallback-reason, action-log/target-actionable-observed}. armed_state_entry primary: {text/armed-state-entered, action-log/armed-state}, fallback: {screenshot/armed-state-fallback, text/fallback-reason, action-log/armed-state}. trigger_wait primary: {clock/trigger-received, action-log/trigger-wait-complete}, fallback: {screenshot/trigger-wait-fallback, text/fallback-reason, action-log/trigger-wait-complete}. click_dispatch primary: {action-log/click-dispatched, dom/click-target-clicked}, fallback: {screenshot/click-dispatched-fallback, text/fallback-reason, action-log/click-dispatched}. click_completion primary: {dom/click-effect-confirmed, action-log/click-completed}, fallback: {screenshot/click-completion-fallback, text/fallback-reason, action-log/click-completed}. success_observation primary: {dom/success-observed, action-log/success-observation}, fallback: {screenshot/success-fallback, text/fallback-reason, action-log/success-observation}. run_completion primary: {action-log/run-completed, text/run-summary}, fallback: {action-log/run-completed, screenshot/run-completion-fallback, text/fallback-reason}. Also in validate_release_ceiling_stop_action_log: change expected mission_name from page_ready_observation to run_completion. Step 2 — src/ez_ax/adapters/pyautogui_adapter.py: Add 8 new entries to _FALLBACK_REFS dict matching the fallback evidence sets above. Step 3 — src/ez_ax/evidence/envelope.py: In validate_release_ceiling_stop_proof, change expected mission from page_ready_observation to run_completion. Step 4 — Update tests: (a) tests/unit/test_pyautogui_adapter.py: add tests for new fallback refs. (b) tests/unit/test_released_mission_evidence_specs.py: add tests for 8 new missions evidence specs. Run pytest and mypy.",
+      "first_validation": ".venv/bin/python -m pytest tests/unit/ -q",
+      "mypy_target": "src/ez_ax/",
+      "ruff_target": "src/ez_ax/ tests/",
+      "done_when": [
+        "8 new mission evidence sets in client.py validate_execution_result",
+        "stop proof validation uses run_completion",
+        "8 new entries in pyautogui_adapter _FALLBACK_REFS",
+        "envelope.py stop proof validator updated",
+        "new tests for evidence specs and adapter",
+        "pytest passes",
+        "mypy clean",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "scope-expansion-integration-e2e-tests",
+      "status": "pending",
+      "evidence_or_reason": "Phase R67 family 5/7: Update integration and E2E tests for 12-mission scope.",
+      "next_slice_hint": "Update all remaining tests that still reference the old 4-mission ceiling: (a) tests/unit/test_released_scope_integration.py: update FakeExecutionAdapter to handle 12 missions. Change expected final mission from page_ready_observation to run_completion. Update ceiling assertions to runCompletion. Update expected artifact set to include all 12 action-log files. (b) tests/unit/test_release_ceiling_stop_proof_enforcement.py: update adapter for 12 missions, change stop proof mission_name to run_completion. (c) tests/unit/test_release_ceiling_stop_proof_path.py: same updates. (d) tests/unit/test_release_boundary_current_ceiling.py: update CeilingTrackingAdapter for 12 missions. Change ceiling assertions from pageReadyObserved to runCompletion. Change final mission from page_ready_observation to run_completion. Expect 12 missions executed not 4. (e) tests/unit/test_released_run_verifiability.py: update ceiling and final mission references. (f) tests/unit/test_runtime_no_llm_inference.py: update final mission assertions. (g) tests/unit/test_typed_evidence_required_for_decisions.py: update final mission. (h) tests/unit/test_purpose_preserve_run_comparability.py: update final mission. (i) tests/unit/test_released_entrypoint.py: update ceiling and imports. (j) tests/unit/test_released_cli_shim.py: update ceiling references. (k) tests/unit/test_phase_r51_released_scope_verification.py: update final mission and ceiling. (l) tests/e2e/test_released_path_e2e.py: update ALL 4 e2e tests for 12-mission scope, run_completion final mission, runCompletion ceiling, expected 12 artifacts. Update fake adapters and real-environment adapter to handle all 12 missions. (m) tests/unit/test_execution_non_replaceable.py: update ceiling to runCompletion. Use find-replace: \"page_ready_observation\" -> \"run_completion\" in assertion contexts. \"pageReadyObserved\" -> \"runCompletion\" in assertion contexts. Run .venv/bin/python -m pytest tests/ -q",
+      "first_validation": ".venv/bin/python -m pytest tests/ -q",
+      "mypy_target": "src/ez_ax/",
+      "ruff_target": "src/ tests/",
+      "done_when": [
+        "test_released_scope_integration.py handles 12 missions",
+        "all stop proof tests use run_completion",
+        "all ceiling tests use runCompletion",
+        "E2E tests handle 12-mission sequence",
+        "pytest tests/ -q passes (ALL tests including e2e)",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "scope-expansion-heuristic-test-cleanup",
+      "status": "pending",
+      "evidence_or_reason": "Phase R67 family 6/7: Update heuristic phase tests and remaining references.",
+      "next_slice_hint": "Search ALL test files for remaining references to the old ceiling: grep -r \"pageReadyObserved\" tests/ and grep -r \"page_ready_observation\" tests/ (in assertion contexts, not imports/function names). Update any remaining hardcoded strings in heuristic phase tests (R44-R60 series): (a) tests/unit/test_phase_r44_comprehensive_prd_clause_audit.py through test_phase_r60: if they check PRD content strings like \"pageReadyObserved\", verify these still match the updated PRD. Update if needed. (b) tests/unit/test_phase_r51_mission_parameter_validation.py: update mission count and ceiling expectations. (c) tests/unit/test_transition_reporting.py: update modeled_nodes count in summary strings. (d) Any other test file with \"pageReadyObserved\" or \"page_ready_observation\" in assertion strings. Also update docs/llm/repo-autonomous-loop-adapter.yaml: change scope.active_scope_boundary from pageReadyObserved to runCompletion. Run .venv/bin/python -m pytest tests/ -q to confirm ALL tests pass.",
+      "first_validation": ".venv/bin/python -m pytest tests/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/ tests/",
+      "done_when": [
+        "grep -r pageReadyObserved tests/ returns 0 assertion matches",
+        "all heuristic phase tests pass",
+        "repo-autonomous-loop-adapter.yaml updated",
+        "pytest tests/ -q passes with 0 failures",
+        "mypy clean",
+        "ruff clean",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "scope-expansion-final-validation",
+      "status": "pending",
+      "evidence_or_reason": "Phase R67 family 7/7: Full validation sweep and work-rag update.",
+      "next_slice_hint": "Final validation sweep: (1) Run .venv/bin/python -m pytest tests/ -q — must show 0 failures. (2) Run .venv/bin/python -m mypy src/ez_ax/ — must show 0 errors. (3) Run .venv/bin/python -m ruff check src/ tests/ — must show 0 errors. If any failures exist, fix them. Then update docs/product/work-rag.json: Set current.goal to \"Released scope expanded from pageReadyObserved to runCompletion. All 12 missions are now released.\". Set current.phase to \"Phase R67 — scope expansion complete\". Set current.milestone to \"All 8 modeled missions promoted to released, full 12-mission pipeline\". Set current.anchor to \"r67ScopeExpansionBound\". Set current.invariant to include \"released ceiling is runCompletion\" instead of \"pageReadyObserved\". Set current.approved_scope_ceiling to \"runCompletion\". Set current.next_action to \"FINAL_STOP_REVIEW - Phase R67 scope expansion complete\". Compress history as needed per compression policy. Also update docs/llm/low-attention-execution-contract.json: scope_ceiling to runCompletion, active_invariant to mention runCompletion. Commit once.",
+      "first_validation": ".venv/bin/python -m pytest tests/ -q",
+      "mypy_target": "src/ez_ax/",
+      "ruff_target": "src/ tests/",
+      "done_when": [
+        "pytest tests/ -q passes with 0 failures",
+        "mypy clean",
+        "ruff clean",
+        "work-rag.json reflects Phase R67 completion",
+        "execution-contract.json scope_ceiling is runCompletion",
         "committed"
       ],
       "template_id": ""

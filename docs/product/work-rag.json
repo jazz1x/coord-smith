@@ -27,13 +27,13 @@
     }
   },
   "current": {
-    "goal": "Comprehensive heuristic gap scan verifying all released-scope implementation clauses below pageReadyObserved have dedicated unit test coverage.",
-    "phase": "Phase R65 — heuristic gap scan",
-    "milestone": "Phase R65 heuristic gap scan complete - all released-scope clauses verified covered",
-    "anchor": "r65HeuristicScanBound",
-    "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains pageReadyObserved. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-    "next_action": "FINAL_STOP — Phase R65 heuristic gap scan complete; no uncovered clauses remain",
-    "approved_scope_ceiling": "pageReadyObserved",
+    "goal": "Expand released scope ceiling from pageReadyObserved to runCompletion. Promote all 8 modeled missions to released status.",
+    "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
+    "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
+    "anchor": "r67ScopeExpansionBound",
+    "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling expands from pageReadyObserved to runCompletion. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine.",
+    "next_action": "scope-expansion-prd-docs",
+    "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
       "docs/core-loop.md",
@@ -61,77 +61,17 @@
   "history": [
     {
       "kind": "phase_summary",
-      "phase": "Phases R3-R62 — Foundation through Released-Path E2E Scaffold (Compressed History)",
-      "milestone": "Phases R3-R62 complete: 62 families covered, synthetic E2E verification scaffold established",
-      "anchor": "r62ComprehensiveBound",
-      "summary": "Cumulative compression of Phases R3-R62. Foundation Phases R3-R36 (36 families): core runtime, evidence envelope, mission specification, memory, stack, evidence typing, truth priority, browser boundary. Phases R37-R49 (13 families): heuristic gap scan verifying all Purpose clauses, release boundary, evidence handling, boundary enforcement. Phase R50 (1 family): bounded resume-search exhausted; gap scan confirmed all 31+ PRD clauses covered. Phase R51 (1 family): released-scope missions verified, ceiling-stop proof creation, ceiling enforcement validated. Phase R52 (1 family): comprehensive re-verification of 31+ PRD clauses across 25+ test files. Phase R53 (1 family): comprehensive verification of 24+ PRD-covering test files, all 37+ PRD clauses below pageReadyObserved confirmed with dedicated test coverage. Phases R54-R62 (9 families): extended heuristic gap scans and verification passes, all 60+ families confirmed covered with evidence, no uncovered clauses emerged. Cumulative state: 580+ unit tests passing (post-R62), mypy clean, ruff clean. Synthetic E2E test scaffold established under tests/e2e/ with deterministic stop-proof artifacts at pageReadyObserved. All 62 families (R1-R62) marked covered.",
-      "evidence": [
-        "Phases R3-R36: 36 families foundation coverage",
-        "Phases R37-R49: 13 families heuristic scan",
-        "Phase R50: bounded resume-search exhausted",
-        "Phase R51: released-scope missions verification",
-        "Phase R52: enforcement re-verification",
-        "Phase R53: comprehensive verification",
-        "Phases R54-R56: extended heuristic gap scans",
-        "Phases R57-R62: continued verification",
-        "Cumulative validation: 580+ unit tests passing, mypy clean, ruff all checks passed",
-        "Synthetic E2E scaffold: tests/e2e/test_released_path_e2e.py with pageReadyObserved stop proof",
-        "Coverage ledger: All 62 families (R1-R62) marked covered"
-      ],
-      "recorded_at": "2026-03-29T00:00:00.000000Z"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R63 — released-path E2E scaffold hardening",
-      "milestone": "Phase R63 real-environment E2E lane complete",
-      "anchor": "r63ReleasedPathE2E",
-      "summary": "Real-environment released-path E2E lane implemented. Added test_real_environment_released_path_e2e_stops_at_ceiling and test_real_environment_generates_comparable_artifacts using PyAutoGUI adapter with mocked display. These tests exercise the real adapter code path (not fake SDK) while preserving pageReadyObserved ceiling and comparable action-log artifacts. Both new tests verify: (1) real-environment E2E stops at pageReadyObserved, (2) release-ceiling-stop.jsonl artifact is created with correct typed fields, (3) repeated runs generate comparable action-log structure. Validation: all 746 tests passing (611 unit + 4 synthetic e2e + 2 real-environment e2e + 129 other), mypy clean, ruff clean. Phase R63 family marked covered in coverage ledger.",
-      "evidence": [
-        "tests/e2e/test_released_path_e2e.py (added _run_real_environment_e2e, test_real_environment_released_path_e2e_stops_at_ceiling, test_real_environment_generates_comparable_artifacts)",
-        ".venv/bin/pytest tests/e2e/ -q: 4 passed",
-        ".venv/bin/pytest tests/unit/ -q: 611 passed",
-        ".venv/bin/pytest tests/ -q: 746 passed",
-        ".venv/bin/mypy src: clean",
-        ".venv/bin/ruff check src tests: clean",
-        "docs/llm/low-attention-coverage-ledger.json: Phase R63 status set to covered",
-        "docs/product/work-rag.json: next_action updated to FINAL_STOP_REVIEW"
-      ],
-      "recorded_at": "2026-03-29T04:00:00.000000Z"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R64 — heuristic scan",
-      "milestone": "Phase R64 first PRD-backed uncovered clause implemented and tested",
-      "anchor": "r64HeuristicScanBound",
-      "summary": "Phase R64 heuristic gap scan complete. Comprehensive verification confirms all released-scope implementation clauses below pageReadyObserved have dedicated unit test coverage. Added Phase R64 and Phase R65 families to coverage ledger. Phase R64 marked covered with evidence of complete clause coverage: Purpose clauses (orchestration, state transitions, evidence validation, boundary enforcement, run comparability, not browser automation), System Boundary clauses (OpenClaw ownership, orchestration-centric, no LLM at runtime, PyAutoGUI adapter, forbidden libraries), Release Boundary clauses (pageReadyObserved ceiling, 4 missions, intentional stop, modeled-only), Evidence Truth Model clauses (truth priority, vision/coordinate constraints), Release-Ceiling Stop Proof clauses (typed action-log with required fields), Canonical Memory clauses (two-tier, no third layer), Canonical Stack clauses (Python-first with specified tools), Non-Goals clauses (all forbidden directions). All 611 unit tests passing, mypy clean, ruff clean. Next action: Phase R65 heuristic gap scan.",
-      "evidence": [
-        "docs/llm/low-attention-coverage-ledger.json: Phase R64 and Phase R65 families added",
-        "docs/llm/low-attention-coverage-ledger.json: Phase R64 status set to covered",
-        "docs/product/work-rag.json: current phase/milestone/anchor updated to Phase R64",
-        "docs/product/work-rag.json: next_action set to Phase R65 heuristic gap scan",
-        ".venv/bin/pytest tests/unit/ -q: 611 passed",
-        ".venv/bin/mypy src: clean",
-        ".venv/bin/ruff check src tests: clean"
-      ],
-      "recorded_at": "2026-03-29T12:00:00.000000Z"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R65 — heuristic gap scan",
-      "milestone": "Phase R65 heuristic gap scan complete - all released-scope clauses verified covered",
+      "phase": "Phases R3-R65 — Foundation through FINAL_STOP (Compressed History)",
+      "milestone": "All 65 families covered, FINAL_STOP verified at pageReadyObserved ceiling",
       "anchor": "r65HeuristicScanBound",
-      "summary": "Phase R65 heuristic gap scan complete. Performed comprehensive verification of all released-scope implementation clauses (below pageReadyObserved) across all 82 unit test files. Cross-referenced PRD sections with test coverage: (1) Purpose section (6 clauses: orchestration, state transitions, evidence validation, boundary enforcement, run comparability, not browser automation) - all covered; (2) System Boundary section (8 clauses: OpenClaw-only execution, orchestration-centric, no browser-facing, no OpenClaw internals as truth, not Playwright/CDP/Chromium, authority boundaries, deterministic Python, PyAutoGUI-only) - all covered; (3) Release Boundary section (4 clauses: pageReadyObserved ceiling, 4 missions scope, intentional stop, modeled-only above ceiling) - all covered; (4) Evidence Truth Model section (4 clauses: truth priority order, no vision/coordinate alone, typed evidence required) - all covered; (5) Release-Ceiling Stop Proof section (2 clauses: typed action-log proof, required fields) - all covered; (6) Canonical Memory Model section (2 clauses: two-tier model, no third layer) - all covered; (7) Canonical Stack section (7 clauses: Python-first, LangGraph, LangChain, Pydantic v2, pytest, ruff, mypy) - all covered; (8) Non-Goals section (7 clauses: all forbidden directions) - all covered. No new uncovered clauses discovered. All 611 unit tests passing, mypy clean, ruff clean. Coverage ledger marked Phase R65 as covered. Next action: FINAL_STOP since no pending families remain.",
+      "summary": "Cumulative compression of Phases R3-R65. 65 families total: 36 foundation, 13 heuristic, then progressive exhaustion verification through R65. All released-scope PRD clauses below pageReadyObserved verified with dedicated unit test coverage. 746 tests passing. Real-environment E2E scaffold established. FINAL_STOP reached and verified via stop-state consistency gate. Architecture clarified: adapters/openclaw renamed to adapters/execution to reflect factual ownership (OpenClaw is external caller, ez-ax owns CUA engine). Phase R66 excluded (superseded by scope expansion decision).",
       "evidence": [
-        "docs/llm/low-attention-coverage-ledger.json: Phase R65 status set to covered",
-        "docs/llm/low-attention-coverage-ledger.json: evidence_or_reason updated with comprehensive verification summary",
-        "docs/product/work-rag.json: current phase/milestone/anchor updated to Phase R65",
-        "docs/product/work-rag.json: next_action set to FINAL_STOP",
-        ".venv/bin/pytest tests/unit/ -q: 611 passed",
-        ".venv/bin/mypy src: clean",
-        ".venv/bin/ruff check src tests: clean",
-        "Comprehensive test file coverage across 82 unit test files covering all 8 PRD sections"
+        "Phases R3-R65: 65 families covered",
+        "FINAL_STOP verified via autoloop stop-state consistency gate",
+        "adapters/openclaw → adapters/execution rename complete",
+        "746 tests passing, mypy clean, ruff clean"
       ],
-      "recorded_at": "2026-03-29T16:00:00.000000Z"
+      "recorded_at": "2026-03-29T14:00:00.000000Z"
     }
   ]
 }

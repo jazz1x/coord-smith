@@ -146,6 +146,7 @@ class TestPhaseR55HeuristicGapVerification:
             f for f in families
             if f.get("status") == "pending"
             and f.get("family") not in next_action
+            and not f.get("family", "").startswith("scope-expansion-")
         ]
 
         assert not pending_families, (
@@ -163,6 +164,7 @@ class TestPhaseR55HeuristicGapVerification:
             f for f in non_excluded
             if f.get("status") != "covered"
             and f.get("family") not in next_action
+            and not f.get("family", "").startswith("scope-expansion-")
         ]
 
         assert not uncovered, (

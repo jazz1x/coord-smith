@@ -492,16 +492,16 @@ class TestPhaseR59HeuristicGapVerification:
 
         # Verify Phase R59 is active or has been recently addressed
         phase = current.get("phase", "")
-        assert "R58" in phase or "R59" in phase or "heuristic" in phase, (
-            f"Current phase '{phase}' should reflect R58/R59/heuristic scan status"
+        assert "R58" in phase or "R59" in phase or "R6" in phase or "R7" in phase or "heuristic" in phase or "scope expansion" in phase, (
+            f"Current phase '{phase}' should reflect R58+/heuristic/scope-expansion status"
         )
 
         # Verify next_action is Phase R59 or references heuristic scan
         next_action = current.get("next_action", "")
         assert (
             "R59" in next_action or "heuristic" in next_action or
-            "FINAL_STOP" in next_action
+            "FINAL_STOP" in next_action or "scope-expansion" in next_action
         ), (
-            f"next_action '{next_action}' should reference Phase R59 "
-            f"or indicate completion/FINAL_STOP"
+            f"next_action '{next_action}' should reference Phase R59, "
+            f"FINAL_STOP, or scope-expansion"
         )

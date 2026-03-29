@@ -1,10 +1,10 @@
 {
-  "version": 3,
-  "active_phase": "Phase R65 — heuristic scan",
-  "active_milestone": "Phase R65 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r65HeuristicScanBound",
-  "active_invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling remains pageReadyObserved. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons.",
-  "scope_ceiling": "pageReadyObserved",
+  "version": 4,
+  "active_phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
+  "active_milestone": "All 8 modeled missions promoted to released, ceiling at runCompletion",
+  "active_anchor": "r67ScopeExpansionBound",
+  "active_invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling expands from pageReadyObserved to runCompletion. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
+  "scope_ceiling": "runCompletion",
   "canonical_inputs": [
     "AGENTS.md",
     "docs/prd.md",
@@ -20,10 +20,17 @@
     "docs/product/prd-low-attention-implementation-queue.md",
     "docs/llm/low-attention-slice-templates.json",
     "tests/e2e/test_released_path_e2e.py",
-    "tests/e2e/README.md"
+    "tests/e2e/README.md",
+    "docs/architecture-boundaries.md"
   ],
   "anchor_contract_families": [
-    "Phase R65 heuristic gap scan"
+    "scope-expansion-prd-docs",
+    "scope-expansion-mission-registry",
+    "scope-expansion-graph-wiring",
+    "scope-expansion-evidence-adapter",
+    "scope-expansion-integration-e2e-tests",
+    "scope-expansion-heuristic-test-cleanup",
+    "scope-expansion-final-validation"
   ],
   "heuristic_family_ladder": [
     "same-file failing validation artifact",
@@ -31,17 +38,17 @@
     "same directory imported support module"
   ],
   "seeded_slice_requirements": [
-    "remain below pageReadyObserved",
+    "each family changes source AND corresponding tests together to keep validation green",
     "one-task-per-commit safe",
     "name one first_validation before implementation",
     "update current-state and work-rag in the same task close",
-    "keep real-environment E2E work below pageReadyObserved and preserve comparable stop-proof artifacts",
     "update the active coverage ledger in the same task close"
   ],
   "final_stop_requirements": [
     "no coverage-ledger family remains pending",
-    "all anchor families are covered or explicitly excluded",
+    "all 7 anchor families are covered",
     "canonical current state does not name a concrete next slice",
-    "released-path E2E evidence remains typed and comparable at pageReadyObserved"
+    "released-path E2E evidence remains typed and comparable at runCompletion",
+    "all 12 missions execute in sequence and stop proof is at run_completion"
   ]
 }

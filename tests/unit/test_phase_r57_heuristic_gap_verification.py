@@ -150,6 +150,7 @@ class TestPhaseR57HeuristicGapVerification:
                 f"Phase R{phase_num}" in f.get("family", "")
                 for phase_num in range(57, 100)  # Exclude R57+ (R57 is current, R58+ are future)
             )
+            and not f.get("family", "").startswith("scope-expansion-")
         ]
 
         assert not released_scope_pending, (
