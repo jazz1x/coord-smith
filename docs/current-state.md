@@ -21,7 +21,7 @@ It is intentionally changeable and subordinate to:
 
 ## Current Interpretation
 
-Phase R65 complete. Phase transition in progress: `Phase R66 heuristic gap scan` is the active task.
+Phase R67 — scope expansion: pageReadyObserved to runCompletion complete. Phase R68 — heuristic gap scan complete. All PRD-backed released-scope clauses verified with dedicated test coverage. Continuation: FINAL_STOP reached.
 
 ## What Is Already Established
 
@@ -113,7 +113,7 @@ Phase R6 complete:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current next action is: `Phase R66 heuristic gap scan`
+The current next action is: `FINAL_STOP — Phase R68 complete`
 
 ## Active Anchor Coverage Ledger
 

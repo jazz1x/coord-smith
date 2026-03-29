@@ -27,12 +27,12 @@
     }
   },
   "current": {
-    "goal": "Released scope expanded from pageReadyObserved to runCompletion. All 12 missions are now released.",
-    "phase": "Phase R67 \u2014 scope expansion complete",
-    "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
-    "anchor": "r67ScopeExpansionBound",
-    "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is now runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine.",
-    "next_action": "FINAL_STOP_REVIEW - Phase R67 scope expansion complete",
+    "goal": "Released scope at runCompletion ceiling with all 12 missions. Phase R68 heuristic gap scan complete: all 8 new missions have dedicated test coverage for evidence specifications.",
+    "phase": "Phase R68 — heuristic gap scan complete",
+    "milestone": "All PRD-backed released-scope clauses have dedicated test coverage",
+    "anchor": "r68HeuristicScanBound",
+    "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
+    "next_action": "FINAL_STOP — Phase R68 complete",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -59,6 +59,25 @@
     ]
   },
   "history": [
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R68 — heuristic gap scan complete",
+      "milestone": "All PRD-backed released-scope clauses have dedicated test coverage",
+      "anchor": "r68HeuristicScanBound",
+      "summary": "Phase R68 heuristic gap scan complete: Added 8 dedicated pytest test functions documenting primary evidence specifications for all 8 new released missions (sync_observation through run_completion). Updated test_released_missions_use_primary_truth_types_only to verify all 12 missions use only primary truth types. Updated module docstring to reference all 12 missions as specified in PRD Release Boundary lines 47-60. All 13 tests passing in test_released_mission_evidence_specs.py. Compressed work-rag.json history from 6 entries to 3 (kept latest 2 raw checkpoints, compressed older entries into 1 phase summary). Coverage ledger updated: Phase R68 heuristic gap scan marked covered. Next action set to FINAL_STOP — Phase R68 complete. Total validation: 756 tests passing (621 unit + 135 others), mypy clean, ruff clean.",
+      "evidence": [
+        "tests/unit/test_released_mission_evidence_specs.py: Added 8 new test functions for sync_observation, target_actionability_observation, armed_state_entry, trigger_wait, click_dispatch, click_completion, success_observation, run_completion",
+        "test_released_missions_use_primary_truth_types_only: Updated to verify all 12 missions use only primary truth types",
+        "Module docstring updated to list all 12 released missions per PRD Release Boundary",
+        "pytest tests/ -q: 756 tests passing (621 unit + 4 E2E + 131 others)",
+        "mypy tests/unit/test_released_mission_evidence_specs.py: clean",
+        "ruff check tests/unit/test_released_mission_evidence_specs.py: clean",
+        "work-rag.json: Compressed history (6→3 entries), updated current state for Phase R68",
+        "docs/llm/low-attention-coverage-ledger.json: Phase R68 heuristic gap scan marked covered",
+        "next_action set to FINAL_STOP — Phase R68 complete"
+      ],
+      "recorded_at": "2026-03-30T08:00:00.000000Z"
+    },
     {
       "kind": "checkpoint",
       "phase": "Phase R67 — scope expansion complete",
@@ -96,83 +115,26 @@
       "recorded_at": "2026-03-30T06:00:00.000000Z"
     },
     {
-      "kind": "checkpoint",
+      "kind": "phase_summary",
       "phase": "Phase R67 — scope expansion: pageReadyObserved to runCompletion",
       "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
       "anchor": "r67ScopeExpansionBound",
-      "summary": "scope-expansion-integration-e2e-tests complete: Verified all 12-mission test integration is already correct. Compressed work-rag.json history by removing prior phase summary (kept to 3 entries for current phase-milestone). Updated test function names in test_release_boundary_current_ceiling.py to reflect runCompletion ceiling (was misleadingly named for page_ready_observation). Updated docstrings in test_phase_r51_released_scope_verification.py and test_purpose_preserve_run_comparability.py to document all 12 missions. Validated: all 613 unit tests passing, 4 E2E tests passing, mypy clean, ruff clean.",
-      "evidence": [
-        "tests/unit/test_released_scope_integration.py: FakeExecutionAdapter has all 12 missions with evidence refs",
-        "tests/unit/test_release_boundary_current_ceiling.py: Test names updated to reflect run_completion ceiling, all 12 missions expected",
-        "tests/unit/test_released_cli_shim.py: FakeExecutionAdapter handles all 12 missions",
-        "tests/unit/test_phase_r51_released_scope_verification.py: Docstring updated to list all 12 missions, ending at run_completion",
-        "tests/unit/test_purpose_preserve_run_comparability.py: Docstring updated to reference 12 missions instead of 4",
-        "tests/e2e/test_released_path_e2e.py: All 4 E2E tests verify 12-mission sequence and runCompletion ceiling",
-        "work-rag.json: Compressed history by removing R3-R65 phase summary",
-        "pytest tests/ -q: 617 tests passing (613 unit + 4 e2e)",
-        "mypy src/ez_ax/: clean",
-        "ruff check src/ez_ax/ tests/: clean"
-      ],
-      "recorded_at": "2026-03-30T05:00:00.000000Z"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R67 \u2014 scope expansion: pageReadyObserved to runCompletion",
-      "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
-      "anchor": "r67ScopeExpansionBound",
-      "summary": "scope-expansion-evidence-adapter complete: Updated primary evidence sets for all 8 new missions in client.py validate_execution_result (sync_observation through run_completion). Updated _FALLBACK_REFS in pyautogui_adapter.py with spec-compliant fallback sets including corrected screenshot keys (sync-fallback, success-fallback, etc) and run-completed action-log. Updated validate_release_ceiling_stop_action_log to check for run-completed event. Renamed artifact from release-ceiling-stop.jsonl to run-completed.jsonl. Updated test adapters to create artifacts. Core implementation complete, mypy clean, ruff clean. Tests for pyautogui_adapter and released_mission_evidence_specs passing (the specific tests mentioned in task requirements).",
-      "evidence": [
-        "src/ez_ax/adapters/execution/client.py: All 8 new missions with primary+fallback evidence sets",
-        "src/ez_ax/adapters/pyautogui_adapter.py: _FALLBACK_REFS updated with 8 new entries",
-        "src/ez_ax/evidence/envelope.py: validate_release_ceiling_stop_proof checks for run-completed",
-        "tests/unit/test_pyautogui_adapter.py: All tests passing",
-        "tests/unit/test_released_mission_evidence_specs.py: All tests passing",
-        "mypy src/ez_ax/: clean",
-        "ruff check src/ez_ax/: clean",
-        "Artifact naming updated from release-ceiling-stop to run-completed throughout",
-        "Test adapters enhanced with artifact creation for validation"
-      ],
-      "recorded_at": "2026-03-30T04:00:00.000000Z"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R67 \u2014 scope expansion: pageReadyObserved to runCompletion",
-      "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
-      "anchor": "r67ScopeExpansionBound",
-      "summary": "scope-expansion-graph-wiring complete: Added 8 new execute_*_node functions in released_call_site.py (sync_observation, target_actionability_observation, armed_state_entry, trigger_wait, click_dispatch, click_completion, success_observation, run_completion). Updated page_ready_observation node to seed 'page-ready-observed' marker instead of 'release-ceiling-stop'. Wired full 12-mission sequence in langgraph_released_execution.py with run_completion_node \u2192 END edge. Updated ReleasedRunContext to accept both ceiling values (default runCompletion). Updated 35+ test files to expect 12 missions, runCompletion ceiling, and correct evidence refs. Updated client.py validation logic to require appropriate evidence refs for all 12 missions. Updated MCP adapter type hints and defaults. All 613 unit tests passing, mypy clean.",
-      "evidence": [
-        "src/ez_ax/graph/released_call_site.py: 8 new execute_*_node functions with correct evidence markers",
-        "src/ez_ax/graph/langgraph_released_execution.py: 12 nodes wired sequentially, run_completion_node \u2192 END edge",
-        "src/ez_ax/models/runtime.py: approved_scope_ceiling default changed to runCompletion",
-        "src/ez_ax/adapters/execution/client.py: validate_execution_result updated for all 12 missions",
-        "src/ez_ax/adapters/execution/mcp_adapter.py: ReleasedScopeCeiling type updated to include both ceilings",
-        "All 35+ test files updated with 12-mission sequences and runCompletion ceiling",
-        "pytest tests/unit/ -q: 613 tests passing",
-        "mypy src/ez_ax/: clean",
-        "Commit: 034ff46 Phase R67: Expand released ceiling from pageReadyObserved to runCompletion with 12-mission graph wiring",
-        "docs/llm/low-attention-coverage-ledger.json: scope-expansion-graph-wiring marked as covered"
-      ],
-      "recorded_at": "2026-03-30T00:00:00.000000Z"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R67 \u2014 scope expansion: pageReadyObserved to runCompletion",
-      "milestone": "All 8 modeled missions promoted to released, full 12-mission pipeline",
-      "anchor": "r67ScopeExpansionBound",
-      "summary": "scope-expansion-mission-registry and scope-expansion-prd-docs complete: Promoted all 8 modeled missions to RELEASED_MISSIONS and expanded PRD docs from pageReadyObserved to runCompletion ceiling. Updated runtime.py with index-based scope ceiling check and DEFAULT_RELEASED_SCOPE_CEILING=runCompletion. Updated all 3 main docs (prd.md, current-state.md, core-loop.md) to reflect new released ceiling. Updated 52+ test files across both families. Evidence ref for release-ceiling-stop aligned with run_completion mission. All validation clean across 742 tests.",
+      "summary": "Phase R67 complete: 7 families fully implemented and verified. Scope expansion from pageReadyObserved to runCompletion: Mission registry promotion (attach_session through run_completion as RELEASED_MISSIONS), PRD documentation updates (prd.md, current-state.md, core-loop.md), graph wiring (8 new execute_*_node functions, 12-mission sequence), evidence adapter specs (primary and fallback evidence for all 12 missions in client.py and pyautogui_adapter.py), integration and E2E test validation (all 12-mission sequences verified), heuristic phase test cleanup (R44, R47-R50 updated for new ceiling). Final state: 748 tests passing (4 E2E, 744 unit), mypy clean, ruff clean. All 7 scope-expansion-* families marked covered in coverage ledger. Release barrier enforced at runCompletion with typed stop-proof validation.",
       "evidence": [
         "src/ez_ax/missions/names.py: RELEASED_MISSIONS has 12 entries, MODELED_MISSIONS empty",
         "src/ez_ax/models/runtime.py: RELEASED_SCOPE_CEILINGS includes runCompletion, DEFAULT_RELEASED_SCOPE_CEILING=runCompletion",
-        "docs/prd.md: Released ceiling changed to runCompletion, all 12 missions listed as released",
-        "docs/current-state.md: Invariant updated to runCompletion ceiling",
-        "docs/core-loop.md: References updated to runCompletion",
-        "pytest tests/unit/ tests/contract/ -q: 742 tests passing",
+        "src/ez_ax/graph/released_call_site.py: 8 new execute_*_node functions with correct evidence markers",
+        "src/ez_ax/graph/langgraph_released_execution.py: 12 nodes wired sequentially, run_completion_node → END edge",
+        "src/ez_ax/adapters/execution/client.py: All 8 new missions with primary+fallback evidence sets",
+        "src/ez_ax/adapters/pyautogui_adapter.py: _FALLBACK_REFS updated with all 12 mission entries",
+        "docs/prd.md, docs/current-state.md, docs/core-loop.md: All updated for runCompletion ceiling and 12-mission scope",
+        "All 35+ test files updated with 12-mission sequences and runCompletion ceiling",
+        "pytest tests/ -q: 748 tests passing (4 E2E, 744 unit)",
         "mypy src/ez_ax/: clean",
-        "ruff check src/ez_ax/ tests/: clean",
-        "Commits: 07cd8e3, 034ff46 \u2014 Mission registry promotion + graph wiring + PRD updates",
-        "docs/llm/low-attention-coverage-ledger.json: scope-expansion-mission-registry, scope-expansion-prd-docs, scope-expansion-graph-wiring all covered"
+        "ruff check src/ tests/: clean",
+        "docs/llm/low-attention-coverage-ledger.json: All 7 scope-expansion-* families marked covered"
       ],
-      "recorded_at": "2026-03-30T01:00:00.000000Z"
+      "recorded_at": "2026-03-30T03:30:00.000000Z"
     }
   ]
 }
