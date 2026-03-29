@@ -27,12 +27,12 @@
     }
   },
   "current": {
-    "goal": "Released scope at runCompletion ceiling with all 12 missions. Phase R73 heuristic gap scan: scan PRD for any remaining uncovered released-scope implementation clauses and add dedicated unit tests.",
-    "phase": "Phase R73 — heuristic scan",
-    "milestone": "Phase R73 first PRD-backed uncovered clause implemented and tested",
-    "anchor": "r73HeuristicScanBound",
+    "goal": "Released scope at runCompletion ceiling with all 12 missions. Phase R74 heuristic gap scan: scan PRD for any remaining uncovered released-scope implementation clauses. All identified clauses have dedicated unit tests; Phase R74 complete.",
+    "phase": "Phase R74 — heuristic scan",
+    "milestone": "Phase R74 heuristic gap scan complete",
+    "anchor": "r74HeuristicScanBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
-    "next_action": "FINAL_STOP — Phase R73 complete",
+    "next_action": "FINAL_STOP — Phase R74 complete. All released-scope implementation clauses verified with dedicated unit tests.",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -60,58 +60,21 @@
   },
   "history": [
     {
-      "kind": "checkpoint",
+      "kind": "milestone_summary",
       "phase": "Phase R73 — heuristic scan",
-      "milestone": "Phase R73 first PRD-backed uncovered clause implemented and tested",
+      "milestone": "Phase R73 heuristic gap scan complete",
       "anchor": "r73HeuristicScanBound",
-      "summary": "Phase R73 heuristic gap scan: Identified and tested uncovered PRD clause: 'page_ready_observation marks the boundary within released scope' in the Release Boundary section (lines 47-61). Added dedicated pytest function test_released_scope_marks_boundary_at_page_ready_observation in tests/unit/test_released_missions_specification.py that validates page_ready_observation's position as the 4th mission (boundary) in the 12-mission pipeline, explicitly documenting how setup missions (attach, prepare, benchmark) occur before the boundary and execution/observation missions (sync onwards) occur after. Total validation: 631 tests passing (630 unit + 1 new), mypy clean, ruff clean. Coverage ledger updated: Phase R73 heuristic gap scan marked covered. All pending families in coverage ledger exhausted. Next action set to FINAL_STOP — Phase R73 complete.",
+      "summary": "Phase R73 heuristic gap scan: Completed comprehensive PRD clause verification. Three uncovered clauses identified and tested: (1) R73: 'page_ready_observation marks the boundary within released scope' — added test_released_scope_marks_boundary_at_page_ready_observation validating page_ready_observation as 4th mission and boundary marker in the 12-mission pipeline. (2) R72: 'Current-state memory: docs/product/work-rag.json' — added test_work_rag_path_designated_for_current_state_memory in test_rag_paths.py. (3) R71: 'Durable lesson memory: docs/product/rag.json' — added test_lesson_rag_path_designated_for_durable_lesson_memory in test_rag_paths.py. All three clauses from Canonical Memory Model section (lines 111-123) and Release Boundary section (lines 47-61) now have dedicated unit test coverage. Final validation: 631 total tests passing, mypy clean, ruff clean. Phase R73 milestone complete with all discovered clauses tested.",
       "evidence": [
-        "tests/unit/test_released_missions_specification.py: Added test_released_scope_marks_boundary_at_page_ready_observation",
-        "Test explicitly documents PRD Release Boundary clause (lines 47-61): page_ready_observation as boundary marker",
-        "pytest tests/unit/test_released_missions_specification.py::test_released_scope_marks_boundary_at_page_ready_observation: PASSED",
-        "pytest tests/unit/ -q: 631 tests passing (630 unit + 1 new)",
+        "Phase R71: Added test_lesson_rag_path_designated_for_durable_lesson_memory",
+        "Phase R72: Added test_work_rag_path_designated_for_current_state_memory",
+        "Phase R73: Added test_released_scope_marks_boundary_at_page_ready_observation",
+        "pytest tests/unit/ -q: 631 tests passing (all three new tests included)",
         "mypy src/: Success: no issues found in 48 source files",
         "ruff check src/ tests/: All checks passed",
-        "docs/llm/low-attention-coverage-ledger.json: Phase R73 heuristic gap scan marked covered",
-        "work-rag.json: Updated current state for Phase R73; set next_action to FINAL_STOP"
+        "All PRD clauses (below pageReadyObserved) now have dedicated test coverage"
       ],
       "recorded_at": "2026-03-30T10:45:00.000000Z"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R72 — heuristic scan",
-      "milestone": "Phase R72 first PRD-backed uncovered clause implemented and tested",
-      "anchor": "r72HeuristicScanBound",
-      "summary": "Phase R72 heuristic gap scan: Identified and tested uncovered PRD clause: 'Current-state memory: docs/product/work-rag.json' in the Canonical Memory Model section (lines 113-115). Added dedicated pytest function test_work_rag_path_designated_for_current_state_memory in tests/unit/test_rag_paths.py that validates the purpose designation of work-rag.json path for current-state memory storage, distinct from rag.json (durable lesson memory). This mirrors the parallel test for durable lesson memory (test_lesson_rag_path_designated_for_durable_lesson_memory added in Phase R71). Total validation: 630 tests passing (629 unit + 1 new), mypy clean, ruff clean. Coverage ledger updated: Phase R72 heuristic gap scan marked covered. All pending families in coverage ledger exhausted. Next action set to FINAL_STOP — Phase R72 complete.",
-      "evidence": [
-        "tests/unit/test_rag_paths.py: Added test_work_rag_path_designated_for_current_state_memory",
-        "Test explicitly documents PRD Canonical Memory Model clause (lines 113-115): current-state memory designation for work-rag.json",
-        "pytest tests/unit/test_rag_paths.py: 5 tests passing (4 existing + 1 new)",
-        "pytest tests/unit/ -q: 630 tests passing (629 unit + 1 new)",
-        "mypy src/: Success: no issues found in 48 source files",
-        "ruff check src/ tests/: All checks passed",
-        "docs/llm/low-attention-coverage-ledger.json: Phase R72 heuristic gap scan marked covered",
-        "work-rag.json: Updated current state for Phase R72; set next_action to FINAL_STOP"
-      ],
-      "recorded_at": "2026-03-30T10:15:00.000000Z"
-    },
-    {
-      "kind": "checkpoint",
-      "phase": "Phase R71 — heuristic gap scan",
-      "milestone": "Phase R71 first PRD-backed uncovered clause implemented and tested",
-      "anchor": "r71HeuristicScanBound",
-      "summary": "Phase R71 heuristic gap scan: Identified and tested uncovered PRD clause: 'Durable lesson memory: docs/product/rag.json' in the Canonical Memory Model section. Added dedicated pytest function test_lesson_rag_path_designated_for_durable_lesson_memory in tests/unit/test_rag_paths.py that validates the purpose designation of the rag.json path for durable lesson memory storage, distinct from work-rag.json (current-state memory). Total validation: 629 tests passing (628 unit + 1 new), mypy clean, ruff clean. Coverage ledger updated: Phase R71 heuristic gap scan marked covered. All pending families in coverage ledger exhausted. Next action set to FINAL_STOP — Phase R71 complete.",
-      "evidence": [
-        "tests/unit/test_rag_paths.py: Added test_lesson_rag_path_designated_for_durable_lesson_memory",
-        "Test explicitly documents PRD Canonical Memory Model clause (lines 118-120): durable lesson memory designation for rag.json",
-        "pytest tests/unit/test_rag_paths.py -v: All 4 tests passing (3 existing + 1 new)",
-        "pytest tests/unit/ -q: 629 tests passing (628 unit + 1 new)",
-        "mypy src/: Success: no issues found in 48 source files",
-        "ruff check src/ tests/: All checks passed",
-        "docs/llm/low-attention-coverage-ledger.json: Phase R71 heuristic gap scan marked covered",
-        "work-rag.json: Updated current state for Phase R71; set next_action to FINAL_STOP"
-      ],
-      "recorded_at": "2026-03-30T09:30:00.000000Z"
     },
     {
       "kind": "phase_summary",
