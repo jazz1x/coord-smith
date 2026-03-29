@@ -12,12 +12,18 @@ from ez_ax.adapters.execution.client import (
 )
 from ez_ax.graph.released_call_site import (
     ReleasedRunContext,
+    execute_armed_state_entry_node,
     execute_attach_session_node,
     execute_benchmark_validation_node,
+    execute_click_completion_node,
+    execute_click_dispatch_node,
     execute_page_ready_observation_node,
     execute_prepare_session_node,
     execute_run_completion_node,
+    execute_success_observation_node,
     execute_sync_observation_node,
+    execute_target_actionability_observation_node,
+    execute_trigger_wait_node,
     seed_action_log_marker,
 )
 from ez_ax.models.errors import ConfigError, FlowError, ValidationError
@@ -321,3 +327,201 @@ async def test_execute_run_completion_node_seeds_release_ceiling_stop(
     )
     assert payload["event"] == "release-ceiling-stop"
     assert payload["mission_name"] == "run_completion"
+
+
+@pytest.mark.asyncio
+async def test_execute_target_actionability_observation_node_wires_execution_wrapper(
+    tmp_path: Path,
+) -> None:
+    """Verify target_actionability_observation_node wires execution wrapper."""
+    run_root = tmp_path
+    run = ReleasedRunContext(
+        run_root=run_root, approved_scope_ceiling="runCompletion"
+    )
+
+    result = ExecutionResult(
+        mission_name="target_actionability_observation",
+        evidence_refs=(
+            "evidence://dom/target-actionable",
+            "evidence://action-log/target-actionable-observed",
+        ),
+    )
+    adapter = FakeExecutionAdapter(result=result)
+    state = RuntimeState(run_id="test-run")
+
+    observed = await execute_target_actionability_observation_node(
+        state=state,
+        adapter=adapter,
+        run=run,
+    )
+
+    assert observed == result
+    assert state.current_mission == "target_actionability_observation"
+    assert state.mission_state.evidence_refs == result.evidence_refs
+    assert (
+        run_root / "artifacts" / "action-log" / "target-actionable-observed.jsonl"
+    ).exists()
+
+
+@pytest.mark.asyncio
+async def test_execute_armed_state_entry_node_wires_execution_wrapper(
+    tmp_path: Path,
+) -> None:
+    """Verify armed_state_entry_node wires execution wrapper."""
+    run_root = tmp_path
+    run = ReleasedRunContext(
+        run_root=run_root, approved_scope_ceiling="runCompletion"
+    )
+
+    result = ExecutionResult(
+        mission_name="armed_state_entry",
+        evidence_refs=(
+            "evidence://text/armed-state-entered",
+            "evidence://action-log/armed-state",
+        ),
+    )
+    adapter = FakeExecutionAdapter(result=result)
+    state = RuntimeState(run_id="test-run")
+
+    observed = await execute_armed_state_entry_node(
+        state=state,
+        adapter=adapter,
+        run=run,
+    )
+
+    assert observed == result
+    assert state.current_mission == "armed_state_entry"
+    assert state.mission_state.evidence_refs == result.evidence_refs
+    assert (run_root / "artifacts" / "action-log" / "armed-state.jsonl").exists()
+
+
+@pytest.mark.asyncio
+async def test_execute_trigger_wait_node_wires_execution_wrapper(
+    tmp_path: Path,
+) -> None:
+    """Verify trigger_wait_node wires execution wrapper."""
+    run_root = tmp_path
+    run = ReleasedRunContext(
+        run_root=run_root, approved_scope_ceiling="runCompletion"
+    )
+
+    result = ExecutionResult(
+        mission_name="trigger_wait",
+        evidence_refs=(
+            "evidence://clock/trigger-received",
+            "evidence://action-log/trigger-wait-complete",
+        ),
+    )
+    adapter = FakeExecutionAdapter(result=result)
+    state = RuntimeState(run_id="test-run")
+
+    observed = await execute_trigger_wait_node(
+        state=state,
+        adapter=adapter,
+        run=run,
+    )
+
+    assert observed == result
+    assert state.current_mission == "trigger_wait"
+    assert state.mission_state.evidence_refs == result.evidence_refs
+    assert (
+        run_root / "artifacts" / "action-log" / "trigger-wait-complete.jsonl"
+    ).exists()
+
+
+@pytest.mark.asyncio
+async def test_execute_click_dispatch_node_wires_execution_wrapper(
+    tmp_path: Path,
+) -> None:
+    """Verify click_dispatch_node wires execution wrapper."""
+    run_root = tmp_path
+    run = ReleasedRunContext(
+        run_root=run_root, approved_scope_ceiling="runCompletion"
+    )
+
+    result = ExecutionResult(
+        mission_name="click_dispatch",
+        evidence_refs=(
+            "evidence://action-log/click-dispatched",
+            "evidence://dom/click-target-clicked",
+        ),
+    )
+    adapter = FakeExecutionAdapter(result=result)
+    state = RuntimeState(run_id="test-run")
+
+    observed = await execute_click_dispatch_node(
+        state=state,
+        adapter=adapter,
+        run=run,
+    )
+
+    assert observed == result
+    assert state.current_mission == "click_dispatch"
+    assert state.mission_state.evidence_refs == result.evidence_refs
+    assert (run_root / "artifacts" / "action-log" / "click-dispatched.jsonl").exists()
+
+
+@pytest.mark.asyncio
+async def test_execute_click_completion_node_wires_execution_wrapper(
+    tmp_path: Path,
+) -> None:
+    """Verify click_completion_node wires execution wrapper."""
+    run_root = tmp_path
+    run = ReleasedRunContext(
+        run_root=run_root, approved_scope_ceiling="runCompletion"
+    )
+
+    result = ExecutionResult(
+        mission_name="click_completion",
+        evidence_refs=(
+            "evidence://dom/click-effect-confirmed",
+            "evidence://action-log/click-completed",
+        ),
+    )
+    adapter = FakeExecutionAdapter(result=result)
+    state = RuntimeState(run_id="test-run")
+
+    observed = await execute_click_completion_node(
+        state=state,
+        adapter=adapter,
+        run=run,
+    )
+
+    assert observed == result
+    assert state.current_mission == "click_completion"
+    assert state.mission_state.evidence_refs == result.evidence_refs
+    assert (run_root / "artifacts" / "action-log" / "click-completed.jsonl").exists()
+
+
+@pytest.mark.asyncio
+async def test_execute_success_observation_node_wires_execution_wrapper(
+    tmp_path: Path,
+) -> None:
+    """Verify success_observation_node wires execution wrapper."""
+    run_root = tmp_path
+    run = ReleasedRunContext(
+        run_root=run_root, approved_scope_ceiling="runCompletion"
+    )
+
+    result = ExecutionResult(
+        mission_name="success_observation",
+        evidence_refs=(
+            "evidence://dom/success-observed",
+            "evidence://action-log/success-observation",
+        ),
+    )
+    adapter = FakeExecutionAdapter(result=result)
+    state = RuntimeState(run_id="test-run")
+
+    observed = await execute_success_observation_node(
+        state=state,
+        adapter=adapter,
+        run=run,
+    )
+
+    assert observed == result
+    assert state.current_mission == "success_observation"
+    assert state.mission_state.evidence_refs == result.evidence_refs
+    assert (
+        run_root / "artifacts" / "action-log" / "success-observation.jsonl"
+    ).exists()

@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R68 — heuristic scan",
-  "active_milestone": "Phase R68 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r68HeuristicScanBound",
+  "active_phase": "Phase R69 — heuristic scan",
+  "active_milestone": "Phase R69 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r69HeuristicScanBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1277,6 +1277,25 @@
         "coverage-ledger.json 'Phase R68 heuristic gap scan' status set to covered ✓",
         "work-rag.json next_action updated ✓",
         "committed ✓"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R69 heuristic gap scan",
+      "status": "covered",
+      "evidence_or_reason": "Added 6 dedicated pytest test functions for node execution of missions below pageReadyObserved (target_actionability_observation, armed_state_entry, trigger_wait, click_dispatch, click_completion, success_observation). These complement the evidence specification tests from Phase R68, providing unit-level verification that each mission's execute_*_node function properly wires the execution wrapper and creates required artifacts. All 627 unit tests passing (621 previous + 6 new), mypy clean, ruff clean.",
+      "next_slice_hint": "",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "6 new pytest functions added for mission node execution tests",
+        "pytest tests/unit/ -q: 627 tests passing (up from 621)",
+        "mypy: clean",
+        "ruff: clean",
+        "coverage-ledger.json Phase R69 status set to covered",
+        "work-rag.json next_action set to FINAL_STOP",
+        "committed"
       ],
       "template_id": ""
     }

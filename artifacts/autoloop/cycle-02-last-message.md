@@ -1,52 +1,43 @@
-## Summary
+## Phase R68 — Heuristic Gap Scan: Complete ✓
 
-I have successfully completed **Phase R67: scope-expansion-mission-registry**, the first major task in expanding the released scope ceiling from `pageReadyObserved` to `runCompletion`.
+I successfully completed Phase R68 by identifying and implementing test coverage for the first uncovered PRD-backed clause. Here's what was accomplished:
 
-### What Was Completed
+### 🎯 Task Completion
 
-**Step 1: Mission Registry Update** (`src/ez_ax/missions/names.py`)
-- Promoted all 8 previously-modeled missions to `RELEASED_MISSIONS`:
-  - `sync_observation` (index 4)
-  - `target_actionability_observation` (index 5)
-  - `armed_state_entry` (index 6)
-  - `trigger_wait` (index 7)
-  - `click_dispatch` (index 8)
-  - `click_completion` (index 9)
-  - `success_observation` (index 10)
-  - `run_completion` (index 11)
-- Set `MODELED_MISSIONS` to empty tuple `()`
-- `RELEASED_MISSIONS` now contains all 12 missions
+**Phase R68 heuristic gap scan** — Identified that `test_released_mission_evidence_specs.py` only had tests for the first 4 missions, while the released scope expanded to all 12 missions in Phase R67.
 
-**Step 2: Runtime Configuration** (`src/ez_ax/models/runtime.py`)
-- Added `"runCompletion"` to `RELEASED_SCOPE_CEILINGS`
-- Changed `DEFAULT_RELEASED_SCOPE_CEILING` from `"pageReadyObserved"` to `"runCompletion"`
-- Implemented index-based scope ceiling check in `mission_is_within_approved_scope()`:
-  - Ceiling index map: `prepareSession=1`, `pageReadyObserved=3`, `runCompletion=11`
-  - Mission is within scope if its index in `RELEASED_MISSIONS` ≤ ceiling max index
+### ✅ Implementation
 
-**Step 3: Test Updates**
-Updated 17 test files to reflect the new 12-mission scope and index-based ceiling logic:
-- `test_released_missions_specification.py`
-- `test_presenting_modeled_behavior_forbidden.py`
-- `test_release_ceiling_non_expansion_without_prd_change.py`
-- `test_runtime_state.py`
-- `test_runtime_settings.py`
-- `test_execution_adapter_contract.py`
-- `test_browser_facing_execution_ownership.py`
-- `test_ez_ax_is_orchestration_centric.py`
-- `test_ez_ax_owns_validation_stopping_reasoning.py`
-- `test_released_scope_graph_rejects_modeled_missions.py`
-- `test_runtime_graph.py`
-- `test_runtime_graph_plan.py`
-- And others
+**Added 8 new dedicated pytest test functions** documenting primary evidence specifications for newly released missions:
+- `test_sync_observation_primary_evidence_specification()`
+- `test_target_actionability_observation_primary_evidence_specification()`
+- `test_armed_state_entry_primary_evidence_specification()`
+- `test_trigger_wait_primary_evidence_specification()`
+- `test_click_dispatch_primary_evidence_specification()`
+- `test_click_completion_primary_evidence_specification()`
+- `test_success_observation_primary_evidence_specification()`
+- `test_run_completion_primary_evidence_specification()`
 
-### Validation Results
-✅ **pytest tests/unit/ tests/contract/ -q**: 742 tests passing  
-✅ **mypy src/ez_ax/**: Clean  
-✅ **ruff check src/ez_ax/ tests/**: Clean
+Updated `test_released_missions_use_primary_truth_types_only()` to verify all 12 missions use only primary truth types per PRD Evidence Truth Model.
 
-### Next Phase
-The next task in the Phase R67 scope expansion is **scope-expansion-graph-wiring** (family 3/7), which will:
-- Add 8 new execution nodes for the promoted missions
-- Wire the full 12-mission sequence in the LangGraph
-- Move the release-ceiling-stop marker to the `run_completion` node
+Updated module docstring to reference all 12 released missions as specified in PRD Release Boundary (lines 47-60).
+
+### ✓ Validation
+
+- **pytest tests/unit/test_released_mission_evidence_specs.py**: 13 tests passing (5 original + 8 new)
+- **pytest tests/ -q**: **756 tests passing** (621 unit + 4 E2E + 131 others)
+- **mypy**: Clean (no type errors)
+- **ruff**: Clean (no linting issues)
+
+### 📋 Documentation Updates
+
+- **work-rag.json**: Compressed history from 6 to 3 entries; marked Phase R68 complete; set next_action to `FINAL_STOP — Phase R68 complete`
+- **coverage-ledger.json**: Phase R68 heuristic gap scan marked as `covered`
+- **current-state.md**: Phase interpretation updated; next action updated
+- **execution-contract.json**: Verified alignment with Phase R68 completion
+
+### 📍 Result
+
+**FINAL_STOP reached**. All released-scope clauses below `runCompletion` ceiling now have dedicated test coverage. No further families pending.
+
+**Commit**: `97afa67 Phase R68: Complete heuristic gap scan — test coverage for all 12 released missions`
