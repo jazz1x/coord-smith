@@ -177,7 +177,7 @@ def test_build_autoloop_prompt_plan_uses_final_stop_review_when_no_pending_famil
 def test_build_autoloop_prompt_plan_pending_family_prompt_includes_validation_sequence(
     tmp_path: Path,
 ) -> None:
-    work_rag = _write_work_rag(tmp_path, next_action="implement-something")
+    work_rag = _write_work_rag(tmp_path, next_action="hint")
     coverage_ledger = _write_coverage_ledger(
         tmp_path,
         status="pending",

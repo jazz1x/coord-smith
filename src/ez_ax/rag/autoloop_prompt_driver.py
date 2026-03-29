@@ -94,6 +94,19 @@ def _implementation_prompt(*, next_action: str) -> str:
     )
 
 
+def _implementation_prompt_with_pending_family(
+    *, next_action: str, pending_family_name: str
+) -> str:
+    return (
+        _implementation_prompt(next_action=next_action)
+        + " The coverage ledger still has an active pending family "
+        f"`{pending_family_name}`, but the concrete work-rag next_action is "
+        "more specific than the family label. Complete the concrete "
+        "work-rag slice first, then update the coverage ledger and next_action "
+        "consistently in the same task close."
+    )
+
+
 def _template_prompt(
     *,
     template_id: str,
@@ -270,6 +283,28 @@ def build_autoloop_prompt_plan(
     next_action = _load_next_action(work_rag_path=work_rag_path)
     compression_suffix = _history_compression_warning(work_rag_path=work_rag_path)
     pending_family = first_pending_family(ledger_path=coverage_ledger_path)
+    explicit_next_action = (
+        not next_action.startswith("FINAL_STOP")
+        and "continuation-seeding pass" not in next_action
+        and "Seed the earliest pending family" not in next_action
+        and pending_family is not None
+        and not pending_family.template_id
+        and next_action != pending_family.family
+        and next_action != pending_family.next_slice_hint
+    )
+
+    if explicit_next_action:
+        assert pending_family is not None
+        return AutoloopPromptPlan(
+            mode="implementation",
+            next_action=next_action,
+            prompt=_implementation_prompt_with_pending_family(
+                next_action=next_action,
+                pending_family_name=pending_family.family,
+            )
+            + compression_suffix,
+        )
+
     if pending_family is not None and pending_family.template_id:
         return AutoloopPromptPlan(
             mode="implementation",
