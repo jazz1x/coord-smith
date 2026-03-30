@@ -17,7 +17,7 @@
 | 언어 | Python 3.12 ~ 3.14 |
 | 상태 머신 | LangGraph |
 | 브라우저 제어 | PyAutoGUI (좌표 클릭 + 스크린샷) |
-| 외부 연동 | MCP (Model Context Protocol) |
+| 외부 연동 | CLI + artifacts (OpenClaw ping-pong) |
 | 데이터 모델 | Pydantic v2 |
 | 타입 체크 | mypy (strict) |
 | 린팅 | ruff |
