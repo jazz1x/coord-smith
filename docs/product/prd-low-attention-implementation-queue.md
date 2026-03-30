@@ -4,7 +4,7 @@
 
 This PRD defines the approved low-attention implementation queue for
 lower-capacity autonomous agents working below the released ceiling
-`pageReadyObserved`.
+`runCompletion`.
 
 It exists so an agent can determine, without guesswork:
 
@@ -26,7 +26,7 @@ This PRD is subordinate to:
 
 Precedence rule:
 
-- if this queue would authorize work above `pageReadyObserved`, the benchmark
+- if this queue would authorize work above `runCompletion`, the benchmark
   PRD wins and this queue is invalid
 - if this queue conflicts with a more specific PRD for a file group, the more
   specific PRD wins
@@ -35,7 +35,7 @@ Precedence rule:
 
 This queue covers only released-scope or released-scope-adjacent Python-first
 surfaces whose hardening can still improve deterministic work below
-`pageReadyObserved`.
+`runCompletion`.
 
 Allowed surfaces:
 
@@ -45,11 +45,11 @@ Allowed surfaces:
 - released-scope reporting or summary surfaces that do not imply modeled-stage
   workflow release
 - modeled-only helper entrypoints that still invoke the released sequence and
-  stop at `pageReadyObserved` without claiming higher-stage release
+  stop at `runCompletion` without claiming higher-stage release
 
 Disallowed surfaces:
 
-- any modeled mission above `pageReadyObserved`
+- any modeled mission above `runCompletion`
 - broad repo-wide cleanup
 - arbitrary third-tier search expansion not explicitly documented here
 
@@ -141,7 +141,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface assembles released-scope graph behavior only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 
 ### Item 3 — Released CLI Shim
 
@@ -225,7 +225,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface wraps the already-approved released execution sequence only
-- it stays below `pageReadyObserved`
+- it stays below `runCompletion`
 - it does not introduce modeled-stage workflow behavior
 
 ### Item 7 — Released-Scope Checkpoint Comparability
@@ -248,7 +248,7 @@ Why in-bounds:
 
 - this surface preserves released-scope checkpoint coherence and comparability
   only
-- it does not widen execution beyond `pageReadyObserved`
+- it does not widen execution beyond `runCompletion`
 
 ### Item 8 — Layered Entrypoint Bootstrap Assets
 
@@ -270,7 +270,7 @@ Why in-bounds:
 
 - this surface hardens the official layered-doc bootstrap entrypoint for
   lower-capacity continuation
-- it does not widen execution above `pageReadyObserved`
+- it does not widen execution above `runCompletion`
 - it preserves autonomous implementation safety without changing product
   architecture
 
@@ -292,7 +292,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface normalizes released-scope evidence refs and kinds only
-- it stays below `pageReadyObserved`
+- it stays below `runCompletion`
 - it preserves the typed evidence contract without releasing modeled behavior
 
 ### Item 10 — Released OpenClaw Adapter Boundary
@@ -313,7 +313,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface validates released-scope OpenClaw request/response boundaries only
-- it stays below `pageReadyObserved`
+- it stays below `runCompletion`
 - it does not imply modeled-stage workflow behavior
 
 ### Item 11 — Bootstrap AutoLoop Entry Skill Asset
@@ -336,7 +336,7 @@ Why in-bounds:
 
 - this surface hardens bootstrap continuity for lower-capacity autonomous
   looping under the released ceiling
-- it stays below `pageReadyObserved`
+- it stays below `runCompletion`
 - it does not widen browser-facing or modeled-stage behavior
 
 ### Item 12 — Released Call-Site Determinism
@@ -357,7 +357,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens released-scope orchestration call-site boundaries only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 
 ### Item 13 — Released Run-Root Determinism
 
@@ -377,7 +377,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens released-scope run-root handling only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 
 ### Item 14 — Released Execution Sequencing
 
@@ -399,7 +399,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens released-path sequencing only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 
 ### Item 15 — Released Action-Log Wrapper Contract
 
@@ -421,7 +421,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens released evidence/action-log validation only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 
 ### Item 16 — Released MCP Response Envelope Contract
 
@@ -443,7 +443,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens released MCP response validation boundaries only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 
 ### Item 17 — Released MCP Stdio Acquisition Contract
 
@@ -465,7 +465,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens released MCP acquisition boundaries only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it does not release modeled-stage workflow behavior
 
 ### Item 18 — Released Entrypoint Signature Contract
@@ -488,7 +488,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens released-scope entrypoint contract determinism only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it does not widen browser-facing or modeled-stage behavior
 
 ### Item 19 — Released MCP Required-Field Schema Violation
@@ -511,7 +511,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens released MCP response schema enforcement only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it does not widen browser-facing or modeled-stage behavior
 
 ### Item 20 — Canonical RAG Path Helpers
@@ -534,7 +534,7 @@ Why in-bounds:
 - this surface owns canonical `work-rag.json` and `rag.json` access helpers for
   low-attention continuation
 - it is directly backed by the runtime-layout `rag/` ownership clause and stays
-  below `pageReadyObserved`
+  below `runCompletion`
 - it hardens autonomous continuation memory without widening browser-facing or
   modeled-stage behavior
 
@@ -556,7 +556,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens released-scope typed orchestration error mapping only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it does not widen browser-facing or modeled-stage behavior
 
 ### Item 22 — Mission Anchor Mapping Contract
@@ -577,7 +577,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface hardens known mission-name and released-anchor mapping used below
-  `pageReadyObserved`
+  `runCompletion`
 - it remains below the released ceiling
 - it preserves orchestration determinism without widening workflow release
 
@@ -600,7 +600,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface is explicitly modeled-only but still stops at the released
-  ceiling `pageReadyObserved`
+  ceiling `runCompletion`
 - it hardens MCP-backed helper orchestration without widening browser-facing
   authority
 - it does not present modeled behavior as released behavior
@@ -624,7 +624,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface is explicitly modeled-only but persists only a summary for runs
-  that already stop at `pageReadyObserved`
+  that already stop at `runCompletion`
 - it hardens deterministic run-summary shaping without widening released scope
 - it remains Python-first and OpenClaw-boundary preserving
 
@@ -648,7 +648,7 @@ Why in-bounds:
 Why in-bounds:
 
 - this surface is modeled-only but still invokes the released-scope sequence
-  and stops at `pageReadyObserved`
+  and stops at `runCompletion`
 - it directly exercises the explicit runtime-layout clause that any user-facing
   entrypoint calling `run_released_scope` must resolve released inputs in
   deterministic CLI-then-env order and fail fast when required values are
@@ -676,7 +676,7 @@ Why in-bounds:
 
 - this surface is in-scope for the explicit MCP-client acquisition PRD and feeds
   released graph-path injection only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it does not introduce concrete transport behavior into released wiring
 
 ## Final Queue Stop
@@ -689,7 +689,7 @@ The documented low-attention implementation queue is exhausted only when:
 
 Exhaustion protocol gate order:
 
-1. run exactly one bounded resume-search pass below `pageReadyObserved`
+1. run exactly one bounded resume-search pass below `runCompletion`
 2. run exactly one queue-extension heuristic pass for the exhaustion cycle
 3. run one final exact gap re-evaluation pass
 4. run one continuation-seeding pass
@@ -779,7 +779,7 @@ Cycle-reset rule:
 Continuation-seeding pass:
 
 - this pass is mandatory while the current phase and milestone still authorize
-  low-attention continuation below `pageReadyObserved`
+  low-attention continuation below `runCompletion`
 - it may add at most one new queue item total for the exhaustion cycle
 - it must prefer:
   1. omitted same-family helper surfaces already on disk
@@ -806,7 +806,7 @@ Seeding-family checklist:
 - released OpenClaw transport-boundary family
 - released evidence / reporting / comparability family
 - typed mission / error / memory helper family
-- modeled helper entrypoint family that still stops at `pageReadyObserved`
+- modeled helper entrypoint family that still stops at `runCompletion`
 - docs-sufficiency family for lower-capacity continuation
 
 Coverage-ledger requirement:
@@ -824,7 +824,7 @@ Stop-state consistency gate:
   - this queue PRD
   - `docs/llm/repo-autonomous-loop-adapter.yaml`
 - `FINAL_STOP` is stale if any of those sources still names one exact in-bounds
-  continuation surface below `pageReadyObserved`
+  continuation surface below `runCompletion`
 - as part of this gate, run one bounded adjacent-surface completion check for
   same-family helper surfaces already present on disk, including:
   - `*_entrypoint.py`
@@ -865,7 +865,7 @@ Final-stop rule:
   - no exact unenforced injected-boundary clause remains without guesswork for
     the transport-neutral OpenClaw adapter contract
   - MCP-specific phrasing is not required to describe the canonical OpenClaw
-    execution boundary below `pageReadyObserved`
+    execution boundary below `runCompletion`
 - `next_if_clean`: rerun the active coverage-ledger check and reopen the next
   exact in-bounds follow-on slice only if one still exists
 - `next_if_fail`:
@@ -878,7 +878,7 @@ Why in-bounds:
 
 - this surface hardens the canonical injected OpenClaw boundary without
   widening browser-facing authority
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it demotes MCP to an optional modeled/reference transport rather than
   architecture truth
 
@@ -906,7 +906,7 @@ Why in-bounds:
 
 - this surface hardens the canonical operator-facing autoloop entry contract
   without widening released behavior
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it keeps the skill-first execution surface aligned with the repo's
   structured continuation assets
 
@@ -934,7 +934,7 @@ Why in-bounds:
 
 - this surface hardens the skill-first autonomous contract without widening
   released behavior
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it removes another source of non-canonical runner leakage from the
   lower-capacity operator path
 
@@ -964,7 +964,7 @@ Why in-bounds:
 
 - this surface hardens the autonomous loop's continuation behavior without
   widening released runtime scope
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it turns the low-attention loop into a task seeder as well as a task
   executor, which is required for continuous autonomous implementation
 
@@ -981,7 +981,7 @@ Why in-bounds:
     without guesswork for the runtime-state surface
   - canonical runtime-state validation remains explicit about
     `current_anchor`, `approved_scope_ceiling`, and released-vs-modeled scope
-    rejection below `pageReadyObserved`
+    rejection below `runCompletion`
 - `next_if_clean`: rerun the active continuation-seeding pass and reopen the
   next exact seeded slice only if canonical sources can still name one
   honestly
@@ -995,7 +995,7 @@ Why in-bounds:
 
 - this surface hardens released-scope runtime-state and ceiling enforcement
   only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it is an existing same-anchor support module already imported by the runtime
   graph family and has a focused validation target on disk
 
@@ -1027,6 +1027,6 @@ Why in-bounds:
 
 - this surface hardens typed checkpoint comparability and transition-artifact
   validation only
-- it remains below `pageReadyObserved`
+- it remains below `runCompletion`
 - it was reopened mechanically from an existing focused mypy artifact rather
   than from speculative search

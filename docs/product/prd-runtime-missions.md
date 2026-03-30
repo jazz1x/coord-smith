@@ -55,14 +55,16 @@ Lifecycle-status rule:
 Lifecycle-status mechanics:
 
 - treat a mission as `released` only when it appears in the "Released Path Missions"
-  list and its outcome does not require any anchor above `pageReadyObserved`
+  list and its outcome does not require any anchor above `runCompletion`
 - treat a mission as `modeled` when it appears in the "Modeled Path Missions" list
-  or would require any anchor above `pageReadyObserved` to complete
+  or would require any anchor above `runCompletion` to complete
 - treat a mission as `control` only when it does not advance the product-stage
   path and instead gates, validates, retries, or records evidence about other
   missions
 - if a mission name or outcome would imply a higher anchor than the benchmark PRD
   allows, classify it as `modeled` even if the implementation exists in code
+- all 12 path missions from `attach_session` through `run_completion` are now
+  released
 
 ## Mission Groups
 
@@ -237,8 +239,6 @@ Lifecycle status:
 
 - released
 
-## Modeled Path Missions
-
 ### Mission: `sync_observation`
 
 Goal:
@@ -270,7 +270,7 @@ Stop condition:
 
 Lifecycle status:
 
-- modeled
+- released
 
 ### Mission: `target_actionability_observation`
 
@@ -303,7 +303,7 @@ Stop condition:
 
 Lifecycle status:
 
-- modeled
+- released
 
 ### Mission: `armed_state_entry`
 
@@ -334,7 +334,7 @@ Stop condition:
 
 Lifecycle status:
 
-- modeled
+- released
 
 ### Mission: `trigger_wait`
 
@@ -367,7 +367,7 @@ Stop condition:
 
 Lifecycle status:
 
-- modeled
+- released
 
 ### Mission: `click_dispatch`
 
@@ -401,7 +401,7 @@ Stop condition:
 
 Lifecycle status:
 
-- modeled
+- released
 
 ### Mission: `click_completion`
 
@@ -434,7 +434,7 @@ Stop condition:
 
 Lifecycle status:
 
-- modeled
+- released
 
 ### Mission: `success_observation`
 
@@ -468,7 +468,7 @@ Stop condition:
 
 Lifecycle status:
 
-- modeled
+- released
 
 ### Mission: `run_completion`
 
@@ -500,7 +500,12 @@ Stop condition:
 
 Lifecycle status:
 
-- modeled
+- released
+
+## Modeled Path Missions
+
+No missions are currently modeled. All 12 path missions from `attach_session`
+through `run_completion` have been released.
 
 ## Control Missions
 
@@ -741,9 +746,6 @@ Released-path ordering:
 - `prepare_session`
 - `benchmark_validation`
 - `page_ready_observation`
-
-Modeled-path ordering:
-
 - `sync_observation`
 - `target_actionability_observation`
 - `armed_state_entry`
@@ -752,6 +754,10 @@ Modeled-path ordering:
 - `click_completion`
 - `success_observation`
 - `run_completion`
+
+Modeled-path ordering:
+
+- (none -- all path missions are released)
 
 Control rule:
 
