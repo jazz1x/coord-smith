@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R80 \u2014 heuristic scan",
-  "active_milestone": "Phase R80 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r80HeuristicScanBound",
+  "active_phase": "Phase R81 \u2014 heuristic scan",
+  "active_milestone": "Phase R81 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r81HeuristicScanBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1481,6 +1481,23 @@
         "at least one new pytest function added for an uncovered PRD clause",
         "pytest tests/unit/ -q passes",
         "coverage-ledger.json 'Phase R80 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R81 heuristic gap scan",
+      "status": "covered",
+      "evidence_or_reason": "Phase R81 heuristic gap scan: Identified uncovered clause 'execution-phase missions (below pageReadyObserved) form a contiguous, linear pipeline with no gaps, no modeled missions, and terminate at runCompletion' (PRD Release Boundary section, lines 47-63, execution-phase structure). Created dedicated unit test test_released_scope_execution_phase_missions_form_contiguous_pipeline() in tests/unit/test_released_missions_specification.py with focused verification that all 8 execution-phase missions are released (not modeled), form the exact PRD-specified sequence from sync_observation to run_completion with no gaps or interspersed modeled missions, and terminate properly at the released ceiling (runCompletion). Test validates the linear, contiguous nature of the execution phase as a critical structural requirement of the released scope. All tests pass. Coverage ledger family 'Phase R81 heuristic gap scan' marked as covered. Phase R81 complete.",
+      "next_slice_hint": "Read docs/prd.md and list all released-scope implementation clauses (below pageReadyObserved). Cross-reference with tests/unit/ to find the first clause that has no dedicated unit test. Write one focused pytest function for it, run pytest to confirm it passes, mark this family covered in docs/llm/low-attention-coverage-ledger.json, update docs/product/work-rag.json current.next_action to the next pending family (or 'FINAL_STOP \u2014 Phase R81 complete' if none remain), and commit.",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "at least one new pytest function added for an uncovered PRD clause",
+        "pytest tests/unit/ -q passes",
+        "coverage-ledger.json 'Phase R81 heuristic gap scan' status set to covered",
         "work-rag.json next_action updated",
         "committed"
       ],

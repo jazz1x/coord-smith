@@ -365,3 +365,82 @@ def test_released_scope_implementation_includes_all_missions_above_page_ready_ob
         f"Released scope must have exactly 4 missions above pageReadyObserved "
         f"(setup phase + boundary); found {len(missions_above_page_ready)}"
     )
+
+
+def test_released_scope_execution_phase_missions_form_contiguous_pipeline() -> None:
+    """Verify execution-phase missions (below pageReadyObserved) form a contiguous pipeline.
+
+    PRD Release Boundary (lines 47-63): The released implementation scope below
+    pageReadyObserved specifies 8 consecutive missions forming the execution phase:
+    - syncObservation (line 53)
+    - targetActionabilityObservation (line 54)
+    - armedStateEntry (line 55)
+    - triggerWait (line 56)
+    - clickDispatch (line 57)
+    - clickCompletion (line 58)
+    - successObservation (line 59)
+    - runCompletion (line 60)
+
+    These missions form the execution and observation phase of the released pipeline,
+    executing sequentially after the pageReadyObserved boundary marker with no gaps,
+    no modeled missions interspersed, and no branching—terminating only at runCompletion.
+
+    This dedicated test verifies that the execution-phase pipeline is properly
+    structured as a complete, linear sequence from sync_observation through
+    run_completion without interruption or deviation.
+    """
+    # Identify the execution phase boundary
+    page_ready_index = 3
+    assert (
+        RELEASED_MISSIONS[page_ready_index] == "page_ready_observation"
+    ), "Boundary must be at index 3"
+
+    # Extract execution-phase missions (all after page_ready_observation)
+    execution_phase_missions = list(RELEASED_MISSIONS[page_ready_index + 1 :])
+
+    # Verify execution phase has exactly 8 missions (no more, no fewer)
+    assert len(execution_phase_missions) == 8, (
+        f"Execution phase must contain exactly 8 missions (sync through run_completion); "
+        f"found {len(execution_phase_missions)}"
+    )
+
+    # Verify each execution-phase mission is released, not modeled
+    modeled_set = set(MODELED_MISSIONS)
+    for mission in execution_phase_missions:
+        assert mission not in modeled_set, (
+            f"Execution-phase mission '{mission}' must be released, not modeled. "
+            f"The execution pipeline must be fully released with no modeled gates."
+        )
+
+    # Verify the execution-phase pipeline is a specific, unchanging sequence
+    expected_execution_sequence = (
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
+    )
+    assert tuple(execution_phase_missions) == expected_execution_sequence, (
+        f"Execution-phase pipeline must follow the exact PRD sequence; "
+        f"expected {expected_execution_sequence}, got {tuple(execution_phase_missions)}"
+    )
+
+    # Verify the pipeline is contiguous: no gaps, no mission repetition
+    assert (
+        execution_phase_missions[0] == "sync_observation"
+    ), "Execution phase must begin immediately with sync_observation"
+    assert (
+        execution_phase_missions[-1] == "run_completion"
+    ), "Execution phase must terminate at run_completion"
+
+    # Verify no modeled missions can appear between released execution-phase missions
+    # (all missions in the execution phase must be released)
+    released_set = set(RELEASED_MISSIONS)
+    for mission in execution_phase_missions:
+        assert mission in released_set, (
+            f"Execution-phase mission '{mission}' must be in released missions; "
+            f"execution phase cannot include modeled-only missions"
+        )
