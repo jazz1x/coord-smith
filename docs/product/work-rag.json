@@ -27,12 +27,12 @@
     }
   },
   "current": {
-    "goal": "Released scope at runCompletion ceiling with all 12 missions with full PRD clause coverage. Phase R76 heuristic gap scan: identified and corrected gap in comprehensive PRD clause audit. Test file test_system_boundary_openclaw_only_execution_actor.py (created in R75) was not included in R44 audit list. Updated test_phase_r44_comprehensive_prd_clause_audit.py to include missing test. Also fixed broken test in test_runtime_no_llm_inference.py for graceful handling of missing anthropic module. All 633 unit tests pass (1 skipped); Phase R76 complete.",
-    "phase": "Phase R76 — heuristic scan",
-    "milestone": "Phase R76 heuristic gap scan complete — all released-scope clauses verified covered",
-    "anchor": "r76HeuristicScanBound",
+    "goal": "Released scope at runCompletion ceiling with all 12 missions with full PRD clause coverage. Phase R77 heuristic gap scan: Identified uncovered clause 'intentional stop at the released ceiling' (PRD Release Boundary, line 61). Created dedicated test file test_released_scope_intentional_stop_at_ceiling.py with two focused unit tests: (1) test_released_scope_stops_exactly_at_run_completion — verifies released scope executes exactly 12 missions and stops at run_completion with no further execution; (2) test_released_scope_enforces_no_missions_beyond_ceiling — confirms the execution graph prevents any missions beyond the released ceiling. All 636 unit tests pass. Coverage ledger 'Phase R77 heuristic gap scan' marked as covered. No additional pending families remain. Phase R77 complete — FINAL_STOP reached.",
+    "phase": "Phase R77 — heuristic scan",
+    "milestone": "Phase R77 heuristic gap scan complete — intentional stop at released ceiling tested and verified",
+    "anchor": "r77HeuristicScanBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
-    "next_action": "Phase R77 heuristic gap scan",
+    "next_action": "FINAL_STOP — Phase R77 complete",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -59,6 +59,22 @@
     ]
   },
   "history": [
+    {
+      "kind": "checkpoint",
+      "phase": "Phase R77 — heuristic scan",
+      "milestone": "Phase R77 heuristic gap scan complete — intentional stop at released ceiling tested and verified",
+      "anchor": "r77HeuristicScanBound",
+      "summary": "Phase R77 heuristic gap scan: Completed PRD clause verification scan. Identified uncovered clause: 'intentional stop at the released ceiling' (PRD Release Boundary section, line 61). Created dedicated test file test_released_scope_intentional_stop_at_ceiling.py with two focused unit tests: (1) test_released_scope_stops_exactly_at_run_completion — verifies released scope executes exactly 12 missions and stops at run_completion without any further execution attempts; (2) test_released_scope_enforces_no_missions_beyond_ceiling — confirms the execution graph prevents missions beyond the released ceiling. All 636 unit tests pass (634 existing + 2 new). Coverage ledger family 'Phase R77 heuristic gap scan' marked as covered. No additional pending families remain in coverage ledger. Phase R77 complete — FINAL_STOP reached.",
+      "evidence": [
+        "Added test_released_scope_intentional_stop_at_ceiling.py with 2 focused unit tests",
+        "pytest tests/unit/ -q: 636 tests passing (634 existing + 2 new)",
+        "mypy src/: Success (no new issues)",
+        "ruff check src/ tests/: All checks passed",
+        "Coverage ledger family 'Phase R77 heuristic gap scan' status changed to 'covered'",
+        "work-rag.json next_action updated to 'FINAL_STOP — Phase R77 complete'"
+      ],
+      "recorded_at": "2026-03-30T21:30:00.000000Z"
+    },
     {
       "kind": "checkpoint",
       "phase": "Phase R75 — heuristic scan",
