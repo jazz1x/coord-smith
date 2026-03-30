@@ -10,6 +10,20 @@
 - 런타임에 LLM 없음 — 외부 LLM(OpenClaw)이 추론 담당
 - 매 미션마다 evidence 기반 검증
 
+## 기술 스택
+
+| 영역 | 기술 |
+|------|------|
+| 언어 | Python 3.12 ~ 3.14 |
+| 상태 머신 | LangGraph |
+| 브라우저 제어 | PyAutoGUI (좌표 클릭 + 스크린샷) |
+| 외부 연동 | MCP (Model Context Protocol) |
+| 데이터 모델 | Pydantic v2 |
+| 타입 체크 | mypy (strict) |
+| 린팅 | ruff |
+| 테스트 | pytest + pytest-asyncio |
+| 패키지 관리 | uv |
+
 ## 시작하기
 
 ```bash
