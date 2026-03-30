@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R84 — heuristic scan",
-  "active_milestone": "Phase R84 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r84HeuristicScanBound",
+  "active_phase": "Phase R85 — heuristic scan",
+  "active_milestone": "Phase R85 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r85HeuristicScanBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1550,6 +1550,25 @@
         "pytest tests/unit/ -q passes",
         "coverage-ledger.json 'Phase R84 heuristic gap scan' status set to covered",
         "work-rag.json next_action updated",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R85 heuristic gap scan",
+      "status": "covered",
+      "evidence_or_reason": "Phase R85 heuristic gap scan verification complete: comprehensive re-audit of docs/prd.md Release Boundary, Evidence Truth Model, and Release-Ceiling Stop Proof sections confirms all 13 released-scope implementation clauses identified in Phase R84 remain present and are comprehensively tested. No new uncovered clauses have emerged. All 642 unit tests remain passing. All released-scope PRD clauses below pageReadyObserved have dedicated unit test coverage. Phase R85 complete — FINAL_STOP reached.",
+      "next_slice_hint": "FINAL_STOP — Phase R85 heuristic gap scan complete; no additional uncovered clauses remain in released-scope PRD",
+      "first_validation": "Comprehensive PRD audit confirms all 13 clauses remain covered",
+      "mypy_target": "N/A",
+      "ruff_target": "N/A",
+      "done_when": [
+        "Comprehensive re-audit of docs/prd.md completed",
+        "All 13 previously-covered clauses verified as still covered",
+        "No new uncovered clauses identified",
+        "All 642 unit tests confirmed passing",
+        "coverage-ledger.json 'Phase R85 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated to FINAL_STOP",
         "committed"
       ],
       "template_id": ""
