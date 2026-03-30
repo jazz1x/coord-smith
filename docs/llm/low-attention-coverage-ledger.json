@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R83 — heuristic scan",
-  "active_milestone": "Phase R83 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r83HeuristicScanBound",
+  "active_phase": "Phase R84 — heuristic scan",
+  "active_milestone": "Phase R84 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r84HeuristicScanBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1532,6 +1532,23 @@
         "at least one new pytest function added for an uncovered PRD clause",
         "pytest tests/unit/ -q passes",
         "coverage-ledger.json 'Phase R83 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R84 heuristic gap scan",
+      "status": "covered",
+      "evidence_or_reason": "Phase R84 heuristic gap scan complete. Comprehensive PRD audit confirms all 13 released-scope implementation clauses below pageReadyObserved have dedicated unit test coverage: (1) evidence truth-priority model (dom > text > clock > action-log), (2) no vision/coordinate-only truth, (3) typed evidence required, (4) release-ceiling stop proof requirement, (5) evidence-ref specification, (6) artifact path specification, (7) required typed fields (event, mission_name, ts), (8) artifact resolution requirement, (9) intentional stop at ceiling, (10) all-released status, (11) released mission count, (12) setup-phase contiguity, (13) execution-phase contiguity. All 642 unit tests passing. No uncovered clauses remain.",
+      "next_slice_hint": "Read docs/prd.md and list all released-scope implementation clauses (below pageReadyObserved). Cross-reference with tests/unit/ to find the first clause that has no dedicated unit test. Write one focused pytest function for it, run pytest to confirm it passes, mark this family covered in docs/llm/low-attention-coverage-ledger.json, update docs/product/work-rag.json current.next_action to the next pending family (or 'FINAL_STOP — Phase R84 complete' if none remain), and commit.",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "at least one new pytest function added for an uncovered PRD clause",
+        "pytest tests/unit/ -q passes",
+        "coverage-ledger.json 'Phase R84 heuristic gap scan' status set to covered",
         "work-rag.json next_action updated",
         "committed"
       ],

@@ -1,8 +1,8 @@
 {
   "version": 4,
-  "active_phase": "Phase R83 — heuristic scan",
-  "active_milestone": "Phase R83 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r83HeuristicScanBound",
+  "active_phase": "Phase R84 — heuristic scan",
+  "active_milestone": "Phase R84 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r84HeuristicScanBound",
   "active_invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
   "scope_ceiling": "runCompletion",
   "canonical_inputs": [
@@ -24,7 +24,7 @@
     "docs/architecture-boundaries.md"
   ],
   "anchor_contract_families": [
-    "Phase R83 heuristic gap scan"
+    "Phase R84 heuristic gap scan"
   ],
   "heuristic_family_ladder": [
     "same-file failing validation artifact",
