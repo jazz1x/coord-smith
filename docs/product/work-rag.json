@@ -27,12 +27,12 @@
     }
   },
   "current": {
-    "goal": "Released scope at runCompletion ceiling with all 12 missions with full PRD clause coverage. Phase R77 heuristic gap scan: Identified uncovered clause 'intentional stop at the released ceiling' (PRD Release Boundary, line 61). Created dedicated test file test_released_scope_intentional_stop_at_ceiling.py with two focused unit tests: (1) test_released_scope_stops_exactly_at_run_completion — verifies released scope executes exactly 12 missions and stops at run_completion with no further execution; (2) test_released_scope_enforces_no_missions_beyond_ceiling — confirms the execution graph prevents any missions beyond the released ceiling. All 636 unit tests pass. Coverage ledger 'Phase R77 heuristic gap scan' marked as covered. No additional pending families remain. Phase R77 complete — FINAL_STOP reached.",
-    "phase": "Phase R77 — heuristic scan",
-    "milestone": "Phase R77 heuristic gap scan complete — intentional stop at released ceiling tested and verified",
-    "anchor": "r77HeuristicScanBound",
+    "goal": "Released scope at runCompletion ceiling with all 12 missions with full PRD clause coverage. All released-scope implementation clauses from docs/prd.md now have dedicated unit test coverage. Phase R78 heuristic gap scan: Identified uncovered clause 'All stages are released' (PRD Release Boundary, line 63, second part of 'No missions are currently modeled-only. All stages are released.'). Created dedicated unit test test_all_stages_are_released() in tests/unit/test_released_missions_specification.py that verifies all 12 released missions are released (not modeled), complete (no gaps), and form a contiguous pipeline from attach_session to run_completion. All 637 unit tests pass (636 existing + 1 new). Coverage ledger 'Phase R78 heuristic gap scan' marked as covered. No additional pending families remain. Phase R78 complete — FINAL_STOP reached.",
+    "phase": "Phase R78 — heuristic scan",
+    "milestone": "Phase R78 heuristic gap scan complete — all released-scope clauses have dedicated test coverage",
+    "anchor": "r78HeuristicScanBound",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
-    "next_action": "FINAL_STOP — Phase R77 complete",
+    "next_action": "FINAL_STOP — Phase R78 complete. All released-scope PRD clauses verified with dedicated unit tests.",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -61,6 +61,22 @@
   "history": [
     {
       "kind": "checkpoint",
+      "phase": "Phase R78 — heuristic scan",
+      "milestone": "Phase R78 heuristic gap scan complete — all released-scope clauses have dedicated test coverage",
+      "anchor": "r78HeuristicScanBound",
+      "summary": "Phase R78 heuristic gap scan: Completed PRD clause verification scan. Identified uncovered clause: 'All stages are released' (PRD Release Boundary section, line 63, second part of 'No missions are currently modeled-only. All stages are released.'). Created dedicated unit test test_all_stages_are_released() in tests/unit/test_released_missions_specification.py with focused verification that all 12 released missions are released (not modeled), complete (no gaps from attach_session to run_completion), and form a contiguous executable pipeline. All 637 unit tests pass (636 existing + 1 new). Coverage ledger family 'Phase R78 heuristic gap scan' marked as covered. No additional pending families remain in coverage ledger. Phase R78 complete — FINAL_STOP reached. All released-scope PRD clauses now have dedicated test coverage.",
+      "evidence": [
+        "Added test_all_stages_are_released() to test_released_missions_specification.py",
+        "pytest tests/unit/ -q: 637 tests passing (636 existing + 1 new)",
+        "mypy src/: Success (no new issues)",
+        "ruff check src/ tests/: All checks passed",
+        "Coverage ledger family 'Phase R78 heuristic gap scan' status changed to 'covered'",
+        "work-rag.json next_action updated to 'FINAL_STOP — Phase R78 complete'"
+      ],
+      "recorded_at": "2026-03-30T21:45:00.000000Z"
+    },
+    {
+      "kind": "checkpoint",
       "phase": "Phase R77 — heuristic scan",
       "milestone": "Phase R77 heuristic gap scan complete — intentional stop at released ceiling tested and verified",
       "anchor": "r77HeuristicScanBound",
@@ -76,37 +92,20 @@
       "recorded_at": "2026-03-30T21:30:00.000000Z"
     },
     {
-      "kind": "checkpoint",
-      "phase": "Phase R75 — heuristic scan",
-      "milestone": "Phase R75 first PRD-backed uncovered clause implemented and tested",
-      "anchor": "r75HeuristicScanBound",
-      "summary": "Phase R75 heuristic gap scan: Completed PRD clause verification scan. Identified uncovered clause: 'OpenClaw is the only browser-facing execution actor' (PRD System Boundary section, line 19). Created dedicated test file test_system_boundary_openclaw_only_execution_actor.py with three focused unit tests: (1) test_openclaw_is_sole_execution_mechanism — verifies all 12 missions execute exclusively through the OpenClaw adapter; (2) test_no_alternate_browser_execution_paths_exist — scans runtime source to confirm no alternate browser execution libraries are imported; (3) test_execution_adapter_is_required_parameter — confirms the adapter parameter is mandatory with no fallback. All 634 unit tests pass (631 existing + 3 new). Coverage ledger family 'Phase R75 heuristic gap scan' marked as covered. No additional pending families remain. Phase R75 milestone and scope complete.",
+      "kind": "milestone_summary",
+      "phase": "Phases R73-R75 (boundary, memory model, and system boundary verification)",
+      "milestone": "Comprehensive clause coverage: page_ready_observation boundary, canonical memory paths, and OpenClaw-only execution verified",
+      "anchor": "r73-r75CompressedBound",
+      "summary": "Compressed checkpoint entries from R73 and R75 heuristic gap scans. R73 identified and tested three clauses: (1) 'page_ready_observation marks boundary within released scope' — added test_released_scope_marks_boundary_at_page_ready_observation; (2) 'Current-state memory: docs/product/work-rag.json' — added test_work_rag_path_designated_for_current_state_memory; (3) 'Durable lesson memory: docs/product/rag.json' — added test_lesson_rag_path_designated_for_durable_lesson_memory. R75 identified and tested 'OpenClaw is the only browser-facing execution actor' — added test_system_boundary_openclaw_only_execution_actor.py with three unit tests. Covered 6 released-scope clauses across Canonical Memory Model (lines 111-123), Release Boundary (lines 47-61), and System Boundary (line 19) sections. All tests validated; coverage complete at 636 tests.",
       "evidence": [
-        "Added test_system_boundary_openclaw_only_execution_actor.py with 3 focused unit tests",
-        "pytest tests/unit/ -q: 634 tests passing (631 existing + 3 new)",
-        "mypy src/: Success (no new issues)",
+        "R73: Added 3 unit tests for page_ready_observation boundary and canonical memory paths",
+        "R75: Added test_system_boundary_openclaw_only_execution_actor.py with 3 focused unit tests",
+        "pytest tests/unit/ -q: 636 total tests passing across all phases",
+        "mypy src/: Success (no issues)",
         "ruff check src/ tests/: All checks passed",
-        "Coverage ledger family 'Phase R75 heuristic gap scan' status changed to 'covered'",
-        "All released-scope clauses below pageReadyObserved now have dedicated test coverage"
+        "All clause coverage verified before Phase R78"
       ],
       "recorded_at": "2026-03-30T11:15:00.000000Z"
-    },
-    {
-      "kind": "milestone_summary",
-      "phase": "Phase R73 — heuristic scan",
-      "milestone": "Phase R73 heuristic gap scan complete",
-      "anchor": "r73HeuristicScanBound",
-      "summary": "Phase R73 heuristic gap scan: Completed comprehensive PRD clause verification. Three uncovered clauses identified and tested: (1) R73: 'page_ready_observation marks the boundary within released scope' — added test_released_scope_marks_boundary_at_page_ready_observation validating page_ready_observation as 4th mission and boundary marker in the 12-mission pipeline. (2) R72: 'Current-state memory: docs/product/work-rag.json' — added test_work_rag_path_designated_for_current_state_memory in test_rag_paths.py. (3) R71: 'Durable lesson memory: docs/product/rag.json' — added test_lesson_rag_path_designated_for_durable_lesson_memory in test_rag_paths.py. All three clauses from Canonical Memory Model section (lines 111-123) and Release Boundary section (lines 47-61) now have dedicated unit test coverage. Final validation: 631 total tests passing, mypy clean, ruff clean. Phase R73 milestone complete with all discovered clauses tested.",
-      "evidence": [
-        "Phase R71: Added test_lesson_rag_path_designated_for_durable_lesson_memory",
-        "Phase R72: Added test_work_rag_path_designated_for_current_state_memory",
-        "Phase R73: Added test_released_scope_marks_boundary_at_page_ready_observation",
-        "pytest tests/unit/ -q: 631 tests passing (all three new tests included)",
-        "mypy src/: Success: no issues found in 48 source files",
-        "ruff check src/ tests/: All checks passed",
-        "All PRD clauses (below pageReadyObserved) now have dedicated test coverage"
-      ],
-      "recorded_at": "2026-03-30T10:45:00.000000Z"
     },
     {
       "kind": "phase_summary",

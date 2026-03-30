@@ -164,3 +164,64 @@ def test_released_scope_marks_boundary_at_page_ready_observation() -> None:
         f"Missions after page_ready_observation must start with execution phase; "
         f"expected {expected_execution_start}, got {execution_missions[:2]}"
     )
+
+
+def test_all_stages_are_released() -> None:
+    """Verify all 12 stages in the released scope are released, not modeled.
+
+    PRD Release Boundary (line 63):
+    'No missions are currently modeled-only. All stages are released.'
+
+    This test verifies the second part of this clause: "All stages are released."
+    It confirms that each mission in the released execution pipeline is truly
+    released (not modeled) and is part of the complete, contiguous pipeline from
+    attach_session through run_completion with no gaps.
+    """
+    # Verify that RELEASED_MISSIONS contains all 12 stages (the "All stages"
+    # part of "All stages are released")
+    assert len(RELEASED_MISSIONS) == 12, (
+        f"All 12 stages must be part of the released scope; "
+        f"found {len(RELEASED_MISSIONS)} stages instead"
+    )
+
+    # Verify each released stage is not in the modeled-only set
+    # (no released stage is modeled-only)
+    released_set = set(RELEASED_MISSIONS)
+    modeled_set = set(MODELED_MISSIONS)
+    intersection = released_set & modeled_set
+    assert (
+        not intersection
+    ), f"All released stages must be released only, but found modeled: {intersection}"
+
+    # Verify the pipeline is complete and contiguous from attach to runCompletion
+    # with no gaps or missing transitions
+    expected_pipeline_start = "attach_session"
+    expected_pipeline_end = "run_completion"
+    assert RELEASED_MISSIONS[0] == expected_pipeline_start, (
+        f"Released stages must start with attach_session; "
+        f"found {RELEASED_MISSIONS[0]} instead"
+    )
+    assert RELEASED_MISSIONS[-1] == expected_pipeline_end, (
+        f"Released stages must end with run_completion; "
+        f"found {RELEASED_MISSIONS[-1]} instead"
+    )
+
+    # Verify all stages are present and accounted for (complete set)
+    expected_all_stages = (
+        "attach_session",
+        "prepare_session",
+        "benchmark_validation",
+        "page_ready_observation",
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
+    )
+    assert RELEASED_MISSIONS == expected_all_stages, (
+        f"Released scope must contain all expected stages in order; "
+        f"expected {expected_all_stages}, got {RELEASED_MISSIONS}"
+    )
