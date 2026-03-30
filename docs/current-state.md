@@ -21,7 +21,7 @@ It is intentionally changeable and subordinate to:
 
 ## Current Interpretation
 
-Phase R86 — heuristic gap scan complete. All released-scope PRD clauses below pageReadyObserved have comprehensive unit test coverage. FINAL_STOP reached.
+Phase R87 — heuristic scan complete. Phase transition in progress: `Phase R88 heuristic gap scan` is the active task.
 
 ## What Is Already Established
 
@@ -113,7 +113,7 @@ Phase R6 complete:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current next action is: `FINAL_STOP — Phase R86 complete — all released-scope PRD clauses have comprehensive unit test coverage`
+The current next action is: `Phase R88 heuristic gap scan`
 
 ## Active Anchor Coverage Ledger
 
