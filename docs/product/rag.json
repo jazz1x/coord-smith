@@ -1,0 +1,136 @@
+{
+    "version": 1,
+    "purpose": "Durable lessons, failed assumptions, and reusable trial-and-error memory.",
+    "schema": {
+        "lesson_entry": {
+            "id": "string",
+            "category": "false_positive | false_negative | flaky_behavior | fallback_misuse | boundary_confusion | reusable_heuristic",
+            "severity": "low | medium | high",
+            "summary": "string",
+            "lesson": "string",
+            "trigger": "string",
+            "evidence": [
+                "string"
+            ],
+            "promoted_from_phase": "string",
+            "recorded_at": "ISO-8601 string",
+            "tags": [
+                "string"
+            ]
+        }
+    },
+    "recording_rules": {
+        "promote_when": [
+            "a false positive or false negative pattern repeats",
+            "a fallback rule proves brittle",
+            "a release versus modeled boundary is confused",
+            "an E2E flaky behavior reveals a durable lesson"
+        ],
+        "read_priority": [
+            "lessons tagged active-implementation",
+            "lessons tagged both active-implementation and historical-cutover",
+            "lessons tagged historical-cutover only"
+        ],
+        "do_not_store": [
+            "transient step-by-step working memory already covered by work-rag.json",
+            "claims without evidence",
+            "release claims for modeled behavior"
+        ]
+    },
+    "promotion_checklist": [
+        "Is the lesson reusable beyond the current step?",
+        "Does it have at least one evidence reference?",
+        "Would a future agent or skill benefit from it?",
+        "Is it different from transient work state already tracked in work-rag.json?"
+    ],
+    "example_lesson_entry": {
+        "id": "lesson-boundary-confusion-001",
+        "category": "boundary_confusion",
+        "severity": "high",
+        "summary": "Implemented modeled stages were mistaken for released workflow scope.",
+        "lesson": "Always read the released ceiling from the benchmark PRD first, even if higher modeled contracts already exist in code or docs.",
+        "trigger": "A later workflow task was considered in-bounds because Phase C-F contracts already existed.",
+        "evidence": [
+            "docs/product/prd-e2e-orchestration.md",
+            "docs/product/prd-openclaw-computer-use-runtime.md"
+        ],
+        "promoted_from_phase": "Phase 0 — Runtime Boundary Definition",
+        "recorded_at": "2026-03-19T00:00:00+09:00",
+        "tags": [
+            "scope",
+            "released-vs-modeled",
+            "autonomous-guardrail"
+        ]
+    },
+    "lessons": [
+        {
+            "id": "lesson-boundary-001",
+            "category": "boundary_confusion",
+            "lesson": "ez-ax is orchestration-only; OpenClaw is the sole browser-facing actor. Once Python-first bootstrap is active, all legacy TypeScript/JS assets are invalid. When hardening an already-released scaffold, do not widen scope beyond approved ceiling.",
+            "evidence": [
+                "docs/prd.md",
+                "AGENTS.md"
+            ],
+            "recorded_at": "2026-03-20T00:00:00+09:00"
+        },
+        {
+            "id": "lesson-scope-ceiling-002",
+            "category": "reusable_heuristic",
+            "lesson": "The released ceiling is pageReadyObserved. When a scope ceiling string is unrecognized, default to the tightest boundary. Log typed failure artifacts when a run claims the release ceiling. Cross-check PRD assertions against the coverage ledger before promoting scope.",
+            "evidence": [
+                "docs/llm/low-attention-coverage-ledger.json",
+                "src/ez_ax/models/failure.py"
+            ],
+            "recorded_at": "2026-03-22T00:00:00+09:00"
+        },
+        {
+            "id": "lesson-validation-003",
+            "category": "reusable_heuristic",
+            "lesson": "Validate mission identifiers, predecessor missions, duplicate-mission rejection, stop_reason/failure_detail mutual exclusion, and OpenClaw request/result identity at every typed boundary. Enforce comparability by rejecting duplicate target missions in checkpoint collections.",
+            "evidence": [
+                "src/ez_ax/models/transition.py",
+                "src/ez_ax/models/checkpoint.py",
+                "tests/unit/test_transition_checkpoint_collection.py"
+            ],
+            "recorded_at": "2026-03-23T00:00:00+09:00"
+        },
+        {
+            "id": "lesson-continuation-004",
+            "category": "reusable_heuristic",
+            "lesson": "Low-attention continuation depends on phase/milestone/anchor coordinates in work-rag.json. When layered entrypoints exist, every shared autonomous skill must quote the exact on-disk next_action verbatim. Under a fixed ceiling and one-commit-safe rule, the autoloop prompt must instruct reading core-loop.md first.",
+            "evidence": [
+                "docs/core-loop.md",
+                "src/ez_ax/rag/autoloop_prompt_driver.py"
+            ],
+            "recorded_at": "2026-03-25T00:00:00+09:00"
+        },
+        {
+            "id": "lesson-false-positive-005",
+            "category": "false_positive",
+            "lesson": "Released checkpoint guards should enforce attach-first continuation, not gate initial creation. When autonomous continuation depends on work-rag.json, require the model to quote the exact on-disk value before acting, preventing stale-state false positives.",
+            "evidence": [
+                "docs/product/work-rag.json"
+            ],
+            "recorded_at": "2026-03-22T00:00:00+09:00"
+        },
+        {
+            "id": "lesson-false-negative-006",
+            "category": "false_negative",
+            "lesson": "Before accepting FINAL_STOP, the loop must run a bounded resume-search across the heuristic catalog and documented adjacent surfaces. When queue and heuristic surfaces are exhausted but the phase/milestone is continuation-bearing, seed one new slice instead of stopping.",
+            "evidence": [
+                "docs/llm/repo-autonomous-loop-adapter.yaml",
+                "docs/current-state.md"
+            ],
+            "recorded_at": "2026-03-25T00:00:00+09:00"
+        },
+        {
+            "id": "lesson-flaky-behavior-007",
+            "category": "flaky_behavior",
+            "lesson": "Treat dependency/toolchain warnings (e.g., broken venv symlinks to macOS paths) as environment signals, not code bugs. The .venv/bin/python symlink targets a macOS homebrew path that is invalid inside the Linux sandbox.",
+            "evidence": [
+                ".venv/bin/python3.14"
+            ],
+            "recorded_at": "2026-03-25T00:00:00+09:00"
+        }
+    ]
+}

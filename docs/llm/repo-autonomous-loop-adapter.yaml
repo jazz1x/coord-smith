@@ -1,0 +1,220 @@
+version: 1
+repo: ez-ax
+purpose: Repo-local adapter inputs for the reusable autonomous implementation loop.
+
+memory:
+  continuation_memory_path: docs/product/work-rag.json
+  reusable_asset_memory_path: docs/product/rag.json
+  tracked_core_skill_bundle_path: docs/codex-global-skills
+  tracked_core_skill_install_script: scripts/install-codex-global-skills.sh
+  low_attention_queue_prd_path: docs/product/prd-low-attention-implementation-queue.md
+
+scope:
+  active_scope_boundary: runCompletion
+  released_anchors:
+    - prepareSession
+    - pageReadyObserved
+    - runCompletion
+  authority_boundary:
+    browser_facing_actor: OpenClaw
+    orchestration_owner: ez-ax
+    canonical_implementation_path: Python-first
+  forbidden_paths:
+    - TypeScript runtime under src/
+    - Bun-first runtime validation as canonical path
+    - modeled-stage implementation presented as released behavior
+
+execution_rules:
+  one_task_per_commit: true
+  continuous_multi_commit_looping: true
+  validation_first: true
+  compaction_before_cycle_close: true
+  active_phase: Phase R67 — scope expansion: pageReadyObserved to runCompletion
+  active_milestone: All 8 modeled missions promoted to released, ceiling at runCompletion
+  active_anchor: r67ScopeExpansionBound
+  current_work_memory_role: what_to_do_now
+  reusable_asset_memory_role: durable_lessons_only
+  anchor_contract_families:
+    - scope-expansion-prd-docs
+    - scope-expansion-mission-registry
+    - scope-expansion-graph-wiring
+    - scope-expansion-evidence-adapter
+    - scope-expansion-integration-e2e-tests
+    - scope-expansion-heuristic-test-cleanup
+    - scope-expansion-final-validation
+  milestone_done_when:
+    - all 12 missions execute in sequence and stop proof is at run_completion
+    - release-ceiling stop-proof artifacts stay typed and comparable at runCompletion
+    - all 7 anchor families are covered
+    - canonical sources are sufficient for a lower-capacity agent to name the next slice or true exhaustion
+  coverage_ledger:
+    statuses:
+      - covered
+      - excluded
+      - pending
+    required_fields:
+      - family
+      - status
+      - evidence_or_reason
+      - next_slice_hint
+    final_stop_blocker: any pending family blocks FINAL_STOP
+  post_commit_continue_rule:
+    - after each honest task close, rewrite work-rag current.next_action to the next exact documented slice
+    - continue in the same session when the next slice can still be named honestly from the queue, resume-search order, heuristic catalog, or continuation-seeding output
+    - do not stop only because one commit was completed
+    - queue exhaustion alone is not sufficient for FINAL_STOP while the active phase and milestone remain continuation-bearing
+    - when queue and heuristic surfaces are exhausted but the active phase and milestone still remain continuation-bearing, rewrite current.next_action to one mandatory continuation-seeding pass instead of FINAL_STOP review
+    - FINAL_STOP is valid only when no exact next one-commit slice can still be named after the full documented exhaustion protocol, including continuation seeding
+    - doc-only FINAL_STOP alignment is not a valid continuation slice unless the user explicitly asked for stop-state cleanup
+  continuation_seeding:
+    enabled: true
+    max_new_slices_per_cycle: 1
+    purpose: convert active phase/milestone/anchor context into one new deterministic one-commit slice when the queue and heuristic surfaces are exhausted; this pass is performed by the loop itself, not by a manual operator reopen
+    candidate_priority:
+      - omitted same-family helper or validation surfaces already on disk
+      - omitted same-anchor support modules already imported by active queue items
+      - docs-sufficiency gaps that block naming the next implementation slice
+    family_ladder:
+      - same-file failing validation artifact
+      - same module exact PRD-backed clause gap
+      - same directory imported support module
+      - same helper-family variant (*_entrypoint.py, *_cli_entrypoint.py, *_argv.py, *_argv_env.py)
+      - same validation family
+      - same-anchor config/settings/reporting/comparability helper
+      - docs-sufficiency source for next-slice naming
+    seeded_slice_requirements:
+      - remain below runCompletion
+      - one-task-per-commit safe
+      - name one first_prd before implementation
+      - name one first_validation before implementation
+      - update current-state, work-rag, and queue-bearing docs in the same task close
+      - update the active coverage ledger in the same task close
+  stop_state_consistency_gate:
+    required_sources:
+      - docs/current-state.md
+      - docs/product/work-rag.json
+      - docs/product/prd-low-attention-implementation-queue.md
+      - docs/llm/repo-autonomous-loop-adapter.yaml
+    invalid_if:
+      - any required source still names a concrete next slice below runCompletion
+      - queue PRD and repo adapter disagree about the documented queue tail
+      - current-state summary still describes continuation-bearing helper surfaces not reflected in the queue
+    adjacent_surface_completion_check:
+      enabled: true
+      max_new_items_per_cycle: 1
+      allowed_families:
+        - "*_entrypoint.py"
+        - "*_cli_entrypoint.py"
+        - "*_argv.py"
+        - "*_argv_env.py"
+        - "colocated focused tests for those helpers"
+      candidate_requirements:
+        - candidate already exists on disk
+        - candidate shares the same helper family or validation family as the last closed queue item or heuristic candidate
+        - one governing PRD clause can be named before implementation
+        - one focused validation command can be named before implementation
+  paused_resume_search_order:
+    - rerun or identify one focused pytest target on the active anchor surface
+    - if pytest is clean, rerun or identify one focused mypy target for the active file group when typing is part of the contract
+    - if mypy is clean, rerun or identify one focused ruff check target for the active file group
+    - if focused validation is clean, scan one relevant PRD for one exact unenforced clause below runCompletion
+    - if a clause is found, name one exact primary code location and one minimum honest validation command for the next one-commit slice
+    - if no exact gap is found for the current file group, advance to the next queued released-scope file group
+    - if the primary queue is exhausted cleanly, advance to the next queued secondary released-scope file group
+    - escalate only if neither a focused failing artifact nor an exact unenforced clause exists without guesswork and the documented primary plus secondary queues are exhausted
+  paused_file_group_queue:
+    - file_group: tests/e2e/test_released_path_e2e.py
+      first_prd: docs/prd.md
+      first_validation: .venv/bin/python -m pytest -q tests/e2e/test_released_path_e2e.py
+    - file_group: src/ez_ax/graph/pyautogui_cli_entrypoint.py
+      first_prd: docs/product/prd-python-runtime-layout.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_pyautogui_cli_entrypoint.py
+    - file_group: src/ez_ax/adapters/pyautogui_adapter.py
+      first_prd: docs/product/prd-python-langgraph-runtime.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_pyautogui_adapter.py
+  paused_secondary_file_group_queue:
+    - file_group: tests/e2e/README.md
+      first_prd: docs/product/prd-openclaw-e2e-validation.md
+      first_validation: .venv/bin/python -m pytest -q tests/e2e/test_released_path_e2e.py
+    - file_group: src/ez_ax/graph/released_run_root.py
+      first_prd: docs/product/prd-python-runtime-layout.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_released_run_root.py
+    - file_group: src/ez_ax/graph/langgraph_released_execution.py
+      first_prd: docs/product/prd-python-langgraph-runtime.md
+      first_validation: .venv/bin/python -m pytest -q tests/unit/test_langgraph_released_execution.py
+  auto_search_boundary:
+    tertiary_queue_allowed_by_default: false
+    heuristic_max_new_items_per_cycle: 1
+    heuristic_pass_interpretation: one bounded sweep across the full documented heuristic catalog; the pass may inspect every candidate in order but may promote at most one new queue item
+    heuristic_candidate_catalog:
+      - file_group: src/ez_ax/graph/released_entrypoint.py
+        first_prd: docs/product/prd-python-runtime-layout.md
+        first_validation: .venv/bin/python -m pytest -q tests/unit/test_released_entrypoint.py
+      - file_group: src/ez_ax/config/settings.py
+        first_prd: docs/product/prd-python-runtime-layout.md
+        first_validation: .venv/bin/python -m pytest -q tests/unit/test_runtime_settings.py
+      - file_group: src/ez_ax/reporting/summary.py
+        first_prd: docs/prd.md
+        first_validation: .venv/bin/python -m pytest -q tests/unit/test_transition_reporting.py
+      - file_group: tests/e2e/test_released_path_e2e.py
+        first_prd: docs/product/prd-openclaw-e2e-validation.md
+        first_validation: .venv/bin/python -m pytest -q tests/e2e/test_released_path_e2e.py
+    heuristic_candidate_scan_steps:
+      - run first_validation for the current candidate
+      - if first_validation fails, stop and open one one-commit task for that candidate
+      - if first_validation passes, run the narrowest applicable mypy target
+      - if mypy passes, run the narrowest applicable ruff check
+      - if focused validation is clean, scan first_prd for one exact unenforced clause tied to the candidate
+      - if no failing artifact and no exact clause are found, advance to the next documented heuristic candidate
+    final_stop_condition: documented queue, bounded resume-search, the full documented queue-extension heuristic catalog, the loop's mandatory continuation-seeding pass, and the stop-state consistency gate are exhausted without an exact in-bounds gap
+  low_attention_implementation_queue:
+    - tests/e2e/test_released_path_e2e.py
+    - tests/e2e/README.md
+    - src/ez_ax/graph/pyautogui_cli_entrypoint.py
+    - src/ez_ax/adapters/pyautogui_adapter.py
+    - src/ez_ax/graph/released_run_root.py
+    - src/ez_ax/graph/langgraph_released_execution.py
+    - src/ez_ax/reporting/summary.py
+    - src/ez_ax/config/settings.py
+
+validation:
+  floor:
+    docs_only:
+      - python3 -m json.tool docs/product/work-rag.json
+      - git diff --check
+    test_only_rule: run the changed test target directly
+    behavior_or_contract_rule: run one focused test plus the narrowest applicable lint or type check
+    mixed_change_rule: treat docs+behavior as behavior_or_contract
+
+compaction:
+  command: Update docs/product/work-rag.json current state, add exactly one same-task history entry, compact same-scope history when it exceeds the raw checkpoint limit, and promote only durable lessons into docs/product/rag.json.
+  raw_checkpoint_limit_per_active_scope: 5
+  preferred_raw_checkpoint_limit_after_compaction: 2
+  active_lesson_tag: active-implementation
+  historical_lesson_tag: historical-cutover
+
+reporting:
+  closeout_shape:
+    - phase / milestone / anchor / invariant / next action
+    - changes made
+    - typed evidence
+    - commit hash
+    - checkpoint / failure-taxonomy impact
+
+model_routing:
+  main_implementer: claude-sonnet-4-6
+  task_slicing: claude-haiku-4-5-20251001
+  validation_picking: claude-haiku-4-5-20251001
+  released_scope_guarding: claude-haiku-4-5-20251001
+  contract_scope_guardian_prompt: claude-haiku-4-5-20251001
+  rag_compaction: claude-haiku-4-5-20251001
+  continuation_cleanup: claude-haiku-4-5-20251001
+  assetization_pattern_promotion_prompt: claude-haiku-4-5-20251001
+
+orchestration:
+  primary_entry_skill: ez-ax-executable-autoloop
+  runner_script: ez-ax-autoloop
+  runtime: claude-code-cli
+  default_loop_mode: continuous_guarded_looping
+  continuation_bias: keep selecting the next documented one-commit slice after each commit until the full exhaustion protocol is honestly complete
+  final_stop_keyword: FINAL_STOP

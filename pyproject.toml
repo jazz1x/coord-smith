@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ez-ax"
+version = "0.1.0"
+description = "Python-first runtime scaffold for ez-ax."
+readme = "docs/product/prd-python-langgraph-runtime.md"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+  "langchain>=0.3.0",
+  "langgraph>=0.3.0",
+  "mcp",
+  "playwright>=1.50.0",
+  "pyautogui>=0.9.54",
+  "pydantic>=2.8.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.11.0",
+  "pre-commit>=4.0.0",
+  "pytest>=8.3.0",
+  "pytest-asyncio>=0.24.0",
+  "ruff>=0.11.0",
+]
+
+[project.scripts]
+ez-ax = "ez_ax.graph.pyautogui_cli_entrypoint:main"
+ez-ax-autoloop = "ez_ax.rag.autoloop_runner:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ez_ax"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Test files use intentionally long, descriptive function names for clarity.
+# E501 (line-too-long) is unavoidable for names like
+# "test_forward_transition_rejects_benchmark_validation_under_prepare_session_ceiling".
+# This is a pragmatic trade-off: test clarity > strict line length.
+"tests/**" = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+packages = ["ez_ax"]
+strict = true

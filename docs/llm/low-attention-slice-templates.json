@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "active_phase": "Phase R3 — Fresh Python Bootstrap",
+  "active_milestone": "Low-attention autonomous continuation remains unambiguous under the Python-first PRD contract",
+  "active_anchor": "pythonRuntimeBootstrapCreated",
+  "templates": [
+    {
+      "id": "docs_sufficiency_coverage_ledger_contract",
+      "family": "docs-sufficiency family for lower-capacity continuation",
+      "trigger_substrings": [
+        "docs_sufficiency_coverage_ledger_contract",
+        "docs-sufficiency family gap",
+        "coverage-ledger maintenance",
+        "pending family from the active coverage ledger"
+      ],
+      "file_group": "src/ez_ax/validation/bootstrap.py",
+      "supporting_files": [
+        "docs/execution-model.md",
+        "docs/current-state.md",
+        "docs/product/prd-low-attention-implementation-queue.md",
+        "docs/llm/repo-autonomous-loop-adapter.yaml",
+        "docs/llm/low-attention-slice-templates.json",
+        "docs/product/work-rag.json"
+      ],
+      "tests": [
+        "tests/unit/test_bootstrap_assets.py",
+        "tests/unit/test_autoloop_prompt_driver.py"
+      ],
+      "first_prd": "docs/execution-model.md",
+      "first_validation": ".venv/bin/python -m pytest -q tests/unit/test_bootstrap_assets.py tests/unit/test_autoloop_prompt_driver.py",
+      "mypy_target": ".venv/bin/python -m mypy src/ez_ax/rag/autoloop_prompt_driver.py tests/unit/test_autoloop_prompt_driver.py tests/unit/test_slice_templates.py",
+      "ruff_target": ".venv/bin/python -m ruff check src/ez_ax/rag/autoloop_prompt_driver.py src/ez_ax/rag/slice_templates.py tests/unit/test_autoloop_prompt_driver.py tests/unit/test_slice_templates.py scripts/print-autoloop-command.py",
+      "done_when": [
+        "the bootstrap/docs-sufficiency path records a deterministic template-backed rule for maintaining the active coverage ledger",
+        "a lower-capacity agent can name the next seeded slice from canonical sources without inventing a family-specific prompt",
+        "focused pytest, mypy, and ruff are clean"
+      ],
+      "next_if_clean": "resume the active continuation cycle and recompute coverage-ledger status",
+      "next_if_fail": "fix the smallest safe docs-sufficiency slice in bootstrap or prompt-driver assets"
+    }
+  ]
+}

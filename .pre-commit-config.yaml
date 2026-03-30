@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: .venv/bin/python -m ruff check .
+        language: system
+        pass_filenames: false
+      - id: mypy-check
+        name: mypy check
+        entry: .venv/bin/python -m mypy src
+        language: system
+        pass_filenames: false
+      - id: pytest-contracts
+        name: pytest contracts
+        entry: .venv/bin/python -m pytest tests/unit tests/contract -q
+        language: system
+        pass_filenames: false
+      - id: bootstrap-assets
+        name: bootstrap assets
+        entry: .venv/bin/python -m pytest tests/unit/test_bootstrap_assets.py -q
+        language: system
+        pass_filenames: false

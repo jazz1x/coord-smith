@@ -1,0 +1,64 @@
+# dependencies
+node_modules
+
+# output
+out
+dist
+*.tgz
+runs/
+
+# local browser profiles
+data/openclaw/profiles/
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+_.log
+report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+.codex/
+!.codex/
+!.codex/skills/
+.codex/skills/*
+!.codex/skills/ez-ax-loop-task-slicer-wrapper/
+!.codex/skills/ez-ax-loop-task-slicer-wrapper/**
+!.codex/skills/ez-ax-loop-validation-picker-wrapper/
+!.codex/skills/ez-ax-loop-validation-picker-wrapper/**
+!.codex/skills/ez-ax-loop-released-scope-guard-wrapper/
+!.codex/skills/ez-ax-loop-released-scope-guard-wrapper/**
+!.codex/skills/ez-ax-loop-rag-compaction-wrapper/
+!.codex/skills/ez-ax-loop-rag-compaction-wrapper/**
+!.codex/skills/ez-ax-low-attention-autoloop/
+!.codex/skills/ez-ax-low-attention-autoloop/**
+!.codex/skills/python-engineering/
+!.codex/skills/python-engineering/**
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# IntelliJ based IDEs
+.idea
+
+# Finder (MacOS) folder config
+.DS_Store
+
+# Python build artifacts
+build/
+site/
+*.egg-info/
