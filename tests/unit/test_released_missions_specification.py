@@ -298,3 +298,70 @@ def test_released_scope_implementation_includes_all_missions_below_page_ready_ob
         f"Released scope must have exactly 8 missions below pageReadyObserved "
         f"(execution phase); found {len(missions_below_page_ready)}"
     )
+
+
+def test_released_scope_implementation_includes_all_missions_above_page_ready_observation() -> None:
+    """Verify all released-scope implementation clauses above pageReadyObserved.
+
+    PRD Release Boundary (lines 47-63): Specifies released implementation scope with
+    missions above pageReadyObserved forming the setup and observation phase:
+    - attach (line 49)
+    - prepareSession (line 50)
+    - benchmark validation (line 51)
+    - pageReadyObserved (line 52)
+
+    These 4 missions must:
+    1. All be present in the released scope (not modeled-only)
+    2. Execute in the correct sequence before the pageReadyObserved boundary
+    3. Be complete and contiguous (no gaps in the setup pipeline)
+    4. End at pageReadyObserved (the boundary marker that separates setup from execution)
+
+    This test explicitly verifies the released scope implementation meets these
+    requirements for missions above the pageReadyObserved boundary, providing
+    a comprehensive counterpart to the below-boundary verification and ensuring
+    the entire 12-mission pipeline is properly structured from attach to runCompletion.
+    """
+    # Find the position of page_ready_observation boundary (index 3)
+    page_ready_index = 3
+    page_ready_mission = RELEASED_MISSIONS[page_ready_index]
+    assert page_ready_mission == "page_ready_observation", (
+        "page_ready_observation must be at index 3 to establish the boundary"
+    )
+
+    # Extract all missions above/including the boundary (setup phase + boundary marker)
+    missions_above_page_ready = list(RELEASED_MISSIONS[: page_ready_index + 1])
+
+    # Verify these missions exist and match PRD specification
+    expected_above_page_ready = [
+        "attach_session",
+        "prepare_session",
+        "benchmark_validation",
+        "page_ready_observation",
+    ]
+    assert missions_above_page_ready == expected_above_page_ready, (
+        f"Missions above/at pageReadyObserved must be exactly as specified in PRD; "
+        f"expected {expected_above_page_ready}, got {missions_above_page_ready}"
+    )
+
+    # Verify all these missions are released (not modeled)
+    modeled_set = set(MODELED_MISSIONS)
+    for mission in missions_above_page_ready:
+        assert mission not in modeled_set, (
+            f"Mission '{mission}' (above pageReadyObserved) must be released, "
+            f"not modeled-only"
+        )
+
+    # Verify the pipeline is contiguous from attach to pageReadyObserved
+    assert missions_above_page_ready[0] == "attach_session", (
+        "Setup phase must begin with attach_session"
+    )
+    assert missions_above_page_ready[-1] == "page_ready_observation", (
+        "Setup phase must end at page_ready_observation (the boundary marker)"
+    )
+
+    # Verify there are exactly 4 missions above/at the boundary
+    # (12 total missions - 8 execution missions = 4 setup missions)
+    assert len(missions_above_page_ready) == 4, (
+        f"Released scope must have exactly 4 missions above pageReadyObserved "
+        f"(setup phase + boundary); found {len(missions_above_page_ready)}"
+    )
