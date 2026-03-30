@@ -225,3 +225,76 @@ def test_all_stages_are_released() -> None:
         f"Released scope must contain all expected stages in order; "
         f"expected {expected_all_stages}, got {RELEASED_MISSIONS}"
     )
+
+
+def test_released_scope_implementation_includes_all_missions_below_page_ready_observation() -> None:
+    """Verify all released-scope implementation clauses below pageReadyObserved.
+
+    PRD Release Boundary (lines 47-63): Specifies released implementation scope with
+    missions below pageReadyObserved forming the execution and observation phase:
+    - syncObservation (line 53)
+    - targetActionabilityObservation (line 54)
+    - armedStateEntry (line 55)
+    - triggerWait (line 56)
+    - clickDispatch (line 57)
+    - clickCompletion (line 58)
+    - successObservation (line 59)
+    - runCompletion (line 60)
+
+    These 8 missions must:
+    1. All be present in the released scope (not modeled-only)
+    2. Execute in the correct sequence after pageReadyObserved
+    3. Be complete and contiguous (no gaps in the execution pipeline)
+    4. Terminate at runCompletion (the released ceiling)
+
+    This test explicitly verifies the released scope implementation meets these
+    requirements for missions below the pageReadyObserved boundary.
+    """
+    # Find the position of page_ready_observation boundary (index 3)
+    page_ready_index = 3
+    page_ready_mission = RELEASED_MISSIONS[page_ready_index]
+    assert page_ready_mission == "page_ready_observation", (
+        "page_ready_observation must be at index 3 to establish the boundary"
+    )
+
+    # Extract all missions below the boundary (execution phase)
+    missions_below_page_ready = list(RELEASED_MISSIONS[page_ready_index + 1 :])
+
+    # Verify these missions exist and match PRD specification
+    expected_below_page_ready = [
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
+    ]
+    assert missions_below_page_ready == expected_below_page_ready, (
+        f"Missions below pageReadyObserved must be exactly as specified in PRD; "
+        f"expected {expected_below_page_ready}, got {missions_below_page_ready}"
+    )
+
+    # Verify all these missions are released (not modeled)
+    modeled_set = set(MODELED_MISSIONS)
+    for mission in missions_below_page_ready:
+        assert mission not in modeled_set, (
+            f"Mission '{mission}' (below pageReadyObserved) must be released, "
+            f"not modeled-only"
+        )
+
+    # Verify the pipeline is contiguous from after pageReadyObserved to runCompletion
+    assert missions_below_page_ready[0] == "sync_observation", (
+        "Execution phase must begin immediately with sync_observation"
+    )
+    assert missions_below_page_ready[-1] == "run_completion", (
+        "Execution phase must terminate at run_completion (released ceiling)"
+    )
+
+    # Verify there are exactly 8 missions below the boundary
+    # (12 total missions - 4 setup missions = 8 execution missions)
+    assert len(missions_below_page_ready) == 8, (
+        f"Released scope must have exactly 8 missions below pageReadyObserved "
+        f"(execution phase); found {len(missions_below_page_ready)}"
+    )

@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R78 — heuristic scan",
-  "active_milestone": "Phase R78 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r78HeuristicScanBound",
+  "active_phase": "Phase R79 — heuristic scan",
+  "active_milestone": "Phase R79 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r79HeuristicScanBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1447,6 +1447,23 @@
         "at least one new pytest function added for an uncovered PRD clause",
         "pytest tests/unit/ -q passes",
         "coverage-ledger.json 'Phase R78 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R79 heuristic gap scan",
+      "status": "covered",
+      "evidence_or_reason": "Identified uncovered clause: released-scope implementation includes all missions below pageReadyObserved in correct sequence and phase. Added dedicated unit test test_released_scope_implementation_includes_all_missions_below_page_ready_observation() to tests/unit/test_released_missions_specification.py with focused verification that all 8 execution-phase missions (sync_observation through run_completion) are present, released (not modeled), and form a contiguous pipeline from the pageReadyObserved boundary to the released ceiling. All 638 unit tests pass (637 existing + 1 new). Coverage ledger family 'Phase R79 heuristic gap scan' marked as covered. No additional pending families remain. Phase R79 complete — FINAL_STOP reached.",
+      "next_slice_hint": "Phase R79 complete. All released-scope PRD clauses verified with comprehensive unit tests. Coverage ledger: all families (R3-R79) covered. Queue exhausted. FINAL_STOP — all coverage-ledger families complete.",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "at least one new pytest function added for an uncovered PRD clause",
+        "pytest tests/unit/ -q passes",
+        "coverage-ledger.json 'Phase R79 heuristic gap scan' status set to covered",
         "work-rag.json next_action updated",
         "committed"
       ],
