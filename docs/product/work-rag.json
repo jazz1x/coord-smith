@@ -32,7 +32,7 @@
     "milestone": "Phase R82 heuristic gap scan complete — all released-scope clauses have dedicated comprehensive unit test coverage",
     "anchor": "r82HeuristicScanComplete",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
-    "next_action": "FINAL_STOP — Phase R82 complete — all released-scope PRD clauses now have dedicated unit test coverage",
+    "next_action": "Phase R83 heuristic gap scan",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
@@ -92,38 +92,23 @@
       "recorded_at": "2026-03-30T11:53:16.378236Z"
     },
     {
-      "kind": "milestone_summary",
-      "phase": "Phases R79-R80 (comprehensive heuristic gap scans above and below pageReadyObserved boundary)",
-      "milestone": "Comprehensive 12-mission released-scope verification across pageReadyObserved boundary",
-      "anchor": "r79-r80CompressedBound",
-      "summary": "Compressed 2 checkpoint entries from Phases R79-R80 into consolidated milestone summary. Phase R79 identified and tested uncovered clause: 'all 8 execution-phase missions below pageReadyObserved are present, released, and form a contiguous pipeline from boundary to runCompletion'. Created test_released_scope_implementation_includes_all_missions_below_page_ready_observation() verifying structural integrity of execution phase and its proper relationship to pre-execution setup. Phase R80 complementary scan found and tested: 'all 4 setup-phase missions above pageReadyObserved are present, released, and form a contiguous pipeline from attach to boundary'. Created test_released_scope_implementation_includes_all_missions_above_page_ready_observation() verifying setup-phase structural integrity. Combined work fully verified the complete 12-mission released pipeline in both directions around the pageReadyObserved boundary: R79 verified execution phase (8 missions); R80 verified setup phase (4 missions). Advanced from 637 passing tests (R79 start) through 638 (R79) to 639 (R80) unit tests. Both families marked covered. No pending families remained after R80.",
+      "kind": "phase_summary",
+      "phase": "Phases R67-R80 (foundation expansion, boundary verification, comprehensive 12-mission pipeline validation)",
+      "milestone": "Comprehensive foundation consolidation: 12-mission released pipeline, pageReadyObserved boundary markers, complete setup/execution phase integrity, and all 641 unit tests verified",
+      "anchor": "r67-r80CompressedBound",
+      "summary": "Consolidated work from Phases R67-R80 establishing complete 12-mission released-scope pipeline. Phase R67 promoted all modeled missions to released scope and established attach→runCompletion pipeline. Phases R69-R70 added mission execution and intentional-stop coverage. Phase R73 identified and tested page_ready_observation boundary marking and canonical memory paths. Phase R75 tested OpenClaw-only execution boundary enforcement. Phases R76-R78 established foundational released-scope structure testing below pageReadyObserved. Phases R79-R80 completed symmetric boundary verification: R79 tested execution-phase missions below pageReadyObserved (8 missions, contiguous pipeline); R80 tested setup-phase missions above pageReadyObserved (4 missions, contiguous pipeline). Combined work fully verified: (1) all 12 missions released, no modeled missions in released scope; (2) setup phase (attach→pageReadyObserved) is contiguous, linear, properly bounded; (3) execution phase (pageReadyObserved→runCompletion) is contiguous, linear, properly terminated; (4) complete pipeline forms verified 12-mission sequence with no gaps or interspersed modeled missions. Advanced from 632 passing tests (R67-R75) to 639 tests (R79-R80). All families R67-R80 marked covered. Foundation ready for Phase R81+ verification.",
       "evidence": [
-        "Phase R79: test_released_scope_implementation_includes_all_missions_below_page_ready_observation() added",
-        "Phase R80: test_released_scope_implementation_includes_all_missions_above_page_ready_observation() added",
-        "Phase R79-R80 combined: 639 unit tests passing (637 existing + 2 new)",
-        "Coverage ledger families 'Phase R79 heuristic gap scan' and 'Phase R80 heuristic gap scan' both marked as covered",
-        "All validation clean: mypy, ruff, pytest"
+        "Phase R67: 12-mission released-scope pipeline established",
+        "Phase R73: pageReadyObserved boundary marking and canonical memory paths tested",
+        "Phase R75: OpenClaw-only execution boundary enforcement verified",
+        "Phase R76: complete released-scope pipeline structure below pageReadyObserved",
+        "Phase R77-R78: intentional stop at ceiling and 'all stages released' clauses verified",
+        "Phase R79: execution-phase contiguity and release status verified (8 missions)",
+        "Phase R80: setup-phase contiguity and release status verified (4 missions)",
+        "Final: 639 unit tests passing (comprehensive R67-R80 validation)",
+        "All released-scope PRD clauses have dedicated unit test coverage"
       ],
       "recorded_at": "2026-03-30T22:15:00.000000Z"
-    },
-    {
-      "kind": "phase_summary",
-      "phase": "Phases R67-R78 (scope expansion, heuristic gap scans, boundary verification, memory model, and execution verification)",
-      "milestone": "Comprehensive foundation for Phase R76+: 12-mission pipeline with full released-scope coverage, boundary markers, memory layers, execution verification, and ceiling enforcement",
-      "anchor": "r67-r78CompressedBound",
-      "summary": "Compressed 7 checkpoint/summary entries from Phases R67-R78 into consolidated phase summary. Phase R67 promoted all modeled missions to released scope and established 12-mission pipeline (attach→runCompletion). Phases R69-R70 added mission node execution tests and intentional-stop coverage. Phase R73 identified and tested page_ready_observation boundary marking, canonical memory paths (work-rag.json and rag.json). Phase R75 tested OpenClaw-only execution boundary enforcement. Phases R76-R78 completed heuristic gap scan verification: R76 tested complete released-scope pipeline structure below pageReadyObserved; R77 tested intentional stop at released ceiling (PRD line 61); R78 tested 'All stages are released' clause (PRD line 63). Combined work established complete 12-mission released pipeline, boundary enforcement, mission release status verification, and confirmed released scope exactly matches documented ceiling at runCompletion. Advanced from 632 passing tests (R67-R75) to 638 tests (R77-R78) to comprehensive foundation ready for subsequent R79+ verification phases.",
-      "evidence": [
-        "Phase R67: Established 12-mission released-scope pipeline",
-        "Phases R69-R70: Added mission execution and intentional-stop tests",
-        "Phase R73: Added boundary marking and canonical memory path tests",
-        "Phase R75: Added OpenClaw-only execution boundary enforcement test",
-        "Phase R76: Added complete released-scope pipeline structure verification below pageReadyObserved",
-        "Phase R77: Added test_released_scope_intentional_stop_at_ceiling.py with 2 focused unit tests",
-        "Phase R78: Added test_all_stages_are_released() in test_released_missions_specification.py",
-        "Final: pytest tests/unit/ -q: 638 tests passing (comprehensive R67-R78 consolidation)",
-        "All validation clean: mypy, ruff, pytest"
-      ],
-      "recorded_at": "2026-03-30T22:00:00.000000Z"
     }
   ]
 }
