@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R85 — heuristic scan",
-  "active_milestone": "Phase R85 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r85HeuristicScanBound",
+  "active_phase": "Phase R86 — heuristic scan",
+  "active_milestone": "Phase R86 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r86HeuristicScanBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1569,6 +1569,23 @@
         "All 642 unit tests confirmed passing",
         "coverage-ledger.json 'Phase R85 heuristic gap scan' status set to covered",
         "work-rag.json next_action updated to FINAL_STOP",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R86 heuristic gap scan",
+      "status": "covered",
+      "evidence_or_reason": "Phase R86 comprehensive heuristic gap scan: Completed final verification that all released-scope PRD clauses below pageReadyObserved have dedicated unit test coverage. Systematically audited all clauses across 5 major PRD sections: Release Boundary (3 clauses), Evidence Truth Model (3 clauses), Release-Ceiling Stop Proof (5 clauses), Canonical Memory Model (4 clauses), Canonical Stack (2 clauses), and Intentional Stop (1 clause) for total of 18 clauses. Cross-referenced each clause with existing unit test files: test_release_boundary_current_ceiling.py, test_released_missions_specification.py, test_released_scope_graph_rejects_modeled_missions.py, test_released_mission_evidence_specs.py, test_typed_evidence_required_for_decisions.py, test_release_ceiling_stop_proof_enforcement.py, test_release_ceiling_stop_proof_path.py, test_rag_paths.py, test_canonical_stack_specification.py, test_released_scope_intentional_stop_at_ceiling.py. Confirmed all 18 clauses have comprehensive dedicated test coverage. No new uncovered clauses discovered. All 642 unit tests continue to pass. Phase R86 complete — all released-scope PRD clauses verified covered.",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "comprehensive PRD clause audit completed for all sections below pageReadyObserved",
+        "all 18 released-scope clauses verified to have dedicated unit test coverage",
+        "pytest tests/unit/ -q passes (642 tests)",
+        "coverage-ledger.json 'Phase R86 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated to FINAL_STOP — Phase R86 complete",
         "committed"
       ],
       "template_id": ""
