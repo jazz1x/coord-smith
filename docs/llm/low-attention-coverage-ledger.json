@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R86 — heuristic scan",
-  "active_milestone": "Phase R86 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r86HeuristicScanBound",
+  "active_phase": "Phase R87 — heuristic scan",
+  "active_milestone": "Phase R87 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r87HeuristicScanBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1586,6 +1586,23 @@
         "pytest tests/unit/ -q passes (642 tests)",
         "coverage-ledger.json 'Phase R86 heuristic gap scan' status set to covered",
         "work-rag.json next_action updated to FINAL_STOP — Phase R86 complete",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R87 heuristic gap scan",
+      "status": "covered",
+      "evidence_or_reason": "Phase R87 heuristic gap scan: Comprehensive re-audit of docs/prd.md confirmed all 18 released-scope implementation clauses identified in Phase R86 remain covered with no new uncovered clauses discovered. Systematic review verified coverage across all 5 major PRD sections below pageReadyObserved: Evidence Truth Model (3 clauses: truth priority hierarchy, no vision/coordinate-only derivation, typed evidence requirement), Release-Ceiling Stop Proof (5 clauses: provability requirement, evidence-ref specification, artifact path, typed fields, artifact resolution enforcement), Release Boundary (3 clauses: runCompletion ceiling, intentional stop, no modeled-only missions), Canonical Memory Model (4 clauses: two-layer structure, work-rag designation, rag designation, no third layer), Canonical Stack (2 clauses: Python-first implementation, stack components). All 18 clauses continue to have dedicated unit test coverage verified in: test_typed_evidence_required_for_decisions.py, test_released_mission_evidence_specs.py, test_release_ceiling_stop_proof_enforcement.py, test_release_ceiling_stop_proof_path.py, test_release_boundary_current_ceiling.py, test_released_scope_intentional_stop_at_ceiling.py, test_released_scope_graph_rejects_modeled_missions.py, test_rag_paths.py, test_canonical_stack_specification.py. All 642 unit tests pass. No new uncovered clauses identified. All coverage-ledger families (R3-R87) complete and verified. All released-scope PRD clauses below pageReadyObserved have comprehensive unit test coverage. Phase R87 complete — FINAL_STOP reached.",
+      "next_slice_hint": "Read docs/prd.md and list all released-scope implementation clauses (below pageReadyObserved). Cross-reference with tests/unit/ to find the first clause that has no dedicated unit test. Write one focused pytest function for it, run pytest to confirm it passes, mark this family covered in docs/llm/low-attention-coverage-ledger.json, update docs/product/work-rag.json current.next_action to the next pending family (or 'FINAL_STOP — Phase R87 complete' if none remain), and commit.",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "at least one new pytest function added for an uncovered PRD clause",
+        "pytest tests/unit/ -q passes",
+        "coverage-ledger.json 'Phase R87 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated",
         "committed"
       ],
       "template_id": ""
