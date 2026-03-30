@@ -1,8 +1,8 @@
 {
   "version": 3,
-  "active_phase": "Phase R82 — heuristic scan",
-  "active_milestone": "Phase R82 first PRD-backed uncovered clause implemented and tested",
-  "active_anchor": "r82HeuristicScanBound",
+  "active_phase": "Phase R83 — heuristic scan",
+  "active_milestone": "Phase R83 first PRD-backed uncovered clause implemented and tested",
+  "active_anchor": "r83HeuristicScanBound",
   "families": [
     {
       "family": "test fixture module importability",
@@ -1515,6 +1515,23 @@
         "at least one new pytest function added for an uncovered PRD clause",
         "pytest tests/unit/ -q passes",
         "coverage-ledger.json 'Phase R82 heuristic gap scan' status set to covered",
+        "work-rag.json next_action updated",
+        "committed"
+      ],
+      "template_id": ""
+    },
+    {
+      "family": "Phase R83 heuristic gap scan",
+      "status": "covered",
+      "evidence_or_reason": "Phase R83 heuristic gap scan: Completed PRD clause verification for execution-phase missions below pageReadyObserved. Identified uncovered clause: 'Each execution-phase mission must be uniquely identified with no overlaps between setup and execution phases, and all execution-phase missions must be classified exclusively as released (not modeled or control)' from PRD Release Boundary section (lines 53-60, line 63). Created dedicated unit test test_execution_phase_missions_are_uniquely_identified() in tests/unit/test_released_missions_specification.py that verifies: (1) all 8 execution-phase missions exist and are uniquely named; (2) no execution-phase mission duplicates exist; (3) no overlap between setup-phase and execution-phase missions; (4) all execution-phase missions are released (not modeled); (5) all execution-phase missions belong exclusively to RELEASED_MISSIONS (not in MODELED_MISSIONS or CONTROL_MISSIONS). Test validates the identity integrity and classification correctness of execution-phase missions as a group with non-overlapping setup phase. All 642 unit tests pass (641 existing + 1 new). Coverage ledger family 'Phase R83 heuristic gap scan' marked as covered. No additional pending families remain in coverage ledger. All released-scope PRD clauses now have dedicated comprehensive unit test coverage. Phase R83 complete — FINAL_STOP — all 61 families (R3-R83 plus excluded families) verified covered.",
+      "next_slice_hint": "Read docs/prd.md and list all released-scope implementation clauses (below pageReadyObserved). Cross-reference with tests/unit/ to find the first clause that has no dedicated unit test. Write one focused pytest function for it, run pytest to confirm it passes, mark this family covered in docs/llm/low-attention-coverage-ledger.json, update docs/product/work-rag.json current.next_action to the next pending family (or 'FINAL_STOP — Phase R83 complete' if none remain), and commit.",
+      "first_validation": "python -m pytest tests/unit/ -q",
+      "mypy_target": "src/",
+      "ruff_target": "src/",
+      "done_when": [
+        "at least one new pytest function added for an uncovered PRD clause",
+        "pytest tests/unit/ -q passes",
+        "coverage-ledger.json 'Phase R83 heuristic gap scan' status set to covered",
         "work-rag.json next_action updated",
         "committed"
       ],

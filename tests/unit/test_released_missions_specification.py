@@ -518,3 +518,88 @@ def test_released_scope_setup_phase_missions_form_contiguous_pipeline() -> None:
             f"Setup-phase mission '{mission}' must be in released missions; "
             f"setup phase cannot include modeled-only missions"
         )
+
+
+def test_execution_phase_missions_are_uniquely_identified() -> None:
+    """Verify each execution-phase mission has a unique, non-overlapping identity.
+
+    PRD Release Boundary (lines 53-60): The 8 execution-phase missions below
+    pageReadyObserved are:
+    - syncObservation (line 53)
+    - targetActionabilityObservation (line 54)
+    - armedStateEntry (line 55)
+    - triggerWait (line 56)
+    - clickDispatch (line 57)
+    - clickCompletion (line 58)
+    - successObservation (line 59)
+    - runCompletion (line 60)
+
+    This clause verifies that:
+    1. Each execution-phase mission name is unique (no duplicates)
+    2. No execution-phase mission overlaps with setup-phase missions
+    3. All execution-phase missions are members of exactly one category (released, modeled, or control)
+    4. No execution-phase mission appears in multiple mission groups simultaneously
+    """
+    # Extract execution-phase missions (all after pageReadyObserved at index 3)
+    page_ready_index = 3
+    execution_phase_missions = tuple(RELEASED_MISSIONS[page_ready_index + 1 :])
+
+    # Verify execution phase has exactly 8 missions
+    assert len(execution_phase_missions) == 8, (
+        f"Execution phase must contain exactly 8 missions; found {len(execution_phase_missions)}"
+    )
+
+    # Verify each mission name appears exactly once in execution phase (no duplicates)
+    execution_set = set(execution_phase_missions)
+    assert len(execution_set) == len(execution_phase_missions), (
+        f"Execution-phase missions must all be unique; "
+        f"found {len(execution_phase_missions)} missions but only {len(execution_set)} unique names"
+    )
+
+    # Verify no execution-phase mission overlaps with setup phase
+    setup_phase_missions = RELEASED_MISSIONS[:page_ready_index]
+    setup_set = set(setup_phase_missions)
+    for mission in execution_phase_missions:
+        assert mission not in setup_set, (
+            f"Execution-phase mission '{mission}' cannot also be in setup phase"
+        )
+
+    # Verify no execution-phase mission is in the modeled missions set
+    modeled_set = set(MODELED_MISSIONS)
+    for mission in execution_phase_missions:
+        assert mission not in modeled_set, (
+            f"Execution-phase mission '{mission}' must be released, not modeled"
+        )
+
+    # Verify each execution-phase mission belongs to exactly one mission group
+    # (released, modeled, or control) by checking mutual exclusivity
+    from ez_ax.missions.names import CONTROL_MISSIONS
+
+    control_set = set(CONTROL_MISSIONS)
+    released_set = set(RELEASED_MISSIONS)
+
+    for mission in execution_phase_missions:
+        in_released = mission in released_set
+        in_modeled = mission in modeled_set
+        in_control = mission in control_set
+
+        assert in_released and not in_modeled and not in_control, (
+            f"Execution-phase mission '{mission}' must be exclusively in RELEASED_MISSIONS; "
+            f"in_released={in_released}, in_modeled={in_modeled}, in_control={in_control}"
+        )
+
+    # Verify the specific execution-phase mission names match PRD specification
+    expected_execution_phase_names = (
+        "sync_observation",
+        "target_actionability_observation",
+        "armed_state_entry",
+        "trigger_wait",
+        "click_dispatch",
+        "click_completion",
+        "success_observation",
+        "run_completion",
+    )
+    assert execution_phase_missions == expected_execution_phase_names, (
+        f"Execution-phase missions must match PRD specification exactly; "
+        f"expected {expected_execution_phase_names}, got {execution_phase_missions}"
+    )

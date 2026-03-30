@@ -21,7 +21,7 @@ It is intentionally changeable and subordinate to:
 
 ## Current Interpretation
 
-Phase R81 — heuristic scan complete. Phase transition in progress: `Phase R82 heuristic gap scan` is the active task.
+Phase R82 — heuristic scan complete. Phase transition in progress: `Phase R83 heuristic gap scan` is the active task.
 
 ## What Is Already Established
 
@@ -113,7 +113,7 @@ Phase R6 complete:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current next action is: `Phase R82 heuristic gap scan`
+The current next action is: `Phase R83 heuristic gap scan`
 
 ## Active Anchor Coverage Ledger
 
