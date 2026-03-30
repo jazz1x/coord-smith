@@ -1,4 +1,0 @@
-version: 1
-display_name: EZ-AX Released Scope Guard
-short_description: Decides whether an ez-ax task is inside the released autonomous boundary.
-default_prompt: Check whether the proposed ez-ax task stays within the released implementation boundary.

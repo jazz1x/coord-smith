@@ -24,7 +24,7 @@ def test_build_runtime_graph_plan_returns_complete_structure() -> None:
     assert len(plan.released_nodes) > 0
     assert len(plan.modeled_nodes) == 0  # All missions are now released
     assert len(plan.control_nodes) > 0
-    assert plan.approved_scope_ceiling == "pageReadyObserved"
+    assert plan.approved_scope_ceiling == "runCompletion"
 
 
 def test_node_name_formatting() -> None:

@@ -2,7 +2,7 @@
 
 This entrypoint is explicitly *modeled-only*: it composes existing released-scope
 input resolution (argv/env) with MCP stdio constructor config parsing (argv only),
-then runs the released-scope mission sequence up to `pageReadyObserved`.
+then runs the released-scope mission sequence up to `runCompletion`.
 """
 
 from __future__ import annotations

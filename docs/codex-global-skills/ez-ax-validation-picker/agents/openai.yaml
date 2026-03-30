@@ -1,4 +1,0 @@
-version: 1
-display_name: EZ-AX Validation Picker
-short_description: Chooses the minimum honest validation bundle for one ez-ax task.
-default_prompt: Choose the smallest honest validation bundle for the current ez-ax task.

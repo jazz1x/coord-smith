@@ -1,4 +1,4 @@
-"""Released-scope graph entrypoint that sequences missions up to pageReadyObserved."""
+"""Released-scope graph entrypoint that sequences missions up to runCompletion."""
 
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ async def run_released_scope(
     site_identity: str,
     base_dir: Path = Path("."),
 ) -> ReleasedEntrypointResult:
-    """Run the released-scope mission sequence and stop at pageReadyObserved."""
+    """Run the released-scope mission sequence and stop at runCompletion."""
 
     result = await run_released_scope_via_langgraph(
         adapter=adapter,

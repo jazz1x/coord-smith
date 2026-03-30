@@ -83,7 +83,7 @@ code; all validation is owned by the Python harness.
 
 Carried forward from Phase R3:
 
-- released-scope graph and entrypoint wiring up to `pageReadyObserved`
+- released-scope graph and entrypoint wiring up to `runCompletion`
 - released-scope adapter boundary and response validation
 - released-scope evidence envelope, checkpoint comparability, and reporting
 - current-memory and durable-lesson RAG helpers

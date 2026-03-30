@@ -15,8 +15,8 @@ from ez_ax.models.transition import build_transition_artifact
 def test_graph_plan_includes_all_released_missions() -> None:
     plan = build_runtime_graph_plan()
 
-    # All 12 missions are now released (pageReadyObserved is still the graph plan ceiling,
-    # but RELEASED_MISSIONS includes all 12)
+    # All 12 missions are now released (runCompletion is the graph plan ceiling,
+    # and RELEASED_MISSIONS includes all 12)
     assert "attach_session_node" in plan.released_nodes
     assert "page_ready_observation_node" in plan.released_nodes
     assert "sync_observation_node" in plan.released_nodes
@@ -24,7 +24,7 @@ def test_graph_plan_includes_all_released_missions() -> None:
 
     # No modeled-only missions exist
     assert len(plan.modeled_nodes) == 0
-    assert plan.approved_scope_ceiling == "pageReadyObserved"
+    assert plan.approved_scope_ceiling == "runCompletion"
 
 
 def test_forward_transition_allows_released_linear_progression() -> None:

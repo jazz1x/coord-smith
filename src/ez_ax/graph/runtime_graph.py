@@ -212,5 +212,5 @@ def build_runtime_graph_plan() -> RuntimeGraphPlan:
         released_nodes=tuple(_node_name(name) for name in RELEASED_MISSIONS),
         modeled_nodes=tuple(_node_name(name) for name in MODELED_MISSIONS),
         control_nodes=tuple(_node_name(name) for name in CONTROL_MISSIONS),
-        approved_scope_ceiling="pageReadyObserved",
+        approved_scope_ceiling="runCompletion",
     )

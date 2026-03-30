@@ -23,7 +23,7 @@ This skill is **NOT** manually invoked by the operator. Instead:
 
 Execute bounded autonomous continuation:
 
-- never cross above `pageReadyObserved`
+- never cross above `runCompletion`
 - never violate OpenClaw-only browser boundary
 - never do speculative expansion
 - enforce one-task-per-commit
@@ -46,7 +46,7 @@ Default mode is continuous guarded looping:
 
 1. Quote the exact on-disk `docs/product/work-rag.json` `current.next_action`
    verbatim, then restate `phase / milestone / anchor / invariant / next_action`
-2. Verify task is in-bounds (below `pageReadyObserved`, no browser-internal tools)
+2. Verify task is in-bounds (below `runCompletion`, no browser-internal tools)
 3. If out-of-bounds: stop immediately and report reason
 4. Pick exactly one task candidate
 5. Run focused validation floor: `python -m pytest tests/unit/ -q`,
@@ -80,7 +80,7 @@ Continuous-loop bias:
 ## Heuristic Scan — When No Uncovered Clause Found
 
 When the active family is a `heuristic gap scan` and you read `docs/prd.md`
-but find no released-scope clause below `pageReadyObserved` that lacks a
+but find no released-scope clause below `runCompletion` that lacks a
 dedicated unit test, do **not** declare `FINAL_STOP` yet. Instead work
 through this **Scope Extension Ladder** in order, stopping at the first
 level that produces a concrete implementable task:

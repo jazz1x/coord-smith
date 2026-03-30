@@ -119,7 +119,7 @@ exhausted, not merely when the current queue ends.
 
 Done when all are true:
 
-- every required anchor surface family below `pageReadyObserved` has either:
+- every required anchor surface family below `runCompletion` has either:
   - one completed queue slice history, or
   - one explicit PRD-backed exclusion from further work
 - every required anchor surface family also has an explicit coverage-ledger
@@ -238,7 +238,7 @@ Heuristic-family rule:
 A generated task is valid only when all are true:
 
 - directly linked to one explicit PRD clause
-- remains at or below `pageReadyObserved`
+- remains at or below `runCompletion`
 - can be validated deterministically (`pytest`, `mypy`, `ruff check`)
 - is single-responsibility and one-commit safe
 
@@ -257,7 +257,7 @@ Continuation-seeding tasks are valid only when all are true:
 - the documented queue and bounded heuristic surfaces are exhausted for the
   current cycle
 - the current phase, milestone, and anchor still authorize continuation below
-  `pageReadyObserved`
+  `runCompletion`
 - the task produces exactly one new deterministic next slice for a
   lower-capacity agent
 - the task updates canonical sources so the next cycle can name one exact
@@ -338,7 +338,7 @@ Before and after each task, the agent must check:
 
 Release boundary check:
 
-- work must stay at or below `pageReadyObserved`
+- work must stay at or below `runCompletion`
 
 Boundary integrity check:
 
@@ -390,7 +390,7 @@ Final-stop alignment guard:
   be named honestly, the agent should document and execute that slice before
   accepting `FINAL_STOP`
 - if the current phase and milestone still define continuation work below
-  `pageReadyObserved`, the agent must prefer one continuation-seeding slice
+  `runCompletion`, the agent must prefer one continuation-seeding slice
   over immediate final stop
 
 ### Stop-State Resume Search
@@ -402,7 +402,7 @@ accepting final stop.
 Resume-search rule:
 
 - this pass is allowed only to find one concrete failing artifact or one exact
-  unenforced clause below `pageReadyObserved`
+  unenforced clause below `runCompletion`
 - this pass must stay within explicitly named released-scope file groups
 - if the pass finds one valid task, implement exactly one smallest safe
   one-commit slice and stop searching further
@@ -468,7 +468,7 @@ Candidate validity requirements:
   Python-first path
 - the candidate is directly adjacent to an exhausted queue item by import,
   validation target, or released-scope runtime wiring
-- the candidate remains below `pageReadyObserved`
+- the candidate remains below `runCompletion`
 - one exact governing PRD clause can be named before implementation begins
 - one focused validation command can be named before implementation begins
 - a focused validation target already exists or can be named deterministically
@@ -511,7 +511,7 @@ Heuristic output contract:
   - one first PRD
   - one first focused validation command
   - one sentence explaining why the candidate is still below
-    `pageReadyObserved`
+    `runCompletion`
 - a failed heuristic pass must explicitly state that every documented heuristic
   candidate was inspected in order and yielded neither a focused failing
   artifact nor an exact PRD-backed clause gap
@@ -541,7 +541,7 @@ Continuation-seeding rule:
 - this pass is performed by the autonomous loop itself rather than by a manual
   operator reopen step
 - the pass may seed at most one new slice per exhaustion cycle
-- the seeded slice must remain below `pageReadyObserved`
+- the seeded slice must remain below `runCompletion`
 - the seeded slice must be one-task-per-commit safe
 - the seeded slice must either:
   - add one new queue item for an omitted in-bounds surface already present in
@@ -635,7 +635,7 @@ Consistency rule:
 
 - `FINAL_STOP` is invalid if any of the sources above still names a concrete
   next slice, stale queue boundary, or omitted continuation surface below
-  `pageReadyObserved`
+  `runCompletion`
 - a lower-capacity agent must prefer a reopened documented queue item over a
   previously recorded stop string
 - if the queue PRD and repo adapter disagree about the tail of the queue, the
@@ -748,6 +748,6 @@ This document does not authorize:
 - new product scope
 - new released stages
 - browser-facing behavior in `ez-ax`
-- speculative implementation above `pageReadyObserved`
+- speculative implementation above `runCompletion`
 
 Those decisions remain in the PRD only.

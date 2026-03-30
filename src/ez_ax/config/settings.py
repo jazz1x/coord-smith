@@ -11,7 +11,7 @@ class RuntimeSettings:
     """Stable bootstrap settings for the Python runtime."""
 
     project_root: Path
-    approved_scope_ceiling: str = "pageReadyObserved"
+    approved_scope_ceiling: str = "runCompletion"
 
     def __post_init__(self) -> None:
         """Clamp scope ceiling to the released boundary for bootstrap safety."""

@@ -178,7 +178,7 @@ def auto_seed_next_phase(*, project_root: Path) -> bool:
             ),
             "next_slice_hint": (
                 "Read docs/prd.md and list all released-scope implementation "
-                "clauses (below pageReadyObserved). Cross-reference with "
+                "clauses (below runCompletion). Cross-reference with "
                 "tests/unit/ to find the first clause that has no dedicated "
                 "unit test. Write one focused pytest function for it, run "
                 "pytest to confirm it passes, mark this family covered in "

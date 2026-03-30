@@ -1,4 +1,4 @@
-"""LangGraph released-scope assembly scaffold (below pageReadyObserved only).
+"""LangGraph released-scope assembly scaffold (up to runCompletion).
 
 This module assembles a released-scope LangGraph with no browser execution.
 It exists to keep the canonical stack contract unambiguous while preserving the
