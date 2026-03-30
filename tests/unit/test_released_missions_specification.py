@@ -444,3 +444,77 @@ def test_released_scope_execution_phase_missions_form_contiguous_pipeline() -> N
             f"Execution-phase mission '{mission}' must be in released missions; "
             f"execution phase cannot include modeled-only missions"
         )
+
+
+def test_released_scope_setup_phase_missions_form_contiguous_pipeline() -> None:
+    """Verify setup-phase missions (above pageReadyObserved) form a contiguous pipeline.
+
+    PRD Release Boundary (lines 47-63): The released implementation scope above
+    pageReadyObserved specifies 4 consecutive missions forming the setup phase:
+    - attach (line 49)
+    - prepareSession (line 50)
+    - benchmark validation (line 51)
+    - pageReadyObserved (line 52, boundary marker)
+
+    These missions form the setup phase of the released pipeline, executing sequentially
+    from attach_session through page_ready_observation (the boundary marker) with no gaps,
+    no modeled missions interspersed, and no branching—establishing the preconditions
+    for the execution phase that follows.
+
+    This dedicated test verifies that the setup-phase pipeline is properly structured
+    as a complete, linear sequence from attach_session through page_ready_observation
+    without interruption or deviation, complementing the execution-phase contiguity
+    test and ensuring the entire 12-mission released pipeline maintains structural
+    integrity across the pageReadyObserved boundary.
+    """
+    # Identify the setup phase boundary
+    page_ready_index = 3
+    assert (
+        RELEASED_MISSIONS[page_ready_index] == "page_ready_observation"
+    ), "Boundary must be at index 3"
+
+    # Extract setup-phase missions (all up to and including page_ready_observation)
+    setup_phase_missions = list(RELEASED_MISSIONS[: page_ready_index + 1])
+
+    # Verify setup phase has exactly 4 missions (no more, no fewer)
+    assert len(setup_phase_missions) == 4, (
+        f"Setup phase must contain exactly 4 missions (attach through page_ready); "
+        f"found {len(setup_phase_missions)}"
+    )
+
+    # Verify each setup-phase mission is released, not modeled
+    modeled_set = set(MODELED_MISSIONS)
+    for mission in setup_phase_missions:
+        assert mission not in modeled_set, (
+            f"Setup-phase mission '{mission}' must be released, not modeled. "
+            f"The setup pipeline must be fully released with no modeled gates."
+        )
+
+    # Verify the setup-phase pipeline is a specific, unchanging sequence
+    expected_setup_sequence = (
+        "attach_session",
+        "prepare_session",
+        "benchmark_validation",
+        "page_ready_observation",
+    )
+    assert tuple(setup_phase_missions) == expected_setup_sequence, (
+        f"Setup-phase pipeline must follow the exact PRD sequence; "
+        f"expected {expected_setup_sequence}, got {tuple(setup_phase_missions)}"
+    )
+
+    # Verify the pipeline is contiguous: no gaps, no mission repetition
+    assert (
+        setup_phase_missions[0] == "attach_session"
+    ), "Setup phase must begin with attach_session"
+    assert (
+        setup_phase_missions[-1] == "page_ready_observation"
+    ), "Setup phase must terminate at page_ready_observation (the boundary marker)"
+
+    # Verify no modeled missions can appear between released setup-phase missions
+    # (all missions in the setup phase must be released)
+    released_set = set(RELEASED_MISSIONS)
+    for mission in setup_phase_missions:
+        assert mission in released_set, (
+            f"Setup-phase mission '{mission}' must be in released missions; "
+            f"setup phase cannot include modeled-only missions"
+        )
