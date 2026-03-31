@@ -14,7 +14,7 @@
 
 | 영역 | 기술 |
 |------|------|
-| 언어 | Python 3.12 ~ 3.14 |
+| 언어 | Python 3.11 ~ 3.14 |
 | 상태 머신 | LangGraph |
 | 브라우저 제어 | PyAutoGUI (좌표 클릭 + 스크린샷) |
 | 외부 연동 | CLI + artifacts (OpenClaw ping-pong) |
