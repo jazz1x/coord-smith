@@ -49,10 +49,53 @@ uv run pytest -q            # expected: 752 passed, 1 skipped, 2 deselected
 권한 부여 후 real-binary integration 테스트로 검증:
 
 ```bash
-uv run pytest -m real -q   # expected: 2 passed
+uv run pytest -m real -q   # expected: 3 passed
 ```
 
 `-m real` 을 붙이지 않은 기본 pytest 실행은 이 테스트들을 자동 skip 합니다.
+
+## Click Recipes (OpenClaw 없이 실제 클릭하기)
+
+런타임의 released 그래프는 click_dispatch 같은 미션에 **빈 payload** 를
+넘긴다 — 원 설계상 OpenClaw 등 외부 액터가 payload 에 x/y 를 주입하도록
+되어 있기 때문. OpenClaw 연동이 없는 환경에서도 실제 브라우저 클릭을
+일으키려면 `click recipe` 를 사용한다. Recipe 는 미션 이름 → 좌표의
+정적 표로, JSON 파일 한 개다.
+
+**Recipe 파일 (`docs/recipes/sample-click-recipe.json`)**:
+
+```json
+{
+  "version": 1,
+  "missions": {
+    "click_dispatch": {"x": 800, "y": 500}
+  }
+}
+```
+
+**실행**:
+
+```bash
+# CLI flag
+ez-ax --click-recipe ./recipe.json \
+    --session-ref my-session \
+    --expected-auth-state authenticated \
+    --target-page-url https://example.com \
+    --site-identity example
+
+# 또는 env var
+EZAX_CLICK_RECIPE=./recipe.json ez-ax --session-ref ...
+```
+
+**우선순위**: 외부 액터가 payload 에 `x`/`y` 를 이미 넣어 보내면 그 값이
+recipe 보다 우선한다. Recipe 에 없는 미션은 클릭하지 않고 그대로 통과.
+Recipe 파일이 지정됐지만 로드 실패(파일 없음·JSON 오류·스키마 불일치) 시
+entrypoint 는 exit 3 으로 실패한다.
+
+**주의사항**: recipe 좌표는 고정이다 — 페이지 레이아웃이 바뀌면 recipe 도
+함께 갱신해야 한다. 잘못된 좌표는 화면의 엉뚱한 UI 요소를 클릭할 수 있다.
+`pyautogui.FAILSAFE=True` 상태라 커서를 화면 모서리로 빠르게 옮기면 루프를
+중단시킬 수 있다.
 
 ## 시작하기
 
