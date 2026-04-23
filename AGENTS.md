@@ -76,7 +76,6 @@ Entrypoint rule:
    - [docs/product/prd-openclaw-e2e-validation.md](docs/product/prd-openclaw-e2e-validation.md)
 6. Follow the remaining repository base configuration files such as `pyproject.toml`, `.pre-commit-config.yaml`, and `.gitignore`.
 7. For Python code writing, review, or refactoring, follow `.claude/python-engineering.md` unless it conflicts with higher-priority repository sources.
-8. Housekeeping direction (ceiling integrity, FINAL_STOP semantics, bootstrap): [docs/prd-direction-realignment.md](docs/prd-direction-realignment.md) and its runbook [docs/prd-direction-realignment-impl.md](docs/prd-direction-realignment-impl.md).
 
 ## Current Repository State
 

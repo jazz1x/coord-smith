@@ -674,6 +674,6 @@
     ],
     "recorded_at": "2026-03-25T00:00:00+09:00",
     "archived_at": "2026-04-23T00:00:00Z",
-    "archive_reason": "Contradicts FINAL_STOP hard-halt canon introduced in src/ez_ax/rag/autoloop_runner.py and docs/prd-direction-realignment.md §2.3. This lesson is the documented root cause of the R32-R89 coverage-theater loop; superseded in-place by rag.json lesson-false-negative-006 (revised)."
+    "archive_reason": "Contradicts FINAL_STOP hard-halt canon introduced in src/ez_ax/rag/autoloop_runner.py. This lesson is the documented root cause of the R32-R89 coverage-theater loop; superseded in-place by rag.json lesson-false-negative-006 (revised)."
   }
 ]

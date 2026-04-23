@@ -40,8 +40,6 @@ WINDOW_BEFORE = 80
 EXCLUDE_PATHS = {
     Path("docs/llm/low-attention-coverage-ledger.json"),
     Path("docs/product/rag-archive.json"),
-    Path("docs/prd-direction-realignment.md"),
-    Path("docs/prd-direction-realignment-impl.md"),
 }
 
 DOCS_ROOT = Path(__file__).resolve().parent.parent.parent / "docs"
