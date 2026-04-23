@@ -246,15 +246,15 @@ and the two RAG files.
 Expected reasoning sequence:
 
 1. read [`prd-e2e-orchestration.md`](./prd-e2e-orchestration.md) and confirm
-   that the released workflow ceiling still stops at `pageReadyObserved`
-2. read `work-rag.json` and see that the current runtime phase is still
-   `Phase 0 — Runtime Boundary Definition`
-3. read this PRD and confirm the current next runtime anchor after Phase 0
-   remains the released gate anchor `pageReadyObserved`
+   that the released workflow ceiling is `runCompletion` (expanded from
+   `pageReadyObserved` on 2026-03-26; see `docs/prd.md`)
+2. read `work-rag.json` and see the current runtime phase
+3. read this PRD and confirm the current released gate anchor is
+   `runCompletion`
 4. read the evidence-model PRD and conclude that DOM/text/clock/action-log
    signals should be primary while screenshot is fallback support
 5. choose a task that improves released-path computer-use observation without
-   widening release beyond `pageReadyObserved`
+   widening release beyond `runCompletion`
 6. update `work-rag.json` during the task
 7. if the task reveals a durable mistake, promote that lesson into `rag.json`
 8. validate the task and commit it before choosing another autonomous task
@@ -269,15 +269,16 @@ Rule:
 
 ## Release Boundary
 
-The current released workflow ceiling does not change here.
+The current released workflow ceiling does not change here; see `docs/prd.md`
+and [`prd-e2e-orchestration.md`](./prd-e2e-orchestration.md) as the Source-Of-Truth.
 
 Released workflow ceiling:
 
-- still stops at `pageReadyObserved` unless the orchestration PRD is explicitly
-  updated
+- `runCompletion` (expanded from `pageReadyObserved` on 2026-03-26 as part of
+  the 12-mission promotion; this PRD does not itself widen the ceiling)
 
-Modeled runtime work may exist above that ceiling, but it must not be described
-as released behavior.
+Modeled runtime work may exist above `runCompletion`, but it must not be
+described as released behavior.
 
 ## OpenClaw Interface Contract (Released Scope)
 
@@ -287,7 +288,7 @@ scope.
 
 Scope rule:
 
-- this contract must not imply workflow release above `pageReadyObserved`
+- this contract must not imply workflow release above `runCompletion`
 - it exists to keep payload and evidence conventions explicit enough that
   implementation hardening does not invent product-level structure
 
