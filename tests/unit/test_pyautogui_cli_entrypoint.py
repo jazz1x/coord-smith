@@ -10,11 +10,14 @@ from ez_ax.graph.pyautogui_cli_entrypoint import _run
 
 
 async def test_run_instantiates_pyautogui_adapter(tmp_path: Path) -> None:
-    with patch(
-        "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
-        new_callable=AsyncMock,
-        return_value=MagicMock(),
-    ) as mock_run:
+    with (
+        patch.object(PyAutoGUIAdapter, "preflight"),
+        patch(
+            "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
+            new_callable=AsyncMock,
+            return_value=MagicMock(),
+        ) as mock_run,
+    ):
         exit_code = await _run(run_root=tmp_path)
 
     assert exit_code == 0
@@ -30,9 +33,12 @@ async def test_run_passes_run_root_to_adapter(tmp_path: Path) -> None:
         captured.append(kwargs["adapter"])  # type: ignore[arg-type]
         return MagicMock()
 
-    with patch(
-        "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
-        side_effect=_capture,
+    with (
+        patch.object(PyAutoGUIAdapter, "preflight"),
+        patch(
+            "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
+            side_effect=_capture,
+        ),
     ):
         await _run(run_root=tmp_path)
 
@@ -40,11 +46,14 @@ async def test_run_passes_run_root_to_adapter(tmp_path: Path) -> None:
 
 
 async def test_run_passes_argv_to_graph(tmp_path: Path) -> None:
-    with patch(
-        "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
-        new_callable=AsyncMock,
-        return_value=MagicMock(),
-    ) as mock_run:
+    with (
+        patch.object(PyAutoGUIAdapter, "preflight"),
+        patch(
+            "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
+            new_callable=AsyncMock,
+            return_value=MagicMock(),
+        ) as mock_run,
+    ):
         await _run(
             argv=["--session-ref", "s", "--expected-auth-state", "a"],
             run_root=tmp_path,
