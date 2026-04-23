@@ -92,8 +92,10 @@ Released today:
 
 ## Released Ceiling Stop-Confirmation Evidence (Required)
 
-The released ceiling (`pageReadyObserved`) must be judged deterministically from
-typed evidence, not inferred from an incomplete workflow.
+The released ceiling (`runCompletion`) must be judged deterministically from
+typed evidence, not inferred from an incomplete workflow. (The ceiling was
+expanded from `pageReadyObserved` to `runCompletion` on 2026-03-26 alongside
+the promotion of all 12 missions to released; cross-ref `docs/prd.md`.)
 
 Rule:
 
@@ -596,7 +598,7 @@ Low-attention contract rule:
 Before starting any autonomous task, a lower-capacity agent must confirm all of
 the following:
 
-1. the current released ceiling is still `pageReadyObserved`
+1. the current released ceiling is `runCompletion`
 2. the current target anchor is named explicitly
 3. the task fits in one honest commit
 4. the task can be validated with a focused check or an explicit docs-only
