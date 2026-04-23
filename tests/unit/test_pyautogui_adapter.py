@@ -6,8 +6,17 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+from PIL import UnidentifiedImageError
+
 from ez_ax.adapters.execution.client import ExecutionRequest
 from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
+from ez_ax.models.errors import (
+    AccessibilityPermissionDenied,
+    ClickCoordinatesOutOfBounds,
+    ClickExecutionUnverified,
+    ScreenCapturePermissionDenied,
+)
 
 
 def test_pyautogui_adapter_has_execute_method() -> None:
@@ -43,6 +52,11 @@ async def test_execute_clicks_when_coordinates_given(tmp_path: Path) -> None:
     with (
         patch("pyautogui.click") as mock_click,
         patch("pyautogui.screenshot", return_value=mock_screenshot),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch(
+            "pyautogui.position",
+            return_value=MagicMock(x=100, y=200),
+        ),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         request = ExecutionRequest(
@@ -150,17 +164,24 @@ async def test_pyautogui_adapter_uses_only_click_and_screenshot(tmp_path: Path) 
 
         return MagicMock(side_effect=wrapper)
 
-    # Patch all common pyautogui methods to track if they're called
-    with patch.multiple(
-        "pyautogui",
-        click=track_call("click"),
-        screenshot=track_call("screenshot"),
-        moveTo=track_call("moveTo"),
-        write=track_call("write"),
-        press=track_call("press"),
-        hotkey=track_call("hotkey"),
-        scroll=track_call("scroll"),
-        locateOnScreen=track_call("locateOnScreen"),
+    # Patch all common pyautogui methods to track if they're called.
+    # size() and position() are read-only queries used by the adapter's
+    # bounds check and post-click verification; they are not execution
+    # primitives, so we mock their return values without tracking.
+    with (
+        patch.multiple(
+            "pyautogui",
+            click=track_call("click"),
+            screenshot=track_call("screenshot"),
+            moveTo=track_call("moveTo"),
+            write=track_call("write"),
+            press=track_call("press"),
+            hotkey=track_call("hotkey"),
+            scroll=track_call("scroll"),
+            locateOnScreen=track_call("locateOnScreen"),
+        ),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=100, y=200)),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
 
@@ -200,3 +221,77 @@ async def test_pyautogui_adapter_uses_only_click_and_screenshot(tmp_path: Path) 
     assert (
         not unwanted_calls
     ), f"PyAutoGUIAdapter must not call these pyautogui methods: {unwanted_calls}"
+
+
+async def test_execute_raises_when_click_coordinates_out_of_bounds(tmp_path: Path) -> None:
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=9999, y=9999)),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        request = ExecutionRequest(
+            mission_name="prepare_session",
+            payload={"target_page_url": "u", "site_identity": "s", "x": 9999, "y": 9999},
+        )
+        with pytest.raises(ClickCoordinatesOutOfBounds):
+            await adapter.execute(request)
+
+
+async def test_execute_raises_when_click_position_mismatch(tmp_path: Path) -> None:
+    """Silent-no-op click (Accessibility denied) must raise, not return bogus success."""
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        # Cursor did not move to (100, 200) — simulated silent failure.
+        patch("pyautogui.position", return_value=MagicMock(x=500, y=500)),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        request = ExecutionRequest(
+            mission_name="prepare_session",
+            payload={"target_page_url": "u", "site_identity": "s", "x": 100, "y": 200},
+        )
+        with pytest.raises(ClickExecutionUnverified):
+            await adapter.execute(request)
+
+
+async def test_capture_screenshot_raises_permission_error_on_unidentified_image(
+    tmp_path: Path,
+) -> None:
+    """PIL UnidentifiedImageError (macOS zero-byte screencapture) -> typed error."""
+    with patch(
+        "pyautogui.screenshot",
+        side_effect=UnidentifiedImageError("screencapture denied"),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        with pytest.raises(ScreenCapturePermissionDenied):
+            adapter._capture_screenshot("test-key")
+
+
+def test_preflight_raises_when_cursor_does_not_move(tmp_path: Path) -> None:
+    """moveTo silent no-op must surface as AccessibilityPermissionDenied."""
+    positions = [MagicMock(x=100, y=100), MagicMock(x=500, y=500)]
+    with (
+        patch("pyautogui.position", side_effect=positions),
+        patch("pyautogui.moveTo"),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        with pytest.raises(AccessibilityPermissionDenied):
+            adapter.preflight()
+
+
+def test_preflight_raises_when_screenshot_denied(tmp_path: Path) -> None:
+    """Screen Recording permission missing -> typed error at preflight."""
+    same_point = MagicMock(x=100, y=100)
+    with (
+        patch("pyautogui.position", return_value=same_point),
+        patch("pyautogui.moveTo"),
+        patch(
+            "pyautogui.screenshot",
+            side_effect=UnidentifiedImageError("screencapture denied"),
+        ),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        with pytest.raises(ScreenCapturePermissionDenied):
+            adapter.preflight()
