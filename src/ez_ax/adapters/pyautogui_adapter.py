@@ -14,6 +14,7 @@ from ez_ax.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
+from ez_ax.config.click_recipe import ClickRecipe
 from ez_ax.models.errors import (
     AccessibilityPermissionDenied,
     ClickCoordinatesOutOfBounds,
@@ -105,8 +106,14 @@ class PyAutoGUIAdapter:
     ClickExecutionUnverified rather than returning a bogus success.
     """
 
-    def __init__(self, *, run_root: Path) -> None:
+    def __init__(
+        self,
+        *,
+        run_root: Path,
+        click_recipe: ClickRecipe | None = None,
+    ) -> None:
         self._run_root = run_root
+        self._click_recipe = click_recipe
 
     def _action_log_path(self, key: str) -> Path:
         path = self._run_root / "artifacts" / "action-log" / f"{key}.jsonl"
@@ -235,6 +242,24 @@ class PyAutoGUIAdapter:
         if image is None or image.size == (0, 0):
             raise ScreenCaptureUnavailable("preflight screenshot returned empty image")
 
+    def _resolve_click_coords(
+        self, mission: str, payload: dict[str, object]
+    ) -> tuple[int, int] | None:
+        """Resolve click coordinates: payload first, then recipe, else None.
+
+        Payload-provided coords (typically from an external caller like
+        OpenClaw) take precedence. When the payload carries no coords, the
+        adapter falls back to the static per-mission recipe supplied at
+        construction time. Returning None means this mission performs no click.
+        """
+        px = payload.get("x")
+        py = payload.get("y")
+        if isinstance(px, (int, float)) and isinstance(py, (int, float)):
+            return (int(px), int(py))
+        if self._click_recipe is not None:
+            return self._click_recipe.coords_for(mission)
+        return None
+
     async def execute(
         self, request: ExecutionRequest
     ) -> ExecutionResult:
@@ -242,10 +267,9 @@ class PyAutoGUIAdapter:
         mission = request.mission_name
         payload = request.payload
 
-        x = payload.get("x")
-        y = payload.get("y")
-        if isinstance(x, (int, float)) and isinstance(y, (int, float)):
-            ix, iy = int(x), int(y)
+        coords = self._resolve_click_coords(mission, payload)
+        if coords is not None:
+            ix, iy = coords
             self._validate_bounds(ix, iy)
             self._verified_click(ix, iy)
 

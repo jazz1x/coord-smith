@@ -303,3 +303,63 @@ def test_preflight_raises_when_screenshot_denied(tmp_path: Path) -> None:
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         with pytest.raises(ScreenCapturePermissionDenied):
             adapter.preflight()
+
+
+async def test_execute_uses_click_recipe_when_payload_lacks_coords(tmp_path: Path) -> None:
+    """Adapter resolves click coords from recipe when payload is empty."""
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    recipe = ClickRecipe.model_validate(
+        {"missions": {"click_dispatch": {"x": 777, "y": 333}}}
+    )
+    with (
+        patch("pyautogui.click") as mock_click,
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=777, y=333)),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        request = ExecutionRequest(mission_name="click_dispatch", payload={})
+        await adapter.execute(request)
+
+    mock_click.assert_called_once_with(777, 333)
+
+
+async def test_execute_payload_coords_override_recipe(tmp_path: Path) -> None:
+    """Payload-provided coords take precedence over recipe coords."""
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    recipe = ClickRecipe.model_validate(
+        {"missions": {"click_dispatch": {"x": 777, "y": 333}}}
+    )
+    with (
+        patch("pyautogui.click") as mock_click,
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=100, y=200)),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        request = ExecutionRequest(
+            mission_name="click_dispatch", payload={"x": 100, "y": 200}
+        )
+        await adapter.execute(request)
+
+    mock_click.assert_called_once_with(100, 200)
+
+
+async def test_execute_no_click_when_recipe_has_no_entry(tmp_path: Path) -> None:
+    """Missions absent from recipe + empty payload -> no click (pre-recipe default)."""
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    recipe = ClickRecipe.model_validate(
+        {"missions": {"click_dispatch": {"x": 777, "y": 333}}}
+    )
+    with (
+        patch("pyautogui.click") as mock_click,
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        request = ExecutionRequest(mission_name="page_ready_observation", payload={})
+        await adapter.execute(request)
+
+    mock_click.assert_not_called()
