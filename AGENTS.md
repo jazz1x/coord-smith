@@ -7,9 +7,15 @@ Codex and other repository agents should use this file as the operational entryp
 Before reading the layered entrypoints, fresh checkouts must run:
 
 1. `uv sync --extra dev`  — installs runtime + dev deps declared in `pyproject.toml`
-2. `uv run pytest -q`     — expected: 744 passed, 1 skipped
+2. `uv run pytest -q`     — expected: 752 passed, 1 skipped, 2 deselected
 
 If pytest collection fails with `ModuleNotFoundError: PIL|pyautogui`, step 1 did not complete.
+
+The 2 deselected items are real-binary integration tests (`pytest -m real`) that
+require macOS Accessibility + Screen Recording permission on the host terminal app.
+When running the `ez-ax` console script on a permission-less host, the runtime
+entrypoint fails at `preflight()` with exit code 2 instead of producing silent
+no-op clicks. See `README.md` §Permissions for the grant procedure.
 
 ## Primary Entrypoint
 

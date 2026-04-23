@@ -31,8 +31,28 @@ Fresh checkouts must sync dev extras before running tests; otherwise
 
 ```bash
 uv sync --extra dev
-uv run pytest -q            # expected: 744 passed, 1 skipped
+uv run pytest -q            # expected: 752 passed, 1 skipped, 2 deselected
 ```
+
+## Permissions (macOS)
+
+런타임(`ez-ax` 콘솔 스크립트) 이 실제로 클릭하고 스크린샷을 찍으려면
+**호스트 터미널 앱** 에 두 권한이 필요합니다. 둘 다 없으면 entrypoint 의
+`preflight` 단계에서 exit 코드 `2` 로 중단됩니다.
+
+1. **Accessibility** — `System Settings → Privacy & Security → Accessibility`
+   에서 사용 중인 터미널 앱(Terminal / iTerm / VS Code / Claude Code 등) 을
+   체크. 체크 후 해당 앱 재시작 필요.
+2. **Screen Recording** — 동일 경로의 `Screen Recording` 항목. 첫 실행 시
+   권한 프롬프트가 뜰 수 있고, 한 번 거부하면 수동으로 추가해야 합니다.
+
+권한 부여 후 real-binary integration 테스트로 검증:
+
+```bash
+uv run pytest -m real -q   # expected: 2 passed
+```
+
+`-m real` 을 붙이지 않은 기본 pytest 실행은 이 테스트들을 자동 skip 합니다.
 
 ## 시작하기
 
