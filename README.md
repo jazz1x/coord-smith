@@ -24,12 +24,23 @@
 | 테스트 | pytest + pytest-asyncio |
 | 패키지 관리 | uv |
 
+## Bootstrap
+
+Fresh checkouts must sync dev extras before running tests; otherwise
+`pytest` collection fails with `ModuleNotFoundError: PIL|pyautogui`.
+
+```bash
+uv sync --extra dev
+uv run pytest -q            # expected: 744 passed, 1 skipped
+```
+
 ## 시작하기
 
 ```bash
-uv sync                      # 또는: pip install -e ".[dev]"
-pytest tests/ -q             # 테스트 실행
-mypy src/                    # 타입 체크
+uv sync --extra dev          # 또는: pip install -e ".[dev]"
+uv run pytest -q             # 테스트 실행 (744 passed, 1 skipped)
+uv run mypy                  # 타입 체크
+uv run ruff check .          # 린팅
 ```
 
 ## 아키텍처
