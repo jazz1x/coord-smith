@@ -11,4 +11,3 @@ class LangChainContextBundle:
     state_refs: tuple[str, ...]
     evidence_refs: tuple[str, ...]
     rag_refs: tuple[str, ...]
-
