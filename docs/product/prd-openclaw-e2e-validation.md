@@ -82,8 +82,9 @@ Each E2E validation run should preserve:
 ## Released Ceiling Stop Validation (Released Scope)
 
 In released scope, the system must stop intentionally at the current approved
-ceiling (`pageReadyObserved`) and prove that stop deterministically from
-artifacts.
+ceiling (`runCompletion`) and prove that stop deterministically from
+artifacts. (The ceiling was expanded from `pageReadyObserved` to
+`runCompletion` on 2026-03-26 — see `docs/prd.md`.)
 
 Goal:
 

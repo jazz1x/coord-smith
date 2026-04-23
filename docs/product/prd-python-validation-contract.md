@@ -123,8 +123,9 @@ Expected tools:
 
 E2E-validation rule:
 
-- the initial release-grade E2E focus remains the released path through
-  `pageReadyObserved`
+- the release-grade E2E focus is the released path through `runCompletion`
+  (all 12 released missions; ceiling was expanded from `pageReadyObserved`
+  to `runCompletion` on 2026-03-26 — see `docs/prd.md`)
 
 ## Release-Gate Validation
 

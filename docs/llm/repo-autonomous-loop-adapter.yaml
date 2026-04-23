@@ -15,6 +15,19 @@ scope:
     - prepareSession
     - pageReadyObserved
     - runCompletion
+  released_missions:
+    - attach
+    - prepareSession
+    - benchmarkValidation
+    - pageReadyObserved
+    - syncObservation
+    - targetActionabilityObservation
+    - armedStateEntry
+    - triggerWait
+    - clickDispatch
+    - clickCompletion
+    - successObservation
+    - runCompletion
   authority_boundary:
     browser_facing_actor: OpenClaw
     orchestration_owner: ez-ax
@@ -29,9 +42,9 @@ execution_rules:
   continuous_multi_commit_looping: true
   validation_first: true
   compaction_before_cycle_close: true
-  active_phase: Phase R67 — scope expansion: pageReadyObserved to runCompletion
-  active_milestone: All 8 modeled missions promoted to released, ceiling at runCompletion
-  active_anchor: r67ScopeExpansionBound
+  active_phase: FINAL_STOP — all 60 coverage-ledger families complete (59 covered + 1 excluded); released-scope clauses verified via 767 passing unit/contract/integration tests plus 3 real-binary tests behind pytest -m real
+  active_milestone: FINAL_STOP reached; no new implementation queue remains
+  active_anchor: finalStopAtRunCompletion
   current_work_memory_role: what_to_do_now
   reusable_asset_memory_role: durable_lessons_only
   anchor_contract_families:
@@ -216,5 +229,6 @@ orchestration:
   runner_script: ez-ax-autoloop
   runtime: claude-code-cli
   default_loop_mode: continuous_guarded_looping
-  continuation_bias: keep selecting the next documented one-commit slice after each commit until the full exhaustion protocol is honestly complete
+  continuation_bias: keep selecting the next documented one-commit slice after each commit until the full exhaustion protocol is honestly complete; FINAL_STOP is a hard halt — once work-rag.current.next_action starts with "FINAL_STOP — ", do not synthesize a new phase or seed a new slice
   final_stop_keyword: FINAL_STOP
+  final_stop_behavior: hard_halt

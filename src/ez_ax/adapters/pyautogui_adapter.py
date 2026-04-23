@@ -3,17 +3,26 @@
 from __future__ import annotations
 
 import json
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pyautogui
+from PIL import UnidentifiedImageError
 
 from ez_ax.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
+from ez_ax.config.click_recipe import ClickRecipe
+from ez_ax.models.errors import (
+    AccessibilityPermissionDenied,
+    ClickCoordinatesOutOfBounds,
+    ClickExecutionUnverified,
+    ScreenCapturePermissionDenied,
+    ScreenCaptureUnavailable,
+)
 
-# Fallback evidence ref sets per mission (screenshot path; no DOM access at OS level).
 _FALLBACK_REFS: dict[str, tuple[str, ...]] = {
     "prepare_session": (
         "evidence://screenshot/prepare-session-fallback",
@@ -79,16 +88,32 @@ _FALLBACK_REFS: dict[str, tuple[str, ...]] = {
 
 _GENERIC_ACTION_LOG_REF = "evidence://action-log/pyautogui-executed"
 
+# Post-click cursor position tolerance (display scaling / animation jitter).
+_CLICK_POSITION_TOLERANCE_PX = 2
+# Sleep after click so OS event loop flushes the cursor move before we read it.
+_POST_CLICK_SETTLE_SECONDS = 0.05
+
 
 class PyAutoGUIAdapter:
     """OS-level coordinate-click adapter implementing ExecutionAdapter protocol.
 
     Uses pyautogui.click() and pyautogui.screenshot() exclusively.
     Contains no LLM inference; all navigation is coordinate-driven.
+
+    All OS-level failures raise typed ExecutionTransportError subclasses.
+    Silent no-ops (e.g. macOS Accessibility permission missing) are detected
+    via post-click cursor position verification and raised as
+    ClickExecutionUnverified rather than returning a bogus success.
     """
 
-    def __init__(self, *, run_root: Path) -> None:
+    def __init__(
+        self,
+        *,
+        run_root: Path,
+        click_recipe: ClickRecipe | None = None,
+    ) -> None:
         self._run_root = run_root
+        self._click_recipe = click_recipe
 
     def _action_log_path(self, key: str) -> Path:
         path = self._run_root / "artifacts" / "action-log" / f"{key}.jsonl"
@@ -112,12 +137,47 @@ class PyAutoGUIAdapter:
             f.write(json.dumps(entry) + "\n")
 
     def _capture_screenshot(self, key: str) -> None:
+        """Capture a screenshot or raise a typed error.
+
+        macOS screencapture with denied Screen Recording permission yields a
+        zero-byte file, which PIL rejects as UnidentifiedImageError. That is
+        mapped to ScreenCapturePermissionDenied so the failure is visible to
+        the caller instead of being swallowed.
+        """
         try:
             screenshot = pyautogui.screenshot()
-        except Exception:  # noqa: BLE001
-            return  # headless or display-unavailable; skip screenshot silently
+        except UnidentifiedImageError as exc:
+            raise ScreenCapturePermissionDenied(
+                "screenshot refused by OS (grant Screen Recording permission "
+                "to the host terminal app and retry)"
+            ) from exc
+        except Exception as exc:
+            raise ScreenCaptureUnavailable(
+                f"pyautogui.screenshot failed: {exc!r}"
+            ) from exc
         path = self._screenshot_path(key)
         screenshot.save(str(path))
+
+    def _validate_bounds(self, x: int, y: int) -> None:
+        size = pyautogui.size()
+        if not (0 <= x < size.width and 0 <= y < size.height):
+            raise ClickCoordinatesOutOfBounds(
+                f"click target ({x}, {y}) outside screen bounds "
+                f"({size.width}x{size.height})"
+            )
+
+    def _verified_click(self, x: int, y: int) -> None:
+        pyautogui.click(x, y)
+        time.sleep(_POST_CLICK_SETTLE_SECONDS)
+        actual = pyautogui.position()
+        if (
+            abs(actual.x - x) > _CLICK_POSITION_TOLERANCE_PX
+            or abs(actual.y - y) > _CLICK_POSITION_TOLERANCE_PX
+        ):
+            raise ClickExecutionUnverified(
+                f"click target=({x}, {y}) but cursor at ({actual.x}, {actual.y}) "
+                "— likely Accessibility permission missing"
+            )
 
     def _gather_evidence(self, mission: str) -> tuple[str, ...]:
         mission_refs = _FALLBACK_REFS.get(mission)
@@ -134,6 +194,83 @@ class PyAutoGUIAdapter:
                 self._capture_screenshot(screenshot_key)
         return mission_refs
 
+    def preflight(self) -> None:
+        """Fail-loudly smoke test for OS permissions before any mission runs.
+
+        Accessibility check: move the cursor by +10 px on the X axis and
+        verify the new position matches. If the cursor does not move, macOS
+        Accessibility permission is missing for the host terminal app and
+        pyautogui is silently no-opping. Restores the original position.
+
+        The cold-start probe is preceded by a no-op moveTo to the current
+        position so the CoreGraphics event pump is warm by the time the
+        real +10 px probe fires; on macOS the very first moveTo after a
+        fresh pyautogui import can be dropped even when permission is
+        actually granted, producing a flaky preflight failure. The warmup
+        is genuinely no-op for permission detection (it targets the start
+        position) and adds a single settle interval.
+
+        Screen Recording check: take one screenshot. UnidentifiedImageError
+        is the canonical macOS zero-byte symptom and maps to
+        ScreenCapturePermissionDenied.
+        """
+        try:
+            start = pyautogui.position()
+        except Exception as exc:  # pragma: no cover — position() rarely fails
+            raise AccessibilityPermissionDenied(
+                f"pyautogui.position() failed: {exc!r}"
+            ) from exc
+        # Warmup: prime the CG event pump before the real probe.
+        pyautogui.moveTo(start.x, start.y, duration=0)
+        time.sleep(_POST_CLICK_SETTLE_SECONDS)
+        probe_x = start.x + 10
+        probe_y = start.y
+        pyautogui.moveTo(probe_x, probe_y, duration=0)
+        time.sleep(_POST_CLICK_SETTLE_SECONDS)
+        after = pyautogui.position()
+        if (
+            abs(after.x - probe_x) > _CLICK_POSITION_TOLERANCE_PX
+            or abs(after.y - probe_y) > _CLICK_POSITION_TOLERANCE_PX
+        ):
+            # Best-effort restore before raising.
+            pyautogui.moveTo(start.x, start.y, duration=0)
+            raise AccessibilityPermissionDenied(
+                "pyautogui.moveTo did not reach target — Accessibility permission "
+                "likely missing for the host terminal app"
+            )
+        pyautogui.moveTo(start.x, start.y, duration=0)
+        # Screen capture smoke — raises typed error if refused.
+        try:
+            image = pyautogui.screenshot()
+        except UnidentifiedImageError as exc:
+            raise ScreenCapturePermissionDenied(
+                "preflight screenshot refused — grant Screen Recording permission"
+            ) from exc
+        except Exception as exc:
+            raise ScreenCaptureUnavailable(
+                f"preflight screenshot failed: {exc!r}"
+            ) from exc
+        if image is None or image.size == (0, 0):
+            raise ScreenCaptureUnavailable("preflight screenshot returned empty image")
+
+    def _resolve_click_coords(
+        self, mission: str, payload: dict[str, object]
+    ) -> tuple[int, int] | None:
+        """Resolve click coordinates: payload first, then recipe, else None.
+
+        Payload-provided coords (typically from an external caller like
+        OpenClaw) take precedence. When the payload carries no coords, the
+        adapter falls back to the static per-mission recipe supplied at
+        construction time. Returning None means this mission performs no click.
+        """
+        px = payload.get("x")
+        py = payload.get("y")
+        if isinstance(px, (int, float)) and isinstance(py, (int, float)):
+            return (int(px), int(py))
+        if self._click_recipe is not None:
+            return self._click_recipe.coords_for(mission)
+        return None
+
     async def execute(
         self, request: ExecutionRequest
     ) -> ExecutionResult:
@@ -141,10 +278,11 @@ class PyAutoGUIAdapter:
         mission = request.mission_name
         payload = request.payload
 
-        x = payload.get("x")
-        y = payload.get("y")
-        if isinstance(x, (int, float)) and isinstance(y, (int, float)):
-            pyautogui.click(int(x), int(y))
+        coords = self._resolve_click_coords(mission, payload)
+        if coords is not None:
+            ix, iy = coords
+            self._validate_bounds(ix, iy)
+            self._verified_click(ix, iy)
 
         evidence_refs = self._gather_evidence(mission)
         return ExecutionResult(

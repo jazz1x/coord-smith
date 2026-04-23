@@ -200,7 +200,7 @@ the artifact-resolution behavior that justified the claim:
 - record a checkpoint or lesson when `artifacts/action-log/release-ceiling-stop.jsonl`
   cannot be resolved or lacks typed `event`, `mission_name`, or `ts` entries
 - tag the lesson `active-implementation` so future agents know the worry impacts
-  the current enclosed ceiling (`pageReadyObserved`)
+  the current enclosed ceiling (`runCompletion`)
 - cross-reference the release-ceiling PRDs (`docs/product/prd-openclaw-e2e-validation.md`,
   `docs/product/prd-openclaw-computer-use-runtime.md`,
   `docs/product/prd-openclaw-evidence-model.md`,

@@ -60,7 +60,8 @@ Required surface families:
 - released OpenClaw transport-boundary and response validation surfaces
 - released evidence, reporting, and comparability surfaces
 - typed mission/error/memory helpers needed for low-attention continuation
-- modeled helper entrypoints that still stop at `pageReadyObserved`
+- modeled helper entrypoints below the released ceiling (`runCompletion`), if
+  any remain — `docs/prd.md` currently declares no modeled-only missions
 - docs-sufficiency surfaces required so a lower-capacity agent can name the
   next one-commit slice from canonical sources alone
 

@@ -14,14 +14,14 @@ It is intentionally changeable and subordinate to:
 
 ## Current Phase Snapshot
 
-- phase: `Phase R63 — heuristic gap scan and released-path E2E scaffold hardening`
-- milestone: `Phase R63 initial synthetic E2E verification complete`
-- anchor: `r63ReleasedPathE2E`
-- invariant: `ez-ax` runtime graph contains no LLM inference. `ez-ax` remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling expands from pageReadyObserved to runCompletion. Canonical continuation memory remains two-tiered: `work-rag` for current state, `rag` for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).
+- phase: `FINAL_STOP — 60/60 coverage-ledger families complete`
+- milestone: `FINAL_STOP reached; no new implementation queue remains`
+- anchor: `finalStopAtRunCompletion`
+- invariant: `ez-ax` runtime graph contains no LLM inference. `ez-ax` remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is `runCompletion` with all 12 missions released. Canonical continuation memory remains two-tiered: `work-rag` for current state, `rag` for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).
 
 ## Current Interpretation
 
-Phase R90 — heuristic scan complete. Phase transition in progress: `Phase R91 heuristic gap scan` is the active task.
+FINAL_STOP reached. The autoloop runner hard-halts when `work-rag.current.next_action` begins with `FINAL_STOP — `. New autonomous phases are not synthesized from this state; a new PRD-backed queue item is required to resume.
 
 ## What Is Already Established
 
@@ -46,7 +46,7 @@ All 60 coverage-ledger families complete and verified (59 covered + 1 excluded).
 
 - Phases R14-R18 (5 families): Memory, stack, evidence typing, truth priority, browser boundary
   14. canonical memory model (1 unit test: two-tier only, no third layer)
-  15. canonical stack specification (5 unit tests: Python 3.12+, LangGraph, LangChain, Pydantic v2, tools)
+  15. canonical stack specification (5 unit tests: Python 3.11+, LangGraph, LangChain, Pydantic v2, tools)
   16. typed evidence requirement (2 unit tests: typed evidence, primary types in decisions)
   17. truth priority order specification (1 unit test: dom > text > clock > action-log > screenshot > coordinate)
   18. browser control library boundary (4 unit tests: no Playwright/CDP/Chromium imports)
@@ -113,7 +113,7 @@ Phase R6 complete:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current next action is: `Phase R91 heuristic gap scan`
+The current next action is: `FINAL_STOP — 60/60 coverage-ledger families complete (59 covered + 1 excluded); released-scope clauses verified via 767 passing unit/contract/integration tests plus 3 real-binary tests behind pytest -m real; no new implementation queue remains.`
 
 ## Active Anchor Coverage Ledger
 

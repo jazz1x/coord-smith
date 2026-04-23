@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-type-test:
+    name: lint + mypy + pytest (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Sync dependencies (dev extras)
+        run: uv sync --extra dev --python ${{ matrix.python-version }}
+
+      - name: Install xvfb (pyautogui needs an X display for import)
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Ruff
+        run: uv run ruff check .
+
+      - name: Mypy
+        run: uv run mypy
+
+      - name: Pytest (default, real marker excluded)
+        # xvfb-run provides a virtual display so `import pyautogui` succeeds.
+        # `-m real` tests are still deselected by the pyproject addopts.
+        run: xvfb-run -a uv run pytest -q
+
+  pre-commit:
+    name: pre-commit hooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python 3.11
+        run: uv python install 3.11
+
+      - name: Sync dependencies (dev extras)
+        run: uv sync --extra dev --python 3.11
+
+      - name: Install xvfb (pyautogui import needs a display)
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Run pre-commit on all files
+        # Hook scripts call `.venv/bin/python -m pytest`; xvfb-run wraps the
+        # whole hook invocation so pyautogui imports inside the pytest hook.
+        run: xvfb-run -a uv run pre-commit run --all-files --show-diff-on-failure
