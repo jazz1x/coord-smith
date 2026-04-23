@@ -42,7 +42,7 @@ execution_rules:
   continuous_multi_commit_looping: true
   validation_first: true
   compaction_before_cycle_close: true
-  active_phase: FINAL_STOP — all 60 coverage-ledger families complete (59 covered + 1 excluded); released-scope clauses verified via 744 passing unit tests
+  active_phase: FINAL_STOP — all 60 coverage-ledger families complete (59 covered + 1 excluded); released-scope clauses verified via 767 passing unit/contract/integration tests plus 3 real-binary tests behind pytest -m real
   active_milestone: FINAL_STOP reached; no new implementation queue remains
   active_anchor: finalStopAtRunCompletion
   current_work_memory_role: what_to_do_now
