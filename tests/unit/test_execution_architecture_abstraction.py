@@ -54,7 +54,6 @@ def test_released_graph_does_not_depend_on_execution_internals() -> None:
         "released_entrypoint.py",
         "released_run_root.py",
         "runtime_graph.py",
-        "langgraph_released.py",
         "langgraph_released_execution.py",
         "pyautogui_cli_entrypoint.py",
     }

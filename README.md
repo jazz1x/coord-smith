@@ -142,9 +142,11 @@ entrypoint 는 exit 3 으로 실패한다.
 
 ## 시작하기
 
+개발 체크는 위 §Development Checks 표 참고. 요약:
+
 ```bash
-uv sync --extra dev          # 또는: pip install -e ".[dev]"
-uv run pytest -q             # 테스트 실행 (744 passed, 1 skipped)
+uv sync --extra dev
+uv run pytest -q             # 767 passed, 1 skipped, 3 deselected
 uv run mypy                  # 타입 체크
 uv run ruff check .          # 린팅
 ```
