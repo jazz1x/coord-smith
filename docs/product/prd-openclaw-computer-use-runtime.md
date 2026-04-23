@@ -379,11 +379,11 @@ Scope rule:
 
 This section defines the concrete instantiation and invocation contract
 required to construct a real `OpenClawAdapter` below the released ceiling
-`pageReadyObserved`.
+`runCompletion` (expanded from `pageReadyObserved` on 2026-03-26).
 
 This contract enables released-scope adapter construction, invocation, and
 request/response validation only. It does not release any modeled mission above
-`pageReadyObserved`.
+`runCompletion`.
 
 ##### Boundary Shape
 
@@ -932,7 +932,8 @@ Primary milestone:
 
 Primary anchor:
 
-- `pageReadyObserved`
+- `runCompletion` (historically this anchor was `pageReadyObserved` prior to
+  the 2026-03-26 scope expansion; see `docs/prd.md`)
 
 Done when:
 
