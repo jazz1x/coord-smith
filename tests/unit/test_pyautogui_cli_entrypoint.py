@@ -77,3 +77,64 @@ def test_main_returns_exit_code_2_when_preflight_fails(tmp_path: Path) -> None:
         exit_code = main(argv=[])
 
     assert exit_code == 2
+
+
+def test_extract_click_recipe_arg_returns_path_and_strips(tmp_path: Path) -> None:
+    from ez_ax.graph.pyautogui_cli_entrypoint import _extract_click_recipe_arg
+
+    recipe_path, remaining = _extract_click_recipe_arg(
+        ["--session-ref", "s", "--click-recipe", "/tmp/r.json", "--site-identity", "x"]
+    )
+    assert recipe_path == Path("/tmp/r.json")
+    assert "--click-recipe" not in remaining
+    assert "/tmp/r.json" not in remaining
+    assert "--session-ref" in remaining
+
+
+def test_resolve_click_recipe_cli_wins_over_env(tmp_path: Path) -> None:
+    from ez_ax.graph.pyautogui_cli_entrypoint import _resolve_click_recipe
+
+    cli_recipe = tmp_path / "cli.json"
+    cli_recipe.write_text(
+        '{"missions": {"click_dispatch": {"x": 1, "y": 2}}}', encoding="utf-8"
+    )
+    env_recipe = tmp_path / "env.json"
+    env_recipe.write_text(
+        '{"missions": {"click_dispatch": {"x": 99, "y": 99}}}', encoding="utf-8"
+    )
+
+    recipe = _resolve_click_recipe(
+        cli_path=cli_recipe, env={"EZAX_CLICK_RECIPE": str(env_recipe)}
+    )
+    assert recipe is not None
+    assert recipe.coords_for("click_dispatch") == (1, 2)
+
+
+def test_resolve_click_recipe_uses_env_when_no_cli(tmp_path: Path) -> None:
+    from ez_ax.graph.pyautogui_cli_entrypoint import _resolve_click_recipe
+
+    env_recipe = tmp_path / "env.json"
+    env_recipe.write_text(
+        '{"missions": {"click_dispatch": {"x": 11, "y": 22}}}', encoding="utf-8"
+    )
+
+    recipe = _resolve_click_recipe(
+        cli_path=None, env={"EZAX_CLICK_RECIPE": str(env_recipe)}
+    )
+    assert recipe is not None
+    assert recipe.coords_for("click_dispatch") == (11, 22)
+
+
+def test_resolve_click_recipe_returns_none_when_neither_set() -> None:
+    from ez_ax.graph.pyautogui_cli_entrypoint import _resolve_click_recipe
+
+    assert _resolve_click_recipe(cli_path=None, env={}) is None
+
+
+def test_main_returns_exit_code_3_on_config_error(tmp_path: Path) -> None:
+    from ez_ax.graph.pyautogui_cli_entrypoint import main
+
+    # Point at a non-existent recipe file -> ConfigError -> exit 3
+    missing = tmp_path / "missing.json"
+    exit_code = main(argv=["--click-recipe", str(missing)])
+    assert exit_code == 3
