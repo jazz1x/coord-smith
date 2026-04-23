@@ -1,6 +1,7 @@
 {
   "version": 1,
   "purpose": "Canonical current-tense work memory for autonomous continuation.",
+  "invariant_next_action_pattern": "single-valued; either a concrete phase string OR 'FINAL_STOP — <reason>' prefix — never both",
   "schema": {
     "current": {
       "goal": "string",
@@ -27,12 +28,12 @@
     }
   },
   "current": {
-    "goal": "Released scope at runCompletion ceiling with all 12 missions with full PRD clause coverage. Phase R89 heuristic gap scan complete: comprehensive re-audit of all released-scope PRD clauses below pageReadyObserved confirms all 18 implementation clauses remain covered with no new uncovered clauses discovered. All coverage-ledger families (R3-R89) complete and verified. All released-scope PRD clauses below pageReadyObserved have comprehensive unit test coverage. Phase R89 complete — FINAL_STOP reached. No further autonomous implementation required.",
-    "phase": "Phase R89 — heuristic gap scan",
-    "milestone": "Phase R89 heuristic gap scan complete — comprehensive re-audit confirms all released-scope PRD clauses have comprehensive unit test coverage, no uncovered clauses remain",
-    "anchor": "r89HeuristicScanComplete",
+    "goal": "Released scope at runCompletion ceiling with all 12 missions with full PRD clause coverage. All coverage-ledger families (R3-R90) complete and verified: 60/60 families (59 covered + 1 excluded). All released-scope PRD clauses have dedicated unit test coverage. FINAL_STOP reached; no further autonomous implementation required.",
+    "phase": "FINAL_STOP — 60/60 coverage-ledger families complete",
+    "milestone": "FINAL_STOP reached; no new implementation queue remains",
+    "anchor": "finalStopAtRunCompletion",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
-    "next_action": "Phase R91 heuristic gap scan",
+    "next_action": "FINAL_STOP — 60/60 coverage-ledger families complete (59 covered + 1 excluded); released-scope clauses verified via 744 passing unit tests; no new implementation queue remains.",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",
