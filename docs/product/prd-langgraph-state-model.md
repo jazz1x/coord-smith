@@ -81,8 +81,8 @@ Global run state must include:
 
 Global-state rule:
 
-- `approved_scope_ceiling` remains `pageReadyObserved` until the benchmark PRD
-  explicitly changes
+- `approved_scope_ceiling` is `runCompletion` (expanded from `pageReadyObserved`
+  on 2026-03-26 — see `docs/prd.md` as Source-Of-Truth)
 - `release_status` must distinguish `released`, `modeled`, and `control-only`
 
 ### Run Root Ownership (Released Scope)
