@@ -11,11 +11,21 @@ Before reading the layered entrypoints, fresh checkouts must run:
 
 If pytest collection fails with `ModuleNotFoundError: PIL|pyautogui`, step 1 did not complete.
 
-The 2 deselected items are real-binary integration tests (`pytest -m real`) that
+The 3 deselected items are real-binary integration tests (`pytest -m real`) that
 require macOS Accessibility + Screen Recording permission on the host terminal app.
 When running the `ez-ax` console script on a permission-less host, the runtime
 entrypoint fails at `preflight()` with exit code 2 instead of producing silent
 no-op clicks. See `README.md` §Permissions for the grant procedure.
+
+## Real Browser Clicks Without OpenClaw
+
+The released-scope graph dispatches click-bearing missions with empty payloads.
+In the documented architecture, an external actor (OpenClaw) populates `x`/`y`
+in the payload. When that actor is absent, the `ez-ax` entrypoint accepts a
+**click recipe** (`--click-recipe PATH` or `EZAX_CLICK_RECIPE` env) that maps
+mission_name → coordinates. The adapter resolves click coords with this order:
+payload first, then recipe, else no click. See `README.md` §Click Recipes for
+schema and usage. `docs/recipes/sample-click-recipe.json` is a minimal example.
 
 ## Primary Entrypoint
 

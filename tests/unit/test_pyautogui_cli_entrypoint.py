@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
 from ez_ax.graph.pyautogui_cli_entrypoint import _run
 
@@ -138,3 +140,14 @@ def test_main_returns_exit_code_3_on_config_error(tmp_path: Path) -> None:
     missing = tmp_path / "missing.json"
     exit_code = main(argv=["--click-recipe", str(missing)])
     assert exit_code == 3
+
+
+def test_main_prints_usage_for_help_and_returns_zero(capsys: pytest.CaptureFixture[str]) -> None:
+    from ez_ax.graph.pyautogui_cli_entrypoint import main
+
+    for flag in ["-h", "--help"]:
+        exit_code = main(argv=[flag])
+        captured = capsys.readouterr()
+        assert exit_code == 0, flag
+        assert "Usage: ez-ax" in captured.out, flag
+        assert "--click-recipe" in captured.out, flag

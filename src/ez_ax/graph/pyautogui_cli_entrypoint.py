@@ -17,6 +17,32 @@ from ez_ax.models.errors import ConfigError, ExecutionTransportError
 _DEFAULT_RUN_ROOT = Path("artifacts/run")
 ENV_CLICK_RECIPE = "EZAX_CLICK_RECIPE"
 
+_USAGE = """\
+Usage: ez-ax [--click-recipe PATH] \\
+             --session-ref STR --expected-auth-state STR \\
+             --target-page-url URL --site-identity STR
+
+Options:
+  --click-recipe PATH   JSON recipe mapping mission_name -> {x, y} coords.
+                        Also accepts the EZAX_CLICK_RECIPE env var.
+                        Required for actual browser clicks when no external
+                        caller injects payload coords.
+  --session-ref         Required. Session identifier (env: EZAX_SESSION_REF).
+  --expected-auth-state Required. (env: EZAX_EXPECTED_AUTH_STATE).
+  --target-page-url     Required. (env: EZAX_TARGET_PAGE_URL).
+  --site-identity       Required. (env: EZAX_SITE_IDENTITY).
+
+Exit codes:
+  0 normal      1 runtime error     2 permission preflight failed
+  3 recipe load error (missing / invalid JSON / schema)
+
+See README §Click Recipes and §Permissions (macOS) for details.
+"""
+
+
+def _wants_help(argv: Sequence[str]) -> bool:
+    return any(a in ("-h", "--help") for a in argv)
+
 
 def _extract_click_recipe_arg(argv: Sequence[str]) -> tuple[Path | None, list[str]]:
     """Strip --click-recipe from argv and return (recipe_path, remaining argv)."""
@@ -57,8 +83,12 @@ async def _run(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    argv_list = list(argv) if argv is not None else sys.argv[1:]
+    if _wants_help(argv_list):
+        print(_USAGE)
+        return 0
     try:
-        return asyncio.run(_run(argv=argv))
+        return asyncio.run(_run(argv=argv_list))
     except ConfigError as exc:
         print(f"ez-ax: config error: {exc}", file=sys.stderr)
         return 3
