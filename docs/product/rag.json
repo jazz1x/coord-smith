@@ -117,12 +117,14 @@
         {
             "id": "lesson-false-negative-006",
             "category": "false_negative",
-            "lesson": "Before accepting FINAL_STOP, the loop must run a bounded resume-search across the heuristic catalog and documented adjacent surfaces. When queue and heuristic surfaces are exhausted but the phase/milestone is continuation-bearing, seed one new slice instead of stopping.",
+            "lesson": "FINAL_STOP is a hard halt. When work-rag.current.next_action starts with 'FINAL_STOP \u2014 ', the autoloop runner returns 0 without invoking the LLM; the prior 'resume-search then seed one new slice' pattern was the root cause of the R32-R89 coverage-theater loop (see rag-archive.json archived 2026-04-23 and docs/prd-direction-realignment.md \u00a72.3). Do not re-introduce auto-seeding past FINAL_STOP: resuming requires a new PRD-backed queue item.",
             "evidence": [
+                "src/ez_ax/rag/autoloop_runner.py",
                 "docs/llm/repo-autonomous-loop-adapter.yaml",
-                "docs/current-state.md"
+                "docs/prd-direction-realignment.md"
             ],
-            "recorded_at": "2026-03-25T00:00:00+09:00"
+            "recorded_at": "2026-04-23T00:00:00Z",
+            "tags": ["final-stop-hard-halt", "anti-auto-seed", "superseded-by-direction-realignment"]
         },
         {
             "id": "lesson-flaky-behavior-007",

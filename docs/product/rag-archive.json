@@ -663,5 +663,17 @@
     "recorded_at": "2026-03-22T00:00:00+09:00",
     "archived_at": "2026-04-23T00:00:00Z",
     "archive_reason": "ceiling expanded pageReadyObserved->runCompletion on 2026-03-26; superseded by rag.json lesson-scope-ceiling-002 (revised)"
+  },
+  {
+    "id": "lesson-false-negative-006",
+    "category": "false_negative",
+    "lesson": "Before accepting FINAL_STOP, the loop must run a bounded resume-search across the heuristic catalog and documented adjacent surfaces. When queue and heuristic surfaces are exhausted but the phase/milestone is continuation-bearing, seed one new slice instead of stopping.",
+    "evidence": [
+      "docs/llm/repo-autonomous-loop-adapter.yaml",
+      "docs/current-state.md"
+    ],
+    "recorded_at": "2026-03-25T00:00:00+09:00",
+    "archived_at": "2026-04-23T00:00:00Z",
+    "archive_reason": "Contradicts FINAL_STOP hard-halt canon introduced in src/ez_ax/rag/autoloop_runner.py and docs/prd-direction-realignment.md §2.3. This lesson is the documented root cause of the R32-R89 coverage-theater loop; superseded in-place by rag.json lesson-false-negative-006 (revised)."
   }
 ]
