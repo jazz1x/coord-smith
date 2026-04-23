@@ -31,8 +31,42 @@ Fresh checkouts must sync dev extras before running tests; otherwise
 
 ```bash
 uv sync --extra dev
-uv run pytest -q            # expected: 752 passed, 1 skipped, 2 deselected
+uv run pytest -q            # expected: 768 passed, 1 skipped, 3 deselected
+uv run pre-commit install   # one-time: wire git hook
 ```
+
+## Development Checks
+
+| Check | Command | 역할 |
+|-------|---------|------|
+| Lint | `uv run ruff check .` | 스타일·미사용 import·규칙 위반 |
+| Type | `uv run mypy` | `strict` 모드 타입 검사 |
+| Test (default) | `uv run pytest -q` | `-m real` 자동 제외 |
+| Test (real binary) | `uv run pytest -m real -q` | 권한 있는 로컬에서만 (macOS Accessibility + Screen Recording 필요) |
+| Pre-commit (전체) | `uv run pre-commit run --all-files` | 커밋 전 전수 검사 |
+
+## CI
+
+`.github/workflows/ci.yml` 은 다음을 수행:
+
+- **lint-type-test matrix**: Python 3.11 / 3.12 / 3.13 에서 ruff + mypy + pytest (기본). Ubuntu + xvfb 로 pyautogui import 를 헤드리스 환경에서 로드.
+- **pre-commit**: 모든 훅(표준 훅 + 로컬 ruff/mypy/pytest-unit-contract/bootstrap-assets) 전수 실행.
+
+둘 다 push / pull_request (main) 에서 동작. 동일 브랜치 동시 실행은 자동 취소(concurrency group).
+
+## Pre-commit
+
+로컬 git hook:
+
+```bash
+uv run pre-commit install
+```
+
+등록되는 훅:
+- 표준(`pre-commit-hooks v5`): trailing whitespace (`*.md` 제외), end-of-file, check-yaml/json/toml, large-file guard(2MB), merge-conflict, mixed-line-ending(LF).
+- 프로젝트(`local`): ruff check, mypy, `tests/unit + tests/contract` pytest, bootstrap asset 테스트.
+
+`-m real` 테스트는 무거우므로 pre-commit 에서 빠집니다. CI 에서도 default pytest 만 돌고, real 은 수동 invocation (`pytest -m real`) 로만 실행합니다.
 
 ## Permissions (macOS)
 
