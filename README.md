@@ -24,6 +24,15 @@
 | 테스트 | pytest + pytest-asyncio |
 | 패키지 관리 | uv |
 
+## What's New on `feat/click-flow-via-recipe`
+
+본 브랜치는 main 대비 4 축으로 이전에 비어 있던 실행 경로를 메꿨습니다.
+
+- **Direction realignment (SOT 정리)** — `runCompletion` ceiling 이 15+ 문서에 일관되게 반영. `pageReadyObserved` 를 current ceiling 으로 주장하던 문장 0건(드리프트 가드 `test_docs_ceiling_truth.py` 가 상시 감시). FINAL_STOP hard-halt 규약을 코드·YAML·PRD·RAG 4 중 일치.
+- **PyAutoGUI 어댑터 견고화** — blanket-except 제거, `ExecutionTransportError` 하위 5 신규 typed exception (`AccessibilityPermissionDenied`, `ScreenCapturePermissionDenied`, `ScreenCaptureUnavailable`, `ClickExecutionUnverified`, `ClickCoordinatesOutOfBounds`). Preflight 로 권한 부재 즉시 포착 (exit code 2).
+- **Real click flow (OpenClaw 없이)** — `--click-recipe PATH` 또는 `EZAX_CLICK_RECIPE` env 로 정적 좌표 table 주입 → 실제 `pyautogui.click` 발사. Payload 가 있으면 payload 우선, 없으면 recipe fallback, 없으면 no-click. 실제 바이너리 통합 테스트 3 건(`pytest -m real`) 상시 검증.
+- **Tooling** — pre-commit (standard hooks + ruff/mypy/pytest unit+contract) + GitHub Actions CI (Python 3.11/3.12/3.13 matrix, Ubuntu + xvfb). 767 default passed + 3 real passed.
+
 ## Bootstrap
 
 Fresh checkouts must sync dev extras before running tests; otherwise
@@ -31,7 +40,7 @@ Fresh checkouts must sync dev extras before running tests; otherwise
 
 ```bash
 uv sync --extra dev
-uv run pytest -q            # expected: 768 passed, 1 skipped, 3 deselected
+uv run pytest -q            # expected: 767 passed, 1 skipped, 3 deselected
 uv run pre-commit install   # one-time: wire git hook
 ```
 
