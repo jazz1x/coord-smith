@@ -30,7 +30,12 @@ CEILING_CONTEXT = re.compile(
 )
 FORBIDDEN = "pageReadyObserved"
 CANON = "runCompletion"
-WINDOW = 120
+# Forward window (chars after the ceiling-context match) that must not contain
+# the forbidden ceiling name. Transition notes naming both ceilings in the
+# surrounding context are permitted — we look backward too so that the canon
+# name before the match counts as a transition note.
+WINDOW_AFTER = 120
+WINDOW_BEFORE = 80
 
 EXCLUDE_PATHS = {
     Path("docs/llm/low-attention-coverage-ledger.json"),
@@ -62,12 +67,14 @@ def test_ceiling_context_never_names_pageReadyObserved() -> None:
     for path in _scan_files():
         text = path.read_text(encoding="utf-8")
         for match in CEILING_CONTEXT.finditer(text):
-            window = text[match.start() : match.start() + WINDOW]
-            if FORBIDDEN not in window:
+            forward = text[match.start() : match.start() + WINDOW_AFTER]
+            if FORBIDDEN not in forward:
                 continue
-            if CANON in window:
-                # Transition note — explicitly naming the new canon alongside
-                # the old name is how docs preserve history.
+            backward = text[max(0, match.start() - WINDOW_BEFORE) : match.start()]
+            if CANON in forward or CANON in backward:
+                # Transition note — the canon name on either side of the
+                # match is how docs preserve history while naming the new
+                # ceiling.
                 continue
             line_no = text[: match.start()].count("\n") + 1
             rel = path.relative_to(REPO_ROOT)
