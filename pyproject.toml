@@ -38,6 +38,10 @@ packages = ["src/ez_ax"]
 pythonpath = ["src", "."]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+  "real: requires OS-level permissions (Accessibility + Screen Recording) and a real display; skipped by default",
+]
+addopts = "-m 'not real'"
 
 [tool.ruff]
 line-length = 88

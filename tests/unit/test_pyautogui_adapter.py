@@ -270,10 +270,17 @@ async def test_capture_screenshot_raises_permission_error_on_unidentified_image(
 
 
 def test_preflight_raises_when_cursor_does_not_move(tmp_path: Path) -> None:
-    """moveTo silent no-op must surface as AccessibilityPermissionDenied."""
-    positions = [MagicMock(x=100, y=100), MagicMock(x=500, y=500)]
+    """moveTo silent no-op must surface as AccessibilityPermissionDenied.
+
+    Simulates the macOS-Accessibility-denied path: pyautogui.moveTo does not
+    move the cursor, so position() returns the original coordinates after
+    the probe instead of the target +10 offset.
+    """
+    start = MagicMock(x=100, y=100)
+    # Two position() calls: first returns start; second (after moveTo) also
+    # returns start (did not move) — should trigger the permission error.
     with (
-        patch("pyautogui.position", side_effect=positions),
+        patch("pyautogui.position", side_effect=[start, start]),
         patch("pyautogui.moveTo"),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
@@ -283,9 +290,10 @@ def test_preflight_raises_when_cursor_does_not_move(tmp_path: Path) -> None:
 
 def test_preflight_raises_when_screenshot_denied(tmp_path: Path) -> None:
     """Screen Recording permission missing -> typed error at preflight."""
-    same_point = MagicMock(x=100, y=100)
+    start = MagicMock(x=100, y=100)
+    probed = MagicMock(x=110, y=100)  # +10 probe reached — Accessibility OK
     with (
-        patch("pyautogui.position", return_value=same_point),
+        patch("pyautogui.position", side_effect=[start, probed]),
         patch("pyautogui.moveTo"),
         patch(
             "pyautogui.screenshot",

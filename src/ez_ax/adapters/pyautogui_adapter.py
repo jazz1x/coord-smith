@@ -190,11 +190,14 @@ class PyAutoGUIAdapter:
     def preflight(self) -> None:
         """Fail-loudly smoke test for OS permissions before any mission runs.
 
-        Performs a no-op moveTo roundtrip (cursor to its current position) to
-        detect missing Accessibility permission, and one screenshot call to
-        detect missing Screen Recording permission. Either failure raises a
-        typed ExecutionTransportError; the entrypoint is expected to catch
-        and exit with a human-readable message.
+        Accessibility check: move the cursor by +10 px on the X axis and
+        verify the new position matches. If the cursor does not move, macOS
+        Accessibility permission is missing for the host terminal app and
+        pyautogui is silently no-opping. Restores the original position.
+
+        Screen Recording check: take one screenshot. UnidentifiedImageError
+        is the canonical macOS zero-byte symptom and maps to
+        ScreenCapturePermissionDenied.
         """
         try:
             start = pyautogui.position()
@@ -202,17 +205,22 @@ class PyAutoGUIAdapter:
             raise AccessibilityPermissionDenied(
                 f"pyautogui.position() failed: {exc!r}"
             ) from exc
-        pyautogui.moveTo(start.x, start.y, duration=0)
+        probe_x = start.x + 10
+        probe_y = start.y
+        pyautogui.moveTo(probe_x, probe_y, duration=0)
         time.sleep(_POST_CLICK_SETTLE_SECONDS)
         after = pyautogui.position()
         if (
-            abs(after.x - start.x) > _CLICK_POSITION_TOLERANCE_PX
-            or abs(after.y - start.y) > _CLICK_POSITION_TOLERANCE_PX
+            abs(after.x - probe_x) > _CLICK_POSITION_TOLERANCE_PX
+            or abs(after.y - probe_y) > _CLICK_POSITION_TOLERANCE_PX
         ):
+            # Best-effort restore before raising.
+            pyautogui.moveTo(start.x, start.y, duration=0)
             raise AccessibilityPermissionDenied(
                 "pyautogui.moveTo did not reach target — Accessibility permission "
                 "likely missing for the host terminal app"
             )
+        pyautogui.moveTo(start.x, start.y, duration=0)
         # Screen capture smoke — raises typed error if refused.
         try:
             image = pyautogui.screenshot()
