@@ -2,6 +2,15 @@
 
 Codex and other repository agents should use this file as the operational entrypoint.
 
+## Bootstrap Preflight
+
+Before reading the layered entrypoints, fresh checkouts must run:
+
+1. `uv sync --extra dev`  — installs runtime + dev deps declared in `pyproject.toml`
+2. `uv run pytest -q`     — expected: 744 passed, 1 skipped
+
+If pytest collection fails with `ModuleNotFoundError: PIL|pyautogui`, step 1 did not complete.
+
 ## Primary Entrypoint
 
 All agents must begin with the layered document system in this exact order:
@@ -51,6 +60,7 @@ Entrypoint rule:
    - [docs/product/prd-openclaw-e2e-validation.md](docs/product/prd-openclaw-e2e-validation.md)
 6. Follow the remaining repository base configuration files such as `pyproject.toml`, `.pre-commit-config.yaml`, and `.gitignore`.
 7. For Python code writing, review, or refactoring, follow `.claude/python-engineering.md` unless it conflicts with higher-priority repository sources.
+8. Housekeeping direction (ceiling integrity, FINAL_STOP semantics, bootstrap): [docs/prd-direction-realignment.md](docs/prd-direction-realignment.md) and its runbook [docs/prd-direction-realignment-impl.md](docs/prd-direction-realignment-impl.md).
 
 ## Current Repository State
 
