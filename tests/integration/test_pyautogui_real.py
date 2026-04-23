@@ -11,6 +11,7 @@ local machine.
 """
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 import pyautogui
@@ -21,6 +22,23 @@ from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
 from ez_ax.config.click_recipe import ClickRecipe
 
 pytestmark = pytest.mark.real
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _pyautogui_warmup() -> None:
+    """Prime the CoreGraphics event pump before the first real test.
+
+    The very first pyautogui.moveTo after a cold process import is
+    occasionally dropped on macOS even when Accessibility permission is
+    granted, producing flaky preflight failures when this file is the
+    only test collected. A one-pixel nudge + restore warms the pump
+    without moving the cursor on net.
+    """
+    start = pyautogui.position()
+    pyautogui.moveTo(start.x + 1, start.y, duration=0)
+    time.sleep(0.1)
+    pyautogui.moveTo(start.x, start.y, duration=0)
+    time.sleep(0.1)
 
 
 def test_preflight_succeeds_on_permission_granted_host() -> None:

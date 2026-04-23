@@ -202,6 +202,14 @@ class PyAutoGUIAdapter:
         Accessibility permission is missing for the host terminal app and
         pyautogui is silently no-opping. Restores the original position.
 
+        The cold-start probe is preceded by a no-op moveTo to the current
+        position so the CoreGraphics event pump is warm by the time the
+        real +10 px probe fires; on macOS the very first moveTo after a
+        fresh pyautogui import can be dropped even when permission is
+        actually granted, producing a flaky preflight failure. The warmup
+        is genuinely no-op for permission detection (it targets the start
+        position) and adds a single settle interval.
+
         Screen Recording check: take one screenshot. UnidentifiedImageError
         is the canonical macOS zero-byte symptom and maps to
         ScreenCapturePermissionDenied.
@@ -212,6 +220,9 @@ class PyAutoGUIAdapter:
             raise AccessibilityPermissionDenied(
                 f"pyautogui.position() failed: {exc!r}"
             ) from exc
+        # Warmup: prime the CG event pump before the real probe.
+        pyautogui.moveTo(start.x, start.y, duration=0)
+        time.sleep(_POST_CLICK_SETTLE_SECONDS)
         probe_x = start.x + 10
         probe_y = start.y
         pyautogui.moveTo(probe_x, probe_y, duration=0)
