@@ -21,3 +21,23 @@ class FlowError(AppError):
 
 class ExecutionTransportError(AppError):
     """Raised when an OpenClaw invocation transport fails or returns malformed data."""
+
+
+class AccessibilityPermissionDenied(ExecutionTransportError):
+    """Mouse control silently fails (macOS Accessibility permission missing)."""
+
+
+class ScreenCapturePermissionDenied(ExecutionTransportError):
+    """Screen capture refused by OS (macOS Screen Recording permission missing)."""
+
+
+class ScreenCaptureUnavailable(ExecutionTransportError):
+    """Screenshot attempt failed for a reason other than permission denial."""
+
+
+class ClickExecutionUnverified(ExecutionTransportError):
+    """pyautogui.click succeeded silently but the cursor did not reach the target."""
+
+
+class ClickCoordinatesOutOfBounds(ExecutionTransportError):
+    """Requested click coordinates fall outside the detected screen size."""
