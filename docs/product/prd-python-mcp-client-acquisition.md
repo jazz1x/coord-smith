@@ -11,7 +11,7 @@ It exists to prevent transport guesswork inside that optional boundary.
 Scope:
 
 - **modeled-only** (does not release workflow execution above the benchmark
-  released ceiling)
+  released ceiling, which is `runCompletion`; see `docs/prd.md`)
 - defines how a real MCP client may be constructed **outside** released-scope
   wiring, and then injected into adapter code that is otherwise released-scope
   envelope-validating
