@@ -53,3 +53,18 @@ async def test_run_passes_argv_to_graph(tmp_path: Path) -> None:
     call_argv = mock_run.call_args.kwargs["argv"]
     assert "--session-ref" in call_argv
     assert "s" in call_argv
+
+
+def test_main_returns_exit_code_2_when_preflight_fails(tmp_path: Path) -> None:
+    """Preflight ExecutionTransportError should produce exit 2 with stderr message."""
+    from ez_ax.graph.pyautogui_cli_entrypoint import main
+    from ez_ax.models.errors import AccessibilityPermissionDenied
+
+    with patch.object(
+        PyAutoGUIAdapter,
+        "preflight",
+        side_effect=AccessibilityPermissionDenied("no permission"),
+    ):
+        exit_code = main(argv=[])
+
+    assert exit_code == 2
