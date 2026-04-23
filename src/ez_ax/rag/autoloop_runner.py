@@ -304,15 +304,11 @@ def run_autoloop(*, settings: AutoloopRunSettings) -> int:
                 return completed.returncode
 
         if should_stop_after_cycle(plan=plan, project_root=settings.project_root):
-            if auto_seed_next_phase(project_root=settings.project_root):
-                print(
-                    f"[cycle {cycle_index}] phase complete; auto-seeded next-phase "
-                    "definition — continuing loop.",
-                    file=sys.stderr,
-                )
-                previous_signature = None  # reset to allow continued execution
-            else:
-                return 0
+            print(
+                f"[cycle {cycle_index}] FINAL_STOP honored; halting autoloop.",
+                file=sys.stderr,
+            )
+            return 0
 
         previous_signature = signature
         cycle_index += 1
