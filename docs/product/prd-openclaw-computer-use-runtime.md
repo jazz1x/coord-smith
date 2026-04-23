@@ -855,9 +855,10 @@ Determinism rule:
   so future agents can replay the determinism chain without inferring intent.
 - validators must also resolve the artifact at `artifacts/action-log/release-ceiling-stop.jsonl`
   under the run root and confirm it contains at least one JSON line whose typed
-  fields include `event: release-ceiling-stop`, `mission_name: page_ready_observation`,
-  and an ISO-8601 `ts` so future evidence viewers can reproduce the ceiling stop
-  without inferring behavior from missing artifacts
+  fields include `event: release-ceiling-stop`, `mission_name: run_completion`
+  (the mission at the current released ceiling), and an ISO-8601 `ts` so future
+  evidence viewers can reproduce the ceiling stop without inferring behavior
+  from missing artifacts
 - crosswalk rule:
 - when `page_ready_observation` release-ceiling determinism is discussed, restate
   the artifact path, the typed fields (`event`, `mission_name`, `ts`), and every
