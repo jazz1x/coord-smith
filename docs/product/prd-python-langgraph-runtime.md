@@ -153,15 +153,17 @@ Completeness rule:
 
 This PRD does not release a broader benchmark workflow by itself.
 
-Released ceiling remains:
+Released ceiling:
 
-- `pageReadyObserved`
+- `runCompletion` (all 12 missions released; expanded from `pageReadyObserved`
+  on 2026-03-26; see `docs/prd.md` for the authoritative statement)
 
 Rule:
 
 - Python-first runtime work may become canonical implementation work without
   changing the released workflow ceiling
-- modeled runtime work above `pageReadyObserved` must still be labeled modeled
+- this PRD defers to `docs/prd.md` as the Source-Of-Truth for ceiling
+- modeled runtime work above `runCompletion` must still be labeled modeled
 - release-ceiling articulation:
 - the runtime must treat `evidence://action-log/release-ceiling-stop` as
   deterministically satisfied only after `artifacts/action-log/release-ceiling-stop.jsonl`
