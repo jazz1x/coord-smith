@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 from PIL import Image
@@ -140,9 +140,9 @@ async def _run_real_environment_e2e(
     adapter = PyAutoGUIAdapter(run_root=tmp_path)
 
     with patch("pyautogui.screenshot", side_effect=fake_screenshot), patch(
-        "pyautogui.click", new_callable=AsyncMock
+        "pyautogui.click"
     ):
-        return await run_released_scope(
+        result = await run_released_scope(
             adapter=adapter,
             session_ref="session-real-1",
             expected_auth_state="authenticated",
@@ -150,6 +150,7 @@ async def _run_real_environment_e2e(
             site_identity="interpark",
             base_dir=tmp_path,
         )
+    return result
 
 
 @pytest.mark.asyncio

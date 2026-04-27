@@ -33,7 +33,7 @@
     "milestone": "FINAL_STOP reached; no new implementation queue remains",
     "anchor": "finalStopAtRunCompletion",
     "invariant": "ez-ax runtime graph contains no LLM inference. ez-ax remains orchestration-centric. The execution backend is PyAutoGUI (OS-level coordinate click). Browser-internal tools (Playwright, CDP) are forbidden as execution backend. The released ceiling is runCompletion with all 12 missions released. Canonical continuation memory remains two-tiered: work-rag for current state, rag for durable lessons. OpenClaw is the external caller; ez-ax owns the CUA engine (PyAutoGUI).",
-    "next_action": "FINAL_STOP — 60/60 coverage-ledger families complete (59 covered + 1 excluded); released-scope clauses verified via 767 passing unit/contract/integration tests plus 3 real-binary tests behind `pytest -m real`; no new implementation queue remains.",
+    "next_action": "FINAL_STOP — production hardening complete; 794 passing tests (+ 3 real-binary); all 9 P1/P2/P3 hardening items applied + ralphi follow-up coverage tests (with_run_root, bool-as-int click guard, atomic-write cleanup); no new implementation queue remains.",
     "approved_scope_ceiling": "runCompletion",
     "references": [
       "docs/prd.md",

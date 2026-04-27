@@ -1,5 +1,7 @@
 # ruff: noqa: E501
 
+import pytest
+
 from ez_ax.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
@@ -479,6 +481,7 @@ def test_build_execution_request_within_scope_rejects_modeled_mission() -> None:
         raise AssertionError("Expected modeled mission to be rejected under ceiling")
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_build_execution_request_within_scope_accepts_released_under_default_ceiling() -> None:
     # sync_observation is now released and within default runCompletion ceiling
     request = build_execution_request_within_scope(
@@ -603,6 +606,7 @@ def test_validate_execution_request_within_scope_rejects_modeled_mission() -> No
         raise AssertionError("Expected modeled mission to be rejected under ceiling")
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_execution_request_within_scope_accepts_released_under_default_ceiling() -> None:
     request = ExecutionRequest(
         mission_name="sync_observation",
@@ -1204,6 +1208,7 @@ def test_validate_execution_result_within_scope_rejects_modeled() -> None:
         raise AssertionError("Expected modeled mission to be rejected under ceiling")
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_validate_execution_result_within_scope_accepts_released_under_default_ceiling() -> (
     None
 ):

@@ -363,3 +363,84 @@ async def test_execute_no_click_when_recipe_has_no_entry(tmp_path: Path) -> None
         await adapter.execute(request)
 
     mock_click.assert_not_called()
+
+
+def test_pyautogui_adapter_sets_failsafe_on_init(tmp_path: Path) -> None:
+    import pyautogui
+
+    pyautogui.FAILSAFE = False
+    PyAutoGUIAdapter(run_root=tmp_path)
+    assert pyautogui.FAILSAFE is True
+
+
+def test_with_run_root_returns_new_adapter_bound_to_different_root(
+    tmp_path: Path,
+) -> None:
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    recipe = ClickRecipe.model_validate(
+        {"missions": {"click_dispatch": {"x": 1, "y": 2}}}
+    )
+    original_root = tmp_path / "original"
+    original_root.mkdir()
+    new_root = tmp_path / "new"
+    new_root.mkdir()
+
+    original = PyAutoGUIAdapter(run_root=original_root, click_recipe=recipe)
+    rebound = original.with_run_root(run_root=new_root)
+
+    assert rebound is not original
+    assert rebound._run_root == new_root
+    assert original._run_root == original_root
+    assert rebound._click_recipe is recipe
+
+
+async def test_resolve_click_coords_rejects_bool_payload_values(
+    tmp_path: Path,
+) -> None:
+    """Booleans are int subclasses; the guard must reject them as click coords."""
+
+    with (
+        patch("pyautogui.click") as mock_click,
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        request = ExecutionRequest(
+            mission_name="click_dispatch",
+            payload={"x": True, "y": False},
+        )
+        await adapter.execute(request)
+
+    mock_click.assert_not_called()
+
+
+def test_with_run_root_returns_new_adapter_with_new_root(tmp_path: Path) -> None:
+    original = PyAutoGUIAdapter(run_root=tmp_path / "original")
+    new_root = tmp_path / "new"
+    cloned = original.with_run_root(run_root=new_root)
+
+    assert cloned is not original
+    assert cloned._run_root == new_root
+    assert cloned._click_recipe is original._click_recipe
+
+
+def test_with_run_root_preserves_click_recipe(tmp_path: Path) -> None:
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    recipe = ClickRecipe.model_validate({"missions": {"click_dispatch": {"x": 10, "y": 20}}})
+    original = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+    cloned = original.with_run_root(run_root=tmp_path / "other")
+
+    assert cloned._click_recipe is recipe
+
+
+def test_resolve_click_coords_rejects_bool_values(tmp_path: Path) -> None:
+    adapter = PyAutoGUIAdapter(run_root=tmp_path)
+    result = adapter._resolve_click_coords("click_dispatch", {"x": True, "y": False})
+    assert result is None
+
+
+def test_resolve_click_coords_accepts_int_and_float(tmp_path: Path) -> None:
+    adapter = PyAutoGUIAdapter(run_root=tmp_path)
+    assert adapter._resolve_click_coords("click_dispatch", {"x": 10, "y": 20}) == (10, 20)
+    assert adapter._resolve_click_coords("click_dispatch", {"x": 1.5, "y": 2.7}) == (1, 2)

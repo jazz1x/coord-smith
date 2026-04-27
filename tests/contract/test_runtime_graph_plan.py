@@ -85,6 +85,7 @@ def test_forward_transition_allows_prepare_session_under_prepare_session_ceiling
     assert decision.detail is None
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_forward_transition_accepts_released_under_default_ceiling() -> (
     None
 ):

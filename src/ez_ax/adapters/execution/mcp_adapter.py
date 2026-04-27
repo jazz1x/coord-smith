@@ -104,7 +104,7 @@ def _require_response_status(value: object) -> ReleasedResponseStatus:
     if value not in ("success", "failure", "pending"):
         msg = "MCP OpenClaw response status must be one of: success | failure | pending"
         raise ValidationError(msg)
-    return cast(ReleasedResponseStatus, value)
+    return value
 
 
 def _parse_evidence_refs(value: object) -> tuple[str, ...]:

@@ -1182,7 +1182,7 @@ def test_validate_release_ceiling_stop_action_log_rejects_missing_artifact(
         )
 
     message = str(excinfo.value)
-    assert "Failed to read release ceiling stop action-log artifact" in message
+    assert "Failed to read release-ceiling-stop action-log artifact" in message
     assert str(expected_path) in message
     assert "prd-openclaw-e2e-validation.md" in message
     assert "prd-openclaw-computer-use-runtime.md" in message
@@ -1244,7 +1244,7 @@ def test_validate_release_ceiling_stop_action_log_read_failure_mentions_docs(
         artifact.chmod(0o600)
 
     message = str(excinfo.value)
-    assert "Failed to read release ceiling stop action-log artifact" in message
+    assert "Failed to read release-ceiling-stop action-log artifact" in message
     assert "prd-openclaw-e2e-validation.md" in message
     assert "prd-openclaw-computer-use-runtime.md" in message
     assert "prd-openclaw-evidence-model.md" in message

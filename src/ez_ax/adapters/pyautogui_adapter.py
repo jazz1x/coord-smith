@@ -112,8 +112,13 @@ class PyAutoGUIAdapter:
         run_root: Path,
         click_recipe: ClickRecipe | None = None,
     ) -> None:
+        pyautogui.FAILSAFE = True
         self._run_root = run_root
         self._click_recipe = click_recipe
+
+    def with_run_root(self, *, run_root: Path) -> PyAutoGUIAdapter:
+        """Return a copy of this adapter bound to a different run root."""
+        return PyAutoGUIAdapter(run_root=run_root, click_recipe=self._click_recipe)
 
     def _action_log_path(self, key: str) -> Path:
         path = self._run_root / "artifacts" / "action-log" / f"{key}.jsonl"
@@ -265,7 +270,12 @@ class PyAutoGUIAdapter:
         """
         px = payload.get("x")
         py = payload.get("y")
-        if isinstance(px, (int, float)) and isinstance(py, (int, float)):
+        if (
+            not isinstance(px, bool)
+            and isinstance(px, (int, float))
+            and not isinstance(py, bool)
+            and isinstance(py, (int, float))
+        ):
             return (int(px), int(py))
         if self._click_recipe is not None:
             return self._click_recipe.coords_for(mission)

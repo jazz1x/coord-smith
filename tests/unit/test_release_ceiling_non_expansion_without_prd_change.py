@@ -9,6 +9,8 @@ unless the PRD itself is explicitly updated.
 
 from __future__ import annotations
 
+import pytest
+
 from ez_ax.missions.names import MODELED_MISSIONS
 from ez_ax.models.runtime import (
     DEFAULT_RELEASED_SCOPE_CEILING,
@@ -82,6 +84,7 @@ def test_released_scope_ceilings_expands_to_run_completion() -> None:
             )
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_effective_scope_ceiling_defaults_unknown_to_run_completion(
 ) -> None:
     """Verify unknown ceiling defaults to runCompletion.

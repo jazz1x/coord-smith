@@ -113,7 +113,7 @@ Phase R6 complete:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current next action is: `FINAL_STOP — 60/60 coverage-ledger families complete (59 covered + 1 excluded); released-scope clauses verified via 767 passing unit/contract/integration tests plus 3 real-binary tests behind pytest -m real; no new implementation queue remains.`
+The current next action is: `FINAL_STOP — production hardening complete; 794 passing tests (794 unit/contract/integration + 3 real-binary behind pytest -m real); all 9 P1/P2/P3 hardening items applied + ralphi follow-up coverage tests for with_run_root, bool-as-int click guard, and atomic-write cleanup.`
 
 ## Active Anchor Coverage Ledger
 

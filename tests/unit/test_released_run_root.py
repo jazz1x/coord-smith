@@ -79,3 +79,17 @@ def test_create_run_root_creates_run_root_and_action_log_dir(tmp_path: Path) -> 
     assert run_root.exists()
     assert run_root.is_dir()
     assert (run_root / "artifacts" / "action-log").is_dir()
+
+
+def test_create_run_root_rejects_whitespace_only_run_id(tmp_path: Path) -> None:
+    with pytest.raises(ConfigError) as excinfo:
+        create_run_root(base_dir=tmp_path, run_id="   ")
+
+    assert "whitespace" in str(excinfo.value)
+
+
+def test_create_run_root_rejects_nul_byte_in_run_id(tmp_path: Path) -> None:
+    with pytest.raises(ConfigError) as excinfo:
+        create_run_root(base_dir=tmp_path, run_id="run\x00id")
+
+    assert "NUL" in str(excinfo.value)
