@@ -702,11 +702,7 @@ def validate_release_ceiling_stop_action_log(
     except OSError as exc:
         msg = (
             f"Failed to read release-ceiling-stop action-log artifact: path='{path}'; "
-            "expected typed fields event/mission_name/ts; "
-            "see docs/product/prd-openclaw-e2e-validation.md, "
-            "docs/product/prd-openclaw-computer-use-runtime.md, "
-            "docs/product/prd-openclaw-evidence-model.md, and "
-            "docs/product/prd-python-validation-contract.md"
+            "expected typed fields event/mission_name/ts"
         )
         raise ValidationError(msg) from exc
 
@@ -732,11 +728,7 @@ def validate_release_ceiling_stop_action_log(
         "expected at least one JSON line with "
         "event='release-ceiling-stop', mission_name='run_completion', and "
         "ISO-8601 ts; "
-        f"path='{path}'; "
-        "see docs/product/prd-openclaw-e2e-validation.md, "
-        "docs/product/prd-openclaw-computer-use-runtime.md, "
-        "docs/product/prd-openclaw-evidence-model.md, and "
-        "docs/product/prd-python-validation-contract.md"
+        f"path='{path}'"
     )
     raise ValidationError(msg)
 

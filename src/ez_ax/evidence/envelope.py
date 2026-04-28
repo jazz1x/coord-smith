@@ -198,10 +198,7 @@ def validate_release_ceiling_stop_proof(
         msg = (
             f"Release-ceiling-stop artifact not found: {path}\n"
             f"Required artifact: artifacts/action-log/release-ceiling-stop.jsonl\n"
-            f"Expected fields: event, mission_name, ts (ISO-8601)\n"
-            f"References: docs/product/prd-openclaw-e2e-validation.md, "
-            f"prd-openclaw-computer-use-runtime.md, "
-            f"prd-openclaw-evidence-model.md, prd-python-validation-contract.md"
+            f"Expected fields: event, mission_name, ts (ISO-8601)"
         )
         raise FileNotFoundError(msg)
 
@@ -210,9 +207,7 @@ def validate_release_ceiling_stop_proof(
     except (FileNotFoundError, ValueError, TypeError) as exc:
         msg = (
             f"Release-ceiling-stop artifact cannot be read or parsed: {path}\n"
-            f"Expected typed fields: event, mission_name, ts (ISO-8601)\n"
-            f"References: docs/product/prd-openclaw-e2e-validation.md, "
-            f"prd-openclaw-computer-use-runtime.md"
+            f"Expected typed fields: event, mission_name, ts (ISO-8601)"
         )
         raise ValueError(msg) from exc
 
@@ -237,9 +232,6 @@ def validate_release_ceiling_stop_proof(
         f"Expected at least one JSON line with:\n"
         f"  event: 'release-ceiling-stop'\n"
         f"  mission_name: 'run_completion'\n"
-        f"  ts: ISO-8601 timestamp\n"
-        f"References: docs/product/prd-openclaw-e2e-validation.md, "
-        f"prd-openclaw-computer-use-runtime.md, "
-        f"prd-openclaw-evidence-model.md, prd-python-validation-contract.md"
+        f"  ts: ISO-8601 timestamp"
     )
     raise ValueError(msg)

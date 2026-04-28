@@ -34,9 +34,6 @@ Runtime inference boundary:
   deterministic Python; no model calls are made during a run
 - `PyAutoGUIAdapter` is the sole execution backend: coordinate-click and
   screenshot only, no LLM calls
-- LLM inference is restricted to the offline autoloop harness
-  (`ez-ax-autoloop`) that generates implementation; it is not part of the
-  runtime path
 
 ## Release Boundary
 
@@ -106,20 +103,6 @@ Required typed fields:
 If this artifact cannot be resolved or the typed fields are missing, the system
 must not claim a correct released-ceiling stop.
 
-## Canonical Memory Model
-
-Only two canonical memory layers exist.
-
-Current-state memory:
-
-- `docs/product/work-rag.json`
-
-Durable lesson memory:
-
-- `docs/product/rag.json`
-
-No third canonical memory layer exists.
-
 ## Canonical Stack
 
 The canonical implementation path is Python-first.
@@ -151,8 +134,5 @@ The following are not in scope for casual change:
 
 This document defines durable system truth only.
 
-Operational loop rules, queue behavior, validation flow, and stop mechanics
-belong to the execution model.
-
 Current implementation progress, current phase interpretation, and immediate
-continuation context belong to the current-state document.
+continuation context belong to `docs/current-state.md`.

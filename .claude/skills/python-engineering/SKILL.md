@@ -10,7 +10,7 @@ repository.
 
 ## Read First
 
-1. `AGENTS.md`
+1. `CLAUDE.md`
 2. `.claude/python-engineering.md`
 3. `pyproject.toml`
 

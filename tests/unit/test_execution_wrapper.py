@@ -1184,10 +1184,6 @@ def test_validate_release_ceiling_stop_action_log_rejects_missing_artifact(
     message = str(excinfo.value)
     assert "Failed to read release-ceiling-stop action-log artifact" in message
     assert str(expected_path) in message
-    assert "prd-openclaw-e2e-validation.md" in message
-    assert "prd-openclaw-computer-use-runtime.md" in message
-    assert "prd-openclaw-evidence-model.md" in message
-    assert "prd-python-validation-contract.md" in message
     assert "event" in message
     assert "mission_name" in message
     assert "ts" in message
@@ -1217,13 +1213,9 @@ def test_validate_release_ceiling_stop_action_log_error_mentions_expected_fields
     assert "mission_name='run_completion'" in message
     assert str(expected_path) in message
     assert "ts" in message
-    assert "prd-openclaw-e2e-validation.md" in message
-    assert "prd-openclaw-computer-use-runtime.md" in message
-    assert "prd-openclaw-evidence-model.md" in message
-    assert "prd-python-validation-contract.md" in message
 
 
-def test_validate_release_ceiling_stop_action_log_read_failure_mentions_docs(
+def test_validate_release_ceiling_stop_action_log_read_failure_message(
     tmp_path: Path,
 ) -> None:
     artifact = action_log_artifact_path(run_root=tmp_path, key="release-ceiling-stop")
@@ -1245,10 +1237,6 @@ def test_validate_release_ceiling_stop_action_log_read_failure_mentions_docs(
 
     message = str(excinfo.value)
     assert "Failed to read release-ceiling-stop action-log artifact" in message
-    assert "prd-openclaw-e2e-validation.md" in message
-    assert "prd-openclaw-computer-use-runtime.md" in message
-    assert "prd-openclaw-evidence-model.md" in message
-    assert "prd-python-validation-contract.md" in message
     assert str(artifact) in message
     assert "event" in message
     assert "mission_name" in message

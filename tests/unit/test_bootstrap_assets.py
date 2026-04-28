@@ -19,20 +19,6 @@ def test_bootstrap_assets_do_not_require_optional_pattern_cache() -> None:
     assert OPTIONAL_BOOTSTRAP_ASSETS == ()
 
 
-def test_bootstrap_assets_require_repo_loop_adapter_and_tracked_skills() -> None:
-    required = {
-        "docs/llm/repo-autonomous-loop-adapter.yaml",
-        "docs/llm/low-attention-execution-contract.json",
-        "docs/llm/low-attention-coverage-ledger.json",
-        ".claude/skills/ez-ax-autoloop/SKILL.md",
-        ".claude/skills/ez-ax-executable-autoloop/SKILL.md",
-        "docs/llm/agents/contract-scope-guardian.md",
-        "docs/llm/agents/assetization-pattern-promoter.md",
-    }
-
-    assert required.issubset(set(REQUIRED_BOOTSTRAP_ASSETS))
-
-
 def test_bootstrap_assets_have_no_duplicates() -> None:
     assert len(set(REQUIRED_BOOTSTRAP_ASSETS)) == len(REQUIRED_BOOTSTRAP_ASSETS)
 

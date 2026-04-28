@@ -4,8 +4,7 @@ PRD clause (System Boundary, line 22):
 'ez-ax must not treat OpenClaw internals as architecture truth'
 
 This means the released-scope graph code must depend only on the public OpenClaw
-adapter protocol (client.py) and never on internal implementation modules
-(execution.py, mcp_adapter.py, mcp_stdio_client.py, etc).
+adapter protocol (client.py) and never on internal implementation modules.
 """
 
 from __future__ import annotations
@@ -42,8 +41,7 @@ def test_released_graph_does_not_depend_on_execution_internals() -> None:
 
     The released-scope graph modules must treat the ExecutionAdapter protocol
     (defined in client.py) as the sole interface. They must not import from
-    internal OpenClaw modules (execution.py, mcp_adapter.py, mcp_stdio_client.py,
-    mcp_settings.py, etc).
+    internal OpenClaw implementation modules (execution.py, etc).
     """
     src_dir = Path(__file__).parent.parent.parent / "src" / "ez_ax" / "graph"
 
@@ -61,9 +59,6 @@ def test_released_graph_does_not_depend_on_execution_internals() -> None:
     # Internal OpenClaw modules that should NOT be imported
     forbidden_execution_internals = {
         "ez_ax.adapters.execution.execution",
-        "ez_ax.adapters.execution.mcp_adapter",
-        "ez_ax.adapters.execution.mcp_stdio_client",
-        "ez_ax.adapters.execution.mcp_settings",
     }
 
     # Allowed OpenClaw import (public protocol interface)

@@ -49,8 +49,7 @@ OpenClaw  (reads results, decides next step)
 ```
 1. OpenClaw decides to run a mission
 2. OpenClaw invokes: ez-ax --session-ref ... --target-page-url ...
-3. ez-ax runs the released-scope LangGraph (4 nodes):
-   attach_session -> prepare_session -> benchmark_validation -> page_ready_observation
+3. ez-ax runs the released-scope LangGraph (12 missions, ceiling = run_completion).
 4. Each node calls PyAutoGUIAdapter.execute():
    - pyautogui.click(x, y)
    - pyautogui.screenshot()
@@ -70,26 +69,12 @@ This package defines ez-ax's **internal execution adapter protocol**. It is
 | File | Purpose |
 |------|---------|
 | `client.py` | `ExecutionAdapter` Protocol, `ExecutionRequest`, `ExecutionResult`, validation |
-| `mcp_adapter.py` | `McpBackedExecutionAdapter` — **modeled/scaffold**, not current reality |
-| `mcp_settings.py` | MCP configuration types (modeled) |
-| `mcp_stdio_client.py` | MCP stdio acquisition (modeled) |
-| `execution.py` | Validation logic (legacy duplicate of `client.py`) |
+| `execution.py` | Re-export shim over `client.py` for back-compat imports |
 
 ### `adapters/pyautogui_adapter.py`
 
 The **real CUA engine**. Implements `ExecutionAdapter` Protocol using
 `pyautogui.click()` and `pyautogui.screenshot()` exclusively. No LLM calls.
-
-### MCP Code Status
-
-The MCP adapter code (`mcp_adapter.py`, `mcp_stdio_client.py`) models a
-potential future integration where ez-ax connects to an external execution
-service via MCP. This is **not the current reality**:
-
-- The modeled direction (ez-ax as MCP client calling a remote server) is
-  **inverted** from the actual direction (OpenClaw calling ez-ax via CLI).
-- No MCP transport exists in the released execution path.
-- The released path uses `PyAutoGUIAdapter` directly.
 
 ## Naming History
 

@@ -23,16 +23,6 @@ def test_ez_ax_console_script_callable_resolves() -> None:
     assert callable(func)
 
 
-def test_ez_ax_autoloop_console_script_callable_resolves() -> None:
-    scripts = _load_pyproject_scripts()
-    assert "ez-ax-autoloop" in scripts
-    module_path, _, attr = scripts["ez-ax-autoloop"].rpartition(":")
-    mod = importlib.import_module(module_path)
-    func = getattr(mod, attr)
-    assert callable(func)
-
-
 def test_pyproject_scripts_point_to_expected_modules() -> None:
     scripts = _load_pyproject_scripts()
     assert scripts["ez-ax"] == "ez_ax.graph.pyautogui_cli_entrypoint:main"
-    assert scripts["ez-ax-autoloop"] == "ez_ax.rag.autoloop_runner:main"
