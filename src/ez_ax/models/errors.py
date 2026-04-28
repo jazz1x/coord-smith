@@ -41,3 +41,19 @@ class ClickExecutionUnverified(ExecutionTransportError):
 
 class ClickCoordinatesOutOfBounds(ExecutionTransportError):
     """Requested click coordinates fall outside the detected screen size."""
+
+
+class ImageTemplateNotFound(ExecutionTransportError):
+    """Click recipe references a template image file that is not on disk."""
+
+
+class ImageMatchConfidenceLow(ExecutionTransportError):
+    """Image click target was not found on screen at the required confidence."""
+
+
+class ImageWaitTimeout(ExecutionTransportError):
+    """Polled image search did not find the post-click signal within timeout."""
+
+
+class PageTransitionNotDetected(ExecutionTransportError):
+    """Pre/post-click screenshot diff fell below the configured change threshold."""

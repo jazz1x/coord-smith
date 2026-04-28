@@ -9,16 +9,27 @@ from pathlib import Path
 
 import pyautogui
 from PIL import UnidentifiedImageError
+from PIL.Image import Image as PILImage
 
 from ez_ax.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.config.click_recipe import ClickRecipe
+from ez_ax.adapters.page_transition import PageTransitionVerifier
+from ez_ax.config.click_recipe import (
+    ClickRecipe,
+    MissionClick,
+    MissionImageClick,
+    PostClickSignal,
+)
 from ez_ax.models.errors import (
     AccessibilityPermissionDenied,
     ClickCoordinatesOutOfBounds,
     ClickExecutionUnverified,
+    ImageMatchConfidenceLow,
+    ImageTemplateNotFound,
+    ImageWaitTimeout,
+    PageTransitionNotDetected,
     ScreenCapturePermissionDenied,
     ScreenCaptureUnavailable,
 )
@@ -261,12 +272,14 @@ class PyAutoGUIAdapter:
     def _resolve_click_coords(
         self, mission: str, payload: dict[str, object]
     ) -> tuple[int, int] | None:
-        """Resolve click coordinates: payload first, then recipe, else None.
+        """Resolve click coordinates: payload > recipe(coord) > recipe(image) > None.
 
         Payload-provided coords (typically from an external caller like
-        OpenClaw) take precedence. When the payload carries no coords, the
-        adapter falls back to the static per-mission recipe supplied at
-        construction time. Returning None means this mission performs no click.
+        OpenClaw) take precedence. Otherwise, the static per-mission recipe
+        is consulted: a coordinate target returns its fixed pixel pair, while
+        an image target is matched against the live screen via
+        ``pyautogui.locateCenterOnScreen`` (OpenCV-backed). Returning None
+        means this mission performs no click.
         """
         px = payload.get("x")
         py = payload.get("y")
@@ -278,8 +291,247 @@ class PyAutoGUIAdapter:
         ):
             return (int(px), int(py))
         if self._click_recipe is not None:
-            return self._click_recipe.coords_for(mission)
+            coord = self._click_recipe.coords_for(mission)
+            if coord is not None:
+                return coord
+            image_target = self._click_recipe.image_target_for(mission)
+            if image_target is not None:
+                return self._locate_image_target(mission, image_target)
         return None
+
+    def _locate_image_target(
+        self, mission: str, target: MissionImageClick
+    ) -> tuple[int, int]:
+        """Match a template image against the live screen and return center coords.
+
+        Records the located coordinates and effective confidence to the
+        per-mission action-log entry so a later evidence audit can trace
+        which template produced which click.
+        """
+        template_path = Path(target.image)
+        if not template_path.exists():
+            raise ImageTemplateNotFound(
+                f"image template not found for mission '{mission}': {template_path}"
+            )
+        try:
+            located = pyautogui.locateCenterOnScreen(
+                str(template_path),
+                confidence=target.confidence,
+                region=target.region,
+                grayscale=target.grayscale,
+            )
+        except pyautogui.ImageNotFoundException as exc:
+            raise ImageMatchConfidenceLow(
+                f"image template not matched for mission '{mission}' "
+                f"at confidence>={target.confidence}: {template_path}"
+            ) from exc
+        if located is None:
+            raise ImageMatchConfidenceLow(
+                f"image template not matched for mission '{mission}' "
+                f"at confidence>={target.confidence}: {template_path}"
+            )
+        cx, cy = int(located.x), int(located.y)
+        self._write_image_match_log(
+            mission=mission,
+            template=str(template_path),
+            confidence=target.confidence,
+            x=cx,
+            y=cy,
+        )
+        return (cx, cy)
+
+    def _action_key_for_mission(self, mission: str) -> str:
+        """Return the canonical action-log key for a mission.
+
+        Most mission names map to a past-tense action key
+        (``click_dispatch`` -> ``click-dispatched``) which is held in the
+        evidence fallback table. Missions absent from the table fall back to
+        a literal underscore-to-hyphen substitution.
+        """
+        refs = _FALLBACK_REFS.get(mission)
+        if refs is not None:
+            for ref in refs:
+                if ref.startswith("evidence://action-log/"):
+                    return ref[len("evidence://action-log/") :]
+        return mission.replace("_", "-")
+
+    def _write_image_match_log(
+        self, *, mission: str, template: str, confidence: float, x: int, y: int
+    ) -> None:
+        """Append a structured image-match record to the mission action log."""
+        ts = datetime.now(tz=UTC).isoformat()
+        action_key = self._action_key_for_mission(mission)
+        entry: dict[str, object] = {
+            "ts": ts,
+            "mission_name": mission,
+            "event": action_key,
+            "image_template": template,
+            "match_confidence": confidence,
+            "match_x": x,
+            "match_y": y,
+        }
+        path = self._action_log_path(action_key)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+
+    def _write_transition_log(
+        self,
+        *,
+        mission: str,
+        changed: bool,
+        change_ratio: float,
+        bbox: tuple[int, int, int, int] | None,
+        threshold: float,
+    ) -> None:
+        """Append a page-transition verification record to the mission action log."""
+        ts = datetime.now(tz=UTC).isoformat()
+        action_key = self._action_key_for_mission(mission)
+        entry: dict[str, object] = {
+            "ts": ts,
+            "mission_name": mission,
+            "event": action_key,
+            "transition_changed": changed,
+            "transition_change_ratio": change_ratio,
+            "transition_threshold": threshold,
+            "transition_bbox": list(bbox) if bbox is not None else None,
+        }
+        path = self._action_log_path(action_key)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+
+    def _write_signal_log(
+        self,
+        *,
+        mission: str,
+        template: str,
+        confidence: float,
+        elapsed: float,
+        x: int,
+        y: int,
+    ) -> None:
+        """Append a post-click-signal hit record to the mission action log."""
+        ts = datetime.now(tz=UTC).isoformat()
+        action_key = self._action_key_for_mission(mission)
+        entry: dict[str, object] = {
+            "ts": ts,
+            "mission_name": mission,
+            "event": action_key,
+            "post_click_signal_template": template,
+            "post_click_signal_confidence": confidence,
+            "post_click_signal_elapsed_seconds": elapsed,
+            "post_click_signal_x": x,
+            "post_click_signal_y": y,
+        }
+        path = self._action_log_path(action_key)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+
+    def wait_for_image(
+        self,
+        *,
+        path: str,
+        timeout: float = 5.0,
+        interval: float = 0.1,
+        confidence: float = 0.9,
+    ) -> tuple[int, int]:
+        """Poll ``locateCenterOnScreen`` until the template appears or timeout elapses.
+
+        Returns the matched center coordinates. Raises ``ImageWaitTimeout``
+        when the template never appears within ``timeout`` seconds.
+        ``interval`` controls polling cadence; smaller values increase CPU.
+        """
+        deadline = time.monotonic() + timeout
+        last_exc: Exception | None = None
+        while True:
+            try:
+                located = pyautogui.locateCenterOnScreen(
+                    path, confidence=confidence
+                )
+            except pyautogui.ImageNotFoundException as exc:
+                located = None
+                last_exc = exc
+            if located is not None:
+                return (int(located.x), int(located.y))
+            if time.monotonic() >= deadline:
+                msg = (
+                    f"post-click signal '{path}' not found within "
+                    f"{timeout:.2f}s at confidence>={confidence}"
+                )
+                if last_exc is not None:
+                    raise ImageWaitTimeout(msg) from last_exc
+                raise ImageWaitTimeout(msg)
+            time.sleep(interval)
+
+    def _mission_target(
+        self, mission: str
+    ) -> MissionClick | MissionImageClick | None:
+        """Return the per-mission recipe entry that drives transition/signal options."""
+        if self._click_recipe is None:
+            return None
+        return self._click_recipe.missions.get(mission)
+
+    def _verify_page_transition(
+        self,
+        *,
+        mission: str,
+        baseline: PILImage,
+        threshold: float,
+        region: tuple[int, int, int, int] | None,
+    ) -> None:
+        """Capture a post-click frame and compare against the baseline."""
+        try:
+            post = pyautogui.screenshot()
+        except Exception as exc:
+            raise ScreenCaptureUnavailable(
+                f"post-click screenshot failed: {exc!r}"
+            ) from exc
+        if not isinstance(post, PILImage):
+            return
+        result = PageTransitionVerifier().verify_changed(
+            baseline=baseline,
+            post=post,
+            threshold=threshold,
+            region=region,
+        )
+        self._write_transition_log(
+            mission=mission,
+            changed=result.changed,
+            change_ratio=result.change_ratio,
+            bbox=result.bbox,
+            threshold=threshold,
+        )
+        if not result.changed:
+            raise PageTransitionNotDetected(
+                f"page transition below threshold for mission '{mission}': "
+                f"change_ratio={result.change_ratio:.4f} < {threshold:.4f}"
+            )
+
+    def _await_post_click_signal(
+        self, *, mission: str, signal: PostClickSignal
+    ) -> None:
+        """Poll for the configured post-click image and log the outcome."""
+        signal_path = Path(signal.image)
+        if not signal_path.exists():
+            raise ImageTemplateNotFound(
+                f"post-click signal template not found for mission "
+                f"'{mission}': {signal_path}"
+            )
+        start = time.monotonic()
+        x, y = self.wait_for_image(
+            path=str(signal_path),
+            timeout=signal.timeout,
+            interval=signal.interval,
+            confidence=signal.confidence,
+        )
+        elapsed = time.monotonic() - start
+        self._write_signal_log(
+            mission=mission,
+            template=str(signal_path),
+            confidence=signal.confidence,
+            elapsed=elapsed,
+            x=x,
+            y=y,
+        )
 
     async def execute(
         self, request: ExecutionRequest
@@ -289,10 +541,44 @@ class PyAutoGUIAdapter:
         payload = request.payload
 
         coords = self._resolve_click_coords(mission, payload)
+        target = self._mission_target(mission)
+
+        baseline_frame: PILImage | None = None
+        if (
+            coords is not None
+            and target is not None
+            and target.verify_transition
+        ):
+            try:
+                shot = pyautogui.screenshot()
+            except Exception as exc:
+                raise ScreenCaptureUnavailable(
+                    f"baseline screenshot failed: {exc!r}"
+                ) from exc
+            if isinstance(shot, PILImage):
+                baseline_frame = shot
+
         if coords is not None:
             ix, iy = coords
             self._validate_bounds(ix, iy)
             self._verified_click(ix, iy)
+
+        if baseline_frame is not None and target is not None:
+            self._verify_page_transition(
+                mission=mission,
+                baseline=baseline_frame,
+                threshold=target.transition_threshold,
+                region=target.transition_region,
+            )
+
+        if (
+            coords is not None
+            and target is not None
+            and target.post_click_signal is not None
+        ):
+            self._await_post_click_signal(
+                mission=mission, signal=target.post_click_signal
+            )
 
         evidence_refs = self._gather_evidence(mission)
         return ExecutionResult(

@@ -16,7 +16,10 @@ OpenClaw (외부 LLM) → ez-ax CLI → 12개 미션 → PyAutoGUI → OS
 
 - 12개 미션 deterministic 파이프라인 (attach_session → run_completion)
 - LangGraph 상태 머신 기반 미션 시퀀싱
-- PyAutoGUI CUA 엔진 (좌표 클릭 + 스크린샷만 사용)
+- PyAutoGUI CUA 엔진 (좌표 클릭 + 스크린샷)
+- 이미지(템플릿) 기반 클릭 — OpenCV 매칭으로 레이아웃 변화에 강건
+- 시각적 페이지 전환 감지 — pre/post 스크린샷 diff로 deterministic 확인
+- post-click 신호 폴링 — 특정 이미지 출현 대기로 비동기 응답 대응
 - 런타임에 LLM 없음 — 외부 LLM(OpenClaw)이 추론 담당
 - 매 미션마다 evidence 기반 검증
 - `pyautogui.FAILSAFE = True` 강제 설정 — 화면 모서리 이동 시 즉시 중단
@@ -30,6 +33,8 @@ OpenClaw (외부 LLM) → ez-ax CLI → 12개 미션 → PyAutoGUI → OS
 | 언어 | Python 3.11+ |
 | 상태 머신 | LangGraph |
 | 브라우저 제어 | PyAutoGUI (좌표 클릭 + 스크린샷) |
+| 이미지 매칭 | OpenCV (`cv2.matchTemplate` via pyautogui) |
+| 시각 비교 | PIL `ImageChops.difference` |
 | 외부 연동 | CLI + artifacts (OpenClaw ping-pong) |
 | 데이터 모델 | Pydantic v2 |
 | 타입 체크 | mypy |
@@ -41,7 +46,7 @@ OpenClaw (외부 LLM) → ez-ax CLI → 12개 미션 → PyAutoGUI → OS
 
 ```bash
 uv sync --extra dev
-uv run pytest -q            # expected: 794 passed, 1 skipped, 3 deselected
+uv run pytest -q            # expected: 827 passed, 1 skipped, 4 deselected
 uv run pre-commit install   # 최초 1회: git hook 설치
 ```
 
@@ -91,14 +96,15 @@ uv run pre-commit install
 
 권한 확인:
 ```bash
-uv run pytest -m real -q   # expected: 3 passed
+uv run pytest -m real -q   # expected: 4 passed (preflight + screenshot + coord click + image self-locate)
 ```
 
 ## Click Recipes (OpenClaw 없이 실제 클릭하기)
 
-OpenClaw 없이도 정적 좌표를 주입해 실제 클릭을 발사할 수 있습니다.
+OpenClaw 없이도 좌표·이미지 기반으로 실제 클릭을 발사할 수 있습니다.
 
-**Recipe 파일**:
+### 좌표 기반 (정적)
+
 ```json
 {
   "version": 1,
@@ -108,7 +114,59 @@ OpenClaw 없이도 정적 좌표를 주입해 실제 클릭을 발사할 수 있
 }
 ```
 
-**실행**:
+### 이미지 기반 (OpenCV 템플릿 매칭)
+
+페이지 레이아웃이 변해도 동작하는 권장 방식. `image` 경로는 recipe 파일 기준 상대경로 또는 절대경로.
+
+```json
+{
+  "version": 1,
+  "missions": {
+    "click_dispatch": {
+      "image": "templates/buy-button.png",
+      "confidence": 0.9,
+      "grayscale": false
+    }
+  }
+}
+```
+
+| 필드 | 의미 |
+|------|------|
+| `image` | 템플릿 이미지 경로 (PNG/JPG). 상대경로는 recipe 파일 기준 |
+| `confidence` | 매칭 임계값(0.0–1.0). 기본 0.9. OpenCV 필요 |
+| `region` | 검색 사각형 `[left, top, width, height]` (성능 최적화) |
+| `grayscale` | 흑백 매칭(빠름, 색 무시). 기본 false |
+
+### 페이지 전환·post-click 신호 (선택 옵션)
+
+각 미션 entry에 다음 필드를 추가하면 클릭 후 deterministic 검증이 활성화됩니다.
+
+```json
+{
+  "missions": {
+    "click_dispatch": {
+      "image": "templates/buy.png",
+      "verify_transition": true,
+      "transition_threshold": 0.02,
+      "transition_region": [0, 100, 1920, 800],
+      "post_click_signal": {
+        "image": "templates/loading-spinner.png",
+        "confidence": 0.85,
+        "timeout": 5.0,
+        "interval": 0.1
+      }
+    }
+  }
+}
+```
+
+- `verify_transition=true` → 클릭 직전 baseline screenshot 캡처 → 클릭 직후 post screenshot → 픽셀 diff 면적이 `transition_threshold`(기본 1%) 이상이면 통과. 미달 시 `PageTransitionNotDetected` 예외.
+- `transition_region` → 비교 영역 제한 (시계·네트워크 indicator 등 잡음 제외).
+- `post_click_signal` → 지정 이미지가 화면에 나타날 때까지 `timeout`초 폴링. 미발견 시 `ImageWaitTimeout`.
+
+### 실행
+
 ```bash
 # CLI flag
 ez-ax --click-recipe ./recipe.json \
@@ -121,10 +179,10 @@ ez-ax --click-recipe ./recipe.json \
 EZAX_CLICK_RECIPE=./recipe.json ez-ax --session-ref ...
 ```
 
-좌표 우선순위: payload(OpenClaw 주입) > recipe > no-click.
-Recipe 파일 로드 실패 시 exit code `3`.
+**좌표 우선순위**: payload(OpenClaw) > recipe(coord) > recipe(image) > no-click.
+**Recipe 로드 실패** → exit code `3`.
 
-> **주의**: recipe 좌표는 고정입니다. 페이지 레이아웃 변경 시 recipe도 갱신해야 합니다.
+> **주의**: 이미지 매칭은 `confidence=0.9` 기본값으로도 anti-aliasing/sub-pixel rendering에 비교적 강건하지만, 디스플레이 스케일이나 다크모드 토글 시 confidence를 조정해야 할 수 있습니다.
 > `pyautogui.FAILSAFE = True` 상태이므로 커서를 화면 모서리로 빠르게 이동하면 즉시 중단됩니다.
 
 ## Autoloop

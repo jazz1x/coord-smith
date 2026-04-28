@@ -7,7 +7,7 @@ Repository agents should use this file as the operational entrypoint.
 Before reading the layered entrypoints, fresh checkouts must run:
 
 1. `uv sync --extra dev`  — installs runtime + dev deps declared in `pyproject.toml`
-2. `uv run pytest -q`     — expected: 794 passed, 1 skipped, 3 deselected
+2. `uv run pytest -q`     — expected: 827 passed, 1 skipped, 4 deselected
 
 If pytest collection fails with `ModuleNotFoundError: PIL|pyautogui`, step 1 did not complete.
 

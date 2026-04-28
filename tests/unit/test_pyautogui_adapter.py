@@ -444,3 +444,408 @@ def test_resolve_click_coords_accepts_int_and_float(tmp_path: Path) -> None:
     adapter = PyAutoGUIAdapter(run_root=tmp_path)
     assert adapter._resolve_click_coords("click_dispatch", {"x": 10, "y": 20}) == (10, 20)
     assert adapter._resolve_click_coords("click_dispatch", {"x": 1.5, "y": 2.7}) == (1, 2)
+
+
+def _write_template(path: Path, *, color: str = "red") -> Path:
+    from PIL import Image
+
+    Image.new("RGB", (16, 16), color=color).save(path)
+    return path
+
+
+async def test_image_target_resolves_via_locate_center_on_screen(
+    tmp_path: Path,
+) -> None:
+    """Image target dispatches to pyautogui.locateCenterOnScreen and clicks the result."""
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    template = _write_template(tmp_path / "buy.png")
+    recipe = ClickRecipe.model_validate(
+        {
+            "missions": {
+                "click_dispatch": {"image": str(template), "confidence": 0.85},
+            },
+        }
+    )
+    located = MagicMock(x=512, y=384)
+    with (
+        patch("pyautogui.click") as mock_click,
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=512, y=384)),
+        patch(
+            "pyautogui.locateCenterOnScreen", return_value=located
+        ) as mock_locate,
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        request = ExecutionRequest(mission_name="click_dispatch", payload={})
+        await adapter.execute(request)
+
+    mock_click.assert_called_once_with(512, 384)
+    locate_call = mock_locate.call_args
+    assert locate_call.args[0] == str(template)
+    assert locate_call.kwargs["confidence"] == 0.85
+
+
+async def test_image_target_raises_when_template_file_missing(
+    tmp_path: Path,
+) -> None:
+    """Recipe loaded with absolute path that later vanishes raises typed error."""
+    from ez_ax.config.click_recipe import ClickRecipe
+    from ez_ax.models.errors import ImageTemplateNotFound
+
+    missing = tmp_path / "vanished.png"
+    recipe = ClickRecipe.model_validate(
+        {"missions": {"click_dispatch": {"image": str(missing)}}}
+    )
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        request = ExecutionRequest(mission_name="click_dispatch", payload={})
+        with pytest.raises(ImageTemplateNotFound):
+            await adapter.execute(request)
+
+
+async def test_image_target_raises_when_match_fails(tmp_path: Path) -> None:
+    """locateCenterOnScreen returning None raises ImageMatchConfidenceLow."""
+    from ez_ax.config.click_recipe import ClickRecipe
+    from ez_ax.models.errors import ImageMatchConfidenceLow
+
+    template = _write_template(tmp_path / "buy.png")
+    recipe = ClickRecipe.model_validate(
+        {"missions": {"click_dispatch": {"image": str(template)}}}
+    )
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.locateCenterOnScreen", return_value=None),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        request = ExecutionRequest(mission_name="click_dispatch", payload={})
+        with pytest.raises(ImageMatchConfidenceLow):
+            await adapter.execute(request)
+
+
+async def test_image_target_raises_on_image_not_found_exception(
+    tmp_path: Path,
+) -> None:
+    """pyautogui's ImageNotFoundException is converted to ImageMatchConfidenceLow."""
+    import pyautogui
+
+    from ez_ax.config.click_recipe import ClickRecipe
+    from ez_ax.models.errors import ImageMatchConfidenceLow
+
+    template = _write_template(tmp_path / "buy.png")
+    recipe = ClickRecipe.model_validate(
+        {"missions": {"click_dispatch": {"image": str(template)}}}
+    )
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch(
+            "pyautogui.locateCenterOnScreen",
+            side_effect=pyautogui.ImageNotFoundException("not found"),
+        ),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        request = ExecutionRequest(mission_name="click_dispatch", payload={})
+        with pytest.raises(ImageMatchConfidenceLow):
+            await adapter.execute(request)
+
+
+async def test_image_match_writes_action_log_with_match_metadata(
+    tmp_path: Path,
+) -> None:
+    """Image-resolved clicks record template, confidence, and matched coords."""
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    template = _write_template(tmp_path / "buy.png")
+    recipe = ClickRecipe.model_validate(
+        {
+            "missions": {
+                "click_dispatch": {"image": str(template), "confidence": 0.95},
+            },
+        }
+    )
+    located = MagicMock(x=200, y=300)
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=200, y=300)),
+        patch("pyautogui.locateCenterOnScreen", return_value=located),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        request = ExecutionRequest(mission_name="click_dispatch", payload={})
+        await adapter.execute(request)
+
+    action_log = tmp_path / "artifacts" / "action-log" / "click-dispatched.jsonl"
+    assert action_log.exists()
+    lines = [
+        json.loads(line)
+        for line in action_log.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    matches = [line for line in lines if line.get("image_template")]
+    assert len(matches) == 1
+    record = matches[0]
+    assert record["image_template"] == str(template)
+    assert record["match_confidence"] == 0.95
+    assert record["match_x"] == 200
+    assert record["match_y"] == 300
+    assert record["mission_name"] == "click_dispatch"
+
+
+async def test_payload_coords_take_precedence_over_image_target(
+    tmp_path: Path,
+) -> None:
+    """payload(x,y) wins over recipe(image) just like over recipe(coord)."""
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    template = _write_template(tmp_path / "buy.png")
+    recipe = ClickRecipe.model_validate(
+        {"missions": {"click_dispatch": {"image": str(template)}}}
+    )
+    with (
+        patch("pyautogui.click") as mock_click,
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=10, y=20)),
+        patch("pyautogui.locateCenterOnScreen") as mock_locate,
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        request = ExecutionRequest(
+            mission_name="click_dispatch", payload={"x": 10, "y": 20}
+        )
+        await adapter.execute(request)
+
+    mock_click.assert_called_once_with(10, 20)
+    mock_locate.assert_not_called()
+
+
+async def test_verify_transition_passes_when_pixels_change(tmp_path: Path) -> None:
+    """When verify_transition is True and pixels differ, the click succeeds."""
+    from PIL import Image
+
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    baseline = Image.new("RGB", (200, 200), color="white")
+    post = Image.new("RGB", (200, 200), color="white")
+    post.paste("black", (50, 50, 150, 150))
+
+    recipe = ClickRecipe.model_validate(
+        {
+            "missions": {
+                "click_dispatch": {
+                    "x": 100,
+                    "y": 100,
+                    "verify_transition": True,
+                    "transition_threshold": 0.01,
+                },
+            },
+        }
+    )
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", side_effect=[baseline, post, post]),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=100, y=100)),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        await adapter.execute(
+            ExecutionRequest(mission_name="click_dispatch", payload={})
+        )
+
+    action_log = tmp_path / "artifacts" / "action-log" / "click-dispatched.jsonl"
+    lines = [
+        json.loads(line)
+        for line in action_log.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    transitions = [line for line in lines if "transition_changed" in line]
+    assert len(transitions) == 1
+    assert transitions[0]["transition_changed"] is True
+    assert transitions[0]["transition_change_ratio"] > 0.01
+
+
+async def test_verify_transition_raises_when_pixels_unchanged(tmp_path: Path) -> None:
+    """Identical pre/post screenshots raise PageTransitionNotDetected."""
+    from PIL import Image
+
+    from ez_ax.config.click_recipe import ClickRecipe
+    from ez_ax.models.errors import PageTransitionNotDetected
+
+    same = Image.new("RGB", (200, 200), color="white")
+
+    recipe = ClickRecipe.model_validate(
+        {
+            "missions": {
+                "click_dispatch": {
+                    "x": 100,
+                    "y": 100,
+                    "verify_transition": True,
+                    "transition_threshold": 0.01,
+                },
+            },
+        }
+    )
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", side_effect=[same, same.copy(), same.copy()]),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=100, y=100)),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        with pytest.raises(PageTransitionNotDetected):
+            await adapter.execute(
+                ExecutionRequest(mission_name="click_dispatch", payload={})
+            )
+
+
+async def test_verify_transition_skipped_when_disabled(tmp_path: Path) -> None:
+    """verify_transition=False (default) bypasses the pre/post comparison."""
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    recipe = ClickRecipe.model_validate(
+        {"missions": {"click_dispatch": {"x": 100, "y": 100}}}
+    )
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", return_value=MagicMock()) as mock_screenshot,
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=100, y=100)),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        await adapter.execute(
+            ExecutionRequest(mission_name="click_dispatch", payload={})
+        )
+
+    # Only the evidence-gathering screenshot is captured (no baseline / no post).
+    assert mock_screenshot.call_count == 1
+
+
+def test_wait_for_image_returns_coords_on_first_match(tmp_path: Path) -> None:
+    """wait_for_image returns immediately when locateCenterOnScreen succeeds."""
+    located = MagicMock(x=42, y=84)
+    with patch("pyautogui.locateCenterOnScreen", return_value=located):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        result = adapter.wait_for_image(
+            path="/fake/template.png", timeout=1.0, interval=0.01
+        )
+    assert result == (42, 84)
+
+
+def test_wait_for_image_polls_until_match(tmp_path: Path) -> None:
+    """wait_for_image keeps polling until a match appears."""
+    located = MagicMock(x=10, y=20)
+    side_effects: list[object] = [None, None, located]
+    with patch(
+        "pyautogui.locateCenterOnScreen", side_effect=side_effects
+    ) as mock_locate:
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        result = adapter.wait_for_image(
+            path="/fake/template.png", timeout=1.0, interval=0.01
+        )
+    assert result == (10, 20)
+    assert mock_locate.call_count == 3
+
+
+def test_wait_for_image_raises_on_timeout(tmp_path: Path) -> None:
+    """wait_for_image raises ImageWaitTimeout when no match appears in time."""
+    from ez_ax.models.errors import ImageWaitTimeout
+
+    with patch("pyautogui.locateCenterOnScreen", return_value=None):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        with pytest.raises(ImageWaitTimeout):
+            adapter.wait_for_image(
+                path="/fake/template.png", timeout=0.05, interval=0.01
+            )
+
+
+async def test_post_click_signal_logs_match_and_continues(tmp_path: Path) -> None:
+    """post_click_signal hit appends a structured signal record to action log."""
+    from ez_ax.config.click_recipe import ClickRecipe
+
+    template = _write_template(tmp_path / "loaded.png")
+    located = MagicMock(x=400, y=500)
+    recipe = ClickRecipe.model_validate(
+        {
+            "missions": {
+                "click_dispatch": {
+                    "x": 50,
+                    "y": 60,
+                    "post_click_signal": {
+                        "image": str(template),
+                        "confidence": 0.85,
+                        "timeout": 1.0,
+                        "interval": 0.01,
+                    },
+                },
+            },
+        }
+    )
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=50, y=60)),
+        patch("pyautogui.locateCenterOnScreen", return_value=located),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        await adapter.execute(
+            ExecutionRequest(mission_name="click_dispatch", payload={})
+        )
+
+    action_log = tmp_path / "artifacts" / "action-log" / "click-dispatched.jsonl"
+    lines = [
+        json.loads(line)
+        for line in action_log.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    signals = [line for line in lines if "post_click_signal_template" in line]
+    assert len(signals) == 1
+    record = signals[0]
+    assert record["post_click_signal_template"] == str(template)
+    assert record["post_click_signal_confidence"] == 0.85
+    assert record["post_click_signal_x"] == 400
+    assert record["post_click_signal_y"] == 500
+
+
+async def test_post_click_signal_timeout_raises(tmp_path: Path) -> None:
+    """post_click_signal that never appears raises ImageWaitTimeout."""
+    from ez_ax.config.click_recipe import ClickRecipe
+    from ez_ax.models.errors import ImageWaitTimeout
+
+    template = _write_template(tmp_path / "loaded.png")
+    recipe = ClickRecipe.model_validate(
+        {
+            "missions": {
+                "click_dispatch": {
+                    "x": 50,
+                    "y": 60,
+                    "post_click_signal": {
+                        "image": str(template),
+                        "timeout": 0.05,
+                        "interval": 0.01,
+                    },
+                },
+            },
+        }
+    )
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", return_value=MagicMock()),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=50, y=60)),
+        patch("pyautogui.locateCenterOnScreen", return_value=None),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        with pytest.raises(ImageWaitTimeout):
+            await adapter.execute(
+                ExecutionRequest(mission_name="click_dispatch", payload={})
+            )
