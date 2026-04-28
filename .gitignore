@@ -37,3 +37,6 @@ site/
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# harnish autonomous-implementation work directory (local-only state)
+.harnish/

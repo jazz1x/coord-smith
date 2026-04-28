@@ -7,7 +7,7 @@ name = "ez-ax"
 version = "0.1.0"
 description = "Python-first runtime scaffold for ez-ax."
 readme = "docs/product/prd-python-langgraph-runtime.md"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.14,<3.15"
 dependencies = [
   "langchain>=0.3.0",
   "langgraph>=0.3.0",
@@ -47,7 +47,7 @@ addopts = "-m 'not real'"
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py314"
 
 [tool.ruff.lint]
 select = ["B", "E", "F", "I", "UP"]
@@ -60,7 +60,7 @@ select = ["B", "E", "F", "I", "UP"]
 "tests/**" = ["E501"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.14"
 mypy_path = "src"
 packages = ["ez_ax"]
 strict = true

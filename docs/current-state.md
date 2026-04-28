@@ -46,7 +46,7 @@ All 60 coverage-ledger families complete and verified (59 covered + 1 excluded).
 
 - Phases R14-R18 (5 families): Memory, stack, evidence typing, truth priority, browser boundary
   14. canonical memory model (1 unit test: two-tier only, no third layer)
-  15. canonical stack specification (5 unit tests: Python 3.11+, LangGraph, LangChain, Pydantic v2, tools)
+  15. canonical stack specification (5 unit tests: Python 3.14, LangGraph, LangChain, Pydantic v2, tools)
   16. typed evidence requirement (2 unit tests: typed evidence, primary types in decisions)
   17. truth priority order specification (1 unit test: dom > text > clock > action-log > screenshot > coordinate)
   18. browser control library boundary (4 unit tests: no Playwright/CDP/Chromium imports)
