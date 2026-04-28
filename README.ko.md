@@ -4,7 +4,7 @@
 
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![tests](https://img.shields.io/badge/tests-827%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-698%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 
 **ez-ax** 는 *손* 입니다. *머리* — OpenClaw 같은 외부 LLM — 가 무엇을 어디서 클릭할지 정하면, ez-ax 는 그 결정을 OS 위에서 좌표 클릭과 스크린샷 증거로 실행합니다. 추론은 런타임 바깥에 있고, 런타임 자체에는 LLM 호출이 0건입니다.
@@ -21,15 +21,15 @@
 |------|------|
 | `attach_session` | session-ref 로 기존 브라우저 세션에 부착. |
 | `prepare_session` | 기대 인증 상태 / 대상 페이지 URL 검증. |
-| `navigate_to_target` | 커서 / 스크롤로 대상 영역까지 이동. |
-| `verify_target_visible` | 스크린샷으로 대상 가시성 확인. |
+| `benchmark_validation` | 기록된 벤치마크에 대해 실행 검증. |
+| `page_ready_observation` | 스크린샷으로 페이지 준비 상태 확인. |
+| `sync_observation` | 로컬 상태와 페이지 상태 동기화. |
+| `target_actionability_observation` | 대상이 클릭 가능한 상태인지 확인. |
+| `armed_state_entry` | 클릭 발사 직전 armed 상태 진입. |
+| `trigger_wait` | 결정적 트리거 신호 대기. |
 | `click_dispatch` | 클릭 발사 — payload 좌표 / recipe 좌표 / recipe 이미지. |
-| `await_response` | 결정적 post-click 신호 대기 (이미지 / 전환 diff). |
-| `verify_state_change` | pre/post 스크린샷 비교, 임계값 기반 변화율. |
-| `capture_evidence` | 스크린샷 + JSONL action log 저장. |
-| `validate_envelope` | evidence envelope 스키마 검증. |
-| `report_result` | 전환 요약 emit. |
-| `seal_artifacts` | 최종 산출물 원자적 저장. |
+| `click_completion` | 클릭 후 evidence (스크린샷, 전환 diff) 캡처. |
+| `success_observation` | 기대한 상태 변화가 발생했는지 검증. |
 | `run_completion` | sealed 상태 코드로 실행 종료. |
 
 각 미션은 고정된 과거형 action key (예: `click_dispatch` → `click-dispatched`) 를 emit 하므로 action log 를 grep 으로 추적할 수 있습니다.
@@ -80,7 +80,7 @@ uv python install 3.14
 ### 2. 검증
 
 ```bash
-uv run pytest -q                # 827 passed, 1 skipped, 4 deselected
+uv run pytest -q                # 698 passed, 1 skipped, 4 deselected
 uv run ruff check .
 uv run mypy
 ```
@@ -198,20 +198,6 @@ ez-ax --click-recipe ./recipe.json \
 
 지정 이미지가 화면에 나타날 때까지 `locateCenterOnScreen` 폴링. 타임아웃 시 `ImageWaitTimeout`.
 
-## Autoloop
-
-저비용 자율 구현 루프:
-
-```bash
-# 드라이 런 — claude 호출 없이 프롬프트만 출력
-uv run ez-ax-autoloop --dry-run
-
-# 실행
-uv run ez-ax-autoloop --model claude-haiku-4-5-20251001 --max-cycles 10
-```
-
-각 사이클은 다음 claude 호출이 허용되기 전에 test / mypy / ruff 게이트를 통과해야 합니다. 설정 파일 쓰기는 원자적 (`mkstemp + os.replace`) 이라 사이클이 중간에 끊겨도 디스크에 부분 상태가 남지 않습니다.
-
 ## CI & 검사
 
 | 검사 | 명령 | 목적 |
@@ -239,13 +225,12 @@ OpenCV 는 결정적 픽셀 매칭 라이브러리이므로 LLM 도 브라우저
 
 ```
 src/ez_ax/
-  adapters/         실행 어댑터 (PyAutoGUI, MCP, page-transition diff)
+  adapters/         실행 어댑터 (PyAutoGUI, page-transition diff)
   config/           설정 모델 (ClickRecipe, RuntimeSettings)
   evidence/         envelope 파싱·검증
   graph/            LangGraph 노드 + CLI 엔트리포인트
   missions/         미션 이름 레지스트리
   models/           런타임 상태·에러·체크포인트 모델
-  rag/              autoloop 드라이버, prompt paths
   reporting/        전환 요약 리포팅
   validation/       bootstrap asset 검증
 tests/
@@ -253,12 +238,12 @@ tests/
   contract/         아키텍처 계약 테스트
   integration/      real-binary 테스트 (`-m real`)
   e2e/              풀 파이프라인 테스트
-  fixtures/         fake MCP SDK 등
+  fixtures/         공용 테스트 fixture
 docs/
-  prd.md            진실의 원천
-  product/          PRD 세트
-  current-state.md  현재 구현 스냅샷
-  recipes/          샘플 click recipe
+  prd.md                     진실의 원천
+  current-state.md           현재 구현 스냅샷
+  architecture-boundaries.md 액터 / 네임스페이스 경계
+  recipes/                   샘플 click recipe
 ```
 
 ## 이름

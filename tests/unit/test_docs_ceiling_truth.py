@@ -13,8 +13,7 @@ Policy:
   explaining history, not asserting the old ceiling.
 - Mission-name uses of `pageReadyObserved` are unaffected because the
   regex targets the words "ceiling" adjacent to the ceiling name.
-- Housekeeping PRDs that quote the drift strings as examples, and
-  historical artifacts (coverage-ledger, rag-archive) are excluded.
+- Housekeeping PRDs that quote the drift strings as examples are excluded.
 """
 from __future__ import annotations
 
@@ -37,10 +36,7 @@ CANON = "runCompletion"
 WINDOW_AFTER = 120
 WINDOW_BEFORE = 80
 
-EXCLUDE_PATHS = {
-    Path("docs/llm/low-attention-coverage-ledger.json"),
-    Path("docs/product/rag-archive.json"),
-}
+EXCLUDE_PATHS: set[Path] = set()
 
 DOCS_ROOT = Path(__file__).resolve().parent.parent.parent / "docs"
 REPO_ROOT = DOCS_ROOT.parent

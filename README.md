@@ -4,7 +4,7 @@
 
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![tests](https://img.shields.io/badge/tests-827%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-698%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 
 **ez-ax** is the *hands*. The *head* — an external LLM such as OpenClaw — decides what to click; ez-ax executes those decisions on the OS as coordinate clicks and screenshot evidence. Reasoning lives outside the runtime; the runtime itself contains zero LLM calls.
@@ -21,15 +21,15 @@ The runtime walks 12 missions in order. Every mission is deterministic and produ
 |---------|------|
 | `attach_session` | Attach to an existing browser session via session-ref. |
 | `prepare_session` | Verify expected auth state and target page URL. |
-| `navigate_to_target` | Walk the cursor / scroll to the target region. |
-| `verify_target_visible` | Confirm the target is on-screen via screenshot. |
+| `benchmark_validation` | Validate the run against the recorded benchmark. |
+| `page_ready_observation` | Confirm the page is ready via screenshot evidence. |
+| `sync_observation` | Sync local state with the page state. |
+| `target_actionability_observation` | Confirm the target is actionable. |
+| `armed_state_entry` | Enter the armed state ready for click dispatch. |
+| `trigger_wait` | Wait for the deterministic trigger signal. |
 | `click_dispatch` | Execute the click — payload coords, recipe coords, or recipe image. |
-| `await_response` | Wait for a deterministic post-click signal (image / transition diff). |
-| `verify_state_change` | Compare pre/post screenshots, threshold-based change ratio. |
-| `capture_evidence` | Persist screenshots + JSONL action log. |
-| `validate_envelope` | Schema-check the evidence envelope. |
-| `report_result` | Emit a transition summary. |
-| `seal_artifacts` | Atomic-write final artifacts. |
+| `click_completion` | Capture post-click evidence (screenshot, transition diff). |
+| `success_observation` | Verify the click produced the expected state change. |
 | `run_completion` | Close the run with a sealed status code. |
 
 Each mission emits a fixed past-tense action key (e.g. `click_dispatch` → `click-dispatched`) so the action log is machine-greppable.
@@ -80,7 +80,7 @@ uv python install 3.14
 ### 2. Verify
 
 ```bash
-uv run pytest -q                # 827 passed, 1 skipped, 4 deselected
+uv run pytest -q                # 698 passed, 1 skipped, 4 deselected
 uv run ruff check .
 uv run mypy
 ```
@@ -198,20 +198,6 @@ Pre-click screenshot → click → post-click screenshot → `PIL.ImageChops.dif
 
 Polls `locateCenterOnScreen` until the signal image appears. Timeout raises `ImageWaitTimeout`.
 
-## Autoloop
-
-Low-attention autonomous implementation loop:
-
-```bash
-# Dry run — print prompts without invoking claude
-uv run ez-ax-autoloop --dry-run
-
-# Execute
-uv run ez-ax-autoloop --model claude-haiku-4-5-20251001 --max-cycles 10
-```
-
-Each cycle must pass the test / mypy / ruff gate before the next claude call is permitted. Settings are written atomically (`mkstemp + os.replace`) so an interrupted cycle never leaves partial state on disk.
-
 ## CI & checks
 
 | Check | Command | Purpose |
@@ -239,13 +225,12 @@ OpenCV is allowed because it is a deterministic pixel-matching library — neith
 
 ```
 src/ez_ax/
-  adapters/         execution adapters (PyAutoGUI, MCP, page-transition diff)
+  adapters/         execution adapters (PyAutoGUI, page-transition diff)
   config/           settings models (ClickRecipe, RuntimeSettings)
   evidence/         envelope parsing / validation
   graph/            LangGraph nodes + CLI entrypoints
   missions/         mission name registry
   models/           runtime state, errors, checkpoints
-  rag/              autoloop driver, prompt paths
   reporting/        transition summary
   validation/       bootstrap-asset checks
 tests/
@@ -253,12 +238,12 @@ tests/
   contract/         architectural contract tests
   integration/      real-binary tests (`-m real`)
   e2e/              full-pipeline tests
-  fixtures/         fake MCP SDK, etc.
+  fixtures/         shared test fixtures
 docs/
-  prd.md            single source of truth
-  product/          PRD set
-  current-state.md  current implementation snapshot
-  recipes/          sample click recipes
+  prd.md                     single source of truth
+  current-state.md           current implementation snapshot
+  architecture-boundaries.md actor / namespace boundaries
+  recipes/                   sample click recipes
 ```
 
 ## Naming

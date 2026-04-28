@@ -4,7 +4,7 @@
 > Claude Code의 CLAUDE.md에서 참조하거나, 프로젝트 루트 `.claude/` 디렉토리에 포함시킨다.
 > **모든 코드 작성, 리뷰, 리팩토링 시 이 원칙을 준수한다.**
 >
-> 저장소의 `AGENTS.md`, PRD, `pyproject.toml`, 검증 계약과 충돌할 경우에는
+> 저장소의 `CLAUDE.md`, PRD, `pyproject.toml`, 검증 계약과 충돌할 경우에는
 > 저장소 canonical source가 우선한다.
 
 ---
