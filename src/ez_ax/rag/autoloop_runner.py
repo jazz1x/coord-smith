@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -109,8 +111,23 @@ def should_stop_after_cycle(
         payload = json.loads(work_rag_path.read_text(encoding="utf-8"))
         next_action: object = payload.get("current", {}).get("next_action", "")
         return isinstance(next_action, str) and next_action.startswith("FINAL_STOP")
-    except Exception:
+    except (OSError, json.JSONDecodeError, KeyError, TypeError):
         return False
+
+
+def _atomic_write(path: Path, content: str) -> None:
+    """Write content to path atomically via a temp file in the same directory."""
+    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def _next_phase_name(current_phase: str) -> str | None:
@@ -200,9 +217,7 @@ def auto_seed_next_phase(*, project_root: Path) -> bool:
             "template_id": "",
         }
     )
-    ledger_path.write_text(
-        json.dumps(ledger, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
+    _atomic_write(ledger_path, json.dumps(ledger, indent=2, ensure_ascii=False))
 
     # Keep execution-contract.json consistent so the prompt driver sees the new phase
     if execution_contract_path.exists():
@@ -213,15 +228,14 @@ def auto_seed_next_phase(*, project_root: Path) -> bool:
         contract["active_milestone"] = next_milestone
         contract["active_anchor"] = next_anchor
         contract["anchor_contract_families"] = [family_name]
-        execution_contract_path.write_text(
-            json.dumps(contract, indent=2, ensure_ascii=False), encoding="utf-8"
+        _atomic_write(
+            execution_contract_path,
+            json.dumps(contract, indent=2, ensure_ascii=False),
         )
 
     work_rag = json.loads(work_rag_path.read_text(encoding="utf-8"))
     work_rag["current"]["next_action"] = family_name
-    work_rag_path.write_text(
-        json.dumps(work_rag, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
+    _atomic_write(work_rag_path, json.dumps(work_rag, indent=2, ensure_ascii=False))
 
     # Update current-state.md so Claude does not read stale FINAL_STOP context
     current_state_path = project_root / "docs/current-state.md"
@@ -242,7 +256,7 @@ def auto_seed_next_phase(*, project_root: Path) -> bool:
             f"The current next action is: `{family_name}`",
             content,
         )
-        current_state_path.write_text(content, encoding="utf-8")
+        _atomic_write(current_state_path, content)
 
     return True
 

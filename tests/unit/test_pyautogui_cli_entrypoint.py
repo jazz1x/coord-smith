@@ -151,3 +151,23 @@ def test_main_prints_usage_for_help_and_returns_zero(capsys: pytest.CaptureFixtu
         assert exit_code == 0, flag
         assert "Usage: ez-ax" in captured.out, flag
         assert "--click-recipe" in captured.out, flag
+
+
+async def test_run_passes_os_environ_as_env_to_graph(tmp_path: Path) -> None:
+    """env=dict(os.environ) must reach run_released_scope_from_argv_env."""
+    sentinel = "test-session-ref-value"
+
+    with (
+        patch.object(PyAutoGUIAdapter, "preflight"),
+        patch(
+            "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
+            new_callable=AsyncMock,
+            return_value=MagicMock(),
+        ) as mock_run,
+        patch.dict("os.environ", {"EZAX_SESSION_REF": sentinel}),
+    ):
+        await _run(run_root=tmp_path)
+
+    call_env = mock_run.call_args.kwargs["env"]
+    assert call_env is not None, "env kwarg must be passed"
+    assert call_env.get("EZAX_SESSION_REF") == sentinel

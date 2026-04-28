@@ -1,3 +1,5 @@
+import pytest
+
 from ez_ax.models.runtime import (
     RuntimeState,
     effective_scope_ceiling,
@@ -39,6 +41,7 @@ def test_set_current_mission_accepts_sync_observation_under_run_completion_ceili
     assert state.mission_state.mission_name == "sync_observation"
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_set_current_mission_defaults_unknown_ceiling_to_run_completion() -> (
     None
 ):
@@ -73,6 +76,7 @@ def test_set_current_mission_rejects_unknown_mission_name() -> None:
         raise AssertionError("Expected unknown mission to be rejected")
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_mission_is_within_scope_defaults_unknown_ceiling_to_run_completion() -> None:
     assert (
         mission_is_within_approved_scope(
@@ -140,6 +144,7 @@ def test_mission_is_within_approved_scope_rejects_unknown_mission_name() -> None
     )
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_effective_scope_ceiling_defaults_unknown_to_run_completion() -> None:
     assert effective_scope_ceiling("pageReadyObserved") == "pageReadyObserved"
     assert effective_scope_ceiling("prepareSession") == "prepareSession"
@@ -148,6 +153,7 @@ def test_effective_scope_ceiling_defaults_unknown_to_run_completion() -> None:
     assert effective_scope_ceiling("unknownCeiling") == "runCompletion"
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_format_scope_ceiling_detail_includes_defaulting_diagnostics() -> None:
     assert format_scope_ceiling_detail("pageReadyObserved") == "'pageReadyObserved'"
     assert format_scope_ceiling_detail("prepareSession") == "'prepareSession'"
@@ -245,3 +251,27 @@ def test_mission_lifecycle_rejects_unknown_mission_name() -> None:
         assert "Unknown mission name" in str(exc)
     else:
         raise AssertionError("Expected unknown mission to be rejected")
+
+
+def test_effective_scope_ceiling_warns_for_unknown_value() -> None:
+    import warnings
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = effective_scope_ceiling("totallyUnknownCeiling")
+
+    assert result == "runCompletion"
+    assert len(caught) == 1
+    assert issubclass(caught[0].category, UserWarning)
+    assert "totallyUnknownCeiling" in str(caught[0].message)
+
+
+def test_effective_scope_ceiling_no_warning_for_known_values() -> None:
+    import warnings
+
+    for ceiling in ("prepareSession", "pageReadyObserved", "runCompletion"):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            result = effective_scope_ceiling(ceiling)
+        assert result == ceiling
+        assert len(caught) == 0, f"Unexpected warning for known ceiling '{ceiling}'"

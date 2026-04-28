@@ -13,7 +13,7 @@ class TransitionCheckpointCollection:
 
     transitions: tuple[TransitionArtifact, ...] = ()
 
-    def append(self, artifact: TransitionArtifact) -> "TransitionCheckpointCollection":
+    def append(self, artifact: TransitionArtifact) -> TransitionCheckpointCollection:
         """Append an artifact while preserving predecessor-target order constraints."""
 
         if artifact.allowed and artifact.stop_reason != "none":

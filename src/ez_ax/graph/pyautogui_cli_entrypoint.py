@@ -14,7 +14,7 @@ from ez_ax.config.click_recipe import ClickRecipe, load_click_recipe
 from ez_ax.graph.released_cli_shim import run_released_scope_from_argv_env
 from ez_ax.models.errors import ConfigError, ExecutionTransportError
 
-_DEFAULT_RUN_ROOT = Path("artifacts/run")
+_DEFAULT_RUN_ROOT = Path("artifacts/runs/default")
 ENV_CLICK_RECIPE = "EZAX_CLICK_RECIPE"
 
 _USAGE = """\
@@ -78,7 +78,9 @@ async def _run(
     recipe = _resolve_click_recipe(cli_path=recipe_path)
     adapter = PyAutoGUIAdapter(run_root=run_root, click_recipe=recipe)
     adapter.preflight()
-    await run_released_scope_from_argv_env(adapter=adapter, argv=remaining_argv)
+    await run_released_scope_from_argv_env(
+        adapter=adapter, argv=remaining_argv, env=dict(os.environ)
+    )
     return 0
 
 

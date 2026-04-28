@@ -1,5 +1,6 @@
 """Core runtime state models for the Python scaffold."""
 
+import warnings
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -26,11 +27,15 @@ DEFAULT_RELEASED_SCOPE_CEILING: Literal["runCompletion"] = "runCompletion"
 def effective_scope_ceiling(approved_scope_ceiling: str) -> str:
     """Normalize unknown ceilings to the released ceiling."""
 
-    return (
-        approved_scope_ceiling
-        if approved_scope_ceiling in RELEASED_SCOPE_CEILINGS
-        else DEFAULT_RELEASED_SCOPE_CEILING
-    )
+    if approved_scope_ceiling not in RELEASED_SCOPE_CEILINGS:
+        warnings.warn(
+            f"Unknown scope ceiling '{approved_scope_ceiling}'; "
+            f"defaulting to '{DEFAULT_RELEASED_SCOPE_CEILING}'",
+            UserWarning,
+            stacklevel=2,
+        )
+        return DEFAULT_RELEASED_SCOPE_CEILING
+    return approved_scope_ceiling
 
 
 def format_scope_ceiling_detail(approved_scope_ceiling: str) -> str:

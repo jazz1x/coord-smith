@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def test_canonical_stack_declares_python_runtime() -> None:
-    """Verify Python 3.11+ is the canonical runtime.
+    """Verify Python 3.14 is the canonical runtime.
 
     PRD requirement (Canonical Stack, lines 125-137):
     'The canonical implementation path is Python-first.
@@ -17,10 +17,10 @@ def test_canonical_stack_declares_python_runtime() -> None:
     with pyproject_path.open("rb") as f:
         data = tomllib.load(f)
 
-    # Verify requires-python specifies 3.11+
+    # Verify requires-python pins to 3.14.x
     requires_python = data.get("project", {}).get("requires-python", "")
-    assert requires_python == ">=3.11,<3.15"
-    assert "3.11" in requires_python
+    assert requires_python == ">=3.14,<3.15"
+    assert "3.14" in requires_python
 
 
 def test_canonical_stack_declares_langgraph() -> None:

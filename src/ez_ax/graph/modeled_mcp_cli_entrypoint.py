@@ -10,9 +10,8 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 from ez_ax.graph.modeled_mcp_entrypoint import run_released_scope_via_mcp_stdio_argv_env
 
@@ -68,7 +67,7 @@ async def run_modeled_mcp_cli_entrypoint(
         in result.state.mission_state.evidence_refs
     )
 
-    recorded_at = datetime.now(tz=ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
+    recorded_at = datetime.now(tz=UTC).isoformat(timespec="seconds")
     if not _is_iso8601_timestamp(recorded_at):
         raise AssertionError(  # pragma: no cover
             "recorded_at must be isoformat timestamp"

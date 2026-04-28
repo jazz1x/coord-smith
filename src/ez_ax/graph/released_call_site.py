@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
-from zoneinfo import ZoneInfo
 
 from ez_ax.adapters.execution.client import (
     ExecutionAdapter,
@@ -87,7 +86,7 @@ def seed_action_log_marker(*, run_root: Path, mission_name: str, key: str) -> Pa
     path = action_log_artifact_path(run_root=run_root, key=key)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
-        "ts": datetime.now(tz=ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds"),
+        "ts": datetime.now(tz=UTC).isoformat(timespec="seconds"),
         "mission_name": mission_name,
         "event": key,
     }

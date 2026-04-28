@@ -46,7 +46,7 @@ All 60 coverage-ledger families complete and verified (59 covered + 1 excluded).
 
 - Phases R14-R18 (5 families): Memory, stack, evidence typing, truth priority, browser boundary
   14. canonical memory model (1 unit test: two-tier only, no third layer)
-  15. canonical stack specification (5 unit tests: Python 3.11+, LangGraph, LangChain, Pydantic v2, tools)
+  15. canonical stack specification (5 unit tests: Python 3.14, LangGraph, LangChain, Pydantic v2, tools)
   16. typed evidence requirement (2 unit tests: typed evidence, primary types in decisions)
   17. truth priority order specification (1 unit test: dom > text > clock > action-log > screenshot > coordinate)
   18. browser control library boundary (4 unit tests: no Playwright/CDP/Chromium imports)
@@ -113,7 +113,7 @@ Phase R6 complete:
 The canonical current-tense continuation state lives in
 `docs/product/work-rag.json`.
 
-The current next action is: `FINAL_STOP — 60/60 coverage-ledger families complete (59 covered + 1 excluded); released-scope clauses verified via 767 passing unit/contract/integration tests plus 3 real-binary tests behind pytest -m real; no new implementation queue remains.`
+The current next action is: `FINAL_STOP — production hardening + CUA visual verification complete; 827 passing tests (827 unit/contract/integration + 4 real-binary behind pytest -m real); image-template clicking (OpenCV), visual page-transition detection, post-click signal polling all released.`
 
 ## Active Anchor Coverage Ledger
 

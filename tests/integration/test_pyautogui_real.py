@@ -89,3 +89,59 @@ async def test_adapter_executes_real_click_from_recipe(tmp_path: Path) -> None:
     )
     assert screenshot.is_file(), "click_dispatch screenshot missing"
     assert screenshot.stat().st_size > 1000, "screenshot suspiciously small"
+
+
+async def test_adapter_locates_image_template_on_real_screen(tmp_path: Path) -> None:
+    """Image-template recipe self-locates against the live screen.
+
+    Captures a real screenshot, crops a small region from it as the template,
+    and feeds that template back to the adapter. The matcher should locate
+    the cropped region on the live screen and click its center. The cursor
+    is then restored to its original position.
+    """
+    start = pyautogui.position()
+    screen = pyautogui.screenshot()
+    # Pull a 64x64 crop from a stable area near top-left to avoid menu bars.
+    crop_box = (200, 200, 264, 264)
+    template_dir = tmp_path / "templates"
+    template_dir.mkdir()
+    template_path = template_dir / "self-region.png"
+    screen.crop(crop_box).save(template_path)
+
+    recipe = ClickRecipe.model_validate(
+        {
+            "missions": {
+                "click_dispatch": {
+                    "image": str(template_path),
+                    "confidence": 0.9,
+                    "grayscale": True,
+                },
+            },
+        }
+    )
+    adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+    try:
+        await adapter.execute(
+            ExecutionRequest(mission_name="click_dispatch", payload={})
+        )
+    finally:
+        # Always restore the cursor so a flaky run does not strand the user.
+        pyautogui.moveTo(start.x, start.y, duration=0)
+
+    action_log = tmp_path / "artifacts" / "action-log" / "click-dispatched.jsonl"
+    assert action_log.is_file(), "click-dispatched action log missing"
+    import json as _json
+
+    lines = [
+        _json.loads(line)
+        for line in action_log.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    image_records = [line for line in lines if "image_template" in line]
+    assert len(image_records) >= 1, "image-match record not written"
+    record = image_records[0]
+    assert record["image_template"] == str(template_path)
+    assert record["match_confidence"] == 0.9
+    # Matched coords should fall inside the crop region with some tolerance.
+    assert 200 <= record["match_x"] <= 280
+    assert 200 <= record["match_y"] <= 280

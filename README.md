@@ -1,111 +1,126 @@
-# coord-smith
+# ez-ax
 
-좌표 기반 브라우저 자동화를 위한 Python-first 오케스트레이션 런타임.
+> Python CUA runtime — deterministic OS-coordinate clicking, driven by an external LLM
 
-## 주요 특징
+![python](https://img.shields.io/badge/python-3.14-blue)
+![license](https://img.shields.io/badge/license-MIT-green)
+![tests](https://img.shields.io/badge/tests-827%20passing-brightgreen)
+![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 
-- 12개 미션 deterministic 파이프라인 (세션 연결 → 클릭 → 완료)
-- LangGraph 상태 머신 기반 미션 시퀀싱
-- PyAutoGUI CUA 엔진 (좌표 클릭 + 스크린샷만 사용)
-- 런타임에 LLM 없음 — 외부 LLM(OpenClaw)이 추론 담당
-- 매 미션마다 evidence 기반 검증
+**ez-ax** is the *hands*. The *head* — an external LLM such as OpenClaw — decides what to click; ez-ax executes those decisions on the OS as coordinate clicks and screenshot evidence. Reasoning lives outside the runtime; the runtime itself contains zero LLM calls.
 
-## 기술 스택
+A run is a 12-mission pipeline driven by a LangGraph state machine. Each mission produces an evidence envelope (action-log JSONL, screenshots, transition diffs) before the next mission is allowed to start. No browser internals (Playwright / CDP / Chromium) are touched — only OS-level coordinates and pixels.
 
-| 영역 | 기술 |
-|------|------|
-| 언어 | Python 3.11 ~ 3.14 |
-| 상태 머신 | LangGraph |
-| 브라우저 제어 | PyAutoGUI (좌표 클릭 + 스크린샷) |
-| 외부 연동 | CLI + artifacts (OpenClaw ping-pong) |
-| 데이터 모델 | Pydantic v2 |
-| 타입 체크 | mypy (strict) |
-| 린팅 | ruff |
-| 테스트 | pytest + pytest-asyncio |
-| 패키지 관리 | uv |
+[한국어](./README.ko.md)
 
-## What's New on `feat/click-flow-via-recipe`
+## Pipeline
 
-본 브랜치는 main 대비 4 축으로 이전에 비어 있던 실행 경로를 메꿨습니다.
+The runtime walks 12 missions in order. Every mission is deterministic and produces evidence on disk before the next mission is allowed to start.
 
-- **Direction realignment (SOT 정리)** — `runCompletion` ceiling 이 15+ 문서에 일관되게 반영. `pageReadyObserved` 를 current ceiling 으로 주장하던 문장 0건(드리프트 가드 `test_docs_ceiling_truth.py` 가 상시 감시). FINAL_STOP hard-halt 규약을 코드·YAML·PRD·RAG 4 중 일치.
-- **PyAutoGUI 어댑터 견고화** — blanket-except 제거, `ExecutionTransportError` 하위 5 신규 typed exception (`AccessibilityPermissionDenied`, `ScreenCapturePermissionDenied`, `ScreenCaptureUnavailable`, `ClickExecutionUnverified`, `ClickCoordinatesOutOfBounds`). Preflight 로 권한 부재 즉시 포착 (exit code 2).
-- **Real click flow (OpenClaw 없이)** — `--click-recipe PATH` 또는 `EZAX_CLICK_RECIPE` env 로 정적 좌표 table 주입 → 실제 `pyautogui.click` 발사. Payload 가 있으면 payload 우선, 없으면 recipe fallback, 없으면 no-click. 실제 바이너리 통합 테스트 3 건(`pytest -m real`) 상시 검증.
-- **Tooling** — pre-commit (standard hooks + ruff/mypy/pytest unit+contract) + GitHub Actions CI (Python 3.11/3.12/3.13 matrix, Ubuntu + xvfb). 767 default passed + 3 real passed.
+| Mission | Role |
+|---------|------|
+| `attach_session` | Attach to an existing browser session via session-ref. |
+| `prepare_session` | Verify expected auth state and target page URL. |
+| `navigate_to_target` | Walk the cursor / scroll to the target region. |
+| `verify_target_visible` | Confirm the target is on-screen via screenshot. |
+| `click_dispatch` | Execute the click — payload coords, recipe coords, or recipe image. |
+| `await_response` | Wait for a deterministic post-click signal (image / transition diff). |
+| `verify_state_change` | Compare pre/post screenshots, threshold-based change ratio. |
+| `capture_evidence` | Persist screenshots + JSONL action log. |
+| `validate_envelope` | Schema-check the evidence envelope. |
+| `report_result` | Emit a transition summary. |
+| `seal_artifacts` | Atomic-write final artifacts. |
+| `run_completion` | Close the run with a sealed status code. |
 
-## Bootstrap
+Each mission emits a fixed past-tense action key (e.g. `click_dispatch` → `click-dispatched`) so the action log is machine-greppable.
 
-Fresh checkouts must sync dev extras before running tests; otherwise
-`pytest` collection fails with `ModuleNotFoundError: PIL|pyautogui`.
-
-```bash
-uv sync --extra dev
-uv run pytest -q            # expected: 767 passed, 1 skipped, 3 deselected
-uv run pre-commit install   # one-time: wire git hook
+```
+ OpenClaw (external LLM)
+      │  decisions, coords, image refs
+      ▼
+ ez-ax CLI ──▶ LangGraph state machine ──▶ 12 missions
+                                              │
+                            evidence envelope (JSONL + PNG)
+                                              │
+                                              ▼
+                                          OS (PyAutoGUI)
+                                              │
+                                  pixels  ◀──────────  cursor
+                                              │
+                            OpenCV match / PIL diff verifies
 ```
 
-## Development Checks
+## Prerequisites
 
-| Check | Command | 역할 |
-|-------|---------|------|
-| Lint | `uv run ruff check .` | 스타일·미사용 import·규칙 위반 |
-| Type | `uv run mypy` | `strict` 모드 타입 검사 |
-| Test (default) | `uv run pytest -q` | `-m real` 자동 제외 |
-| Test (real binary) | `uv run pytest -m real -q` | 권한 있는 로컬에서만 (macOS Accessibility + Screen Recording 필요) |
-| Pre-commit (전체) | `uv run pre-commit run --all-files` | 커밋 전 전수 검사 |
+- **Python 3.14** — pinned. Earlier minors are no longer supported by this repo.
+- **macOS** for real-binary tests: Accessibility + Screen Recording permissions.
+- **uv** as the package manager (`pip install uv` or `brew install uv`).
 
-## CI
+```bash
+python3.14 --version    # must be 3.14.x
+uv --version
+```
 
-`.github/workflows/ci.yml` 은 다음을 수행:
+## Install
 
-- **lint-type-test matrix**: Python 3.11 / 3.12 / 3.13 에서 ruff + mypy + pytest (기본). Ubuntu + xvfb 로 pyautogui import 를 헤드리스 환경에서 로드.
-- **pre-commit**: 모든 훅(표준 훅 + 로컬 ruff/mypy/pytest-unit-contract/bootstrap-assets) 전수 실행.
+### 1. Bootstrap the project
 
-둘 다 push / pull_request (main) 에서 동작. 동일 브랜치 동시 실행은 자동 취소(concurrency group).
+```bash
+git clone https://github.com/<your-org>/ez-ax.git
+cd ez-ax
+uv sync --extra dev
+```
 
-## Pre-commit
+`uv` will resolve and provision Python 3.14 automatically based on `requires-python` in `pyproject.toml`. If your system Python is older, install it first:
 
-로컬 git hook:
+```bash
+uv python install 3.14
+```
+
+### 2. Verify
+
+```bash
+uv run pytest -q                # 827 passed, 1 skipped, 4 deselected
+uv run ruff check .
+uv run mypy
+```
+
+The `-m real` suite is excluded by default (it drives the live cursor).
+
+### 3. Install the git hooks (once per clone)
 
 ```bash
 uv run pre-commit install
 ```
 
-등록되는 훅:
-- 표준(`pre-commit-hooks v5`): trailing whitespace (`*.md` 제외), end-of-file, check-yaml/json/toml, large-file guard(2MB), merge-conflict, mixed-line-ending(LF).
-- 프로젝트(`local`): ruff check, mypy, `tests/unit + tests/contract` pytest, bootstrap asset 테스트.
+### 4. (macOS) Grant permissions for real clicks
 
-`-m real` 테스트는 무거우므로 pre-commit 에서 빠집니다. CI 에서도 default pytest 만 돌고, real 은 수동 invocation (`pytest -m real`) 로만 실행합니다.
+System Settings → Privacy & Security:
 
-## Permissions (macOS)
+1. **Accessibility** — check the terminal app, then restart the terminal.
+2. **Screen Recording** — same path, same app.
 
-런타임(`ez-ax` 콘솔 스크립트) 이 실제로 클릭하고 스크린샷을 찍으려면
-**호스트 터미널 앱** 에 두 권한이 필요합니다. 둘 다 없으면 entrypoint 의
-`preflight` 단계에서 exit 코드 `2` 로 중단됩니다.
-
-1. **Accessibility** — `System Settings → Privacy & Security → Accessibility`
-   에서 사용 중인 터미널 앱(Terminal / iTerm / VS Code / Claude Code 등) 을
-   체크. 체크 후 해당 앱 재시작 필요.
-2. **Screen Recording** — 동일 경로의 `Screen Recording` 항목. 첫 실행 시
-   권한 프롬프트가 뜰 수 있고, 한 번 거부하면 수동으로 추가해야 합니다.
-
-권한 부여 후 real-binary integration 테스트로 검증:
+Then:
 
 ```bash
-uv run pytest -m real -q   # expected: 3 passed
+uv run pytest -m real -q        # 4 passed: preflight + screenshot + coord click + image self-locate
 ```
 
-`-m real` 을 붙이지 않은 기본 pytest 실행은 이 테스트들을 자동 skip 합니다.
+Without these permissions, `preflight()` exits with code `2`.
 
-## Click Recipes (OpenClaw 없이 실제 클릭하기)
+## Quickstart
 
-런타임의 released 그래프는 click_dispatch 같은 미션에 **빈 payload** 를
-넘긴다 — 원 설계상 OpenClaw 등 외부 액터가 payload 에 x/y 를 주입하도록
-되어 있기 때문. OpenClaw 연동이 없는 환경에서도 실제 브라우저 클릭을
-일으키려면 `click recipe` 를 사용한다. Recipe 는 미션 이름 → 좌표의
-정적 표로, JSON 파일 한 개다.
+Drive a real click without OpenClaw, using a recipe:
 
-**Recipe 파일 (`docs/recipes/sample-click-recipe.json`)**:
+```bash
+ez-ax --click-recipe ./recipe.json \
+      --session-ref my-session \
+      --expected-auth-state authenticated \
+      --target-page-url https://example.com \
+      --site-identity example
+```
+
+A minimal coordinate recipe:
 
 ```json
 {
@@ -116,59 +131,158 @@ uv run pytest -m real -q   # expected: 3 passed
 }
 ```
 
-**실행**:
+A layout-tolerant image recipe (recommended):
+
+```json
+{
+  "version": 1,
+  "missions": {
+    "click_dispatch": {
+      "image": "templates/buy-button.png",
+      "confidence": 0.9,
+      "grayscale": false
+    }
+  }
+}
+```
+
+**Coordinate priority**: payload (OpenClaw) → recipe coord → recipe image → no-click.
+
+## Click Recipes
+
+### Image-based clicking (OpenCV template matching)
+
+| Field | Meaning |
+|-------|---------|
+| `image` | Template path. Relative paths resolve from the recipe file. |
+| `confidence` | Match threshold 0.0–1.0. Default `0.9`. |
+| `region` | `[left, top, width, height]` to constrain the search. |
+| `grayscale` | Drop color for speed. Default `false`. |
+
+Failure modes are typed: `ImageTemplateNotFound`, `ImageMatchConfidenceLow`.
+
+### Page-transition verification (optional, off by default)
+
+```json
+{
+  "missions": {
+    "click_dispatch": {
+      "image": "templates/buy.png",
+      "verify_transition": true,
+      "transition_threshold": 0.02,
+      "transition_region": [0, 100, 1920, 800]
+    }
+  }
+}
+```
+
+Pre-click screenshot → click → post-click screenshot → `PIL.ImageChops.difference` bbox area / region area > threshold ⇒ pass. Below the threshold raises `PageTransitionNotDetected`.
+
+### Post-click signal polling (optional, off by default)
+
+```json
+{
+  "missions": {
+    "click_dispatch": {
+      "image": "templates/buy.png",
+      "post_click_signal": {
+        "image": "templates/loading-spinner.png",
+        "confidence": 0.85,
+        "timeout": 5.0,
+        "interval": 0.1
+      }
+    }
+  }
+}
+```
+
+Polls `locateCenterOnScreen` until the signal image appears. Timeout raises `ImageWaitTimeout`.
+
+## Autoloop
+
+Low-attention autonomous implementation loop:
 
 ```bash
-# CLI flag
-ez-ax --click-recipe ./recipe.json \
-    --session-ref my-session \
-    --expected-auth-state authenticated \
-    --target-page-url https://example.com \
-    --site-identity example
+# Dry run — print prompts without invoking claude
+uv run ez-ax-autoloop --dry-run
 
-# 또는 env var
-EZAX_CLICK_RECIPE=./recipe.json ez-ax --session-ref ...
+# Execute
+uv run ez-ax-autoloop --model claude-haiku-4-5-20251001 --max-cycles 10
 ```
 
-**우선순위**: 외부 액터가 payload 에 `x`/`y` 를 이미 넣어 보내면 그 값이
-recipe 보다 우선한다. Recipe 에 없는 미션은 클릭하지 않고 그대로 통과.
-Recipe 파일이 지정됐지만 로드 실패(파일 없음·JSON 오류·스키마 불일치) 시
-entrypoint 는 exit 3 으로 실패한다.
+Each cycle must pass the test / mypy / ruff gate before the next claude call is permitted. Settings are written atomically (`mkstemp + os.replace`) so an interrupted cycle never leaves partial state on disk.
 
-**주의사항**: recipe 좌표는 고정이다 — 페이지 레이아웃이 바뀌면 recipe 도
-함께 갱신해야 한다. 잘못된 좌표는 화면의 엉뚱한 UI 요소를 클릭할 수 있다.
-`pyautogui.FAILSAFE=True` 상태라 커서를 화면 모서리로 빠르게 옮기면 루프를
-중단시킬 수 있다.
+## CI & checks
 
-## 시작하기
+| Check | Command | Purpose |
+|-------|---------|---------|
+| Lint | `uv run ruff check .` | Style, unused imports, rule violations |
+| Types | `uv run mypy` | Strict typing |
+| Tests (default) | `uv run pytest -q` | `-m real` auto-excluded |
+| Tests (real binary) | `uv run pytest -m real -q` | macOS Accessibility + Screen Recording |
+| Pre-commit | `uv run pre-commit run --all-files` | Full sweep |
 
-개발 체크는 위 §Development Checks 표 참고. 요약:
+GitHub Actions runs Python 3.14 only (Ubuntu, xvfb for pyautogui import) plus a separate pre-commit job.
 
-```bash
-uv sync --extra dev
-uv run pytest -q             # 767 passed, 1 skipped, 3 deselected
-uv run mypy                  # 타입 체크
-uv run ruff check .          # 린팅
-```
+## Invariants
 
-## 아키텍처
+ez-ax has four hard invariants. Anything that violates them is rejected at PR time:
 
-```
-OpenClaw (외부 LLM) --> coord-smith CLI --> 12 미션 --> PyAutoGUI --> OS
-```
+1. **LLM-free runtime.** No model calls inside ez-ax. Reasoning lives in OpenClaw.
+2. **Browser-internals forbidden.** No Playwright, no CDP, no Chromium driver. OS coordinates and pixels only.
+3. **`pyautogui.FAILSAFE = True`** is enforced in `PyAutoGUIAdapter.__init__`. Slamming the cursor into a screen corner aborts the run instantly.
+4. **Coordinate priority is fixed.** payload → recipe coord → recipe image → no-click. Never the other way.
 
-OpenClaw이 MCP를 통해 추론 결정을 제공합니다. coord-smith는 deterministic
-오케스트레이션 루프를 담당합니다: 12개 순차 미션(attach_session ~ run_completion)을
-순서대로 실행하고, PyAutoGUI로 좌표 클릭을 수행하며, 스크린샷을 evidence로
-캡처하고, 각 전환을 검증한 후 다음 미션으로 진행합니다.
+OpenCV is allowed because it is a deterministic pixel-matching library — neither LLM nor browser.
 
-## 프로젝트 구조
+## Project structure
 
 ```
-src/ez_ax/          런타임 소스 (missions, graph, adapters, models)
-tests/              유닛 및 통합 테스트
-docs/               제품 스펙 및 아키텍처 문서
-docs/product/       PRD 세트
+src/ez_ax/
+  adapters/         execution adapters (PyAutoGUI, MCP, page-transition diff)
+  config/           settings models (ClickRecipe, RuntimeSettings)
+  evidence/         envelope parsing / validation
+  graph/            LangGraph nodes + CLI entrypoints
+  missions/         mission name registry
+  models/           runtime state, errors, checkpoints
+  rag/              autoloop driver, prompt paths
+  reporting/        transition summary
+  validation/       bootstrap-asset checks
+tests/
+  unit/             unit tests
+  contract/         architectural contract tests
+  integration/      real-binary tests (`-m real`)
+  e2e/              full-pipeline tests
+  fixtures/         fake MCP SDK, etc.
+docs/
+  prd.md            single source of truth
+  product/          PRD set
+  current-state.md  current implementation snapshot
+  recipes/          sample click recipes
 ```
 
-전체 스펙은 [docs/product/prd.md](docs/product/prd.md)를 참조하세요.
+## Naming
+
+- **ez-ax** — *easy axes*: the runtime swings two axes (coordinates and pixels) and asks no further questions.
+
+## Triad
+
+ez-ax fits between two sibling tools — independent processes, connected only through artifacts on disk:
+
+```
+OpenClaw (think)  ──▶  ez-ax (act)  ──▶  evidence envelope (record)
+   external LLM        deterministic        JSONL + PNG on disk
+                       OS-coord click
+```
+
+The split is deliberate: every component must be replaceable without touching the others.
+
+## Footnote
+
+> *"A click is the simplest possible bet on truth: pixels move or they don't."*
+
+ez-ax never reasons about a page. It clicks where it was told to click, and asks the screen whether anything changed. If the screen says no, the run fails — loudly, with evidence.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
