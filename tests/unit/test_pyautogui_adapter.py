@@ -282,6 +282,7 @@ def test_preflight_raises_when_cursor_does_not_move(tmp_path: Path) -> None:
     with (
         patch("pyautogui.position", side_effect=[start, start]),
         patch("pyautogui.moveTo"),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         with pytest.raises(AccessibilityPermissionDenied):
@@ -295,6 +296,7 @@ def test_preflight_raises_when_screenshot_denied(tmp_path: Path) -> None:
     with (
         patch("pyautogui.position", side_effect=[start, probed]),
         patch("pyautogui.moveTo"),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
         patch(
             "pyautogui.screenshot",
             side_effect=UnidentifiedImageError("screencapture denied"),
@@ -363,6 +365,41 @@ async def test_execute_no_click_when_recipe_has_no_entry(tmp_path: Path) -> None
         await adapter.execute(request)
 
     mock_click.assert_not_called()
+
+
+def test_preflight_probes_left_near_right_screen_edge(tmp_path: Path) -> None:
+    """Near the right screen edge the probe flips to −10 so it stays in bounds."""
+    from PIL import Image
+
+    # x=1918 → start.x + 10 = 1928 >= 1920 → probe_delta = -10 → probe_x = 1908
+    start = MagicMock(x=1918, y=500)
+    probed = MagicMock(x=1908, y=500)
+    valid_screenshot = Image.new("RGB", (1920, 1080), color="black")
+    with (
+        patch("pyautogui.position", side_effect=[start, probed]),
+        patch("pyautogui.moveTo"),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.screenshot", return_value=valid_screenshot),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        adapter.preflight()  # must NOT raise AccessibilityPermissionDenied
+
+
+def test_preflight_screenshot_unexpected_type_raises(tmp_path: Path) -> None:
+    """preflight() raises ScreenCaptureUnavailable when screenshot returns non-PIL."""
+    from ez_ax.models.errors import ScreenCaptureUnavailable
+
+    start = MagicMock(x=100, y=100)
+    probed = MagicMock(x=110, y=100)
+    with (
+        patch("pyautogui.position", side_effect=[start, probed]),
+        patch("pyautogui.moveTo"),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.screenshot", return_value="not-a-pil-image"),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path)
+        with pytest.raises(ScreenCaptureUnavailable, match="unexpected type"):
+            adapter.preflight()
 
 
 def test_pyautogui_adapter_sets_failsafe_on_init(tmp_path: Path) -> None:
@@ -846,6 +883,73 @@ async def test_post_click_signal_timeout_raises(tmp_path: Path) -> None:
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
         with pytest.raises(ImageWaitTimeout):
+            await adapter.execute(
+                ExecutionRequest(mission_name="click_dispatch", payload={})
+            )
+
+
+async def test_baseline_screenshot_unexpected_type_raises(tmp_path: Path) -> None:
+    """execute() raises ScreenCaptureUnavailable when baseline screenshot is non-PIL."""
+    from ez_ax.config.click_recipe import ClickRecipe
+    from ez_ax.models.errors import ScreenCaptureUnavailable
+
+    recipe = ClickRecipe.model_validate(
+        {
+            "missions": {
+                "click_dispatch": {
+                    "x": 100,
+                    "y": 100,
+                    "verify_transition": True,
+                },
+            },
+        }
+    )
+    # First screenshot() call is the baseline — return a non-PIL value.
+    with (
+        patch("pyautogui.click"),
+        patch("pyautogui.screenshot", return_value="not-a-pil-image"),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=100, y=100)),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        with pytest.raises(ScreenCaptureUnavailable, match="unexpected type"):
+            await adapter.execute(
+                ExecutionRequest(mission_name="click_dispatch", payload={})
+            )
+
+
+async def test_post_click_screenshot_unexpected_type_raises(tmp_path: Path) -> None:
+    """_verify_page_transition raises ScreenCaptureUnavailable for non-PIL post frame."""
+    from PIL import Image
+
+    from ez_ax.config.click_recipe import ClickRecipe
+    from ez_ax.models.errors import ScreenCaptureUnavailable
+
+    baseline = Image.new("RGB", (200, 200), color="white")
+
+    recipe = ClickRecipe.model_validate(
+        {
+            "missions": {
+                "click_dispatch": {
+                    "x": 100,
+                    "y": 100,
+                    "verify_transition": True,
+                    "transition_threshold": 0.01,
+                },
+            },
+        }
+    )
+    # First screenshot() = valid PIL baseline; second = non-PIL post-click frame.
+    with (
+        patch("pyautogui.click"),
+        patch(
+            "pyautogui.screenshot", side_effect=[baseline, "not-a-pil-image"]
+        ),
+        patch("pyautogui.size", return_value=MagicMock(width=1920, height=1080)),
+        patch("pyautogui.position", return_value=MagicMock(x=100, y=100)),
+    ):
+        adapter = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
+        with pytest.raises(ScreenCaptureUnavailable, match="unexpected type"):
             await adapter.execute(
                 ExecutionRequest(mission_name="click_dispatch", payload={})
             )

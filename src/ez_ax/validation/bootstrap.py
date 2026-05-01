@@ -29,7 +29,9 @@ class BootstrapAssetStatus:
 def bootstrap_asset_status(root: Path) -> BootstrapAssetStatus:
     """Return missing required/optional bootstrap assets for typed evidence."""
 
-    missing_optional = tuple(sorted(path for path in OPTIONAL_BOOTSTRAP_ASSETS))
+    missing_optional = tuple(
+        sorted(path for path in OPTIONAL_BOOTSTRAP_ASSETS if not (root / path).exists())
+    )
     return BootstrapAssetStatus(
         missing_required=tuple(missing_bootstrap_assets(root)),
         missing_optional=missing_optional,

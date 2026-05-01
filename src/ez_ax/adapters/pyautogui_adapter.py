@@ -213,14 +213,18 @@ class PyAutoGUIAdapter:
     def preflight(self) -> None:
         """Fail-loudly smoke test for OS permissions before any mission runs.
 
-        Accessibility check: move the cursor by +10 px on the X axis and
-        verify the new position matches. If the cursor does not move, macOS
-        Accessibility permission is missing for the host terminal app and
-        pyautogui is silently no-opping. Restores the original position.
+        Accessibility check: move the cursor by ±10 px on the X axis and
+        verify the new position matches. The probe direction is chosen at
+        runtime: +10 px when there is room to the right, −10 px when the
+        cursor is near the right screen edge (avoids boundary clipping that
+        would produce a false AccessibilityPermissionDenied). If the cursor
+        does not move, macOS Accessibility permission is missing for the
+        host terminal app and pyautogui is silently no-opping. Restores
+        the original position.
 
         The cold-start probe is preceded by a no-op moveTo to the current
         position so the CoreGraphics event pump is warm by the time the
-        real +10 px probe fires; on macOS the very first moveTo after a
+        real probe fires; on macOS the very first moveTo after a
         fresh pyautogui import can be dropped even when permission is
         actually granted, producing a flaky preflight failure. The warmup
         is genuinely no-op for permission detection (it targets the start
@@ -239,7 +243,9 @@ class PyAutoGUIAdapter:
         # Warmup: prime the CG event pump before the real probe.
         pyautogui.moveTo(start.x, start.y, duration=0)
         time.sleep(_POST_CLICK_SETTLE_SECONDS)
-        probe_x = start.x + 10
+        screen = pyautogui.size()
+        probe_delta = 10 if start.x + 10 < screen.width else -10
+        probe_x = start.x + probe_delta
         probe_y = start.y
         pyautogui.moveTo(probe_x, probe_y, duration=0)
         time.sleep(_POST_CLICK_SETTLE_SECONDS)
@@ -266,7 +272,12 @@ class PyAutoGUIAdapter:
             raise ScreenCaptureUnavailable(
                 f"preflight screenshot failed: {exc!r}"
             ) from exc
-        if image is None or image.size == (0, 0):
+        if not isinstance(image, PILImage):
+            raise ScreenCaptureUnavailable(
+                "preflight screenshot returned unexpected type: "
+                f"expected PIL.Image, got {type(image)!r}"
+            )
+        if image.size == (0, 0):
             raise ScreenCaptureUnavailable("preflight screenshot returned empty image")
 
     def _resolve_click_coords(
@@ -486,7 +497,10 @@ class PyAutoGUIAdapter:
                 f"post-click screenshot failed: {exc!r}"
             ) from exc
         if not isinstance(post, PILImage):
-            return
+            raise ScreenCaptureUnavailable(
+                "post-click screenshot returned unexpected type: "
+                f"expected PIL.Image, got {type(post)!r}"
+            )
         result = PageTransitionVerifier().verify_changed(
             baseline=baseline,
             post=post,
@@ -555,8 +569,12 @@ class PyAutoGUIAdapter:
                 raise ScreenCaptureUnavailable(
                     f"baseline screenshot failed: {exc!r}"
                 ) from exc
-            if isinstance(shot, PILImage):
-                baseline_frame = shot
+            if not isinstance(shot, PILImage):
+                raise ScreenCaptureUnavailable(
+                    "baseline screenshot returned unexpected type: "
+                    f"expected PIL.Image, got {type(shot)!r}"
+                )
+            baseline_frame = shot
 
         if coords is not None:
             ix, iy = coords
