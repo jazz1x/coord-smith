@@ -134,6 +134,40 @@ def test_mission_is_within_scope_enforces_prepare_session_ceiling() -> None:
     )
 
 
+def test_mission_is_within_scope_enforces_page_ready_observed_ceiling() -> None:
+    # Pin the boundary: page_ready_observation is the terminal mission for the
+    # pageReadyObserved ceiling.  Anything before it is allowed; anything after
+    # it (e.g. sync_observation, run_completion) is rejected.
+    assert (
+        mission_is_within_approved_scope(
+            mission_name="prepare_session",
+            approved_scope_ceiling="pageReadyObserved",
+        )
+        is True
+    )
+    assert (
+        mission_is_within_approved_scope(
+            mission_name="page_ready_observation",
+            approved_scope_ceiling="pageReadyObserved",
+        )
+        is True
+    )
+    assert (
+        mission_is_within_approved_scope(
+            mission_name="sync_observation",
+            approved_scope_ceiling="pageReadyObserved",
+        )
+        is False
+    )
+    assert (
+        mission_is_within_approved_scope(
+            mission_name="run_completion",
+            approved_scope_ceiling="pageReadyObserved",
+        )
+        is False
+    )
+
+
 def test_mission_is_within_approved_scope_rejects_unknown_mission_name() -> None:
     assert (
         mission_is_within_approved_scope(

@@ -23,6 +23,28 @@ RELEASED_SCOPE_CEILINGS: tuple[str, ...] = (
 )
 DEFAULT_RELEASED_SCOPE_CEILING: Literal["runCompletion"] = "runCompletion"
 
+# Ceiling name → terminal released mission name.  Indices are derived from
+# RELEASED_MISSIONS at call time so they stay correct when the tuple changes.
+# Keys must remain in lock-step with RELEASED_SCOPE_CEILINGS; values must be
+# valid RELEASED_MISSIONS entries.  Validated at import time below.
+_CEILING_TERMINAL_MISSION: dict[str, str] = {
+    "prepareSession": "prepare_session",
+    "pageReadyObserved": "page_ready_observation",
+    "runCompletion": "run_completion",
+}
+assert _CEILING_TERMINAL_MISSION.keys() == set(RELEASED_SCOPE_CEILINGS), (
+    f"_CEILING_TERMINAL_MISSION keys {set(_CEILING_TERMINAL_MISSION.keys())} "
+    f"must match RELEASED_SCOPE_CEILINGS {set(RELEASED_SCOPE_CEILINGS)}"
+)
+_invalid_terminals = [
+    v for v in _CEILING_TERMINAL_MISSION.values() if v not in RELEASED_MISSIONS
+]
+assert not _invalid_terminals, (
+    f"_CEILING_TERMINAL_MISSION values must all be valid RELEASED_MISSIONS entries; "
+    f"invalid: {_invalid_terminals}"
+)
+del _invalid_terminals
+
 
 def effective_scope_ceiling(approved_scope_ceiling: str) -> str:
     """Normalize unknown ceilings to the released ceiling."""
@@ -91,17 +113,8 @@ def mission_is_within_approved_scope(
 
     approved_scope_ceiling = effective_scope_ceiling(approved_scope_ceiling)
 
-    # Index-based scope ceiling check
-    ceiling_index_map = {
-        "prepareSession": 1,
-        "pageReadyObserved": 3,
-        "runCompletion": 11,
-    }
-
-    if approved_scope_ceiling not in ceiling_index_map:
-        return False
-
-    max_index = ceiling_index_map[approved_scope_ceiling]
+    terminal = _CEILING_TERMINAL_MISSION[approved_scope_ceiling]
+    max_index = RELEASED_MISSIONS.index(terminal)
     mission_index = RELEASED_MISSIONS.index(mission_name)
     return mission_index <= max_index
 

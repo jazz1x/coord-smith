@@ -7,7 +7,7 @@ Operational entrypoint for agents working in this repository.
 Fresh checkouts run, in order:
 
 1. `uv sync --extra dev` — installs runtime + dev deps from `pyproject.toml`.
-2. `uv run pytest -q` — expected: 698 passing, 1 skipped, 4 deselected.
+2. `uv run pytest -q` — expected: 703 passing, 1 skipped, 4 deselected.
 
 If pytest collection fails with `ModuleNotFoundError: PIL|pyautogui`, step 1
 did not complete.
