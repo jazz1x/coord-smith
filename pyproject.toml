@@ -11,7 +11,6 @@ requires-python = ">=3.14,<3.15"
 dependencies = [
   "langchain>=0.3.0",
   "langgraph>=0.3.0",
-  "mcp",
   "opencv-python>=4.10.0",
   "pyautogui>=0.9.54",
   "pydantic>=2.8.0",
@@ -43,6 +42,9 @@ markers = [
   "real: requires OS-level permissions (Accessibility + Screen Recording) and a real display; skipped by default",
 ]
 addopts = "-m 'not real'"
+filterwarnings = [
+  "ignore::UserWarning:langchain_core.*",
+]
 
 [tool.ruff]
 line-length = 88

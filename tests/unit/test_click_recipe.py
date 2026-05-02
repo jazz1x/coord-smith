@@ -203,3 +203,50 @@ def test_mission_click_remains_unaffected_by_union_resolution() -> None:
     )
     entry = recipe.missions["click_dispatch"]
     assert isinstance(entry, MissionClick)
+
+
+def test_load_click_recipe_resolves_post_click_signal_path(tmp_path: Path) -> None:
+    template = _make_template(tmp_path / "signal.png")
+    click_template = _make_template(tmp_path / "buy.png")
+    recipe_path = tmp_path / "recipe.json"
+    recipe_path.write_text(
+        json.dumps(
+            {
+                "missions": {
+                    "click_dispatch": {
+                        "image": "buy.png",
+                        "post_click_signal": {"image": "signal.png", "timeout": 3.0},
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    recipe = load_click_recipe(recipe_path)
+    entry = recipe.image_target_for("click_dispatch")
+    assert entry is not None
+    assert Path(entry.image) == click_template.resolve()
+    assert entry.post_click_signal is not None
+    assert Path(entry.post_click_signal.image) == template.resolve()
+
+
+def test_load_click_recipe_raises_when_post_click_signal_template_missing(
+    tmp_path: Path,
+) -> None:
+    click_template = _make_template(tmp_path / "buy.png")
+    recipe_path = tmp_path / "recipe.json"
+    recipe_path.write_text(
+        json.dumps(
+            {
+                "missions": {
+                    "click_dispatch": {
+                        "image": str(click_template),
+                        "post_click_signal": {"image": "missing-signal.png"},
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ConfigError, match="post-click signal"):
+        load_click_recipe(recipe_path)
