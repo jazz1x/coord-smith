@@ -77,7 +77,7 @@ async def _run(
     recipe_path, remaining_argv = _extract_click_recipe_arg(argv_list)
     recipe = _resolve_click_recipe(cli_path=recipe_path)
     adapter = PyAutoGUIAdapter(run_root=run_root, click_recipe=recipe)
-    adapter.preflight()
+    await adapter.preflight()
     await run_released_scope_from_argv_env(
         adapter=adapter, argv=remaining_argv, env=dict(os.environ)
     )

@@ -267,7 +267,6 @@ async def test_execute_sync_observation_node_wires_execution_wrapper(
         mission_name="sync_observation",
         evidence_refs=(
             "evidence://screenshot/sync-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/sync-observed",
         ),
     )
@@ -302,7 +301,6 @@ async def test_execute_run_completion_node_seeds_release_ceiling_stop(
         mission_name="run_completion",
         evidence_refs=(
                     "evidence://action-log/release-ceiling-stop",
-                    "evidence://text/fallback-reason",
                 ),
     )
     adapter = FakeExecutionAdapter(result=result)

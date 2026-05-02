@@ -41,13 +41,14 @@ def _pyautogui_warmup() -> None:
     time.sleep(0.1)
 
 
-def test_preflight_succeeds_on_permission_granted_host() -> None:
+@pytest.mark.asyncio
+async def test_preflight_succeeds_on_permission_granted_host() -> None:
     """preflight() must return without raising when permissions are granted."""
     import tempfile
 
     with tempfile.TemporaryDirectory() as tmp:
         adapter = PyAutoGUIAdapter(run_root=Path(tmp))
-        adapter.preflight()  # raises on permission failure; silence = pass
+        await adapter.preflight()  # raises on permission failure; silence = pass
 
 
 def test_screenshot_produces_real_png_file(tmp_path: Path) -> None:

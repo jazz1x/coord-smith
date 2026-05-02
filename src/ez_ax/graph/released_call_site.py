@@ -14,6 +14,7 @@ from ez_ax.adapters.execution.client import (
     action_log_artifact_path,
     execute_within_scope,
 )
+from ez_ax.evidence.envelope import enforce_evidence_priority_gate
 from ez_ax.missions.names import ALL_MISSIONS
 from ez_ax.models.errors import ConfigError, FlowError
 from ez_ax.models.runtime import RuntimeState
@@ -121,6 +122,7 @@ async def execute_prepare_session_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -153,6 +155,7 @@ async def execute_attach_session_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -183,6 +186,7 @@ async def execute_benchmark_validation_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -211,6 +215,7 @@ async def execute_page_ready_observation_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -239,6 +244,7 @@ async def execute_sync_observation_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -267,6 +273,7 @@ async def execute_target_actionability_observation_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -295,6 +302,7 @@ async def execute_armed_state_entry_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -323,6 +331,7 @@ async def execute_trigger_wait_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -351,6 +360,7 @@ async def execute_click_dispatch_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -379,6 +389,7 @@ async def execute_click_completion_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -407,6 +418,7 @@ async def execute_success_observation_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result
 
 
@@ -435,4 +447,5 @@ async def execute_run_completion_node(
         run_root=run.run_root,
     )
     state.mission_state.evidence_refs = result.evidence_refs
+    enforce_evidence_priority_gate(result)
     return result

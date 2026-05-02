@@ -44,7 +44,6 @@ async def test_execute_prepare_session_returns_fallback_evidence_refs(
     assert result.mission_name == "prepare_session"
     assert "evidence://action-log/prepare-session" in result.evidence_refs
     assert "evidence://screenshot/prepare-session-fallback" in result.evidence_refs
-    assert "evidence://text/fallback-reason" in result.evidence_refs
 
 
 async def test_execute_clicks_when_coordinates_given(tmp_path: Path) -> None:
@@ -269,7 +268,8 @@ async def test_capture_screenshot_raises_permission_error_on_unidentified_image(
             adapter._capture_screenshot("test-key")
 
 
-def test_preflight_raises_when_cursor_does_not_move(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_preflight_raises_when_cursor_does_not_move(tmp_path: Path) -> None:
     """moveTo silent no-op must surface as AccessibilityPermissionDenied.
 
     Simulates the macOS-Accessibility-denied path: pyautogui.moveTo does not
@@ -286,10 +286,11 @@ def test_preflight_raises_when_cursor_does_not_move(tmp_path: Path) -> None:
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         with pytest.raises(AccessibilityPermissionDenied):
-            adapter.preflight()
+            await adapter.preflight()
 
 
-def test_preflight_raises_when_screenshot_denied(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_preflight_raises_when_screenshot_denied(tmp_path: Path) -> None:
     """Screen Recording permission missing -> typed error at preflight."""
     start = MagicMock(x=100, y=100)
     probed = MagicMock(x=110, y=100)  # +10 probe reached — Accessibility OK
@@ -304,7 +305,7 @@ def test_preflight_raises_when_screenshot_denied(tmp_path: Path) -> None:
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         with pytest.raises(ScreenCapturePermissionDenied):
-            adapter.preflight()
+            await adapter.preflight()
 
 
 async def test_execute_uses_click_recipe_when_payload_lacks_coords(tmp_path: Path) -> None:
@@ -367,7 +368,8 @@ async def test_execute_no_click_when_recipe_has_no_entry(tmp_path: Path) -> None
     mock_click.assert_not_called()
 
 
-def test_preflight_probes_left_near_right_screen_edge(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_preflight_probes_left_near_right_screen_edge(tmp_path: Path) -> None:
     """Near the right screen edge the probe flips to −10 so it stays in bounds."""
     from PIL import Image
 
@@ -382,10 +384,11 @@ def test_preflight_probes_left_near_right_screen_edge(tmp_path: Path) -> None:
         patch("pyautogui.screenshot", return_value=valid_screenshot),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        adapter.preflight()  # must NOT raise AccessibilityPermissionDenied
+        await adapter.preflight()  # must NOT raise AccessibilityPermissionDenied
 
 
-def test_preflight_screenshot_unexpected_type_raises(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_preflight_screenshot_unexpected_type_raises(tmp_path: Path) -> None:
     """preflight() raises ScreenCaptureUnavailable when screenshot returns non-PIL."""
     from ez_ax.models.errors import ScreenCaptureUnavailable
 
@@ -399,7 +402,7 @@ def test_preflight_screenshot_unexpected_type_raises(tmp_path: Path) -> None:
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         with pytest.raises(ScreenCaptureUnavailable, match="unexpected type"):
-            adapter.preflight()
+            await adapter.preflight()
 
 
 def test_pyautogui_adapter_sets_failsafe_on_init(tmp_path: Path) -> None:
@@ -766,18 +769,20 @@ async def test_verify_transition_skipped_when_disabled(tmp_path: Path) -> None:
     assert mock_screenshot.call_count == 1
 
 
-def test_wait_for_image_returns_coords_on_first_match(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_wait_for_image_returns_coords_on_first_match(tmp_path: Path) -> None:
     """wait_for_image returns immediately when locateCenterOnScreen succeeds."""
     located = MagicMock(x=42, y=84)
     with patch("pyautogui.locateCenterOnScreen", return_value=located):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        result = adapter.wait_for_image(
+        result = await adapter.wait_for_image(
             path="/fake/template.png", timeout=1.0, interval=0.01
         )
     assert result == (42, 84)
 
 
-def test_wait_for_image_polls_until_match(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_wait_for_image_polls_until_match(tmp_path: Path) -> None:
     """wait_for_image keeps polling until a match appears."""
     located = MagicMock(x=10, y=20)
     side_effects: list[object] = [None, None, located]
@@ -785,21 +790,22 @@ def test_wait_for_image_polls_until_match(tmp_path: Path) -> None:
         "pyautogui.locateCenterOnScreen", side_effect=side_effects
     ) as mock_locate:
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        result = adapter.wait_for_image(
+        result = await adapter.wait_for_image(
             path="/fake/template.png", timeout=1.0, interval=0.01
         )
     assert result == (10, 20)
     assert mock_locate.call_count == 3
 
 
-def test_wait_for_image_raises_on_timeout(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_wait_for_image_raises_on_timeout(tmp_path: Path) -> None:
     """wait_for_image raises ImageWaitTimeout when no match appears in time."""
     from ez_ax.models.errors import ImageWaitTimeout
 
     with patch("pyautogui.locateCenterOnScreen", return_value=None):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         with pytest.raises(ImageWaitTimeout):
-            adapter.wait_for_image(
+            await adapter.wait_for_image(
                 path="/fake/template.png", timeout=0.05, interval=0.01
             )
 
@@ -953,3 +959,23 @@ async def test_post_click_screenshot_unexpected_type_raises(tmp_path: Path) -> N
             await adapter.execute(
                 ExecutionRequest(mission_name="click_dispatch", payload={})
             )
+
+
+def test_fallback_refs_covers_exactly_released_missions() -> None:
+    """_FALLBACK_REFS must stay in sync with RELEASED_MISSIONS.
+
+    Each released mission must have a fallback evidence tuple so that
+    standalone runs (without OpenClaw) produce a valid ExecutionResult.
+    Any drift between _FALLBACK_REFS and RELEASED_MISSIONS would silently
+    fall back to the generic action-log ref, bypassing per-mission validation.
+    """
+    from ez_ax.adapters.pyautogui_adapter import _FALLBACK_REFS
+    from ez_ax.missions.names import RELEASED_MISSIONS
+
+    expected = set(RELEASED_MISSIONS)
+    actual = set(_FALLBACK_REFS.keys())
+    assert actual == expected, (
+        f"_FALLBACK_REFS keys must match RELEASED_MISSIONS exactly.\n"
+        f"  Missing from _FALLBACK_REFS: {sorted(expected - actual)}\n"
+        f"  Extra in _FALLBACK_REFS:     {sorted(actual - expected)}"
+    )

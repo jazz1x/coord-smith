@@ -34,6 +34,21 @@ class ExecutionResult:
     mission_name: str
     evidence_refs: tuple[str, ...]
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.mission_name, str) or not self.mission_name.strip():
+            raise ValidationError(
+                "ExecutionResult.mission_name must be a non-empty string"
+            )
+        if not isinstance(self.evidence_refs, tuple):
+            raise ValidationError("ExecutionResult.evidence_refs must be a tuple")
+        for ref in self.evidence_refs:
+            try:
+                parse_released_evidence_ref(ref)
+            except (TypeError, ValueError) as exc:
+                raise ValidationError(
+                    f"ExecutionResult.evidence_refs contains invalid ref: '{ref}'"
+                ) from exc
+
 
 class ExecutionBoundary(Protocol):
     """Transport-neutral injected boundary for OpenClaw execution."""
@@ -218,7 +233,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/prepare-session-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/prepare-session",
         }
         required_sets = (primary, fallback)
@@ -230,7 +244,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         fallback = {
             "evidence://action-log/enter-target-page",
             "evidence://screenshot/target-page-entered-fallback",
-            "evidence://text/fallback-reason",
         }
         required_sets = (primary, fallback)
     elif result.mission_name == "page_ready_observation":
@@ -240,7 +253,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/page-shell-ready-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/page-ready-observed",
         }
         required_sets = (primary, fallback)
@@ -251,7 +263,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/sync-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/sync-observed",
         }
         required_sets = (primary, fallback)
@@ -262,7 +273,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/target-actionable-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/target-actionable-observed",
         }
         required_sets = (primary, fallback)
@@ -273,7 +283,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/armed-state-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/armed-state",
         }
         required_sets = (primary, fallback)
@@ -284,7 +293,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/trigger-wait-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/trigger-wait-complete",
         }
         required_sets = (primary, fallback)
@@ -295,7 +303,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/click-dispatched-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/click-dispatched",
         }
         required_sets = (primary, fallback)
@@ -306,7 +313,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/click-completed-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/click-completed",
         }
         required_sets = (primary, fallback)
@@ -317,7 +323,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/success-observation-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/success-observation",
         }
         required_sets = (primary, fallback)
@@ -327,7 +332,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/run-completion-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/release-ceiling-stop",
         }
         required_sets = (primary, fallback)
@@ -339,7 +343,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         }
         fallback = {
             "evidence://screenshot/attach-session-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/attach-session",
         }
         required_sets = (primary, fallback)

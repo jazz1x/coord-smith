@@ -1,10 +1,15 @@
 """Evidence envelope model for comparable artifacts."""
 
+from __future__ import annotations
+
 import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
+
+if TYPE_CHECKING:
+    from ez_ax.adapters.execution.client import ExecutionResult
 
 EvidenceKind = Literal["dom", "text", "clock", "action-log", "screenshot", "coordinate"]
 EvidencePriority = Literal[
@@ -168,6 +173,43 @@ def enforce_evidence_priority(
 
     msg = "No valid evidence kind found in observed_refs"
     raise ValueError(msg)
+
+
+_WEAK_EVIDENCE_KINDS: frozenset[EvidenceKind] = frozenset({"screenshot", "coordinate"})
+
+
+def enforce_evidence_priority_gate(result: ExecutionResult) -> EvidenceKind:
+    """Enforce evidence priority; reject results with only weak evidence.
+
+    Raises:
+        FlowError: If highest-priority kind is screenshot or coordinate
+                   (action-log or higher is required).
+    """
+    from ez_ax.models.errors import FlowError
+
+    if not result.evidence_refs:
+        raise FlowError(
+            f"Evidence priority gate failed for mission '{result.mission_name}': "
+            "evidence_refs is empty"
+        )
+
+    try:
+        refs = set(result.evidence_refs)
+        top_kind = cast(EvidenceKind, enforce_evidence_priority(refs))
+    except ValueError as exc:
+        raise FlowError(
+            f"Evidence priority gate failed for mission "
+            f"'{result.mission_name}': {exc}"
+        ) from exc
+
+    if top_kind in _WEAK_EVIDENCE_KINDS:
+        raise FlowError(
+            f"Evidence priority gate failed for mission '{result.mission_name}': "
+            f"highest evidence kind '{top_kind}' is insufficient "
+            "(minimum required: action-log)"
+        )
+
+    return top_kind
 
 
 def validate_release_ceiling_stop_proof(

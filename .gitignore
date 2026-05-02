@@ -40,3 +40,14 @@ site/
 
 # harnish autonomous-implementation work directory (local-only state)
 .harnish/
+
+# agent / skill infrastructure (auto-installed, not project source)
+.agents/
+.galmuri/
+skills-lock.json
+.claude/skills/python-anti-patterns
+.claude/skills/python-design-patterns
+.claude/skills/python-error-handling
+.claude/skills/python-performance-optimization
+.claude/skills/python-testing-patterns
+.claude/skills/python-type-safety

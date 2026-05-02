@@ -91,7 +91,6 @@ class ParameterTrackingAdapter:
             ),
             "run_completion": (
                 "evidence://action-log/release-ceiling-stop",
-                "evidence://text/fallback-reason",
             ),
         }
 

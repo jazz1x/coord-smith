@@ -13,7 +13,7 @@ from ez_ax.graph.pyautogui_cli_entrypoint import _run
 
 async def test_run_instantiates_pyautogui_adapter(tmp_path: Path) -> None:
     with (
-        patch.object(PyAutoGUIAdapter, "preflight"),
+        patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
         patch(
             "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
             new_callable=AsyncMock,
@@ -36,7 +36,7 @@ async def test_run_passes_run_root_to_adapter(tmp_path: Path) -> None:
         return MagicMock()
 
     with (
-        patch.object(PyAutoGUIAdapter, "preflight"),
+        patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
         patch(
             "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
             side_effect=_capture,
@@ -49,7 +49,7 @@ async def test_run_passes_run_root_to_adapter(tmp_path: Path) -> None:
 
 async def test_run_passes_argv_to_graph(tmp_path: Path) -> None:
     with (
-        patch.object(PyAutoGUIAdapter, "preflight"),
+        patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
         patch(
             "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
             new_callable=AsyncMock,
@@ -74,6 +74,7 @@ def test_main_returns_exit_code_2_when_preflight_fails(tmp_path: Path) -> None:
     with patch.object(
         PyAutoGUIAdapter,
         "preflight",
+        new_callable=AsyncMock,
         side_effect=AccessibilityPermissionDenied("no permission"),
     ):
         exit_code = main(argv=[])
@@ -158,7 +159,7 @@ async def test_run_passes_os_environ_as_env_to_graph(tmp_path: Path) -> None:
     sentinel = "test-session-ref-value"
 
     with (
-        patch.object(PyAutoGUIAdapter, "preflight"),
+        patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
         patch(
             "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
             new_callable=AsyncMock,

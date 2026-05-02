@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from datetime import UTC, datetime
@@ -37,62 +38,50 @@ from ez_ax.models.errors import (
 _FALLBACK_REFS: dict[str, tuple[str, ...]] = {
     "prepare_session": (
         "evidence://screenshot/prepare-session-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/prepare-session",
     ),
     "benchmark_validation": (
         "evidence://action-log/enter-target-page",
         "evidence://screenshot/target-page-entered-fallback",
-        "evidence://text/fallback-reason",
     ),
     "page_ready_observation": (
         "evidence://screenshot/page-shell-ready-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/page-ready-observed",
     ),
     "sync_observation": (
         "evidence://screenshot/sync-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/sync-observed",
     ),
     "target_actionability_observation": (
         "evidence://screenshot/target-actionable-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/target-actionable-observed",
     ),
     "armed_state_entry": (
         "evidence://screenshot/armed-state-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/armed-state",
     ),
     "trigger_wait": (
         "evidence://screenshot/trigger-wait-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/trigger-wait-complete",
     ),
     "click_dispatch": (
         "evidence://screenshot/click-dispatched-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/click-dispatched",
     ),
     "click_completion": (
         "evidence://screenshot/click-completed-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/click-completed",
     ),
     "success_observation": (
         "evidence://screenshot/success-observation-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/success-observation",
     ),
     "run_completion": (
         "evidence://screenshot/run-completion-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/release-ceiling-stop",
     ),
     "attach_session": (
         "evidence://screenshot/attach-session-fallback",
-        "evidence://text/fallback-reason",
         "evidence://action-log/attach-session",
     ),
 }
@@ -182,9 +171,9 @@ class PyAutoGUIAdapter:
                 f"({size.width}x{size.height})"
             )
 
-    def _verified_click(self, x: int, y: int) -> None:
+    async def _verified_click(self, x: int, y: int) -> None:
         pyautogui.click(x, y)
-        time.sleep(_POST_CLICK_SETTLE_SECONDS)
+        await asyncio.sleep(_POST_CLICK_SETTLE_SECONDS)
         actual = pyautogui.position()
         if (
             abs(actual.x - x) > _CLICK_POSITION_TOLERANCE_PX
@@ -210,7 +199,7 @@ class PyAutoGUIAdapter:
                 self._capture_screenshot(screenshot_key)
         return mission_refs
 
-    def preflight(self) -> None:
+    async def preflight(self) -> None:
         """Fail-loudly smoke test for OS permissions before any mission runs.
 
         Accessibility check: move the cursor by ±10 px on the X axis and
@@ -242,13 +231,13 @@ class PyAutoGUIAdapter:
             ) from exc
         # Warmup: prime the CG event pump before the real probe.
         pyautogui.moveTo(start.x, start.y, duration=0)
-        time.sleep(_POST_CLICK_SETTLE_SECONDS)
+        await asyncio.sleep(_POST_CLICK_SETTLE_SECONDS)
         screen = pyautogui.size()
         probe_delta = 10 if start.x + 10 < screen.width else -10
         probe_x = start.x + probe_delta
         probe_y = start.y
         pyautogui.moveTo(probe_x, probe_y, duration=0)
-        time.sleep(_POST_CLICK_SETTLE_SECONDS)
+        await asyncio.sleep(_POST_CLICK_SETTLE_SECONDS)
         after = pyautogui.position()
         if (
             abs(after.x - probe_x) > _CLICK_POSITION_TOLERANCE_PX
@@ -437,7 +426,7 @@ class PyAutoGUIAdapter:
         with path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry) + "\n")
 
-    def wait_for_image(
+    async def wait_for_image(
         self,
         *,
         path: str,
@@ -471,7 +460,7 @@ class PyAutoGUIAdapter:
                 if last_exc is not None:
                     raise ImageWaitTimeout(msg) from last_exc
                 raise ImageWaitTimeout(msg)
-            time.sleep(interval)
+            await asyncio.sleep(interval)
 
     def _mission_target(
         self, mission: str
@@ -520,7 +509,7 @@ class PyAutoGUIAdapter:
                 f"change_ratio={result.change_ratio:.4f} < {threshold:.4f}"
             )
 
-    def _await_post_click_signal(
+    async def _await_post_click_signal(
         self, *, mission: str, signal: PostClickSignal
     ) -> None:
         """Poll for the configured post-click image and log the outcome."""
@@ -531,7 +520,7 @@ class PyAutoGUIAdapter:
                 f"'{mission}': {signal_path}"
             )
         start = time.monotonic()
-        x, y = self.wait_for_image(
+        x, y = await self.wait_for_image(
             path=str(signal_path),
             timeout=signal.timeout,
             interval=signal.interval,
@@ -579,7 +568,7 @@ class PyAutoGUIAdapter:
         if coords is not None:
             ix, iy = coords
             self._validate_bounds(ix, iy)
-            self._verified_click(ix, iy)
+            await self._verified_click(ix, iy)
 
         if baseline_frame is not None and target is not None:
             self._verify_page_transition(
@@ -594,7 +583,7 @@ class PyAutoGUIAdapter:
             and target is not None
             and target.post_click_signal is not None
         ):
-            self._await_post_click_signal(
+            await self._await_post_click_signal(
                 mission=mission, signal=target.post_click_signal
             )
 

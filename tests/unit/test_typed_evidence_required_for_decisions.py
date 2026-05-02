@@ -118,7 +118,6 @@ class TypedEvidenceFakeExecutionAdapter:
             ),
             "run_completion": (
                 "evidence://action-log/release-ceiling-stop",
-                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name, ())

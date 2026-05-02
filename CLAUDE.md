@@ -2,6 +2,89 @@
 
 Operational entrypoint for agents working in this repository.
 
+## Project Goal
+
+ez-ax는 **클릭 규칙(recipe)을 받아 OS 레벨에서 실행하고, 그 결과를 타입화된 증거로 반환하는 오케스트레이터**다.
+브라우저를 직접 다루지 않는다. 클릭할 위치를 스스로 결정하지 않는다.
+
+### 시스템 내 역할
+
+```yaml
+caller: OpenClaw          # 외부 AI 추론 레이어. ez-ax를 호출하는 쪽.
+ez_ax_owns:
+  - 미션 그래프 순회 (LangGraph)
+  - 클릭 규칙 실행 (pyautogui)
+  - 증거 수집 및 검증
+  - 릴리스 경계 강제 (runCompletion 이하)
+ez_ax_does_not_own:
+  - 브라우저 내부 (DOM, CDP, Playwright)
+  - 런타임 LLM 추론
+  - "무엇을 클릭할지" 판단 — 그것은 호출자(OpenClaw)의 역할
+```
+
+### 입력 계약
+
+```yaml
+required:
+  session_ref:         "세션 식별자"
+  expected_auth_state: "인증 선행 조건"
+  target_page_url:     "액션이 일어날 페이지 URL"
+  site_identity:       "사이트 식별자"
+
+click_rule:            # 선택. 없으면 클릭 없이 통과.
+  source: "--click-recipe PATH  또는  EZAX_CLICK_RECIPE 환경변수"
+  format: "JSON (런타임 파싱) / YAML (사람·AI 작성 권장)"
+  coord_priority: "payload(OpenClaw) > recipe coord > recipe image > no-click"
+```
+
+### 클릭 규칙 포맷 (YAML — 사람과 AI 모두 이 형태로 작성)
+
+```yaml
+version: 1
+missions:
+  click_dispatch:
+    # 방법 A: 고정 픽셀 좌표
+    x: 400
+    y: 300
+
+    # 방법 B: 스크린샷 템플릿 매칭 (OpenCV)
+    # image: templates/submit-button.png
+    # confidence: 0.9          # 0~1, 기본 0.9
+    # region: [0, 500, 1920, 600]  # [x, y, width, height]
+
+    # 선택: 클릭 후 페이지 전환 감지
+    verify_transition: true
+    transition_threshold: 0.01
+
+    # 선택: 클릭 후 특정 이미지가 나타날 때까지 폴링
+    post_click_signal:
+      image: templates/success-toast.png
+      confidence: 0.85
+      timeout: 5.0
+      interval: 0.1
+```
+
+AI에게 레시피 생성을 요청할 때는 Pydantic 스키마를 프롬프트에 첨부한다:
+
+```bash
+python -c "import json; from ez_ax.config.click_recipe import ClickRecipe; \
+           print(json.dumps(ClickRecipe.model_json_schema(), indent=2))"
+```
+
+### 출력 계약
+
+```yaml
+artifacts: "artifacts/runs/<run_id>/"
+evidence_types:
+  action_log: "artifacts/action-log/<key>.jsonl"
+  screenshot:  "artifacts/screenshot/<key>.png"
+exit_codes:
+  0: 정상
+  1: 런타임 에러
+  2: macOS Accessibility / Screen Recording 권한 없음
+  3: 레시피 파일 누락·스키마 오류
+```
+
 ## Bootstrap
 
 Fresh checkouts run, in order:

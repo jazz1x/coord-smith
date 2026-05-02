@@ -117,7 +117,6 @@ class FakeExecutionAdapter:
                 mission_name="run_completion",
                 evidence_refs=(
                     "evidence://action-log/release-ceiling-stop",
-                    "evidence://text/fallback-reason",
                 ),
             )
         raise AssertionError(f"Unexpected mission: {request.mission_name}")
