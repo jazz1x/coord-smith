@@ -33,8 +33,8 @@ ez-ax \
   --click-recipe       <path/to/recipe.yaml>
 ```
 
-All flags are optional except the recipe path; omitting it runs the pipeline
-with no click (useful for smoke-testing the evidence pipeline).
+All flags are optional, including `--click-recipe`. Omitting the recipe runs
+the pipeline with no click (useful for smoke-testing the evidence pipeline).
 
 ---
 

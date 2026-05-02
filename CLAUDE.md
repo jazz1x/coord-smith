@@ -33,7 +33,7 @@ required:
 
 click_rule:            # 선택. 없으면 클릭 없이 통과.
   source: "--click-recipe PATH  또는  EZAX_CLICK_RECIPE 환경변수"
-  format: "JSON (런타임 파싱) / YAML (사람·AI 작성 권장)"
+  format: "YAML (.yaml/.yml) 또는 JSON — 둘 다 런타임 파싱 지원. YAML 권장."
   coord_priority: "payload(OpenClaw) > recipe coord > recipe image > no-click"
 ```
 
