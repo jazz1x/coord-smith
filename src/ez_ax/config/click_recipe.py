@@ -27,6 +27,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+import yaml
 from pydantic import BaseModel, Field
 from pydantic import ValidationError as PydanticValidationError
 
@@ -100,21 +101,29 @@ class ClickRecipe(BaseModel):
 
 
 def load_click_recipe(path: Path) -> ClickRecipe:
-    """Load and validate a click recipe from a JSON file.
+    """Load and validate a click recipe from a JSON or YAML file.
 
     Image paths within the recipe are resolved relative to the recipe file's
-    directory so users can keep templates next to the recipe JSON. Absolute
-    image paths are preserved unchanged. Raises ``ConfigError`` if the file
-    is missing, malformed, has the wrong shape, or references a nonexistent
+    directory so users can keep templates next to the recipe. Absolute image
+    paths are preserved unchanged. Raises ``ConfigError`` if the file is
+    missing, malformed, has the wrong shape, or references a nonexistent
     template.
+
+    Both ``.json`` and ``.yaml``/``.yml`` extensions are accepted. YAML is
+    preferred for human and agent authoring; JSON is accepted for backwards
+    compatibility. Files with any other extension are parsed as JSON.
     """
     if not path.exists():
         raise ConfigError(f"click recipe not found: {path}")
+    text = path.read_text(encoding="utf-8")
     try:
-        data: Any = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
+        if path.suffix.lower() in {".yaml", ".yml"}:
+            data: Any = yaml.safe_load(text)
+        else:
+            data = json.loads(text)
+    except (yaml.YAMLError, json.JSONDecodeError) as exc:
         raise ConfigError(
-            f"click recipe {path} is not valid JSON: {exc}"
+            f"click recipe {path} could not be parsed: {exc}"
         ) from exc
     try:
         recipe = ClickRecipe.model_validate(data)
