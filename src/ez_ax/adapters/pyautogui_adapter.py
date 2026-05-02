@@ -23,6 +23,7 @@ from ez_ax.config.click_recipe import (
     MissionImageClick,
     PostClickSignal,
 )
+from ez_ax.evidence.envelope import parse_released_evidence_ref
 from ez_ax.models.errors import (
     AccessibilityPermissionDenied,
     ClickCoordinatesOutOfBounds,
@@ -191,12 +192,11 @@ class PyAutoGUIAdapter:
             self._write_action_log(key=action_key, mission_name=mission)
             return (_GENERIC_ACTION_LOG_REF,)
         for ref in mission_refs:
-            if ref.startswith("evidence://action-log/"):
-                action_key = ref[len("evidence://action-log/") :]
-                self._write_action_log(key=action_key, mission_name=mission)
-            elif ref.startswith("evidence://screenshot/"):
-                screenshot_key = ref[len("evidence://screenshot/") :]
-                self._capture_screenshot(screenshot_key)
+            kind, key = parse_released_evidence_ref(ref)
+            if kind == "action-log":
+                self._write_action_log(key=key, mission_name=mission)
+            elif kind == "screenshot":
+                self._capture_screenshot(key)
         return mission_refs
 
     async def preflight(self) -> None:
@@ -313,6 +313,10 @@ class PyAutoGUIAdapter:
             raise ImageTemplateNotFound(
                 f"image template not found for mission '{mission}': {template_path}"
             )
+        _not_matched = (
+            f"image template not matched for mission '{mission}' "
+            f"at confidence>={target.confidence}: {template_path}"
+        )
         try:
             located = pyautogui.locateCenterOnScreen(
                 str(template_path),
@@ -321,15 +325,9 @@ class PyAutoGUIAdapter:
                 grayscale=target.grayscale,
             )
         except pyautogui.ImageNotFoundException as exc:
-            raise ImageMatchConfidenceLow(
-                f"image template not matched for mission '{mission}' "
-                f"at confidence>={target.confidence}: {template_path}"
-            ) from exc
+            raise ImageMatchConfidenceLow(_not_matched) from exc
         if located is None:
-            raise ImageMatchConfidenceLow(
-                f"image template not matched for mission '{mission}' "
-                f"at confidence>={target.confidence}: {template_path}"
-            )
+            raise ImageMatchConfidenceLow(_not_matched)
         cx, cy = int(located.x), int(located.y)
         self._write_image_match_log(
             mission=mission,
@@ -351,8 +349,9 @@ class PyAutoGUIAdapter:
         refs = _FALLBACK_REFS.get(mission)
         if refs is not None:
             for ref in refs:
-                if ref.startswith("evidence://action-log/"):
-                    return ref[len("evidence://action-log/") :]
+                kind, key = parse_released_evidence_ref(ref)
+                if kind == "action-log":
+                    return key
         return mission.replace("_", "-")
 
     def _write_image_match_log(
