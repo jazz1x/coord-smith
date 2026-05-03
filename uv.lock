@@ -110,6 +110,7 @@ dependencies = [
     { name = "opencv-python" },
     { name = "pyautogui" },
     { name = "pydantic" },
+    { name = "pyyaml" },
 ]
 
 [package.optional-dependencies]
@@ -121,6 +122,7 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "ruff" },
     { name = "types-pyautogui" },
+    { name = "types-pyyaml" },
 ]
 
 [package.metadata]
@@ -135,8 +137,10 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.8.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11.0" },
     { name = "types-pyautogui", marker = "extra == 'dev'" },
+    { name = "types-pyyaml", marker = "extra == 'dev'" },
 ]
 provides-extras = ["dev"]
 
@@ -985,6 +989,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fe/ca/3d985f56303380bc028ec156f09f82479e6ebd21c7a4e1300108d4b9547c/types_pyscreeze-1.0.1.20250801.tar.gz", hash = "sha256:3780fadab237fca7e2ccb72928e36d04ef8a9cc93c5f5bdad7aff7a24e20004f", size = 9145, upload-time = "2025-08-01T03:48:49.18Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7d/26/a1c2148014d0879bea6765402be1ebcc673317772174daabeb1b50b6ae15/types_pyscreeze-1.0.1.20250801-py3-none-any.whl", hash = "sha256:2a01abe6bac94ba9d97ce9d5f89c8e025443831f72309f1bd410a5fad45c6758", size = 8649, upload-time = "2025-08-01T03:48:48.364Z" },
+]
+
+[[package]]
+name = "types-pyyaml"
+version = "6.0.12.20260408"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/73/b759b1e413c31034cc01ecdfb96b38115d0ab4db55a752a3929f0cd449fd/types_pyyaml-6.0.12.20260408.tar.gz", hash = "sha256:92a73f2b8d7f39ef392a38131f76b970f8c66e4c42b3125ae872b7c93b556307", size = 17735, upload-time = "2026-04-08T04:30:50.974Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1c/f0/c391068b86abb708882c6d75a08cd7d25b2c7227dab527b3a3685a3c635b/types_pyyaml-6.0.12.20260408-py3-none-any.whl", hash = "sha256:fbc42037d12159d9c801ebfcc79ebd28335a7c13b08a4cfbc6916df78fee9384", size = 20339, upload-time = "2026-04-08T04:30:50.113Z" },
 ]
 
 [[package]]

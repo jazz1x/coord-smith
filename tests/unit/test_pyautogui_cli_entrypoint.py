@@ -20,7 +20,7 @@ async def test_run_instantiates_pyautogui_adapter(tmp_path: Path) -> None:
             return_value=MagicMock(),
         ) as mock_run,
     ):
-        exit_code = await _run(run_root=tmp_path)
+        exit_code = await _run(base_dir=tmp_path)
 
     assert exit_code == 0
     mock_run.assert_called_once()
@@ -42,7 +42,7 @@ async def test_run_passes_run_root_to_adapter(tmp_path: Path) -> None:
             side_effect=_capture,
         ),
     ):
-        await _run(run_root=tmp_path)
+        await _run(base_dir=tmp_path)
 
     assert captured[0]._run_root == tmp_path
 
@@ -58,7 +58,7 @@ async def test_run_passes_argv_to_graph(tmp_path: Path) -> None:
     ):
         await _run(
             argv=["--session-ref", "s", "--expected-auth-state", "a"],
-            run_root=tmp_path,
+            base_dir=tmp_path,
         )
 
     call_argv = mock_run.call_args.kwargs["argv"]
@@ -167,7 +167,7 @@ async def test_run_passes_os_environ_as_env_to_graph(tmp_path: Path) -> None:
         ) as mock_run,
         patch.dict("os.environ", {"EZAX_SESSION_REF": sentinel}),
     ):
-        await _run(run_root=tmp_path)
+        await _run(base_dir=tmp_path)
 
     call_env = mock_run.call_args.kwargs["env"]
     assert call_env is not None, "env kwarg must be passed"

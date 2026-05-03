@@ -14,7 +14,6 @@ from ez_ax.config.click_recipe import ClickRecipe, load_click_recipe
 from ez_ax.graph.released_cli_shim import run_released_scope_from_argv_env
 from ez_ax.models.errors import ConfigError, ExecutionTransportError
 
-_DEFAULT_RUN_ROOT = Path("artifacts/runs/default")
 ENV_CLICK_RECIPE = "EZAX_CLICK_RECIPE"
 
 _USAGE = """\
@@ -23,7 +22,7 @@ Usage: ez-ax [--click-recipe PATH] \\
              --target-page-url URL --site-identity STR
 
 Options:
-  --click-recipe PATH   JSON recipe mapping mission_name -> {x, y} coords.
+  --click-recipe PATH   YAML or JSON recipe mapping mission_name -> click target.
                         Also accepts the EZAX_CLICK_RECIPE env var.
                         Required for actual browser clicks when no external
                         caller injects payload coords.
@@ -34,7 +33,7 @@ Options:
 
 Exit codes:
   0 normal      1 runtime error     2 permission preflight failed
-  3 recipe load error (missing / invalid JSON / schema)
+  3 recipe load error (missing / invalid YAML or JSON / schema)
 
 See README §Click Recipes and §Permissions (macOS) for details.
 """
@@ -70,16 +69,16 @@ def _resolve_click_recipe(
 async def _run(
     *,
     argv: Sequence[str] | None = None,
-    run_root: Path = _DEFAULT_RUN_ROOT,
+    base_dir: Path = Path("."),
 ) -> int:
     """Instantiate PyAutoGUIAdapter, preflight OS permissions, then run the graph."""
     argv_list = list(argv or [])
     recipe_path, remaining_argv = _extract_click_recipe_arg(argv_list)
     recipe = _resolve_click_recipe(cli_path=recipe_path)
-    adapter = PyAutoGUIAdapter(run_root=run_root, click_recipe=recipe)
+    adapter = PyAutoGUIAdapter(run_root=base_dir, click_recipe=recipe)
     await adapter.preflight()
     await run_released_scope_from_argv_env(
-        adapter=adapter, argv=remaining_argv, env=dict(os.environ)
+        adapter=adapter, argv=remaining_argv, env=dict(os.environ), base_dir=base_dir
     )
     return 0
 
