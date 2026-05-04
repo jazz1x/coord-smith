@@ -4,7 +4,7 @@
 
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![tests](https://img.shields.io/badge/tests-720%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-721%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 
 **ez-ax** is the *hands*. The *head* — an external LLM such as OpenClaw — decides what to click; ez-ax executes those decisions on the OS as coordinate clicks and screenshot evidence. Reasoning lives outside the runtime; the runtime itself contains zero LLM calls.
@@ -80,7 +80,7 @@ uv python install 3.14
 ### 2. Verify
 
 ```bash
-uv run pytest -q                # 720 passed, 1 skipped, 4 deselected
+uv run pytest -q                # 721 passed, 1 skipped, 4 deselected
 uv run ruff check .
 uv run mypy
 ```

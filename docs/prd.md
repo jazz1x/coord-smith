@@ -129,6 +129,10 @@ The following are not in scope for casual change:
 - presenting modeled behavior as released behavior
 - TypeScript runtime revival under the active runtime path
 - Bun-first canonical runtime or validation direction
+- MCP transport adoption — permanently out of scope. The active transport
+  between `OpenClaw` and `ez-ax` is CLI subprocess (`ez-ax --click-recipe`
+  → exit code + `artifacts/`). Prior `mcp_stdio` scaffold modules were
+  removed; reviving MCP requires a new PRD that supersedes this decision.
 
 ## Invariant Reading
 
