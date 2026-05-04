@@ -9,7 +9,7 @@ changeable and subordinate to `docs/prd.md`.
 
 - Python 3.14 pinned (`requires-python = ">=3.14,<3.15"`).
 - Released ceiling: `runCompletion` — all 12 missions released.
-- Test count: 720 passing, 1 skipped, 4 deselected (`-m real`).
+- Test count: 727 passing, 1 skipped, 4 deselected (`-m real`).
 - Static checks: ruff clean, mypy strict clean, pre-commit clean.
 
 ## Architecture

@@ -1,4 +1,13 @@
-"""Typed runtime config + precedence resolution for MCP stdio acquisition."""
+"""Typed runtime config + precedence resolution for MCP stdio acquisition.
+
+.. note::
+   **Inactive scaffold.** OpenClaw uses CLI subprocess transport, not MCP.
+   The released path (``pyautogui_cli_entrypoint`` →
+   ``run_released_scope_from_argv_env``) does not import any symbol from here.
+   The scaffold is preserved per ``docs/prd.md`` Non-Goals: it documents the
+   shape of an MCP transport if ever revived, but no MCP server is implemented.
+   Do not add new dependencies on this module from the released path.
+"""
 
 from __future__ import annotations
 

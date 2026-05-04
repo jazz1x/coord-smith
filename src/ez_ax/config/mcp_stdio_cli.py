@@ -1,5 +1,10 @@
 """Modeled-only CLI parsing for MCP stdio constructor inputs.
 
+.. note::
+   **Inactive scaffold.** Companion to ``ez_ax.config.mcp_stdio`` — see that
+   module's docstring. The released path does not invoke this CLI. Preserved
+   for shape only.
+
 This module does not widen released-scope argv/env contracts. It provides an
 explicit argv-only helper so harnesses can build `McpStdioConstructorConfig`
 deterministically without inventing environment variables.

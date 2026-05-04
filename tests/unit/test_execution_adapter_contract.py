@@ -1227,3 +1227,25 @@ def test_validate_execution_roundtrip_within_scope_rejects_mission_mismatch() ->
         assert "must match request mission_name" in str(exc)
     else:
         raise AssertionError("Expected mission mismatch to be rejected")
+
+
+def test_validate_execution_result_covers_every_released_mission() -> None:
+    """validate_execution_result must enforce per-mission required_sets for all
+    released missions. If a mission falls through to the ``required_sets = ()``
+    branch, no validation is applied — silent acceptance of any evidence_refs
+    shape. This guard prevents that drift when RELEASED_MISSIONS grows.
+    """
+    from ez_ax.missions.names import RELEASED_MISSIONS
+
+    # A result whose evidence_refs deliberately do NOT match either primary
+    # or fallback set for the mission. If validate_execution_result has a
+    # required_sets entry for this mission, it must raise.
+    decoy_refs = ("evidence://action-log/this-key-cannot-match-any-mission-spec",)
+
+    for mission in RELEASED_MISSIONS:
+        result = ExecutionResult(
+            mission_name=mission,
+            evidence_refs=decoy_refs,
+        )
+        with pytest.raises(ValueError, match="missing required minimum keys"):
+            validate_execution_result(result)
