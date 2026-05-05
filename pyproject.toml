@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "coord-smith"
-version = "0.1.0"
+version = "0.0.1"
 description = "Python-first runtime scaffold for coord-smith."
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
