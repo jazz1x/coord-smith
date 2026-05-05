@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 class AppError(Exception):
-    """Base class for typed ez-ax runtime errors."""
+    """Base class for typed coord-smith runtime errors."""
 
 
 class ConfigError(AppError):

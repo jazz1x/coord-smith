@@ -1,4 +1,4 @@
-"""Test that ez-ax is not a browser automation engine.
+"""Test that coord-smith is not a browser automation engine.
 
 PRD requirement (Purpose section, line 15):
 'It is not a browser automation engine.'
@@ -97,7 +97,7 @@ def test_runtime_graph_does_not_import_browser_automation_libraries() -> None:
     all browser operations to the OpenClaw adapter.
     """
     project_root = _get_project_root()
-    graph_dir = project_root / "src" / "ez_ax" / "graph"
+    graph_dir = project_root / "src" / "coord_smith" / "graph"
 
     if not graph_dir.exists():
         pytest.skip("graph directory not found")
@@ -135,7 +135,7 @@ def test_released_scope_delegates_browser_ops_through_adapter() -> None:
     """
     project_root = _get_project_root()
     released_entrypoint = (
-        project_root / "src" / "ez_ax" / "graph" / "released_entrypoint.py"
+        project_root / "src" / "coord_smith" / "graph" / "released_entrypoint.py"
     )
 
     if not released_entrypoint.exists():
@@ -166,7 +166,7 @@ def test_purpose_confirms_orchestration_over_browser_automation() -> None:
     3. OpenClaw is the sole executor of browser operations
     4. Runtime itself contains no browser control logic
     """
-    from ez_ax.graph.released_entrypoint import run_released_scope
+    from coord_smith.graph.released_entrypoint import run_released_scope
 
     # Verify that the runtime accepts an adapter (orchestration pattern)
     # rather than implementing browser control directly

@@ -4,14 +4,14 @@ import warnings
 from dataclasses import dataclass, field
 from typing import Literal
 
-from ez_ax.missions.names import (
+from coord_smith.missions.names import (
     ALL_MISSIONS,
     CONTROL_MISSIONS,
     MODELED_MISSIONS,
     RELEASED_MISSIONS,
 )
-from ez_ax.models.checkpoint import TransitionCheckpointCollection
-from ez_ax.models.transition import TransitionArtifact
+from coord_smith.models.checkpoint import TransitionCheckpointCollection
+from coord_smith.models.transition import TransitionArtifact
 
 RunStatus = Literal["idle", "running", "stopped", "completed", "escalated"]
 ReleaseStatus = Literal["released", "modeled", "control-only"]

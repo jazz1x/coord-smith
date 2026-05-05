@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
-from ez_ax.missions.names import ALL_MISSIONS
-from ez_ax.models.failure import (
+from coord_smith.missions.names import ALL_MISSIONS
+from coord_smith.models.failure import (
     TransitionFailureCode,
     TransitionStopReason,
     failure_code_for_stop_reason,

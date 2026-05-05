@@ -12,9 +12,9 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
-from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
-from ez_ax.graph.pyautogui_cli_entrypoint import main
-from ez_ax.models.errors import AccessibilityPermissionDenied
+from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
+from coord_smith.graph.pyautogui_cli_entrypoint import main
+from coord_smith.models.errors import AccessibilityPermissionDenied
 
 
 def test_main_exits_0_on_successful_run(tmp_path: Path) -> None:
@@ -71,7 +71,7 @@ def test_main_exits_1_on_unhandled_runtime_error() -> None:
     with (
         patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
         patch(
-            "ez_ax.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
+            "coord_smith.graph.pyautogui_cli_entrypoint.run_released_scope_from_argv_env",
             new_callable=AsyncMock,
             side_effect=RuntimeError("unexpected failure"),
         ),

@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 
-from ez_ax.missions.names import ALL_MISSIONS
-from ez_ax.models.failure import failure_code_for_stop_reason
-from ez_ax.models.transition import TransitionArtifact
+from coord_smith.missions.names import ALL_MISSIONS
+from coord_smith.models.failure import failure_code_for_stop_reason
+from coord_smith.models.transition import TransitionArtifact
 
 
 @dataclass(frozen=True, slots=True)

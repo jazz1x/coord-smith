@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from PIL import Image
 
-from ez_ax.adapters.page_transition import (
+from coord_smith.adapters.page_transition import (
     PageTransitionResult,
     PageTransitionVerifier,
 )

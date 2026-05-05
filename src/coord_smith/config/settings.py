@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from ez_ax.models.runtime import effective_scope_ceiling
+from coord_smith.models.runtime import effective_scope_ceiling
 
 
 @dataclass(frozen=True, slots=True)

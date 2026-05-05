@@ -3,9 +3,9 @@ requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ez-ax"
+name = "coord-smith"
 version = "0.1.0"
-description = "Python-first runtime scaffold for ez-ax."
+description = "Python-first runtime scaffold for coord-smith."
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
@@ -30,10 +30,10 @@ dev = [
 ]
 
 [project.scripts]
-ez-ax = "ez_ax.graph.pyautogui_cli_entrypoint:main"
+coord-smith = "coord_smith.graph.pyautogui_cli_entrypoint:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ez_ax"]
+packages = ["src/coord_smith"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
@@ -65,5 +65,5 @@ select = ["B", "E", "F", "I", "UP"]
 [tool.mypy]
 python_version = "3.14"
 mypy_path = "src"
-packages = ["ez_ax"]
+packages = ["coord_smith"]
 strict = true

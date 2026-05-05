@@ -2,7 +2,7 @@
 
 These tests prove the documented contract in docs/recipe-guide.md:
   1. Agent writes a YAML (or JSON) recipe file.
-  2. Agent invokes the ez-ax CLI with --click-recipe.
+  2. Agent invokes the coord-smith CLI with --click-recipe.
   3. CLI exits 0.
   4. Artifacts directory contains the expected evidence files.
   5. Action-log JSONL records are valid and contain the required fields.
@@ -19,8 +19,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from PIL import Image
 
-from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
-from ez_ax.graph.pyautogui_cli_entrypoint import _run, main
+from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
+from coord_smith.graph.pyautogui_cli_entrypoint import _run, main
 
 
 def _fake_screenshot() -> Image.Image:

@@ -9,10 +9,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Protocol
 
-from ez_ax.evidence.envelope import parse_released_evidence_ref
-from ez_ax.missions.names import ALL_MISSIONS, mission_is_browser_facing
-from ez_ax.models.errors import AppError, ExecutionTransportError, ValidationError
-from ez_ax.models.runtime import (
+from coord_smith.evidence.envelope import parse_released_evidence_ref
+from coord_smith.missions.names import ALL_MISSIONS, mission_is_browser_facing
+from coord_smith.models.errors import AppError, ExecutionTransportError, ValidationError
+from coord_smith.models.runtime import (
     effective_scope_ceiling,
     format_scope_ceiling_detail,
     mission_is_within_approved_scope,

@@ -1,15 +1,15 @@
 import pytest
 
-from ez_ax.graph.runtime_graph import (
+from coord_smith.graph.runtime_graph import (
     append_transition_checkpoint,
     build_runtime_graph_plan,
     evaluate_and_record_forward_transition,
     evaluate_forward_transition,
     transition_artifact_from_decision,
 )
-from ez_ax.models.checkpoint import TransitionCheckpointCollection
-from ez_ax.models.runtime import RuntimeState
-from ez_ax.models.transition import build_transition_artifact
+from coord_smith.models.checkpoint import TransitionCheckpointCollection
+from coord_smith.models.runtime import RuntimeState
+from coord_smith.models.transition import build_transition_artifact
 
 
 def test_graph_plan_includes_all_released_missions() -> None:

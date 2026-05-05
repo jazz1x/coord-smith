@@ -7,7 +7,7 @@ from pathlib import Path
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from ez_ax.models.errors import ConfigError
+from coord_smith.models.errors import ConfigError
 
 
 def generate_run_id(*, now: datetime | None = None) -> str:

@@ -1,7 +1,7 @@
-# ez-ax Recipe Guide — Agent Edition
+# coord-smith Recipe Guide — Agent Edition
 
 This document is the single reference an autonomous agent (e.g. OpenClaw) needs
-to operate ez-ax correctly. Read this before writing or modifying any recipe.
+to operate coord-smith correctly. Read this before writing or modifying any recipe.
 
 ---
 
@@ -11,21 +11,21 @@ What you **can** do:
 
 - Read any file under `docs/` and `src/` (read-only reference).
 - Write or modify `*.yaml` / `*.yml` / `*.json` recipe files anywhere on disk.
-- Invoke the `ez-ax` CLI with a recipe path.
+- Invoke the `coord-smith` CLI with a recipe path.
 - Read exit codes and artifacts to decide what to do next.
 
 What you **must never** do:
 
-- Modify any file under `src/ez_ax/` — that is a contract violation.
-- Touch browser internals (DOM, CDP, Playwright) — ez-ax owns the OS layer only.
-- Decide *where* to click inside ez-ax — the recipe is the only channel for that.
+- Modify any file under `src/coord_smith/` — that is a contract violation.
+- Touch browser internals (DOM, CDP, Playwright) — coord-smith owns the OS layer only.
+- Decide *where* to click inside coord-smith — the recipe is the only channel for that.
 
 ---
 
 ## CLI Invocation
 
 ```bash
-ez-ax \
+coord-smith \
   --session-ref        <session-id>        \
   --expected-auth-state authenticated      \
   --target-page-url    <url>               \
@@ -250,7 +250,7 @@ Do I need to confirm a specific element appeared (e.g. spinner, toast)?
 ```bash
 uv run python -c "
 import json
-from ez_ax.config.click_recipe import ClickRecipe
+from coord_smith.config.click_recipe import ClickRecipe
 print(json.dumps(ClickRecipe.model_json_schema(), indent=2))
 "
 ```

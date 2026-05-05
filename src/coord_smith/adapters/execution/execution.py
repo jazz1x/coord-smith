@@ -1,6 +1,6 @@
 """Re-export shim — all symbols delegated to client.py to eliminate drift."""
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     action_log_artifact_path,
     execute_within_scope,
     validate_action_log_artifacts_contain_ref_events,

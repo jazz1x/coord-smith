@@ -1,4 +1,4 @@
-# ez-ax
+# coord-smith
 
 > Python CUA 런타임 — 외부 LLM 의 지시에 따라 OS 좌표를 결정적으로 누른다
 
@@ -7,7 +7,7 @@
 ![tests](https://img.shields.io/badge/tests-721%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 
-**ez-ax** 는 *손* 입니다. *머리* — OpenClaw 같은 외부 LLM — 가 무엇을 어디서 클릭할지 정하면, ez-ax 는 그 결정을 OS 위에서 좌표 클릭과 스크린샷 증거로 실행합니다. 추론은 런타임 바깥에 있고, 런타임 자체에는 LLM 호출이 0건입니다.
+**coord-smith** 는 *손* 입니다. *머리* — OpenClaw 같은 외부 LLM — 가 무엇을 어디서 클릭할지 정하면, coord-smith 는 그 결정을 OS 위에서 좌표 클릭과 스크린샷 증거로 실행합니다. 추론은 런타임 바깥에 있고, 런타임 자체에는 LLM 호출이 0건입니다.
 
 한 번의 실행은 LangGraph 상태 머신이 12 개 미션을 순서대로 통과시키는 파이프라인입니다. 각 미션은 다음 미션이 시작되기 전에 evidence envelope (action-log JSONL, 스크린샷, 전환 diff) 를 디스크에 남깁니다. 브라우저 내부 (Playwright / CDP / Chromium) 는 건드리지 않습니다 — OS 좌표와 픽셀만 사용합니다.
 
@@ -38,7 +38,7 @@
  OpenClaw (외부 LLM)
       │  결정 / 좌표 / 이미지 ref
       ▼
- ez-ax CLI ──▶ LangGraph 상태 머신 ──▶ 12 미션
+ coord-smith CLI ──▶ LangGraph 상태 머신 ──▶ 12 미션
                                               │
                             evidence envelope (JSONL + PNG)
                                               │
@@ -66,8 +66,8 @@ uv --version
 ### 1. 프로젝트 부트스트랩
 
 ```bash
-git clone https://github.com/<your-org>/ez-ax.git
-cd ez-ax
+git clone https://github.com/<your-org>/coord-smith.git
+cd coord-smith
 uv sync --extra dev
 ```
 
@@ -113,7 +113,7 @@ uv run pytest -m real -q        # 4 passed: preflight + screenshot + coord click
 OpenClaw 없이 recipe 만으로 실제 클릭 발사:
 
 ```bash
-ez-ax --click-recipe ./recipe.yaml \
+coord-smith --click-recipe ./recipe.yaml \
       --session-ref my-session \
       --expected-auth-state authenticated \
       --target-page-url https://example.com \
@@ -200,9 +200,9 @@ GitHub Actions 는 Python 3.14 단일 버전 (Ubuntu, pyautogui import 용 xvfb)
 
 ## 불변식
 
-ez-ax 에는 네 개의 hard invariant 가 있습니다. 위반은 PR 단계에서 거절됩니다:
+coord-smith 에는 네 개의 hard invariant 가 있습니다. 위반은 PR 단계에서 거절됩니다:
 
-1. **LLM-free 런타임.** ez-ax 안에서 모델 호출 없음. 추론은 OpenClaw 에 있습니다.
+1. **LLM-free 런타임.** coord-smith 안에서 모델 호출 없음. 추론은 OpenClaw 에 있습니다.
 2. **브라우저 내부 금지.** Playwright / CDP / Chromium 드라이버 없음. OS 좌표·픽셀만.
 3. **`pyautogui.FAILSAFE = True`** 가 `PyAutoGUIAdapter.__init__` 에서 강제 설정됩니다. 커서를 화면 모서리로 빠르게 던지면 즉시 중단됩니다.
 4. **좌표 우선순위 고정.** payload → recipe 좌표 → recipe 이미지 → no-click. 역순 허용 안 함.
@@ -212,7 +212,7 @@ OpenCV 는 결정적 픽셀 매칭 라이브러리이므로 LLM 도 브라우저
 ## 프로젝트 구조
 
 ```
-src/ez_ax/
+src/coord_smith/
   adapters/         실행 어댑터 (PyAutoGUI, page-transition diff)
   config/           설정 모델 (ClickRecipe, RuntimeSettings)
   evidence/         envelope 파싱·검증
@@ -236,14 +236,14 @@ docs/
 
 ## 이름
 
-- **ez-ax** — *easy axes*: 두 자루 도끼 (좌표와 픽셀) 만 휘두르고, 그 이상은 묻지 않는다.
+- **coord-smith** — *easy axes*: 두 자루 도끼 (좌표와 픽셀) 만 휘두르고, 그 이상은 묻지 않는다.
 
 ## Triad
 
-ez-ax 는 두 자매 도구 사이에 위치합니다 — 각각 독립 프로세스, 디스크 위 산출물로만 연결됩니다:
+coord-smith 는 두 자매 도구 사이에 위치합니다 — 각각 독립 프로세스, 디스크 위 산출물로만 연결됩니다:
 
 ```
-OpenClaw (think)  ──▶  ez-ax (act)  ──▶  evidence envelope (record)
+OpenClaw (think)  ──▶  coord-smith (act)  ──▶  evidence envelope (record)
    외부 LLM           결정적                JSONL + PNG (디스크)
                        OS 좌표 클릭
 ```
@@ -254,7 +254,7 @@ OpenClaw (think)  ──▶  ez-ax (act)  ──▶  evidence envelope (record)
 
 > *"클릭은 진실에 거는 가장 단순한 베팅이다 — 픽셀이 움직이거나, 움직이지 않거나."*
 
-ez-ax 는 페이지에 대해 추론하지 않습니다. 시킨 자리를 누르고, 화면에게 "뭐 변했어?" 라고 묻습니다. 화면이 아니라고 답하면 그 실행은 — 큰 소리로, 증거와 함께 — 실패합니다.
+coord-smith 는 페이지에 대해 추론하지 않습니다. 시킨 자리를 누르고, 화면에게 "뭐 변했어?" 라고 묻습니다. 화면이 아니라고 답하면 그 실행은 — 큰 소리로, 증거와 함께 — 실패합니다.
 
 ## 라이선스
 

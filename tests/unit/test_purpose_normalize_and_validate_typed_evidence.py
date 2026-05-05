@@ -1,4 +1,4 @@
-"""Test that ez-ax normalizes and validates typed evidence.
+"""Test that coord-smith normalizes and validates typed evidence.
 
 PRD Purpose section (line 11):
 'normalize and validate typed evidence'
@@ -14,9 +14,12 @@ from __future__ import annotations
 
 import pytest
 
-from ez_ax.adapters.execution.client import ExecutionResult, validate_execution_result
-from ez_ax.evidence.envelope import parse_released_evidence_ref
-from ez_ax.models.errors import ValidationError
+from coord_smith.adapters.execution.client import (
+    ExecutionResult,
+    validate_execution_result,
+)
+from coord_smith.evidence.envelope import parse_released_evidence_ref
+from coord_smith.models.errors import ValidationError
 
 
 def test_normalize_evidence_ref_rejects_empty_ref() -> None:

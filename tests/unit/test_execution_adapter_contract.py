@@ -2,7 +2,7 @@
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
     build_execution_request,
@@ -16,8 +16,8 @@ from ez_ax.adapters.execution.client import (
     validate_execution_result_within_scope,
     validate_execution_roundtrip_within_scope,
 )
-from ez_ax.missions.names import mission_is_browser_facing
-from ez_ax.models.errors import ValidationError
+from coord_smith.missions.names import mission_is_browser_facing
+from coord_smith.models.errors import ValidationError
 
 
 def test_mission_is_browser_facing_accepts_released_and_modeled() -> None:
@@ -1235,7 +1235,7 @@ def test_validate_execution_result_covers_every_released_mission() -> None:
     branch, no validation is applied — silent acceptance of any evidence_refs
     shape. This guard prevents that drift when RELEASED_MISSIONS grows.
     """
-    from ez_ax.missions.names import RELEASED_MISSIONS
+    from coord_smith.missions.names import RELEASED_MISSIONS
 
     # A result whose evidence_refs deliberately do NOT match either primary
     # or fallback set for the mission. If validate_execution_result has a

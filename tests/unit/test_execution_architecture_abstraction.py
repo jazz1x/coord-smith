@@ -1,7 +1,7 @@
-"""Tests verifying the PRD requirement: ez-ax must not treat OpenClaw internals as architecture truth.
+"""Tests verifying the PRD requirement: coord-smith must not treat OpenClaw internals as architecture truth.
 
 PRD clause (System Boundary, line 22):
-'ez-ax must not treat OpenClaw internals as architecture truth'
+'coord-smith must not treat OpenClaw internals as architecture truth'
 
 This means the released-scope graph code must depend only on the public OpenClaw
 adapter protocol (client.py) and never on internal implementation modules.
@@ -36,14 +36,14 @@ def _get_all_imports_in_file(filepath: Path) -> set[str]:
 def test_released_graph_does_not_depend_on_execution_internals() -> None:
     """Verify that released-scope graph code only imports from OpenClaw.client.
 
-    PRD System Boundary (line 22): 'ez-ax must not treat OpenClaw internals as
+    PRD System Boundary (line 22): 'coord-smith must not treat OpenClaw internals as
     architecture truth'
 
     The released-scope graph modules must treat the ExecutionAdapter protocol
     (defined in client.py) as the sole interface. They must not import from
     internal OpenClaw implementation modules (execution.py, etc).
     """
-    src_dir = Path(__file__).parent.parent.parent / "src" / "ez_ax" / "graph"
+    src_dir = Path(__file__).parent.parent.parent / "src" / "coord_smith" / "graph"
 
     # Released-scope graph modules that should not depend on OpenClaw internals
     released_modules = {
@@ -58,11 +58,11 @@ def test_released_graph_does_not_depend_on_execution_internals() -> None:
 
     # Internal OpenClaw modules that should NOT be imported
     forbidden_execution_internals = {
-        "ez_ax.adapters.execution.execution",
+        "coord_smith.adapters.execution.execution",
     }
 
     # Allowed OpenClaw import (public protocol interface)
-    allowed_execution_import = "ez_ax.adapters.execution.client"
+    allowed_execution_import = "coord_smith.adapters.execution.client"
 
     for module_file in released_modules:
         filepath = src_dir / module_file
@@ -87,7 +87,7 @@ def test_execution_protocol_is_in_client_module() -> None:
     This ensures the architecture treats the protocol as the single source of
     truth, not internal implementation details.
     """
-    from ez_ax.adapters.execution.client import (
+    from coord_smith.adapters.execution.client import (
         ExecutionAdapter,
         ExecutionBoundary,
     )

@@ -9,11 +9,13 @@ from unittest.mock import patch
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
+from coord_smith.graph.langgraph_released_execution import (
+    run_released_scope_via_langgraph,
+)
 
 
 class FakeExecutionAdapter:
@@ -114,7 +116,7 @@ async def test_released_scope_released_missions_are_deterministic(
     """Verify released missions execute deterministically without LLM calls.
 
     PRD requirement (System Boundary, lines 32-34):
-    'The ez-ax runtime must not invoke any LLM inference at execution time.
+    'The coord-smith runtime must not invoke any LLM inference at execution time.
      All graph traversal, evidence validation, and stopping decisions are
      deterministic Python; no model calls are made during a run.'
     """
@@ -159,7 +161,7 @@ async def test_released_scope_pyautogui_adapter_is_deterministic(tmp_path: Path)
     'PyAutoGUIAdapter is the sole execution backend: coordinate-click and screenshot
      only, no LLM calls.'
     """
-    from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
+    from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
 
     adapter = PyAutoGUIAdapter(run_root=tmp_path)
 
@@ -178,7 +180,7 @@ async def test_released_scope_execution_makes_no_llm_client_calls(
     """Verify no LLM client is instantiated or invoked during runtime.
 
     PRD requirement (System Boundary, lines 32-34):
-    'The ez-ax runtime must not invoke any LLM inference at execution time. All graph
+    'The coord-smith runtime must not invoke any LLM inference at execution time. All graph
      traversal, evidence validation, and stopping decisions are deterministic Python;
      no model calls are made during a run.'
     """

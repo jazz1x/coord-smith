@@ -7,18 +7,18 @@ from typing import cast
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.langgraph_released_execution import (
+from coord_smith.graph.langgraph_released_execution import (
     _ReleasedGraphState,
     build_released_scope_execution_graph,
     run_released_scope_via_langgraph,
 )
-from ez_ax.graph.released_call_site import ReleasedRunContext
-from ez_ax.models.errors import ConfigError, FlowError
-from ez_ax.models.runtime import RuntimeState
+from coord_smith.graph.released_call_site import ReleasedRunContext
+from coord_smith.models.errors import ConfigError, FlowError
+from coord_smith.models.runtime import RuntimeState
 
 
 class FakeExecutionAdapter:
@@ -399,7 +399,7 @@ async def test_run_released_scope_via_langgraph_rejects_missing_runtime_output(
         ) -> dict[str, object]:
             return {}
 
-    import ez_ax.graph.langgraph_released_execution as mod
+    import coord_smith.graph.langgraph_released_execution as mod
 
     monkeypatch.setattr(
         mod,

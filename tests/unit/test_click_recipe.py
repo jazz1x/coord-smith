@@ -7,13 +7,13 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from ez_ax.config.click_recipe import (
+from coord_smith.config.click_recipe import (
     ClickRecipe,
     MissionClick,
     MissionImageClick,
     load_click_recipe,
 )
-from ez_ax.models.errors import ConfigError
+from coord_smith.models.errors import ConfigError
 
 
 def _make_template(path: Path, *, color: str = "red", size: tuple[int, int] = (32, 32)) -> Path:

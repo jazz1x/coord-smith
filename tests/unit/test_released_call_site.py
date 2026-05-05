@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.released_call_site import (
+from coord_smith.graph.released_call_site import (
     ReleasedRunContext,
     execute_armed_state_entry_node,
     execute_attach_session_node,
@@ -26,8 +26,8 @@ from ez_ax.graph.released_call_site import (
     execute_trigger_wait_node,
     seed_action_log_marker,
 )
-from ez_ax.models.errors import ConfigError, FlowError, ValidationError
-from ez_ax.models.runtime import RuntimeState
+from coord_smith.models.errors import ConfigError, FlowError, ValidationError
+from coord_smith.models.runtime import RuntimeState
 
 
 class FakeExecutionAdapter:

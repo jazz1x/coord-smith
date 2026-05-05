@@ -1,11 +1,11 @@
 """Small runtime summary helpers."""
 
-from ez_ax.graph.runtime_graph import (
+from coord_smith.graph.runtime_graph import (
     RuntimeGraphPlan,
     TransitionDecision,
     transition_artifact_from_decision,
 )
-from ez_ax.models.transition import TransitionArtifact
+from coord_smith.models.transition import TransitionArtifact
 
 
 def summarize_graph_plan(plan: RuntimeGraphPlan) -> str:

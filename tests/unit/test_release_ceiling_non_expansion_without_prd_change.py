@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from ez_ax.missions.names import MODELED_MISSIONS
-from ez_ax.models.runtime import (
+from coord_smith.missions.names import MODELED_MISSIONS
+from coord_smith.models.runtime import (
     DEFAULT_RELEASED_SCOPE_CEILING,
     RELEASED_SCOPE_CEILINGS,
     effective_scope_ceiling,

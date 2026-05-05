@@ -12,12 +12,14 @@ from __future__ import annotations
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
-from ez_ax.missions.names import RELEASED_MISSIONS
+from coord_smith.graph.langgraph_released_execution import (
+    run_released_scope_via_langgraph,
+)
+from coord_smith.missions.names import RELEASED_MISSIONS
 
 
 class TrackingExecutionAdapter:

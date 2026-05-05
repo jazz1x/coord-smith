@@ -13,8 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, TypedDict, cast
 
-from ez_ax.adapters.execution.client import ExecutionAdapter
-from ez_ax.graph.released_call_site import (
+from coord_smith.adapters.execution.client import ExecutionAdapter
+from coord_smith.graph.released_call_site import (
     ReleasedRunContext,
     execute_armed_state_entry_node,
     execute_attach_session_node,
@@ -29,9 +29,9 @@ from ez_ax.graph.released_call_site import (
     execute_target_actionability_observation_node,
     execute_trigger_wait_node,
 )
-from ez_ax.graph.released_run_root import create_run_root, generate_run_id
-from ez_ax.models.errors import ConfigError, FlowError
-from ez_ax.models.runtime import RuntimeState
+from coord_smith.graph.released_run_root import create_run_root, generate_run_id
+from coord_smith.models.errors import ConfigError, FlowError
+from coord_smith.models.runtime import RuntimeState
 
 if TYPE_CHECKING:
     from langgraph.graph import StateGraph

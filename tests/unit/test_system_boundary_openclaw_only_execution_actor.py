@@ -14,8 +14,10 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-from ez_ax.adapters.execution.client import ExecutionRequest, ExecutionResult
-from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
+from coord_smith.adapters.execution.client import ExecutionRequest, ExecutionResult
+from coord_smith.graph.langgraph_released_execution import (
+    run_released_scope_via_langgraph,
+)
 
 
 class SingleExecutionPathAdapter:
@@ -152,7 +154,7 @@ def test_no_alternate_browser_execution_paths_exist() -> None:
     # Get the released-scope runtime path
     runtime_path = (
         Path(__file__).parent.parent.parent
-        / "src/ez_ax/graph/langgraph_released_execution.py"
+        / "src/coord_smith/graph/langgraph_released_execution.py"
     )
 
     with open(runtime_path) as f:
@@ -210,7 +212,7 @@ def test_execution_adapter_is_required_parameter() -> None:
     # Import the function signature
     from inspect import Parameter, signature
 
-    from ez_ax.graph.langgraph_released_execution import (
+    from coord_smith.graph.langgraph_released_execution import (
         run_released_scope_via_langgraph,
     )
 

@@ -1,7 +1,7 @@
-"""Test that ez-ax is a Python-first orchestration runtime.
+"""Test that coord-smith is a Python-first orchestration runtime.
 
 PRD requirement (Purpose section, line 5):
-'ez-ax is a Python-first orchestration runtime.'
+'coord-smith is a Python-first orchestration runtime.'
 
 This is a foundational architectural statement that means:
 1. The implementation language is Python (not TypeScript, Go, Rust, etc.)
@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 class TestPythonFirstOrchestrationRuntime:
-    """Tests verifying that ez-ax is fundamentally a Python-first orchestration runtime."""
+    """Tests verifying that coord-smith is fundamentally a Python-first orchestration runtime."""
 
     @staticmethod
     def _get_project_root() -> Path:
@@ -26,13 +26,13 @@ class TestPythonFirstOrchestrationRuntime:
     def test_released_scope_runtime_is_implemented_in_python(self) -> None:
         """Verify that the released-scope runtime is written in Python.
 
-        The Purpose clause states: 'ez-ax is a Python-first orchestration runtime.'
+        The Purpose clause states: 'coord-smith is a Python-first orchestration runtime.'
         This requires that the core runtime implementation is in Python.
         """
         project_root = self._get_project_root()
-        src_dir = project_root / "src" / "ez_ax"
+        src_dir = project_root / "src" / "coord_smith"
 
-        assert src_dir.exists(), "src/ez_ax directory must exist"
+        assert src_dir.exists(), "src/coord_smith directory must exist"
 
         # Verify core modules are Python (.py files, not other languages)
         py_files = list(src_dir.glob("**/*.py"))
@@ -99,7 +99,7 @@ class TestPythonFirstOrchestrationRuntime:
         backbone, confirming this is an orchestration runtime, not direct execution.
         """
         project_root = self._get_project_root()
-        graph_dir = project_root / "src" / "ez_ax" / "graph"
+        graph_dir = project_root / "src" / "coord_smith" / "graph"
 
         # Core orchestration modules should use LangGraph
         langgraph_references = 0
@@ -120,7 +120,7 @@ class TestPythonFirstOrchestrationRuntime:
         """
         project_root = self._get_project_root()
         entrypoint_path = (
-            project_root / "src" / "ez_ax" / "graph" / "langgraph_released_execution.py"
+            project_root / "src" / "coord_smith" / "graph" / "langgraph_released_execution.py"
         )
 
         assert entrypoint_path.exists(), (

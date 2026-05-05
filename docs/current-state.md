@@ -1,4 +1,4 @@
-# ez-ax Current State
+# coord-smith Current State
 
 ## Purpose
 
@@ -14,13 +14,13 @@ changeable and subordinate to `docs/prd.md`.
 
 ## Architecture
 
-- **LLM-free runtime.** The ez-ax runtime graph contains no LLM inference.
+- **LLM-free runtime.** The coord-smith runtime graph contains no LLM inference.
   Each LangGraph node is deterministic: state setup, adapter call, evidence
   collection.
-- **CUA engine.** `src/ez_ax/adapters/pyautogui_adapter.py` implements
+- **CUA engine.** `src/coord_smith/adapters/pyautogui_adapter.py` implements
   `ExecutionAdapter.execute()` using `pyautogui.click()` /
   `pyautogui.screenshot()` only. Wired via
-  `src/ez_ax/graph/pyautogui_cli_entrypoint.py` (`ez-ax` console script).
+  `src/coord_smith/graph/pyautogui_cli_entrypoint.py` (`coord-smith` console script).
 - **Browser-internals forbidden.** Playwright, CDP, and similar drivers are
   not part of the execution backend. OS-level coordinates and pixels only.
 - **Visual click verification.** Image-template click via OpenCV,
@@ -37,10 +37,10 @@ Released:
   implementation in the released path.
 - Evidence envelope, checkpoint comparability, transition reporting.
 - Typed error hierarchy and mission anchor mapping.
-- `ez-ax` console script registered in `pyproject.toml`.
+- `coord-smith` console script registered in `pyproject.toml`.
 
 ## Source of ongoing truth
 
-For domain-specific contracts, defer to source code under `src/ez_ax/`.
+For domain-specific contracts, defer to source code under `src/coord_smith/`.
 Repository base config (`pyproject.toml`, `.pre-commit-config.yaml`) is
 authoritative for tooling.

@@ -8,16 +8,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionAdapter,
     ExecutionResult,
     action_log_artifact_path,
     execute_within_scope,
 )
-from ez_ax.evidence.envelope import enforce_evidence_priority_gate
-from ez_ax.missions.names import ALL_MISSIONS
-from ez_ax.models.errors import ConfigError, FlowError
-from ez_ax.models.runtime import RuntimeState
+from coord_smith.evidence.envelope import enforce_evidence_priority_gate
+from coord_smith.missions.names import ALL_MISSIONS
+from coord_smith.models.errors import ConfigError, FlowError
+from coord_smith.models.runtime import RuntimeState
 
 
 @dataclass(frozen=True, slots=True)

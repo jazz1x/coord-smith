@@ -1,4 +1,4 @@
-"""ez-ax Python-first runtime scaffold."""
+"""coord-smith Python-first runtime scaffold."""
 
 __all__ = ["__version__"]
 

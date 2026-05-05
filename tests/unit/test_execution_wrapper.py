@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.adapters.execution.execution import (
+from coord_smith.adapters.execution.execution import (
     action_log_artifact_path,
     execute_within_scope,
     validate_action_log_artifacts_contain_ref_events,
@@ -18,7 +18,7 @@ from ez_ax.adapters.execution.execution import (
     validate_action_log_evidence_refs_resolvable,
     validate_release_ceiling_stop_action_log,
 )
-from ez_ax.models.errors import ExecutionTransportError, ValidationError
+from coord_smith.models.errors import ExecutionTransportError, ValidationError
 
 
 class FakeExecutionAdapter:

@@ -5,10 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from ez_ax.adapters.execution.client import ExecutionAdapter
-from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
-from ez_ax.graph.released_call_site import ReleasedRunContext
-from ez_ax.models.runtime import RuntimeState
+from coord_smith.adapters.execution.client import ExecutionAdapter
+from coord_smith.graph.langgraph_released_execution import (
+    run_released_scope_via_langgraph,
+)
+from coord_smith.graph.released_call_site import ReleasedRunContext
+from coord_smith.models.runtime import RuntimeState
 
 
 @dataclass(frozen=True, slots=True)

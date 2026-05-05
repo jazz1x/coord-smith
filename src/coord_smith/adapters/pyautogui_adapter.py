@@ -12,19 +12,19 @@ import pyautogui
 from PIL import UnidentifiedImageError
 from PIL.Image import Image as PILImage
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.adapters.page_transition import PageTransitionVerifier
-from ez_ax.config.click_recipe import (
+from coord_smith.adapters.page_transition import PageTransitionVerifier
+from coord_smith.config.click_recipe import (
     ClickRecipe,
     MissionClick,
     MissionImageClick,
     PostClickSignal,
 )
-from ez_ax.evidence.envelope import parse_released_evidence_ref
-from ez_ax.models.errors import (
+from coord_smith.evidence.envelope import parse_released_evidence_ref
+from coord_smith.models.errors import (
     AccessibilityPermissionDenied,
     ClickCoordinatesOutOfBounds,
     ClickExecutionUnverified,

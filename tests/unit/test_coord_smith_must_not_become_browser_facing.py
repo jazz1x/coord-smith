@@ -1,10 +1,10 @@
-"""Tests verifying the PRD requirement: ez-ax must not become browser-facing.
+"""Tests verifying the PRD requirement: coord-smith must not become browser-facing.
 
 PRD clause (System Boundary, line 21):
-'ez-ax must not become browser-facing'
+'coord-smith must not become browser-facing'
 
 This is a distinct requirement from being orchestration-centric (line 20).
-It explicitly prohibits ez-ax from ever becoming a browser-facing runtime,
+It explicitly prohibits coord-smith from ever becoming a browser-facing runtime,
 ensuring the architectural separation from OpenClaw remains permanent.
 """
 
@@ -14,10 +14,10 @@ import inspect
 from pathlib import Path
 
 
-def test_ez_ax_runtime_never_calls_browser_apis_directly() -> None:
-    """Verify that ez-ax runtime code never calls browser automation APIs.
+def test_coord_smith_runtime_never_calls_browser_apis_directly() -> None:
+    """Verify that coord-smith runtime code never calls browser automation APIs.
 
-    PRD System Boundary (line 21): 'ez-ax must not become browser-facing'
+    PRD System Boundary (line 21): 'coord-smith must not become browser-facing'
 
     The runtime must not directly invoke browser control, must not instantiate
     browser automation libraries, and must not perform any browser operations.
@@ -26,8 +26,8 @@ def test_ez_ax_runtime_never_calls_browser_apis_directly() -> None:
     This test verifies that no core orchestration code imports or calls browser
     automation libraries.
     """
-    from ez_ax.graph import langgraph_released_execution, released_call_site
-    from ez_ax.models import errors, runtime
+    from coord_smith.graph import langgraph_released_execution, released_call_site
+    from coord_smith.models import errors, runtime
 
     # Key modules that own orchestration logic
     orchestration_modules = [
@@ -53,22 +53,22 @@ def test_ez_ax_runtime_never_calls_browser_apis_directly() -> None:
                 f"from {lib}" not in module_source.lower()
             ), (
                 f"Orchestration module {module.__name__} must not import {lib} "
-                f"(PRD clause: 'ez-ax must not become browser-facing')"
+                f"(PRD clause: 'coord-smith must not become browser-facing')"
             )
 
 
-def test_ez_ax_cannot_perform_browser_operations_without_adapter() -> None:
+def test_coord_smith_cannot_perform_browser_operations_without_adapter() -> None:
     """Verify that browser operations ONLY happen through the adapter boundary.
 
-    PRD System Boundary (line 21): 'ez-ax must not become browser-facing'
+    PRD System Boundary (line 21): 'coord-smith must not become browser-facing'
 
     The architecture must enforce that ALL browser-facing operations are
-    mediated by the adapter protocol. There should be no code path in ez-ax
+    mediated by the adapter protocol. There should be no code path in coord-smith
     that performs browser operations independently.
 
     This test verifies that the ExecutionAdapter is the mandatory boundary.
     """
-    from ez_ax.adapters.execution.client import ExecutionAdapter
+    from coord_smith.adapters.execution.client import ExecutionAdapter
 
     # The only way to perform browser operations is through this adapter
     assert hasattr(ExecutionAdapter, "execute"), (
@@ -81,14 +81,14 @@ def test_ez_ax_cannot_perform_browser_operations_without_adapter() -> None:
 
     assert "request" in params or "self" in params, (
         "ExecutionAdapter.execute must accept execution requests "
-        "(PRD clause: 'ez-ax must not become browser-facing')"
+        "(PRD clause: 'coord-smith must not become browser-facing')"
     )
 
 
 def test_released_scope_graph_cannot_perform_browser_operations_directly() -> None:
     """Verify that the released-scope graph cannot perform browser operations directly.
 
-    PRD System Boundary (line 21): 'ez-ax must not become browser-facing'
+    PRD System Boundary (line 21): 'coord-smith must not become browser-facing'
 
     The released-scope execution graph owns orchestration logic (mission sequencing,
     state transitions, validation). It must NOT own execution logic. All execution
@@ -98,10 +98,10 @@ def test_released_scope_graph_cannot_perform_browser_operations_directly() -> No
     """
     import tempfile
 
-    from ez_ax.graph.langgraph_released_execution import (
+    from coord_smith.graph.langgraph_released_execution import (
         build_released_scope_execution_graph,
     )
-    from ez_ax.graph.released_call_site import ReleasedRunContext
+    from coord_smith.graph.released_call_site import ReleasedRunContext
 
     # Create a minimal context to build the graph
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -109,7 +109,7 @@ def test_released_scope_graph_cannot_perform_browser_operations_directly() -> No
 
         class MinimalAdapter:
             async def execute(self, request):
-                from ez_ax.adapters.execution.client import ExecutionResult
+                from coord_smith.adapters.execution.client import ExecutionResult
 
                 return ExecutionResult(
                     mission_name=request.mission_name,
@@ -142,22 +142,22 @@ def test_released_scope_graph_cannot_perform_browser_operations_directly() -> No
         for term in forbidden_browser_terms:
             assert term not in graph_source.lower(), (
                 f"Released-scope graph builder must not contain '{term}' "
-                f"(PRD clause: 'ez-ax must not become browser-facing')"
+                f"(PRD clause: 'coord-smith must not become browser-facing')"
             )
 
 
-def test_ez_ax_design_prevents_browser_facing_expansion() -> None:
+def test_coord_smith_design_prevents_browser_facing_expansion() -> None:
     """Verify that the architecture is designed to prevent becoming browser-facing.
 
-    PRD System Boundary (line 21): 'ez-ax must not become browser-facing'
+    PRD System Boundary (line 21): 'coord-smith must not become browser-facing'
 
     The design should make it structurally difficult to add browser operations
-    to ez-ax without breaking the adapter protocol. The adapter pattern is
+    to coord-smith without breaking the adapter protocol. The adapter pattern is
     intentional to enforce this separation.
 
     This test verifies the architectural constraint is in place.
     """
-    from ez_ax.adapters.execution.client import ExecutionAdapter
+    from coord_smith.adapters.execution.client import ExecutionAdapter
 
     # ExecutionAdapter is a protocol/interface that must be implemented
     # Any browser operation attempt must go through this boundary
@@ -166,7 +166,7 @@ def test_ez_ax_design_prevents_browser_facing_expansion() -> None:
     )
 
     # The adapter is not optional - it's required to build the graph
-    from ez_ax.graph.langgraph_released_execution import (
+    from coord_smith.graph.langgraph_released_execution import (
         build_released_scope_execution_graph,
     )
 

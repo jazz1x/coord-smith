@@ -14,10 +14,13 @@ from unittest.mock import patch
 import pytest
 from PIL import Image
 
-from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
-from ez_ax.config.click_recipe import ClickRecipe, MissionClick
-from ez_ax.evidence.envelope import enforce_evidence_priority_gate
-from ez_ax.graph.released_entrypoint import ReleasedEntrypointResult, run_released_scope
+from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
+from coord_smith.config.click_recipe import ClickRecipe, MissionClick
+from coord_smith.evidence.envelope import enforce_evidence_priority_gate
+from coord_smith.graph.released_entrypoint import (
+    ReleasedEntrypointResult,
+    run_released_scope,
+)
 
 
 def _load_jsonl_record(path: Path) -> dict[str, object]:
@@ -152,7 +155,7 @@ async def test_evidence_priority_gate_passes_on_real_run(tmp_path: Path) -> None
     """Verify enforce_evidence_priority_gate passes (>= action-log) on a real run."""
     result = await _run_real_environment_e2e(tmp_path=tmp_path)
 
-    from ez_ax.adapters.execution.client import ExecutionResult
+    from coord_smith.adapters.execution.client import ExecutionResult
 
     final_result = ExecutionResult(
         mission_name=result.state.current_mission or "run_completion",

@@ -19,7 +19,7 @@ Each mission must have defined primary and fallback evidence requirements
 per the Evidence Truth Model (lines 69-83) priority hierarchy.
 """
 
-from ez_ax.adapters.execution.client import ExecutionResult
+from coord_smith.adapters.execution.client import ExecutionResult
 
 
 def test_attach_session_primary_evidence_specification() -> None:

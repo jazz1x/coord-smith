@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, cast
 
 if TYPE_CHECKING:
-    from ez_ax.adapters.execution.client import ExecutionResult
+    from coord_smith.adapters.execution.client import ExecutionResult
 
 EvidenceKind = Literal["dom", "text", "clock", "action-log", "screenshot", "coordinate"]
 EvidencePriority = Literal[
@@ -185,7 +185,7 @@ def enforce_evidence_priority_gate(result: ExecutionResult) -> EvidenceKind:
         FlowError: If highest-priority kind is screenshot or coordinate
                    (action-log or higher is required).
     """
-    from ez_ax.models.errors import FlowError
+    from coord_smith.models.errors import FlowError
 
     if not result.evidence_refs:
         raise FlowError(

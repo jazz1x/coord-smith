@@ -1,26 +1,28 @@
-"""Tests verifying the PRD requirement: ez-ax is orchestration-centric.
+"""Tests verifying the PRD requirement: coord-smith is orchestration-centric.
 
 PRD clause (System Boundary, line 20):
-'ez-ax is orchestration-centric'
+'coord-smith is orchestration-centric'
 
-This verifies that the ez-ax runtime focuses on orchestration—managing mission
+This verifies that the coord-smith runtime focuses on orchestration—managing mission
 sequencing, state transitions, validation, and stopping decisions—rather than
 performing browser-facing operations directly.
 """
 
 from __future__ import annotations
 
-from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
-from ez_ax.missions.names import RELEASED_MISSIONS
-from ez_ax.models.runtime import RuntimeState
+from coord_smith.graph.langgraph_released_execution import (
+    run_released_scope_via_langgraph,
+)
+from coord_smith.missions.names import RELEASED_MISSIONS
+from coord_smith.models.runtime import RuntimeState
 
 
 def test_released_scope_runtime_owns_orchestration_logic() -> None:
-    """Verify that ez-ax owns orchestration: mission sequencing, state management, transitions.
+    """Verify that coord-smith owns orchestration: mission sequencing, state management, transitions.
 
-    PRD System Boundary (line 20): 'ez-ax is orchestration-centric'
+    PRD System Boundary (line 20): 'coord-smith is orchestration-centric'
 
-    The ez-ax runtime must be focused on orchestration—sequencing missions,
+    The coord-smith runtime must be focused on orchestration—sequencing missions,
     managing state transitions, validating evidence, and making stopping
     decisions. Execution is delegated to adapters.
 
@@ -29,7 +31,7 @@ def test_released_scope_runtime_owns_orchestration_logic() -> None:
     2. The RuntimeState owns the orchestration state (current_mission, mission_state)
     3. The released-scope execution graph manages transitions between missions
     """
-    # Mission sequence is defined by ez-ax orchestration
+    # Mission sequence is defined by coord-smith orchestration
     # All 12 missions are now released (ceiling expands to runCompletion)
     assert len(RELEASED_MISSIONS) == 12, "Mission sequence includes all 12 released missions"
     assert RELEASED_MISSIONS[0] == "attach_session", "Sequence starts with attach_session"
@@ -46,32 +48,32 @@ def test_released_scope_runtime_owns_orchestration_logic() -> None:
     assert hasattr(state, "mission_state"), "RuntimeState owns mission state"
     assert hasattr(state, "set_current_mission"), "RuntimeState manages mission transitions"
 
-    # Verify orchestration functions exist and are owned by ez-ax
-    from ez_ax.graph.runtime_graph import (
+    # Verify orchestration functions exist and are owned by coord-smith
+    from coord_smith.graph.runtime_graph import (
         evaluate_and_record_forward_transition,
         evaluate_forward_transition,
     )
 
     assert callable(evaluate_forward_transition), (
-        "ez-ax owns transition evaluation (orchestration logic)"
+        "coord-smith owns transition evaluation (orchestration logic)"
     )
     assert callable(evaluate_and_record_forward_transition), (
-        "ez-ax owns transition recording (orchestration logic)"
+        "coord-smith owns transition recording (orchestration logic)"
     )
 
 
 def test_released_scope_execution_delegates_to_adapter() -> None:
     """Verify that execution is delegated to the adapter, not performed by orchestration.
 
-    PRD System Boundary (line 20): 'ez-ax is orchestration-centric'
+    PRD System Boundary (line 20): 'coord-smith is orchestration-centric'
 
     The orchestration runtime must delegate ALL browser-facing execution to the
-    adapter. The ez-ax runtime should not perform browser operations.
+    adapter. The coord-smith runtime should not perform browser operations.
 
     This test verifies the separation: orchestration owns sequencing, the adapter
     owns execution.
     """
-    from ez_ax.adapters.execution.client import (
+    from coord_smith.adapters.execution.client import (
         ExecutionAdapter,
     )
 
@@ -92,7 +94,7 @@ def test_released_scope_execution_delegates_to_adapter() -> None:
 def test_orchestration_logic_does_not_perform_browser_operations() -> None:
     """Verify that core orchestration modules don't contain browser operation code.
 
-    PRD System Boundary (line 20): 'ez-ax is orchestration-centric'
+    PRD System Boundary (line 20): 'coord-smith is orchestration-centric'
 
     Core orchestration modules (graph, models, evidence) should not contain
     direct browser control code. They should focus on mission sequencing,
@@ -100,9 +102,9 @@ def test_orchestration_logic_does_not_perform_browser_operations() -> None:
 
     This test verifies separation: orchestration logic is isolated from execution.
     """
-    from ez_ax.evidence import envelope
-    from ez_ax.graph import runtime_graph
-    from ez_ax.models import runtime
+    from coord_smith.evidence import envelope
+    from coord_smith.graph import runtime_graph
+    from coord_smith.models import runtime
 
     # Check that orchestration modules don't import browser control libs
     module_names = [

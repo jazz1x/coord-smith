@@ -2,19 +2,23 @@
 
 from dataclasses import dataclass
 
-from ez_ax.missions.names import CONTROL_MISSIONS, MODELED_MISSIONS, RELEASED_MISSIONS
-from ez_ax.models.checkpoint import TransitionCheckpointCollection
-from ez_ax.models.failure import (
+from coord_smith.missions.names import (
+    CONTROL_MISSIONS,
+    MODELED_MISSIONS,
+    RELEASED_MISSIONS,
+)
+from coord_smith.models.checkpoint import TransitionCheckpointCollection
+from coord_smith.models.failure import (
     TransitionFailureCode,
     TransitionStopReason,
     failure_code_for_stop_reason,
 )
-from ez_ax.models.runtime import (
+from coord_smith.models.runtime import (
     RuntimeState,
     format_scope_ceiling_detail,
     mission_is_within_approved_scope,
 )
-from ez_ax.models.transition import TransitionArtifact, build_transition_artifact
+from coord_smith.models.transition import TransitionArtifact, build_transition_artifact
 
 
 @dataclass(frozen=True, slots=True)

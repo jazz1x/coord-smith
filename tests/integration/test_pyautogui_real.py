@@ -17,9 +17,9 @@ from pathlib import Path
 import pyautogui
 import pytest
 
-from ez_ax.adapters.execution.client import ExecutionRequest
-from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
-from ez_ax.config.click_recipe import ClickRecipe
+from coord_smith.adapters.execution.client import ExecutionRequest
+from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
+from coord_smith.config.click_recipe import ClickRecipe
 
 pytestmark = pytest.mark.real
 

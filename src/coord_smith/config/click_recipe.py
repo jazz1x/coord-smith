@@ -1,7 +1,7 @@
 """Deterministic click-coordinate recipe used when no external actor injects coords.
 
 The released-scope graph dispatches click-bearing missions with empty payloads
-(see `src/ez_ax/graph/released_call_site.py`). In the documented architecture,
+(see `src/coord_smith/graph/released_call_site.py`). In the documented architecture,
 an external actor (OpenClaw) supplies target coordinates by populating the
 payload `x`/`y` fields. When that caller is absent, this module loads a static
 per-mission coordinate table from disk so the runtime can still exercise real
@@ -31,7 +31,7 @@ import yaml
 from pydantic import BaseModel, Field
 from pydantic import ValidationError as PydanticValidationError
 
-from ez_ax.models.errors import ConfigError
+from coord_smith.models.errors import ConfigError
 
 
 class PostClickSignal(BaseModel):

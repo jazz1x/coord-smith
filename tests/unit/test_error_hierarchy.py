@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ez_ax.models.errors import (
+from coord_smith.models.errors import (
     AppError,
     ConfigError,
     ExecutionTransportError,

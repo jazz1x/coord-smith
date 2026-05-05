@@ -16,11 +16,11 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.released_entrypoint import (
+from coord_smith.graph.released_entrypoint import (
     ReleasedEntrypointResult,
     run_released_scope,
 )

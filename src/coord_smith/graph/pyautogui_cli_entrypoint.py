@@ -9,27 +9,27 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
-from ez_ax.config.click_recipe import ClickRecipe, load_click_recipe
-from ez_ax.graph.released_cli_shim import run_released_scope_from_argv_env
-from ez_ax.models.errors import ConfigError, ExecutionTransportError
+from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
+from coord_smith.config.click_recipe import ClickRecipe, load_click_recipe
+from coord_smith.graph.released_cli_shim import run_released_scope_from_argv_env
+from coord_smith.models.errors import ConfigError, ExecutionTransportError
 
-ENV_CLICK_RECIPE = "EZAX_CLICK_RECIPE"
+ENV_CLICK_RECIPE = "COORDSMITH_CLICK_RECIPE"
 
 _USAGE = """\
-Usage: ez-ax [--click-recipe PATH] \\
+Usage: coord-smith [--click-recipe PATH] \\
              --session-ref STR --expected-auth-state STR \\
              --target-page-url URL --site-identity STR
 
 Options:
   --click-recipe PATH   YAML or JSON recipe mapping mission_name -> click target.
-                        Also accepts the EZAX_CLICK_RECIPE env var.
+                        Also accepts the COORDSMITH_CLICK_RECIPE env var.
                         Required for actual browser clicks when no external
                         caller injects payload coords.
-  --session-ref         Required. Session identifier (env: EZAX_SESSION_REF).
-  --expected-auth-state Required. (env: EZAX_EXPECTED_AUTH_STATE).
-  --target-page-url     Required. (env: EZAX_TARGET_PAGE_URL).
-  --site-identity       Required. (env: EZAX_SITE_IDENTITY).
+  --session-ref         Required. Session identifier (env: COORDSMITH_SESSION_REF).
+  --expected-auth-state Required. (env: COORDSMITH_EXPECTED_AUTH_STATE).
+  --target-page-url     Required. (env: COORDSMITH_TARGET_PAGE_URL).
+  --site-identity       Required. (env: COORDSMITH_SITE_IDENTITY).
 
 Exit codes:
   0 normal      1 runtime error     2 permission preflight failed
@@ -54,7 +54,7 @@ def _extract_click_recipe_arg(argv: Sequence[str]) -> tuple[Path | None, list[st
 def _resolve_click_recipe(
     *, cli_path: Path | None, env: dict[str, str] | None = None
 ) -> ClickRecipe | None:
-    """CLI --click-recipe overrides EZAX_CLICK_RECIPE; both optional."""
+    """CLI --click-recipe overrides COORDSMITH_CLICK_RECIPE; both optional."""
     env_map = env if env is not None else dict(os.environ)
     path: Path | None = cli_path
     if path is None:
@@ -91,21 +91,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         return asyncio.run(_run(argv=argv_list))
     except ConfigError as exc:
-        print(f"ez-ax: config error: {exc}", file=sys.stderr)
+        print(f"coord-smith: config error: {exc}", file=sys.stderr)
         return 3
     except ExecutionTransportError as exc:
         print(
-            f"ez-ax: preflight failed ({type(exc).__name__}): {exc}",
+            f"coord-smith: preflight failed ({type(exc).__name__}): {exc}",
             file=sys.stderr,
         )
         print(
-            "ez-ax: grant macOS Accessibility + Screen Recording permission to "
+            "coord-smith: grant macOS Accessibility + Screen Recording permission to "
             "the host terminal app and retry.",
             file=sys.stderr,
         )
         return 2
     except Exception as exc:  # noqa: BLE001
-        print(f"ez-ax: fatal error: {exc}", file=sys.stderr)
+        print(f"coord-smith: fatal error: {exc}", file=sys.stderr)
         return 1
 
 

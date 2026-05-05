@@ -5,7 +5,7 @@ PRD requirement (Release Boundary, lines 47-62 and System Boundary, lines 25-28)
 pageReadyObserved, syncObservation, targetActionabilityObservation,
 armedStateEntry, triggerWait, clickDispatch, clickCompletion,
 successObservation, runCompletion. Authority boundary: OpenClaw owns browser-facing execution;
-ez-ax owns orchestration, validation, stopping, and reasoning.'
+coord-smith owns orchestration, validation, stopping, and reasoning.'
 
 This test verifies that each released mission receives and correctly validates
 its required parameters before execution, ensuring the released-scope graph
@@ -24,11 +24,13 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
+from coord_smith.graph.langgraph_released_execution import (
+    run_released_scope_via_langgraph,
+)
 
 
 class ParameterTrackingAdapter:
@@ -261,7 +263,7 @@ async def test_mission_parameter_validation_respects_parameter_whitespace_rules(
     leading/trailing whitespace. The released-scope graph enforces this at the
     boundary.
     """
-    from ez_ax.models.errors import ConfigError
+    from coord_smith.models.errors import ConfigError
 
     # Verify that whitespace-wrapped parameters are rejected
     with pytest.raises(ConfigError) as exc_info:

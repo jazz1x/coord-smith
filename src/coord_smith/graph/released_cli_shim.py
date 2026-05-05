@@ -10,12 +10,15 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from ez_ax.adapters.execution.client import ExecutionAdapter
-from ez_ax.config.released_inputs import (
+from coord_smith.adapters.execution.client import ExecutionAdapter
+from coord_smith.config.released_inputs import (
     ReleasedScopeInputs,
     resolve_released_scope_inputs,
 )
-from ez_ax.graph.released_entrypoint import ReleasedEntrypointResult, run_released_scope
+from coord_smith.graph.released_entrypoint import (
+    ReleasedEntrypointResult,
+    run_released_scope,
+)
 
 
 def resolve_inputs_for_released_scope(
