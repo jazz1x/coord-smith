@@ -1,5 +1,5 @@
-from ez_ax.models.checkpoint import TransitionCheckpointCollection
-from ez_ax.models.transition import TransitionArtifact, build_transition_artifact
+from coord_smith.models.checkpoint import TransitionCheckpointCollection
+from coord_smith.models.transition import TransitionArtifact, build_transition_artifact
 
 
 def test_checkpoint_collection_appends_ordered_transitions() -> None:

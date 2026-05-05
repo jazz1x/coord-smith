@@ -1,13 +1,13 @@
 import pytest
 
-from ez_ax.models.runtime import (
+from coord_smith.models.runtime import (
     RuntimeState,
     effective_scope_ceiling,
     format_scope_ceiling_detail,
     mission_is_within_approved_scope,
     mission_lifecycle,
 )
-from ez_ax.models.transition import build_transition_artifact
+from coord_smith.models.transition import build_transition_artifact
 
 
 def test_runtime_state_defaults_match_bootstrap_contract() -> None:

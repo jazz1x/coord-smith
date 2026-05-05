@@ -2,7 +2,7 @@
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
     build_execution_request,
@@ -16,7 +16,8 @@ from ez_ax.adapters.execution.client import (
     validate_execution_result_within_scope,
     validate_execution_roundtrip_within_scope,
 )
-from ez_ax.missions.names import mission_is_browser_facing
+from coord_smith.missions.names import mission_is_browser_facing
+from coord_smith.models.errors import ValidationError
 
 
 def test_mission_is_browser_facing_accepts_released_and_modeled() -> None:
@@ -647,17 +648,12 @@ def test_validate_execution_result_accepts_primary_minimum_with_optional_extras(
 
 
 def test_validate_execution_result_rejects_non_schema_ref() -> None:
-    result = ExecutionResult(
-        mission_name="attach_session", evidence_refs=("evidence://text/not_kebab_case",)
-    )
-
-    try:
-        validate_execution_result(result)
-    except ValueError as exc:
-        assert "released-scope schema" in str(exc)
-        assert "not_kebab_case" in str(exc)
-    else:
-        raise AssertionError("Expected evidence ref schema violation to be rejected")
+    with pytest.raises(ValidationError) as exc_info:
+        ExecutionResult(
+            mission_name="attach_session",
+            evidence_refs=("evidence://text/not_kebab_case",),
+        )
+    assert "not_kebab_case" in str(exc_info.value)
 
 
 def test_validate_execution_result_rejects_prepare_session_missing_minimum_keys() -> (
@@ -685,7 +681,6 @@ def test_validate_execution_result_accepts_prepare_session_fallback_minimum() ->
         mission_name="prepare_session",
         evidence_refs=(
             "evidence://screenshot/prepare-session-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/prepare-session",
         ),
     )
@@ -730,7 +725,6 @@ def test_validate_execution_result_accepts_benchmark_validation_fallback_minimum
         evidence_refs=(
             "evidence://action-log/enter-target-page",
             "evidence://screenshot/target-page-entered-fallback",
-            "evidence://text/fallback-reason",
         ),
     )
 
@@ -773,7 +767,6 @@ def test_validate_execution_result_accepts_page_ready_fallback_minimum() -> (
         mission_name="page_ready_observation",
         evidence_refs=(
             "evidence://screenshot/page-shell-ready-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/page-ready-observed",
         ),
     )
@@ -782,16 +775,11 @@ def test_validate_execution_result_accepts_page_ready_fallback_minimum() -> (
 
 
 def test_validate_execution_result_rejects_unknown_evidence_ref_kind() -> None:
-    result = ExecutionResult(
-        mission_name="attach_session", evidence_refs=("evidence://video/clip",)
-    )
-
-    try:
-        validate_execution_result(result)
-    except ValueError as exc:
-        assert "released-scope schema" in str(exc)
-    else:
-        raise AssertionError("Expected unknown evidence ref kind to be rejected")
+    with pytest.raises(ValidationError) as exc_info:
+        ExecutionResult(
+            mission_name="attach_session", evidence_refs=("evidence://video/clip",)
+        )
+    assert "video" in str(exc_info.value)
 
 
 def test_validate_execution_result_accepts_attach_session_primary_minimum() -> (
@@ -833,7 +821,6 @@ def test_validate_execution_result_accepts_attach_session_fallback_minimum() -> 
         mission_name="attach_session",
         evidence_refs=(
             "evidence://screenshot/attach-session-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/attach-session",
         ),
     )
@@ -904,29 +891,19 @@ def test_validate_execution_result_within_scope_rejects_page_ready_under_prepare
 
 
 def test_validate_execution_result_rejects_non_tuple_refs() -> None:
-    result = ExecutionResult(  # type: ignore[arg-type]
-        mission_name="attach_session", evidence_refs=["not-a-tuple"]
-    )
-
-    try:
-        validate_execution_result(result)
-    except TypeError as exc:
-        assert "evidence_refs must be a tuple" in str(exc)
-    else:
-        raise AssertionError("Expected evidence_refs type to be rejected")
+    with pytest.raises(ValidationError) as exc_info:
+        ExecutionResult(  # type: ignore[arg-type]
+            mission_name="attach_session", evidence_refs=["not-a-tuple"]
+        )
+    assert "tuple" in str(exc_info.value)
 
 
 def test_validate_execution_result_rejects_non_string_mission_name() -> None:
-    result = ExecutionResult(  # type: ignore[arg-type]
-        mission_name=123, evidence_refs=("evidence://text/session-viable",)
-    )
-
-    try:
-        validate_execution_result(result)
-    except TypeError as exc:
-        assert "mission_name must be a string" in str(exc)
-    else:
-        raise AssertionError("Expected non-string mission_name to be rejected")
+    with pytest.raises(ValidationError) as exc_info:
+        ExecutionResult(  # type: ignore[arg-type]
+            mission_name=123, evidence_refs=("evidence://text/session-viable",)
+        )
+    assert "mission_name" in str(exc_info.value)
 
 
 def test_validate_execution_result_rejects_whitespace_wrapped_mission_name() -> (
@@ -1033,67 +1010,42 @@ def test_validate_execution_result_rejects_screenshot_and_coordinate_only() -> (
 
 
 def test_validate_execution_result_rejects_empty_ref() -> None:
-    result = ExecutionResult(mission_name="attach_session", evidence_refs=("",))
-
-    try:
-        validate_execution_result(result)
-    except ValueError as exc:
-        assert "must be non-empty" in str(exc)
-    else:
-        raise AssertionError("Expected empty evidence ref to be rejected")
+    with pytest.raises(ValidationError) as exc_info:
+        ExecutionResult(mission_name="attach_session", evidence_refs=("",))
+    assert "invalid ref" in str(exc_info.value)
 
 
 def test_validate_execution_result_rejects_whitespace_only_ref() -> None:
-    result = ExecutionResult(
-        mission_name="attach_session", evidence_refs=("   ",)
-    )
-
-    try:
-        validate_execution_result(result)
-    except ValueError as exc:
-        assert "whitespace-only" in str(exc)
-    else:
-        raise AssertionError("Expected whitespace-only evidence ref to be rejected")
+    with pytest.raises(ValidationError) as exc_info:
+        ExecutionResult(
+            mission_name="attach_session", evidence_refs=("   ",)
+        )
+    assert "invalid ref" in str(exc_info.value)
 
 
 def test_validate_execution_result_rejects_whitespace_wrapped_ref() -> None:
-    result = ExecutionResult(
-        mission_name="attach_session",
-        evidence_refs=(" evidence://text/session-viable",),
-    )
-
-    try:
-        validate_execution_result(result)
-    except ValueError as exc:
-        assert "leading or trailing whitespace" in str(exc)
-    else:
-        raise AssertionError("Expected whitespace-wrapped evidence ref to be rejected")
+    with pytest.raises(ValidationError) as exc_info:
+        ExecutionResult(
+            mission_name="attach_session",
+            evidence_refs=(" evidence://text/session-viable",),
+        )
+    assert "invalid ref" in str(exc_info.value)
 
 
 def test_validate_execution_result_rejects_non_string_ref() -> None:
-    result = ExecutionResult(  # type: ignore[arg-type]
-        mission_name="attach_session", evidence_refs=(123,)
-    )
-
-    try:
-        validate_execution_result(result)
-    except TypeError as exc:
-        assert "entries must be strings" in str(exc)
-    else:
-        raise AssertionError("Expected non-string evidence ref to be rejected")
+    with pytest.raises(ValidationError) as exc_info:
+        ExecutionResult(  # type: ignore[arg-type]
+            mission_name="attach_session", evidence_refs=(123,)
+        )
+    assert "invalid ref" in str(exc_info.value)
 
 
 def test_validate_execution_result_rejects_unhashable_ref() -> None:
-    result = ExecutionResult(  # type: ignore[arg-type]
-        mission_name="attach_session", evidence_refs=({},)
-    )
-
-    try:
-        validate_execution_result(result)
-    except TypeError as exc:
-        assert "entries must be strings" in str(exc)
-    else:
-        raise AssertionError("Expected unhashable evidence ref to be rejected")
+    with pytest.raises(ValidationError) as exc_info:
+        ExecutionResult(  # type: ignore[arg-type]
+            mission_name="attach_session", evidence_refs=({},)
+        )
+    assert "invalid ref" in str(exc_info.value)
 
 
 def test_validate_execution_result_rejects_non_browser_mission() -> None:
@@ -1275,3 +1227,25 @@ def test_validate_execution_roundtrip_within_scope_rejects_mission_mismatch() ->
         assert "must match request mission_name" in str(exc)
     else:
         raise AssertionError("Expected mission mismatch to be rejected")
+
+
+def test_validate_execution_result_covers_every_released_mission() -> None:
+    """validate_execution_result must enforce per-mission required_sets for all
+    released missions. If a mission falls through to the ``required_sets = ()``
+    branch, no validation is applied — silent acceptance of any evidence_refs
+    shape. This guard prevents that drift when RELEASED_MISSIONS grows.
+    """
+    from coord_smith.missions.names import RELEASED_MISSIONS
+
+    # A result whose evidence_refs deliberately do NOT match either primary
+    # or fallback set for the mission. If validate_execution_result has a
+    # required_sets entry for this mission, it must raise.
+    decoy_refs = ("evidence://action-log/this-key-cannot-match-any-mission-spec",)
+
+    for mission in RELEASED_MISSIONS:
+        result = ExecutionResult(
+            mission_name=mission,
+            evidence_refs=decoy_refs,
+        )
+        with pytest.raises(ValueError, match="missing required minimum keys"):
+            validate_execution_result(result)

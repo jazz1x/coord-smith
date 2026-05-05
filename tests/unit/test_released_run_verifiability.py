@@ -16,11 +16,11 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.released_entrypoint import (
+from coord_smith.graph.released_entrypoint import (
     ReleasedEntrypointResult,
     run_released_scope,
 )
@@ -81,7 +81,6 @@ class VerifiableRunAdapter:
             ),
             "run_completion": (
                 "evidence://action-log/release-ceiling-stop",
-                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name, ())

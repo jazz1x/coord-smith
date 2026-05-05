@@ -1,9 +1,9 @@
-# ez-ax Architecture Boundaries
+# coord-smith Architecture Boundaries
 
 ## Purpose
 
 This document defines who owns what and who calls whom. It exists because
-naming confusion between OpenClaw, ez-ax, and PyAutoGUI caused repeated
+naming confusion between OpenClaw, coord-smith, and PyAutoGUI caused repeated
 implementation misdirection.
 
 ## System Actors
@@ -13,7 +13,7 @@ OpenClaw  (external caller)
     |
     |  invokes via skill / CLI
     v
-ez-ax CLI  (`ez-ax` console script)
+coord-smith CLI  (`coord-smith` console script)
     |
     |  owns and operates
     v
@@ -32,29 +32,29 @@ OpenClaw  (reads results, decides next step)
 
 | Actor | What It Is | What It Owns | Calls | Called By |
 |-------|-----------|-------------|-------|----------|
-| **OpenClaw** | External orchestration system | Task selection, high-level workflow | ez-ax CLI (via skill) | (external trigger) |
-| **ez-ax** | Python orchestration runtime | CUA engine (PyAutoGUI), mission graph, validation, stopping | PyAutoGUI | OpenClaw (via CLI) |
-| **PyAutoGUI** | OS-level CUA engine | `click(x, y)` + `screenshot()` | OS display server | ez-ax |
+| **OpenClaw** | External orchestration system | Task selection, high-level workflow | coord-smith CLI (via skill) | (external trigger) |
+| **coord-smith** | Python orchestration runtime | CUA engine (PyAutoGUI), mission graph, validation, stopping | PyAutoGUI | OpenClaw (via CLI) |
+| **PyAutoGUI** | OS-level CUA engine | `click(x, y)` + `screenshot()` | OS display server | coord-smith |
 
 ### Key Facts
 
-- **OpenClaw calls ez-ax.** ez-ax does not call OpenClaw.
-- **OpenClaw has no MCP server.** It invokes ez-ax through skill-based CLI execution.
-- **ez-ax owns the CUA engine.** PyAutoGUI runs inside ez-ax, not inside OpenClaw.
-- **Communication is ping-pong:** OpenClaw invokes `ez-ax` CLI, ez-ax writes
+- **OpenClaw calls coord-smith.** coord-smith does not call OpenClaw.
+- **OpenClaw has no MCP server.** It invokes coord-smith through skill-based CLI execution.
+- **coord-smith owns the CUA engine.** PyAutoGUI runs inside coord-smith, not inside OpenClaw.
+- **Communication is ping-pong:** OpenClaw invokes `coord-smith` CLI, coord-smith writes
   results to stdout and `artifacts/`, OpenClaw reads them and decides next step.
 
 ## Integration Pattern
 
 ```
 1. OpenClaw decides to run a mission
-2. OpenClaw invokes: ez-ax --session-ref ... --target-page-url ...
-3. ez-ax runs the released-scope LangGraph (12 missions, ceiling = run_completion).
+2. OpenClaw invokes: coord-smith --session-ref ... --target-page-url ...
+3. coord-smith runs the released-scope LangGraph (12 missions, ceiling = run_completion).
 4. Each node calls PyAutoGUIAdapter.execute():
    - pyautogui.click(x, y)
    - pyautogui.screenshot()
    - writes action-log JSONL to artifacts/
-5. ez-ax exits, leaving artifacts and stdout output
+5. coord-smith exits, leaving artifacts and stdout output
 6. OpenClaw reads artifacts, decides next action
 7. Repeat (ping-pong)
 ```
@@ -63,7 +63,7 @@ OpenClaw  (reads results, decides next step)
 
 ### `adapters/execution/` (formerly `adapters/openclaw/`)
 
-This package defines ez-ax's **internal execution adapter protocol**. It is
+This package defines coord-smith's **internal execution adapter protocol**. It is
 **not** an API client that connects to OpenClaw.
 
 | File | Purpose |
@@ -80,12 +80,12 @@ The **real CUA engine**. Implements `ExecutionAdapter` Protocol using
 
 The `adapters/openclaw/` directory was originally named when the execution
 boundary was conceptualized as "a connection to OpenClaw." In reality, the
-protocol defines ez-ax's internal pluggable execution backend. The rename to
+protocol defines coord-smith's internal pluggable execution backend. The rename to
 `adapters/execution/` reflects this correction.
 
 | Old Name | New Name | Reason |
 |----------|----------|--------|
-| `OpenClawAdapter` | `ExecutionAdapter` | It is ez-ax's internal protocol, not an OpenClaw API |
-| `OpenClawExecutionRequest` | `ExecutionRequest` | Request is from ez-ax graph to its own adapter |
-| `OpenClawExecutionResult` | `ExecutionResult` | Result is from adapter back to ez-ax graph |
+| `OpenClawAdapter` | `ExecutionAdapter` | It is coord-smith's internal protocol, not an OpenClaw API |
+| `OpenClawExecutionRequest` | `ExecutionRequest` | Request is from coord-smith graph to its own adapter |
+| `OpenClawExecutionResult` | `ExecutionResult` | Result is from adapter back to coord-smith graph |
 | `adapters/openclaw/` | `adapters/execution/` | Package defines execution protocol, not OpenClaw client |

@@ -1,4 +1,4 @@
-from ez_ax.missions.names import (
+from coord_smith.missions.names import (
     CONTROL_MISSIONS,
     RAG_MISSIONS,
     VALIDATION_MISSIONS,

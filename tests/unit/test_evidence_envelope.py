@@ -2,10 +2,13 @@ import tempfile
 from pathlib import Path
 from typing import get_args
 
-from ez_ax.evidence.envelope import (
+import pytest
+
+from coord_smith.evidence.envelope import (
     EvidenceEnvelope,
     EvidenceKind,
     enforce_evidence_priority,
+    enforce_evidence_priority_gate,
     load_action_log_artifact,
     parse_released_evidence_ref,
     validate_release_ceiling_stop_proof,
@@ -342,7 +345,7 @@ def test_truth_priority_order_matches_prd_specification() -> None:
     This test ensures the EVIDENCE_PRIORITY_ORDER constant is defined correctly
     to enforce this exact ordering for all released-scope decisions.
     """
-    from ez_ax.evidence.envelope import EVIDENCE_PRIORITY_ORDER
+    from coord_smith.evidence.envelope import EVIDENCE_PRIORITY_ORDER
 
     # Verify the order matches the PRD specification
     expected_order = ("dom", "text", "clock", "action-log", "screenshot", "coordinate")
@@ -381,3 +384,46 @@ def test_truth_priority_order_matches_prd_specification() -> None:
     assert (
         primary_order == expected_primary_order
     ), f"Primary types must maintain PRD order. Expected {expected_primary_order}, got {primary_order}"
+
+
+def _make_result(
+    mission_name: str, evidence_refs: tuple[str, ...]
+) -> object:
+    from coord_smith.adapters.execution.client import ExecutionResult
+    return ExecutionResult(mission_name=mission_name, evidence_refs=evidence_refs)
+
+
+def test_enforce_evidence_priority_gate_raises_on_empty_refs() -> None:
+    from coord_smith.models.errors import FlowError
+    result = _make_result("run_completion", ())
+    with pytest.raises(FlowError, match="evidence_refs is empty"):
+        enforce_evidence_priority_gate(result)  # type: ignore[arg-type]
+
+
+def test_enforce_evidence_priority_gate_raises_on_screenshot_only_evidence() -> None:
+    from coord_smith.models.errors import FlowError
+    result = _make_result(
+        "click_dispatch",
+        ("evidence://screenshot/click-dispatched-fallback",),
+    )
+    with pytest.raises(FlowError, match="insufficient"):
+        enforce_evidence_priority_gate(result)  # type: ignore[arg-type]
+
+
+def test_enforce_evidence_priority_gate_raises_on_coordinate_only_evidence() -> None:
+    from coord_smith.models.errors import FlowError
+    result = _make_result(
+        "click_dispatch",
+        ("evidence://coordinate/click-target",),
+    )
+    with pytest.raises(FlowError, match="insufficient"):
+        enforce_evidence_priority_gate(result)  # type: ignore[arg-type]
+
+
+def test_enforce_evidence_priority_gate_passes_on_action_log_evidence() -> None:
+    result = _make_result(
+        "run_completion",
+        ("evidence://action-log/release-ceiling-stop",),
+    )
+    top_kind = enforce_evidence_priority_gate(result)  # type: ignore[arg-type]
+    assert top_kind == "action-log"

@@ -1,7 +1,7 @@
-"""Tests verifying the PRD requirement: ez-ax is not a browser control runtime.
+"""Tests verifying the PRD requirement: coord-smith is not a browser control runtime.
 
 PRD clause (System Boundary, line 23):
-'ez-ax is not a Playwright, CDP, or Chromium control runtime'
+'coord-smith is not a Playwright, CDP, or Chromium control runtime'
 
 Also from Non-Goals (line 145):
 'direct Playwright, CDP, or Chromium control as product architecture'
@@ -31,16 +31,16 @@ def _get_all_imports_in_file(filepath: Path) -> set[str]:
     return imports
 
 
-def test_ez_ax_runtime_does_not_import_playwright() -> None:
-    """Verify that ez-ax runtime code does not import Playwright.
+def test_coord_smith_runtime_does_not_import_playwright() -> None:
+    """Verify that coord-smith runtime code does not import Playwright.
 
-    PRD System Boundary (line 23): 'ez-ax is not a Playwright, CDP, or Chromium
+    PRD System Boundary (line 23): 'coord-smith is not a Playwright, CDP, or Chromium
     control runtime'
 
-    Playwright is a browser automation library. The ez-ax runtime is
+    Playwright is a browser automation library. The coord-smith runtime is
     orchestration-centric and must not perform browser control directly.
     """
-    src_dir = Path(__file__).parent.parent.parent / "src" / "ez_ax"
+    src_dir = Path(__file__).parent.parent.parent / "src" / "coord_smith"
     forbidden = {"playwright"}
 
     for py_file in src_dir.rglob("*.py"):
@@ -52,16 +52,16 @@ def test_ez_ax_runtime_does_not_import_playwright() -> None:
         )
 
 
-def test_ez_ax_runtime_does_not_import_cdp_tools() -> None:
-    """Verify that ez-ax runtime code does not import CDP-related libraries.
+def test_coord_smith_runtime_does_not_import_cdp_tools() -> None:
+    """Verify that coord-smith runtime code does not import CDP-related libraries.
 
-    PRD System Boundary (line 23): 'ez-ax is not a Playwright, CDP, or Chromium
+    PRD System Boundary (line 23): 'coord-smith is not a Playwright, CDP, or Chromium
     control runtime'
 
     CDP (Chrome DevTools Protocol) tools like pyppeteer are browser automation
-    libraries. The ez-ax runtime must not perform direct protocol-level control.
+    libraries. The coord-smith runtime must not perform direct protocol-level control.
     """
-    src_dir = Path(__file__).parent.parent.parent / "src" / "ez_ax"
+    src_dir = Path(__file__).parent.parent.parent / "src" / "coord_smith"
     forbidden = {"pyppeteer"}  # CDP equivalent for Python
 
     for py_file in src_dir.rglob("*.py"):
@@ -73,16 +73,16 @@ def test_ez_ax_runtime_does_not_import_cdp_tools() -> None:
         )
 
 
-def test_ez_ax_runtime_does_not_import_chromium_control() -> None:
-    """Verify that ez-ax runtime code does not import direct Chromium libraries.
+def test_coord_smith_runtime_does_not_import_chromium_control() -> None:
+    """Verify that coord-smith runtime code does not import direct Chromium libraries.
 
-    PRD System Boundary (line 23): 'ez-ax is not a Playwright, CDP, or Chromium
+    PRD System Boundary (line 23): 'coord-smith is not a Playwright, CDP, or Chromium
     control runtime'
 
     Direct Chromium control libraries like chromium-automation are not permitted.
     The runtime delegates all browser interaction through OpenClaw adapter.
     """
-    src_dir = Path(__file__).parent.parent.parent / "src" / "ez_ax"
+    src_dir = Path(__file__).parent.parent.parent / "src" / "coord_smith"
     # Common chromium/browser control library names to check
     forbidden = {
         "chromium",  # Generic chromium control
@@ -98,7 +98,7 @@ def test_ez_ax_runtime_does_not_import_chromium_control() -> None:
         )
 
 
-def test_ez_ax_adapter_abstraction_prevents_direct_browser_control() -> None:
+def test_coord_smith_adapter_abstraction_prevents_direct_browser_control() -> None:
     """Verify that OpenClaw adapter is the sole browser-facing interface.
 
     PRD System Boundary (line 19): 'OpenClaw is the only browser-facing
@@ -107,15 +107,15 @@ def test_ez_ax_adapter_abstraction_prevents_direct_browser_control() -> None:
     The ExecutionAdapter protocol defines the boundary. Verify that adapter
     implementations are the only runtime code touching browser-specific APIs.
     """
-    from ez_ax.adapters.execution.client import ExecutionAdapter
+    from coord_smith.adapters.execution.client import ExecutionAdapter
 
     # Verify the adapter protocol exists and is protocol-based
     assert hasattr(ExecutionAdapter, "execute")
 
     # Verify it's abstract/protocol (must not reference browser libs directly)
-    from ez_ax.adapters import pyautogui_adapter
+    from coord_smith.adapters import pyautogui_adapter
 
     adapter_module = pyautogui_adapter.__name__
     # Adapter can have implementation-specific imports, but the core runtime
-    # (ez_ax.graph, ez_ax.evidence, etc.) must not
+    # (coord_smith.graph, coord_smith.evidence, etc.) must not
     assert "adapter" in adapter_module.lower()

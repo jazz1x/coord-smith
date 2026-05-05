@@ -14,12 +14,12 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 
-from ez_ax.adapters.execution.client import ExecutionBoundary
-from ez_ax.graph.langgraph_released_execution import (
+from coord_smith.adapters.execution.client import ExecutionBoundary
+from coord_smith.graph.langgraph_released_execution import (
     build_released_scope_execution_graph,
 )
-from ez_ax.graph.released_call_site import ReleasedRunContext
-from ez_ax.graph.released_entrypoint import run_released_scope
+from coord_smith.graph.released_call_site import ReleasedRunContext
+from coord_smith.graph.released_entrypoint import run_released_scope
 
 
 def test_released_scope_graph_requires_execution_adapter(tmp_path: Path) -> None:

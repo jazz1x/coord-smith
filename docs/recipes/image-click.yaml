@@ -1,0 +1,8 @@
+version: 1
+missions:
+  click_dispatch:
+    image: templates/buy-button.png
+    confidence: 0.9
+    region: [0, 400, 1920, 400]   # [left, top, width, height] — restrict search area
+    verify_transition: true
+    transition_threshold: 0.02

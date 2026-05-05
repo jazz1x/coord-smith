@@ -1,6 +1,6 @@
 """Unit tests for runtime graph transition logic."""
 
-from ez_ax.graph.runtime_graph import (
+from coord_smith.graph.runtime_graph import (
     RuntimeGraphPlan,
     TransitionDecision,
     _expected_predecessor,
@@ -11,9 +11,9 @@ from ez_ax.graph.runtime_graph import (
     evaluate_forward_transition,
     transition_artifact_from_decision,
 )
-from ez_ax.models.checkpoint import TransitionCheckpointCollection
-from ez_ax.models.runtime import RuntimeState
-from ez_ax.models.transition import TransitionArtifact
+from coord_smith.models.checkpoint import TransitionCheckpointCollection
+from coord_smith.models.runtime import RuntimeState
+from coord_smith.models.transition import TransitionArtifact
 
 
 def test_build_runtime_graph_plan_returns_complete_structure() -> None:

@@ -1,13 +1,13 @@
-# ez-ax
+# coord-smith
 
 > Python CUA runtime — deterministic OS-coordinate clicking, driven by an external LLM
 
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![tests](https://img.shields.io/badge/tests-703%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-721%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 
-**ez-ax** is the *hands*. The *head* — an external LLM such as OpenClaw — decides what to click; ez-ax executes those decisions on the OS as coordinate clicks and screenshot evidence. Reasoning lives outside the runtime; the runtime itself contains zero LLM calls.
+**coord-smith** is the *hands*. The *head* — an external LLM such as OpenClaw — decides what to click; coord-smith executes those decisions on the OS as coordinate clicks and screenshot evidence. Reasoning lives outside the runtime; the runtime itself contains zero LLM calls.
 
 A run is a 12-mission pipeline driven by a LangGraph state machine. Each mission produces an evidence envelope (action-log JSONL, screenshots, transition diffs) before the next mission is allowed to start. No browser internals (Playwright / CDP / Chromium) are touched — only OS-level coordinates and pixels.
 
@@ -38,7 +38,7 @@ Each mission emits a fixed past-tense action key (e.g. `click_dispatch` → `cli
  OpenClaw (external LLM)
       │  decisions, coords, image refs
       ▼
- ez-ax CLI ──▶ LangGraph state machine ──▶ 12 missions
+ coord-smith CLI ──▶ LangGraph state machine ──▶ 12 missions
                                               │
                             evidence envelope (JSONL + PNG)
                                               │
@@ -66,8 +66,8 @@ uv --version
 ### 1. Bootstrap the project
 
 ```bash
-git clone https://github.com/<your-org>/ez-ax.git
-cd ez-ax
+git clone https://github.com/<your-org>/coord-smith.git
+cd coord-smith
 uv sync --extra dev
 ```
 
@@ -80,7 +80,7 @@ uv python install 3.14
 ### 2. Verify
 
 ```bash
-uv run pytest -q                # 703 passed, 1 skipped, 4 deselected
+uv run pytest -q                # 721 passed, 1 skipped, 4 deselected
 uv run ruff check .
 uv run mypy
 ```
@@ -113,7 +113,7 @@ Without these permissions, `preflight()` exits with code `2`.
 Drive a real click without OpenClaw, using a recipe:
 
 ```bash
-ez-ax --click-recipe ./recipe.json \
+coord-smith --click-recipe ./recipe.yaml \
       --session-ref my-session \
       --expected-auth-state authenticated \
       --target-page-url https://example.com \
@@ -122,29 +122,26 @@ ez-ax --click-recipe ./recipe.json \
 
 A minimal coordinate recipe:
 
-```json
-{
-  "version": 1,
-  "missions": {
-    "click_dispatch": {"x": 800, "y": 500}
-  }
-}
+```yaml
+version: 1
+missions:
+  click_dispatch:
+    x: 800
+    y: 500
 ```
 
 A layout-tolerant image recipe (recommended):
 
-```json
-{
-  "version": 1,
-  "missions": {
-    "click_dispatch": {
-      "image": "templates/buy-button.png",
-      "confidence": 0.9,
-      "grayscale": false
-    }
-  }
-}
+```yaml
+version: 1
+missions:
+  click_dispatch:
+    image: templates/buy-button.png
+    confidence: 0.9
+    grayscale: false
 ```
+
+YAML is canonical; `.json` files are accepted for backwards compatibility (extension-routed). See [docs/recipe-guide.md](docs/recipe-guide.md) for the full schema and agent contract.
 
 **Coordinate priority**: payload (OpenClaw) → recipe coord → recipe image → no-click.
 
@@ -163,37 +160,28 @@ Failure modes are typed: `ImageTemplateNotFound`, `ImageMatchConfidenceLow`.
 
 ### Page-transition verification (optional, off by default)
 
-```json
-{
-  "missions": {
-    "click_dispatch": {
-      "image": "templates/buy.png",
-      "verify_transition": true,
-      "transition_threshold": 0.02,
-      "transition_region": [0, 100, 1920, 800]
-    }
-  }
-}
+```yaml
+missions:
+  click_dispatch:
+    image: templates/buy.png
+    verify_transition: true
+    transition_threshold: 0.02
+    transition_region: [0, 100, 1920, 800]
 ```
 
 Pre-click screenshot → click → post-click screenshot → `PIL.ImageChops.difference` bbox area / region area > threshold ⇒ pass. Below the threshold raises `PageTransitionNotDetected`.
 
 ### Post-click signal polling (optional, off by default)
 
-```json
-{
-  "missions": {
-    "click_dispatch": {
-      "image": "templates/buy.png",
-      "post_click_signal": {
-        "image": "templates/loading-spinner.png",
-        "confidence": 0.85,
-        "timeout": 5.0,
-        "interval": 0.1
-      }
-    }
-  }
-}
+```yaml
+missions:
+  click_dispatch:
+    image: templates/buy.png
+    post_click_signal:
+      image: templates/loading-spinner.png
+      confidence: 0.85
+      timeout: 5.0
+      interval: 0.1
 ```
 
 Polls `locateCenterOnScreen` until the signal image appears. Timeout raises `ImageWaitTimeout`.
@@ -212,9 +200,9 @@ GitHub Actions runs Python 3.14 only (Ubuntu, xvfb for pyautogui import) plus a 
 
 ## Invariants
 
-ez-ax has four hard invariants. Anything that violates them is rejected at PR time:
+coord-smith has four hard invariants. Anything that violates them is rejected at PR time:
 
-1. **LLM-free runtime.** No model calls inside ez-ax. Reasoning lives in OpenClaw.
+1. **LLM-free runtime.** No model calls inside coord-smith. Reasoning lives in OpenClaw.
 2. **Browser-internals forbidden.** No Playwright, no CDP, no Chromium driver. OS coordinates and pixels only.
 3. **`pyautogui.FAILSAFE = True`** is enforced in `PyAutoGUIAdapter.__init__`. Slamming the cursor into a screen corner aborts the run instantly.
 4. **Coordinate priority is fixed.** payload → recipe coord → recipe image → no-click. Never the other way.
@@ -224,7 +212,7 @@ OpenCV is allowed because it is a deterministic pixel-matching library — neith
 ## Project structure
 
 ```
-src/ez_ax/
+src/coord_smith/
   adapters/         execution adapters (PyAutoGUI, page-transition diff)
   config/           settings models (ClickRecipe, RuntimeSettings)
   evidence/         envelope parsing / validation
@@ -248,14 +236,14 @@ docs/
 
 ## Naming
 
-- **ez-ax** — *easy axes*: the runtime swings two axes (coordinates and pixels) and asks no further questions.
+- **coord-smith** — *easy axes*: the runtime swings two axes (coordinates and pixels) and asks no further questions.
 
 ## Triad
 
-ez-ax fits between two sibling tools — independent processes, connected only through artifacts on disk:
+coord-smith fits between two sibling tools — independent processes, connected only through artifacts on disk:
 
 ```
-OpenClaw (think)  ──▶  ez-ax (act)  ──▶  evidence envelope (record)
+OpenClaw (think)  ──▶  coord-smith (act)  ──▶  evidence envelope (record)
    external LLM        deterministic        JSONL + PNG on disk
                        OS-coord click
 ```
@@ -266,7 +254,7 @@ The split is deliberate: every component must be replaceable without touching th
 
 > *"A click is the simplest possible bet on truth: pixels move or they don't."*
 
-ez-ax never reasons about a page. It clicks where it was told to click, and asks the screen whether anything changed. If the screen says no, the run fails — loudly, with evidence.
+coord-smith never reasons about a page. It clicks where it was told to click, and asks the screen whether anything changed. If the screen says no, the run fails — loudly, with evidence.
 
 ## License
 

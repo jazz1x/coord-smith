@@ -1,8 +1,8 @@
-# ez-ax PRD
+# coord-smith PRD
 
 ## Purpose
 
-`ez-ax` is a Python-first orchestration runtime.
+`coord-smith` is a Python-first orchestration runtime.
 
 Its purpose is to:
 
@@ -17,19 +17,19 @@ It is not a browser automation engine.
 ## System Boundary
 
 - `OpenClaw` is the only browser-facing execution actor
-- `ez-ax` is orchestration-centric
-- `ez-ax` must not become browser-facing
-- `ez-ax` must not treat OpenClaw internals as architecture truth
-- `ez-ax` is not a Playwright, CDP, or Chromium control runtime
+- `coord-smith` is orchestration-centric
+- `coord-smith` must not become browser-facing
+- `coord-smith` must not treat OpenClaw internals as architecture truth
+- `coord-smith` is not a Playwright, CDP, or Chromium control runtime
 
 Authority boundary:
 
 - `OpenClaw` owns browser-facing execution
-- `ez-ax` owns orchestration, validation, stopping, and reasoning
+- `coord-smith` owns orchestration, validation, stopping, and reasoning
 
 Runtime inference boundary:
 
-- The `ez-ax` runtime must not invoke any LLM inference at execution time
+- The `coord-smith` runtime must not invoke any LLM inference at execution time
 - All graph traversal, evidence validation, and stopping decisions are
   deterministic Python; no model calls are made during a run
 - `PyAutoGUIAdapter` is the sole execution backend: coordinate-click and
@@ -121,7 +121,7 @@ Expected stack direction:
 
 The following are not in scope for casual change:
 
-- `ez-ax` becoming browser-facing
+- `coord-smith` becoming browser-facing
 - replacing `OpenClaw`
 - direct Playwright, CDP, or Chromium control as product architecture
 - release-ceiling expansion above `runCompletion` without explicit PRD
@@ -129,6 +129,10 @@ The following are not in scope for casual change:
 - presenting modeled behavior as released behavior
 - TypeScript runtime revival under the active runtime path
 - Bun-first canonical runtime or validation direction
+- MCP transport adoption — permanently out of scope. The active transport
+  between `OpenClaw` and `coord-smith` is CLI subprocess (`coord-smith --click-recipe`
+  → exit code + `artifacts/`). Prior `mcp_stdio` scaffold modules were
+  removed; reviving MCP requires a new PRD that supersedes this decision.
 
 ## Invariant Reading
 

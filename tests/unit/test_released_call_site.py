@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.released_call_site import (
+from coord_smith.graph.released_call_site import (
     ReleasedRunContext,
     execute_armed_state_entry_node,
     execute_attach_session_node,
@@ -26,8 +26,8 @@ from ez_ax.graph.released_call_site import (
     execute_trigger_wait_node,
     seed_action_log_marker,
 )
-from ez_ax.models.errors import ConfigError, FlowError, ValidationError
-from ez_ax.models.runtime import RuntimeState
+from coord_smith.models.errors import ConfigError, FlowError, ValidationError
+from coord_smith.models.runtime import RuntimeState
 
 
 class FakeExecutionAdapter:
@@ -267,7 +267,6 @@ async def test_execute_sync_observation_node_wires_execution_wrapper(
         mission_name="sync_observation",
         evidence_refs=(
             "evidence://screenshot/sync-fallback",
-            "evidence://text/fallback-reason",
             "evidence://action-log/sync-observed",
         ),
     )
@@ -302,7 +301,6 @@ async def test_execute_run_completion_node_seeds_release_ceiling_stop(
         mission_name="run_completion",
         evidence_refs=(
                     "evidence://action-log/release-ceiling-stop",
-                    "evidence://text/fallback-reason",
                 ),
     )
     adapter = FakeExecutionAdapter(result=result)

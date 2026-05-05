@@ -1,10 +1,10 @@
-from ez_ax.graph.runtime_graph import (
+from coord_smith.graph.runtime_graph import (
     build_runtime_graph_plan,
     evaluate_forward_transition,
 )
-from ez_ax.models.failure import failure_code_for_stop_reason
-from ez_ax.models.transition import build_transition_artifact
-from ez_ax.reporting.summary import (
+from coord_smith.models.failure import failure_code_for_stop_reason
+from coord_smith.models.transition import build_transition_artifact
+from coord_smith.reporting.summary import (
     summarize_graph_plan,
     summarize_transition_artifact,
     summarize_transition_decision,

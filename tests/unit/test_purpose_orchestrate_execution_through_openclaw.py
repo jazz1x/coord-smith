@@ -1,4 +1,4 @@
-"""Test that ez-ax orchestrates execution through OpenClaw.
+"""Test that coord-smith orchestrates execution through OpenClaw.
 
 PRD Purpose section (line 9):
 'orchestrate execution through `OpenClaw`'
@@ -16,11 +16,13 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
+from coord_smith.graph.langgraph_released_execution import (
+    run_released_scope_via_langgraph,
+)
 
 
 class ExecutionTrackingAdapter:
@@ -86,7 +88,6 @@ class ExecutionTrackingAdapter:
             ),
             "run_completion": (
                 "evidence://action-log/release-ceiling-stop",
-                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name, ())
@@ -310,7 +311,6 @@ async def test_released_scope_execution_graph_wires_to_execution_adapter(
             ),
                 "run_completion": (
                 "evidence://action-log/release-ceiling-stop",
-                "evidence://text/fallback-reason",
             ),
             }
             refs = evidence_map.get(request.mission_name, ())

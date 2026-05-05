@@ -14,10 +14,10 @@ def _load_pyproject_scripts() -> dict[str, str]:
     return data.get("project", {}).get("scripts", {})
 
 
-def test_ez_ax_console_script_callable_resolves() -> None:
+def test_coord_smith_console_script_callable_resolves() -> None:
     scripts = _load_pyproject_scripts()
-    assert "ez-ax" in scripts
-    module_path, _, attr = scripts["ez-ax"].rpartition(":")
+    assert "coord-smith" in scripts
+    module_path, _, attr = scripts["coord-smith"].rpartition(":")
     mod = importlib.import_module(module_path)
     func = getattr(mod, attr)
     assert callable(func)
@@ -25,4 +25,4 @@ def test_ez_ax_console_script_callable_resolves() -> None:
 
 def test_pyproject_scripts_point_to_expected_modules() -> None:
     scripts = _load_pyproject_scripts()
-    assert scripts["ez-ax"] == "ez_ax.graph.pyautogui_cli_entrypoint:main"
+    assert scripts["coord-smith"] == "coord_smith.graph.pyautogui_cli_entrypoint:main"

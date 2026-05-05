@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from ez_ax.validation.bootstrap import (
+from coord_smith.validation.bootstrap import (
     OPTIONAL_BOOTSTRAP_ASSETS,
     REQUIRED_BOOTSTRAP_ASSETS,
     BootstrapAssetStatus,

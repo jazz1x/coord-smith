@@ -1,4 +1,4 @@
-"""Test that ez-ax normalizes and validates typed evidence.
+"""Test that coord-smith normalizes and validates typed evidence.
 
 PRD Purpose section (line 11):
 'normalize and validate typed evidence'
@@ -14,7 +14,12 @@ from __future__ import annotations
 
 import pytest
 
-from ez_ax.evidence.envelope import parse_released_evidence_ref
+from coord_smith.adapters.execution.client import (
+    ExecutionResult,
+    validate_execution_result,
+)
+from coord_smith.evidence.envelope import parse_released_evidence_ref
+from coord_smith.models.errors import ValidationError
 
 
 def test_normalize_evidence_ref_rejects_empty_ref() -> None:
@@ -148,11 +153,6 @@ async def test_evidence_validation_in_adapter_contract() -> None:
     The OpenClaw adapter result validation must enforce typed evidence
     schema for all execution results.
     """
-    from ez_ax.adapters.execution.client import (
-        ExecutionResult,
-        validate_execution_result,
-    )
-
     # Valid evidence refs should be accepted
     valid_result = ExecutionResult(
         mission_name="attach_session",
@@ -166,17 +166,9 @@ async def test_evidence_validation_in_adapter_contract() -> None:
     # Should not raise
     validate_execution_result(valid_result)
 
-    # Invalid evidence refs should be rejected
-    invalid_result = ExecutionResult(
-        mission_name="attach_session",
-        evidence_refs=("not-a-valid-evidence-ref",),
-    )
-
-    try:
-        validate_execution_result(invalid_result)
-    except ValueError as exc:
-        assert "schema" in str(exc)
-    else:
-        raise AssertionError(
-            "Invalid evidence ref should be rejected by adapter contract validation"
+    # Invalid evidence refs are rejected at construction (__post_init__)
+    with pytest.raises(ValidationError, match="invalid ref"):
+        ExecutionResult(
+            mission_name="attach_session",
+            evidence_refs=("not-a-valid-evidence-ref",),
         )

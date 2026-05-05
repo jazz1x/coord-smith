@@ -1,6 +1,6 @@
 """Test that released missions match PRD specification."""
 
-from ez_ax.missions.names import (
+from coord_smith.missions.names import (
     BROWSER_FACING_MISSIONS,
     MODELED_MISSIONS,
     RELEASED_MISSIONS,
@@ -573,7 +573,7 @@ def test_execution_phase_missions_are_uniquely_identified() -> None:
 
     # Verify each execution-phase mission belongs to exactly one mission group
     # (released, modeled, or control) by checking mutual exclusivity
-    from ez_ax.missions.names import CONTROL_MISSIONS
+    from coord_smith.missions.names import CONTROL_MISSIONS
 
     control_set = set(CONTROL_MISSIONS)
     released_set = set(RELEASED_MISSIONS)

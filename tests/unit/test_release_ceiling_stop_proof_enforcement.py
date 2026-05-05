@@ -15,12 +15,14 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.evidence.envelope import validate_release_ceiling_stop_proof
-from ez_ax.graph.langgraph_released_execution import run_released_scope_via_langgraph
+from coord_smith.evidence.envelope import validate_release_ceiling_stop_proof
+from coord_smith.graph.langgraph_released_execution import (
+    run_released_scope_via_langgraph,
+)
 
 
 class StopProofValidationAdapter:
@@ -82,7 +84,6 @@ class StopProofValidationAdapter:
             ),
             "run_completion": (
                 "evidence://action-log/release-ceiling-stop",
-                "evidence://text/fallback-reason",
             ),
         }
         refs = evidence_map.get(request.mission_name, ())

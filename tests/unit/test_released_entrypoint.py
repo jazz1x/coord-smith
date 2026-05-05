@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.released_entrypoint import run_released_scope
-from ez_ax.models.errors import ConfigError
+from coord_smith.graph.released_entrypoint import run_released_scope
+from coord_smith.models.errors import ConfigError
 
 
 class FakeExecutionAdapter:
@@ -117,7 +117,6 @@ class FakeExecutionAdapter:
                 mission_name="run_completion",
                 evidence_refs=(
                     "evidence://action-log/release-ceiling-stop",
-                    "evidence://text/fallback-reason",
                 ),
             )
         raise AssertionError(f"Unexpected mission: {request.mission_name}")

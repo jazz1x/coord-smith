@@ -97,7 +97,7 @@ def test_released_scope_runtime_is_python_only():
     PRD Non-Goals constraint (lines 148-150):
     "TypeScript runtime revival" and "Bun-first canonical runtime"
 
-    The released-scope execution backend (src/ez_ax/) must be Python-only.
+    The released-scope execution backend (src/coord_smith/) must be Python-only.
     """
     runtime_src = PROJECT_ROOT / "src"
     assert (

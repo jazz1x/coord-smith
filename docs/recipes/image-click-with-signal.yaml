@@ -1,0 +1,12 @@
+version: 1
+missions:
+  click_dispatch:
+    image: templates/buy-button.png
+    confidence: 0.9
+    verify_transition: true
+    transition_threshold: 0.02
+    post_click_signal:
+      image: templates/loading-spinner.png
+      confidence: 0.85
+      timeout: 5.0
+      interval: 0.1

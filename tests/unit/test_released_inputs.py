@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from ez_ax.config.released_inputs import resolve_released_scope_inputs
+from coord_smith.config.released_inputs import resolve_released_scope_inputs
 
 
 def test_resolve_released_scope_inputs_prefers_cli_args_over_env() -> None:
@@ -18,10 +18,10 @@ def test_resolve_released_scope_inputs_prefers_cli_args_over_env() -> None:
             "cli-site",
         ],
         env={
-            "EZAX_SESSION_REF": "env-session",
-            "EZAX_EXPECTED_AUTH_STATE": "env-auth",
-            "EZAX_TARGET_PAGE_URL": "https://env.invalid/goods/2",
-            "EZAX_SITE_IDENTITY": "env-site",
+            "COORDSMITH_SESSION_REF": "env-session",
+            "COORDSMITH_EXPECTED_AUTH_STATE": "env-auth",
+            "COORDSMITH_TARGET_PAGE_URL": "https://env.invalid/goods/2",
+            "COORDSMITH_SITE_IDENTITY": "env-site",
         },
     )
 
@@ -35,10 +35,10 @@ def test_resolve_released_scope_inputs_falls_back_to_env() -> None:
     result = resolve_released_scope_inputs(
         argv=[],
         env={
-            "EZAX_SESSION_REF": "env-session",
-            "EZAX_EXPECTED_AUTH_STATE": "env-auth",
-            "EZAX_TARGET_PAGE_URL": "https://env.invalid/goods/2",
-            "EZAX_SITE_IDENTITY": "env-site",
+            "COORDSMITH_SESSION_REF": "env-session",
+            "COORDSMITH_EXPECTED_AUTH_STATE": "env-auth",
+            "COORDSMITH_TARGET_PAGE_URL": "https://env.invalid/goods/2",
+            "COORDSMITH_SITE_IDENTITY": "env-site",
         },
     )
 
@@ -67,9 +67,9 @@ def test_resolve_released_scope_inputs_rejects_whitespace_only_values() -> None:
         resolve_released_scope_inputs(
             argv=["--session-ref", "   "],
             env={
-                "EZAX_EXPECTED_AUTH_STATE": "env-auth",
-                "EZAX_TARGET_PAGE_URL": "https://env.invalid/goods/2",
-                "EZAX_SITE_IDENTITY": "env-site",
+                "COORDSMITH_EXPECTED_AUTH_STATE": "env-auth",
+                "COORDSMITH_TARGET_PAGE_URL": "https://env.invalid/goods/2",
+                "COORDSMITH_SITE_IDENTITY": "env-site",
             },
         )
     except ValueError as exc:
@@ -85,9 +85,9 @@ def test_resolve_released_scope_inputs_rejects_whitespace_wrapped_values() -> No
         resolve_released_scope_inputs(
             argv=["--session-ref", " cli-session "],
             env={
-                "EZAX_EXPECTED_AUTH_STATE": "env-auth",
-                "EZAX_TARGET_PAGE_URL": "https://env.invalid/goods/2",
-                "EZAX_SITE_IDENTITY": "env-site",
+                "COORDSMITH_EXPECTED_AUTH_STATE": "env-auth",
+                "COORDSMITH_TARGET_PAGE_URL": "https://env.invalid/goods/2",
+                "COORDSMITH_SITE_IDENTITY": "env-site",
             },
         )
     except ValueError as exc:
@@ -113,9 +113,9 @@ def test_resolve_released_scope_inputs_rejects_whitespace_wrapped_values_for_all
         resolve_released_scope_inputs(
             argv=["--session-ref", "cli-session", *argv],
             env={
-                "EZAX_EXPECTED_AUTH_STATE": "env-auth",
-                "EZAX_TARGET_PAGE_URL": "https://env.invalid/goods/2",
-                "EZAX_SITE_IDENTITY": "env-site",
+                "COORDSMITH_EXPECTED_AUTH_STATE": "env-auth",
+                "COORDSMITH_TARGET_PAGE_URL": "https://env.invalid/goods/2",
+                "COORDSMITH_SITE_IDENTITY": "env-site",
             },
         )
     except ValueError as exc:

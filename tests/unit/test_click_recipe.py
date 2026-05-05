@@ -7,13 +7,13 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from ez_ax.config.click_recipe import (
+from coord_smith.config.click_recipe import (
     ClickRecipe,
     MissionClick,
     MissionImageClick,
     load_click_recipe,
 )
-from ez_ax.models.errors import ConfigError
+from coord_smith.models.errors import ConfigError
 
 
 def _make_template(path: Path, *, color: str = "red", size: tuple[int, int] = (32, 32)) -> Path:
@@ -61,9 +61,8 @@ def test_load_click_recipe_missing_file_raises_config_error(tmp_path: Path) -> N
 def test_load_click_recipe_invalid_json_raises_config_error(tmp_path: Path) -> None:
     path = tmp_path / "recipe.json"
     path.write_text("{not valid json", encoding="utf-8")
-    with pytest.raises(ConfigError) as exc_info:
+    with pytest.raises(ConfigError, match="could not be parsed"):
         load_click_recipe(path)
-    assert "not valid JSON" in str(exc_info.value)
 
 
 def test_load_click_recipe_wrong_schema_raises_config_error(tmp_path: Path) -> None:
@@ -203,3 +202,95 @@ def test_mission_click_remains_unaffected_by_union_resolution() -> None:
     )
     entry = recipe.missions["click_dispatch"]
     assert isinstance(entry, MissionClick)
+
+
+def test_load_click_recipe_resolves_post_click_signal_path(tmp_path: Path) -> None:
+    template = _make_template(tmp_path / "signal.png")
+    click_template = _make_template(tmp_path / "buy.png")
+    recipe_path = tmp_path / "recipe.json"
+    recipe_path.write_text(
+        json.dumps(
+            {
+                "missions": {
+                    "click_dispatch": {
+                        "image": "buy.png",
+                        "post_click_signal": {"image": "signal.png", "timeout": 3.0},
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    recipe = load_click_recipe(recipe_path)
+    entry = recipe.image_target_for("click_dispatch")
+    assert entry is not None
+    assert Path(entry.image) == click_template.resolve()
+    assert entry.post_click_signal is not None
+    assert Path(entry.post_click_signal.image) == template.resolve()
+
+
+def test_load_click_recipe_raises_when_post_click_signal_template_missing(
+    tmp_path: Path,
+) -> None:
+    click_template = _make_template(tmp_path / "buy.png")
+    recipe_path = tmp_path / "recipe.json"
+    recipe_path.write_text(
+        json.dumps(
+            {
+                "missions": {
+                    "click_dispatch": {
+                        "image": str(click_template),
+                        "post_click_signal": {"image": "missing-signal.png"},
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ConfigError, match="post-click signal"):
+        load_click_recipe(recipe_path)
+
+
+# ---------------------------------------------------------------------------
+# YAML loader
+# ---------------------------------------------------------------------------
+
+
+def test_load_click_recipe_from_yaml_coord(tmp_path: Path) -> None:
+    path = tmp_path / "recipe.yaml"
+    path.write_text(
+        "version: 1\nmissions:\n  click_dispatch:\n    x: 150\n    y: 250\n",
+        encoding="utf-8",
+    )
+    recipe = load_click_recipe(path)
+    assert recipe.coords_for("click_dispatch") == (150, 250)
+
+
+def test_load_click_recipe_from_yml_extension(tmp_path: Path) -> None:
+    path = tmp_path / "recipe.yml"
+    path.write_text(
+        "version: 1\nmissions:\n  click_dispatch:\n    x: 10\n    y: 20\n",
+        encoding="utf-8",
+    )
+    recipe = load_click_recipe(path)
+    assert recipe.coords_for("click_dispatch") == (10, 20)
+
+
+def test_load_click_recipe_from_yaml_image(tmp_path: Path) -> None:
+    template = _make_template(tmp_path / "btn.png")
+    path = tmp_path / "recipe.yaml"
+    path.write_text(
+        f"version: 1\nmissions:\n  click_dispatch:\n    image: {template}\n    confidence: 0.85\n",
+        encoding="utf-8",
+    )
+    recipe = load_click_recipe(path)
+    target = recipe.image_target_for("click_dispatch")
+    assert target is not None
+    assert target.confidence == pytest.approx(0.85)
+
+
+def test_load_click_recipe_invalid_yaml_raises_config_error(tmp_path: Path) -> None:
+    path = tmp_path / "recipe.yaml"
+    path.write_text("missions: [\nunclosed bracket", encoding="utf-8")
+    with pytest.raises(ConfigError, match="could not be parsed"):
+        load_click_recipe(path)

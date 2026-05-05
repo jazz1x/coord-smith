@@ -24,14 +24,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.langgraph_released_execution import (
+from coord_smith.graph.langgraph_released_execution import (
     build_released_scope_execution_graph,
 )
-from ez_ax.graph.released_call_site import ReleasedRunContext
+from coord_smith.graph.released_call_site import ReleasedRunContext
 
 
 class StubExecutionAdapter:

@@ -6,8 +6,8 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from ez_ax.graph.released_run_root import create_run_root, generate_run_id
-from ez_ax.models.errors import ConfigError
+from coord_smith.graph.released_run_root import create_run_root, generate_run_id
+from coord_smith.models.errors import ConfigError
 
 
 def test_generate_run_id_is_safe_for_run_root_creation(tmp_path: Path) -> None:

@@ -9,9 +9,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from PIL import UnidentifiedImageError
 
-from ez_ax.adapters.execution.client import ExecutionRequest
-from ez_ax.adapters.pyautogui_adapter import PyAutoGUIAdapter
-from ez_ax.models.errors import (
+from coord_smith.adapters.execution.client import ExecutionRequest
+from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
+from coord_smith.models.errors import (
     AccessibilityPermissionDenied,
     ClickCoordinatesOutOfBounds,
     ClickExecutionUnverified,
@@ -44,7 +44,6 @@ async def test_execute_prepare_session_returns_fallback_evidence_refs(
     assert result.mission_name == "prepare_session"
     assert "evidence://action-log/prepare-session" in result.evidence_refs
     assert "evidence://screenshot/prepare-session-fallback" in result.evidence_refs
-    assert "evidence://text/fallback-reason" in result.evidence_refs
 
 
 async def test_execute_clicks_when_coordinates_given(tmp_path: Path) -> None:
@@ -269,7 +268,8 @@ async def test_capture_screenshot_raises_permission_error_on_unidentified_image(
             adapter._capture_screenshot("test-key")
 
 
-def test_preflight_raises_when_cursor_does_not_move(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_preflight_raises_when_cursor_does_not_move(tmp_path: Path) -> None:
     """moveTo silent no-op must surface as AccessibilityPermissionDenied.
 
     Simulates the macOS-Accessibility-denied path: pyautogui.moveTo does not
@@ -286,10 +286,11 @@ def test_preflight_raises_when_cursor_does_not_move(tmp_path: Path) -> None:
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         with pytest.raises(AccessibilityPermissionDenied):
-            adapter.preflight()
+            await adapter.preflight()
 
 
-def test_preflight_raises_when_screenshot_denied(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_preflight_raises_when_screenshot_denied(tmp_path: Path) -> None:
     """Screen Recording permission missing -> typed error at preflight."""
     start = MagicMock(x=100, y=100)
     probed = MagicMock(x=110, y=100)  # +10 probe reached — Accessibility OK
@@ -304,12 +305,12 @@ def test_preflight_raises_when_screenshot_denied(tmp_path: Path) -> None:
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         with pytest.raises(ScreenCapturePermissionDenied):
-            adapter.preflight()
+            await adapter.preflight()
 
 
 async def test_execute_uses_click_recipe_when_payload_lacks_coords(tmp_path: Path) -> None:
     """Adapter resolves click coords from recipe when payload is empty."""
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     recipe = ClickRecipe.model_validate(
         {"missions": {"click_dispatch": {"x": 777, "y": 333}}}
@@ -329,7 +330,7 @@ async def test_execute_uses_click_recipe_when_payload_lacks_coords(tmp_path: Pat
 
 async def test_execute_payload_coords_override_recipe(tmp_path: Path) -> None:
     """Payload-provided coords take precedence over recipe coords."""
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     recipe = ClickRecipe.model_validate(
         {"missions": {"click_dispatch": {"x": 777, "y": 333}}}
@@ -351,7 +352,7 @@ async def test_execute_payload_coords_override_recipe(tmp_path: Path) -> None:
 
 async def test_execute_no_click_when_recipe_has_no_entry(tmp_path: Path) -> None:
     """Missions absent from recipe + empty payload -> no click (pre-recipe default)."""
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     recipe = ClickRecipe.model_validate(
         {"missions": {"click_dispatch": {"x": 777, "y": 333}}}
@@ -367,7 +368,8 @@ async def test_execute_no_click_when_recipe_has_no_entry(tmp_path: Path) -> None
     mock_click.assert_not_called()
 
 
-def test_preflight_probes_left_near_right_screen_edge(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_preflight_probes_left_near_right_screen_edge(tmp_path: Path) -> None:
     """Near the right screen edge the probe flips to −10 so it stays in bounds."""
     from PIL import Image
 
@@ -382,12 +384,13 @@ def test_preflight_probes_left_near_right_screen_edge(tmp_path: Path) -> None:
         patch("pyautogui.screenshot", return_value=valid_screenshot),
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        adapter.preflight()  # must NOT raise AccessibilityPermissionDenied
+        await adapter.preflight()  # must NOT raise AccessibilityPermissionDenied
 
 
-def test_preflight_screenshot_unexpected_type_raises(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_preflight_screenshot_unexpected_type_raises(tmp_path: Path) -> None:
     """preflight() raises ScreenCaptureUnavailable when screenshot returns non-PIL."""
-    from ez_ax.models.errors import ScreenCaptureUnavailable
+    from coord_smith.models.errors import ScreenCaptureUnavailable
 
     start = MagicMock(x=100, y=100)
     probed = MagicMock(x=110, y=100)
@@ -399,7 +402,7 @@ def test_preflight_screenshot_unexpected_type_raises(tmp_path: Path) -> None:
     ):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         with pytest.raises(ScreenCaptureUnavailable, match="unexpected type"):
-            adapter.preflight()
+            await adapter.preflight()
 
 
 def test_pyautogui_adapter_sets_failsafe_on_init(tmp_path: Path) -> None:
@@ -413,7 +416,7 @@ def test_pyautogui_adapter_sets_failsafe_on_init(tmp_path: Path) -> None:
 def test_with_run_root_returns_new_adapter_bound_to_different_root(
     tmp_path: Path,
 ) -> None:
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     recipe = ClickRecipe.model_validate(
         {"missions": {"click_dispatch": {"x": 1, "y": 2}}}
@@ -462,7 +465,7 @@ def test_with_run_root_returns_new_adapter_with_new_root(tmp_path: Path) -> None
 
 
 def test_with_run_root_preserves_click_recipe(tmp_path: Path) -> None:
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     recipe = ClickRecipe.model_validate({"missions": {"click_dispatch": {"x": 10, "y": 20}}})
     original = PyAutoGUIAdapter(run_root=tmp_path, click_recipe=recipe)
@@ -494,7 +497,7 @@ async def test_image_target_resolves_via_locate_center_on_screen(
     tmp_path: Path,
 ) -> None:
     """Image target dispatches to pyautogui.locateCenterOnScreen and clicks the result."""
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     template = _write_template(tmp_path / "buy.png")
     recipe = ClickRecipe.model_validate(
@@ -528,8 +531,8 @@ async def test_image_target_raises_when_template_file_missing(
     tmp_path: Path,
 ) -> None:
     """Recipe loaded with absolute path that later vanishes raises typed error."""
-    from ez_ax.config.click_recipe import ClickRecipe
-    from ez_ax.models.errors import ImageTemplateNotFound
+    from coord_smith.config.click_recipe import ClickRecipe
+    from coord_smith.models.errors import ImageTemplateNotFound
 
     missing = tmp_path / "vanished.png"
     recipe = ClickRecipe.model_validate(
@@ -548,8 +551,8 @@ async def test_image_target_raises_when_template_file_missing(
 
 async def test_image_target_raises_when_match_fails(tmp_path: Path) -> None:
     """locateCenterOnScreen returning None raises ImageMatchConfidenceLow."""
-    from ez_ax.config.click_recipe import ClickRecipe
-    from ez_ax.models.errors import ImageMatchConfidenceLow
+    from coord_smith.config.click_recipe import ClickRecipe
+    from coord_smith.models.errors import ImageMatchConfidenceLow
 
     template = _write_template(tmp_path / "buy.png")
     recipe = ClickRecipe.model_validate(
@@ -573,8 +576,8 @@ async def test_image_target_raises_on_image_not_found_exception(
     """pyautogui's ImageNotFoundException is converted to ImageMatchConfidenceLow."""
     import pyautogui
 
-    from ez_ax.config.click_recipe import ClickRecipe
-    from ez_ax.models.errors import ImageMatchConfidenceLow
+    from coord_smith.config.click_recipe import ClickRecipe
+    from coord_smith.models.errors import ImageMatchConfidenceLow
 
     template = _write_template(tmp_path / "buy.png")
     recipe = ClickRecipe.model_validate(
@@ -599,7 +602,7 @@ async def test_image_match_writes_action_log_with_match_metadata(
     tmp_path: Path,
 ) -> None:
     """Image-resolved clicks record template, confidence, and matched coords."""
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     template = _write_template(tmp_path / "buy.png")
     recipe = ClickRecipe.model_validate(
@@ -642,7 +645,7 @@ async def test_payload_coords_take_precedence_over_image_target(
     tmp_path: Path,
 ) -> None:
     """payload(x,y) wins over recipe(image) just like over recipe(coord)."""
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     template = _write_template(tmp_path / "buy.png")
     recipe = ClickRecipe.model_validate(
@@ -669,7 +672,7 @@ async def test_verify_transition_passes_when_pixels_change(tmp_path: Path) -> No
     """When verify_transition is True and pixels differ, the click succeeds."""
     from PIL import Image
 
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     baseline = Image.new("RGB", (200, 200), color="white")
     post = Image.new("RGB", (200, 200), color="white")
@@ -714,8 +717,8 @@ async def test_verify_transition_raises_when_pixels_unchanged(tmp_path: Path) ->
     """Identical pre/post screenshots raise PageTransitionNotDetected."""
     from PIL import Image
 
-    from ez_ax.config.click_recipe import ClickRecipe
-    from ez_ax.models.errors import PageTransitionNotDetected
+    from coord_smith.config.click_recipe import ClickRecipe
+    from coord_smith.models.errors import PageTransitionNotDetected
 
     same = Image.new("RGB", (200, 200), color="white")
 
@@ -746,7 +749,7 @@ async def test_verify_transition_raises_when_pixels_unchanged(tmp_path: Path) ->
 
 async def test_verify_transition_skipped_when_disabled(tmp_path: Path) -> None:
     """verify_transition=False (default) bypasses the pre/post comparison."""
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     recipe = ClickRecipe.model_validate(
         {"missions": {"click_dispatch": {"x": 100, "y": 100}}}
@@ -766,18 +769,20 @@ async def test_verify_transition_skipped_when_disabled(tmp_path: Path) -> None:
     assert mock_screenshot.call_count == 1
 
 
-def test_wait_for_image_returns_coords_on_first_match(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_wait_for_image_returns_coords_on_first_match(tmp_path: Path) -> None:
     """wait_for_image returns immediately when locateCenterOnScreen succeeds."""
     located = MagicMock(x=42, y=84)
     with patch("pyautogui.locateCenterOnScreen", return_value=located):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        result = adapter.wait_for_image(
+        result = await adapter.wait_for_image(
             path="/fake/template.png", timeout=1.0, interval=0.01
         )
     assert result == (42, 84)
 
 
-def test_wait_for_image_polls_until_match(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_wait_for_image_polls_until_match(tmp_path: Path) -> None:
     """wait_for_image keeps polling until a match appears."""
     located = MagicMock(x=10, y=20)
     side_effects: list[object] = [None, None, located]
@@ -785,28 +790,29 @@ def test_wait_for_image_polls_until_match(tmp_path: Path) -> None:
         "pyautogui.locateCenterOnScreen", side_effect=side_effects
     ) as mock_locate:
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
-        result = adapter.wait_for_image(
+        result = await adapter.wait_for_image(
             path="/fake/template.png", timeout=1.0, interval=0.01
         )
     assert result == (10, 20)
     assert mock_locate.call_count == 3
 
 
-def test_wait_for_image_raises_on_timeout(tmp_path: Path) -> None:
+@pytest.mark.asyncio
+async def test_wait_for_image_raises_on_timeout(tmp_path: Path) -> None:
     """wait_for_image raises ImageWaitTimeout when no match appears in time."""
-    from ez_ax.models.errors import ImageWaitTimeout
+    from coord_smith.models.errors import ImageWaitTimeout
 
     with patch("pyautogui.locateCenterOnScreen", return_value=None):
         adapter = PyAutoGUIAdapter(run_root=tmp_path)
         with pytest.raises(ImageWaitTimeout):
-            adapter.wait_for_image(
+            await adapter.wait_for_image(
                 path="/fake/template.png", timeout=0.05, interval=0.01
             )
 
 
 async def test_post_click_signal_logs_match_and_continues(tmp_path: Path) -> None:
     """post_click_signal hit appends a structured signal record to action log."""
-    from ez_ax.config.click_recipe import ClickRecipe
+    from coord_smith.config.click_recipe import ClickRecipe
 
     template = _write_template(tmp_path / "loaded.png")
     located = MagicMock(x=400, y=500)
@@ -855,8 +861,8 @@ async def test_post_click_signal_logs_match_and_continues(tmp_path: Path) -> Non
 
 async def test_post_click_signal_timeout_raises(tmp_path: Path) -> None:
     """post_click_signal that never appears raises ImageWaitTimeout."""
-    from ez_ax.config.click_recipe import ClickRecipe
-    from ez_ax.models.errors import ImageWaitTimeout
+    from coord_smith.config.click_recipe import ClickRecipe
+    from coord_smith.models.errors import ImageWaitTimeout
 
     template = _write_template(tmp_path / "loaded.png")
     recipe = ClickRecipe.model_validate(
@@ -890,8 +896,8 @@ async def test_post_click_signal_timeout_raises(tmp_path: Path) -> None:
 
 async def test_baseline_screenshot_unexpected_type_raises(tmp_path: Path) -> None:
     """execute() raises ScreenCaptureUnavailable when baseline screenshot is non-PIL."""
-    from ez_ax.config.click_recipe import ClickRecipe
-    from ez_ax.models.errors import ScreenCaptureUnavailable
+    from coord_smith.config.click_recipe import ClickRecipe
+    from coord_smith.models.errors import ScreenCaptureUnavailable
 
     recipe = ClickRecipe.model_validate(
         {
@@ -922,8 +928,8 @@ async def test_post_click_screenshot_unexpected_type_raises(tmp_path: Path) -> N
     """_verify_page_transition raises ScreenCaptureUnavailable for non-PIL post frame."""
     from PIL import Image
 
-    from ez_ax.config.click_recipe import ClickRecipe
-    from ez_ax.models.errors import ScreenCaptureUnavailable
+    from coord_smith.config.click_recipe import ClickRecipe
+    from coord_smith.models.errors import ScreenCaptureUnavailable
 
     baseline = Image.new("RGB", (200, 200), color="white")
 
@@ -953,3 +959,23 @@ async def test_post_click_screenshot_unexpected_type_raises(tmp_path: Path) -> N
             await adapter.execute(
                 ExecutionRequest(mission_name="click_dispatch", payload={})
             )
+
+
+def test_fallback_refs_covers_exactly_released_missions() -> None:
+    """_FALLBACK_REFS must stay in sync with RELEASED_MISSIONS.
+
+    Each released mission must have a fallback evidence tuple so that
+    standalone runs (without OpenClaw) produce a valid ExecutionResult.
+    Any drift between _FALLBACK_REFS and RELEASED_MISSIONS would silently
+    fall back to the generic action-log ref, bypassing per-mission validation.
+    """
+    from coord_smith.adapters.pyautogui_adapter import _FALLBACK_REFS
+    from coord_smith.missions.names import RELEASED_MISSIONS
+
+    expected = set(RELEASED_MISSIONS)
+    actual = set(_FALLBACK_REFS.keys())
+    assert actual == expected, (
+        f"_FALLBACK_REFS keys must match RELEASED_MISSIONS exactly.\n"
+        f"  Missing from _FALLBACK_REFS: {sorted(expected - actual)}\n"
+        f"  Extra in _FALLBACK_REFS:     {sorted(actual - expected)}"
+    )

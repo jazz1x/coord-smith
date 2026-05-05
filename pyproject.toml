@@ -3,18 +3,18 @@ requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ez-ax"
-version = "0.1.0"
-description = "Python-first runtime scaffold for ez-ax."
+name = "coord-smith"
+version = "0.0.1"
+description = "Python-first runtime scaffold for coord-smith."
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
 dependencies = [
   "langchain>=0.3.0",
   "langgraph>=0.3.0",
-  "mcp",
   "opencv-python>=4.10.0",
   "pyautogui>=0.9.54",
   "pydantic>=2.8.0",
+  "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -26,13 +26,14 @@ dev = [
   "pytest-asyncio>=0.24.0",
   "ruff>=0.11.0",
   "types-PyAutoGUI",
+  "types-PyYAML",
 ]
 
 [project.scripts]
-ez-ax = "ez_ax.graph.pyautogui_cli_entrypoint:main"
+coord-smith = "coord_smith.graph.pyautogui_cli_entrypoint:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/ez_ax"]
+packages = ["src/coord_smith"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
@@ -43,6 +44,9 @@ markers = [
   "real: requires OS-level permissions (Accessibility + Screen Recording) and a real display; skipped by default",
 ]
 addopts = "-m 'not real'"
+filterwarnings = [
+  "ignore::UserWarning:langchain_core.*",
+]
 
 [tool.ruff]
 line-length = 88
@@ -61,5 +65,5 @@ select = ["B", "E", "F", "I", "UP"]
 [tool.mypy]
 python_version = "3.14"
 mypy_path = "src"
-packages = ["ez_ax"]
+packages = ["coord_smith"]
 strict = true

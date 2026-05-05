@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from ez_ax.adapters.execution.client import (
+from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
 )
-from ez_ax.graph.released_cli_shim import run_released_scope_from_argv_env
+from coord_smith.graph.released_cli_shim import run_released_scope_from_argv_env
 
 
 class FakeExecutionAdapter:
@@ -114,7 +114,6 @@ class FakeExecutionAdapter:
                 mission_name="run_completion",
                 evidence_refs=(
                     "evidence://action-log/release-ceiling-stop",
-                    "evidence://text/fallback-reason",
                 ),
             )
         raise AssertionError(f"Unexpected mission: {request.mission_name}")
@@ -136,10 +135,10 @@ async def test_released_cli_shim_prefers_cli_args_over_env(tmp_path: Path) -> No
         "cli-site",
     ]
     env = {
-        "EZAX_SESSION_REF": "env-session",
-        "EZAX_EXPECTED_AUTH_STATE": "env-auth",
-        "EZAX_TARGET_PAGE_URL": "https://env.invalid/goods/2",
-        "EZAX_SITE_IDENTITY": "env-site",
+        "COORDSMITH_SESSION_REF": "env-session",
+        "COORDSMITH_EXPECTED_AUTH_STATE": "env-auth",
+        "COORDSMITH_TARGET_PAGE_URL": "https://env.invalid/goods/2",
+        "COORDSMITH_SITE_IDENTITY": "env-site",
     }
 
     result = await run_released_scope_from_argv_env(
@@ -305,9 +304,9 @@ async def test_released_cli_shim_rejects_whitespace_wrapped_fields_before_artifa
 @pytest.mark.parametrize(
     ("env", "expected_label"),
     [
-        ({"EZAX_EXPECTED_AUTH_STATE": " auth "}, "expected_auth_state"),
-        ({"EZAX_TARGET_PAGE_URL": " https://cli.invalid/goods/1 "}, "target_page_url"),
-        ({"EZAX_SITE_IDENTITY": " cli-site "}, "site_identity"),
+        ({"COORDSMITH_EXPECTED_AUTH_STATE": " auth "}, "expected_auth_state"),
+        ({"COORDSMITH_TARGET_PAGE_URL": " https://cli.invalid/goods/1 "}, "target_page_url"),
+        ({"COORDSMITH_SITE_IDENTITY": " cli-site "}, "site_identity"),
     ],
 )
 async def test_released_cli_shim_rejects_whitespace_wrapped_env_values_before_artifacts(
@@ -319,10 +318,10 @@ async def test_released_cli_shim_rejects_whitespace_wrapped_env_values_before_ar
     adapter = FakeExecutionAdapter()
 
     full_env = {
-        "EZAX_SESSION_REF": "cli-session",
-        "EZAX_EXPECTED_AUTH_STATE": "cli-auth",
-        "EZAX_TARGET_PAGE_URL": "https://cli.invalid/goods/1",
-        "EZAX_SITE_IDENTITY": "cli-site",
+        "COORDSMITH_SESSION_REF": "cli-session",
+        "COORDSMITH_EXPECTED_AUTH_STATE": "cli-auth",
+        "COORDSMITH_TARGET_PAGE_URL": "https://cli.invalid/goods/1",
+        "COORDSMITH_SITE_IDENTITY": "cli-site",
     }
     full_env.update(env)
 
