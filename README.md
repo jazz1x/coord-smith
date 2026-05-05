@@ -113,7 +113,7 @@ Without these permissions, `preflight()` exits with code `2`.
 Drive a real click without OpenClaw, using a recipe:
 
 ```bash
-ez-ax --click-recipe ./recipe.json \
+ez-ax --click-recipe ./recipe.yaml \
       --session-ref my-session \
       --expected-auth-state authenticated \
       --target-page-url https://example.com \
@@ -122,29 +122,26 @@ ez-ax --click-recipe ./recipe.json \
 
 A minimal coordinate recipe:
 
-```json
-{
-  "version": 1,
-  "missions": {
-    "click_dispatch": {"x": 800, "y": 500}
-  }
-}
+```yaml
+version: 1
+missions:
+  click_dispatch:
+    x: 800
+    y: 500
 ```
 
 A layout-tolerant image recipe (recommended):
 
-```json
-{
-  "version": 1,
-  "missions": {
-    "click_dispatch": {
-      "image": "templates/buy-button.png",
-      "confidence": 0.9,
-      "grayscale": false
-    }
-  }
-}
+```yaml
+version: 1
+missions:
+  click_dispatch:
+    image: templates/buy-button.png
+    confidence: 0.9
+    grayscale: false
 ```
+
+YAML is canonical; `.json` files are accepted for backwards compatibility (extension-routed). See [docs/recipe-guide.md](docs/recipe-guide.md) for the full schema and agent contract.
 
 **Coordinate priority**: payload (OpenClaw) → recipe coord → recipe image → no-click.
 
@@ -163,37 +160,28 @@ Failure modes are typed: `ImageTemplateNotFound`, `ImageMatchConfidenceLow`.
 
 ### Page-transition verification (optional, off by default)
 
-```json
-{
-  "missions": {
-    "click_dispatch": {
-      "image": "templates/buy.png",
-      "verify_transition": true,
-      "transition_threshold": 0.02,
-      "transition_region": [0, 100, 1920, 800]
-    }
-  }
-}
+```yaml
+missions:
+  click_dispatch:
+    image: templates/buy.png
+    verify_transition: true
+    transition_threshold: 0.02
+    transition_region: [0, 100, 1920, 800]
 ```
 
 Pre-click screenshot → click → post-click screenshot → `PIL.ImageChops.difference` bbox area / region area > threshold ⇒ pass. Below the threshold raises `PageTransitionNotDetected`.
 
 ### Post-click signal polling (optional, off by default)
 
-```json
-{
-  "missions": {
-    "click_dispatch": {
-      "image": "templates/buy.png",
-      "post_click_signal": {
-        "image": "templates/loading-spinner.png",
-        "confidence": 0.85,
-        "timeout": 5.0,
-        "interval": 0.1
-      }
-    }
-  }
-}
+```yaml
+missions:
+  click_dispatch:
+    image: templates/buy.png
+    post_click_signal:
+      image: templates/loading-spinner.png
+      confidence: 0.85
+      timeout: 5.0
+      interval: 0.1
 ```
 
 Polls `locateCenterOnScreen` until the signal image appears. Timeout raises `ImageWaitTimeout`.

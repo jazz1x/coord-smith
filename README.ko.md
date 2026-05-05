@@ -113,7 +113,7 @@ uv run pytest -m real -q        # 4 passed: preflight + screenshot + coord click
 OpenClaw 없이 recipe 만으로 실제 클릭 발사:
 
 ```bash
-ez-ax --click-recipe ./recipe.json \
+ez-ax --click-recipe ./recipe.yaml \
       --session-ref my-session \
       --expected-auth-state authenticated \
       --target-page-url https://example.com \
@@ -122,29 +122,26 @@ ez-ax --click-recipe ./recipe.json \
 
 최소 좌표 recipe:
 
-```json
-{
-  "version": 1,
-  "missions": {
-    "click_dispatch": {"x": 800, "y": 500}
-  }
-}
+```yaml
+version: 1
+missions:
+  click_dispatch:
+    x: 800
+    y: 500
 ```
 
 레이아웃 변화에 강건한 이미지 recipe (권장):
 
-```json
-{
-  "version": 1,
-  "missions": {
-    "click_dispatch": {
-      "image": "templates/buy-button.png",
-      "confidence": 0.9,
-      "grayscale": false
-    }
-  }
-}
+```yaml
+version: 1
+missions:
+  click_dispatch:
+    image: templates/buy-button.png
+    confidence: 0.9
+    grayscale: false
 ```
+
+YAML이 정식 포맷이며, `.json` 파일은 backwards compatibility 용으로 받아들여집니다 (확장자 기반 자동 라우팅). 전체 스키마와 에이전트 계약은 [docs/recipe-guide.md](docs/recipe-guide.md) 참고.
 
 **좌표 우선순위**: payload (OpenClaw) → recipe 좌표 → recipe 이미지 → no-click.
 
@@ -163,37 +160,28 @@ ez-ax --click-recipe ./recipe.json \
 
 ### 페이지 전환 검증 (옵션, 기본 off)
 
-```json
-{
-  "missions": {
-    "click_dispatch": {
-      "image": "templates/buy.png",
-      "verify_transition": true,
-      "transition_threshold": 0.02,
-      "transition_region": [0, 100, 1920, 800]
-    }
-  }
-}
+```yaml
+missions:
+  click_dispatch:
+    image: templates/buy.png
+    verify_transition: true
+    transition_threshold: 0.02
+    transition_region: [0, 100, 1920, 800]
 ```
 
 클릭 직전 스크린샷 → 클릭 → 클릭 직후 스크린샷 → `PIL.ImageChops.difference` bbox 면적 / 영역 면적 > threshold 면 통과. 미달 시 `PageTransitionNotDetected` 예외.
 
 ### Post-click 신호 폴링 (옵션, 기본 off)
 
-```json
-{
-  "missions": {
-    "click_dispatch": {
-      "image": "templates/buy.png",
-      "post_click_signal": {
-        "image": "templates/loading-spinner.png",
-        "confidence": 0.85,
-        "timeout": 5.0,
-        "interval": 0.1
-      }
-    }
-  }
-}
+```yaml
+missions:
+  click_dispatch:
+    image: templates/buy.png
+    post_click_signal:
+      image: templates/loading-spinner.png
+      confidence: 0.85
+      timeout: 5.0
+      interval: 0.1
 ```
 
 지정 이미지가 화면에 나타날 때까지 `locateCenterOnScreen` 폴링. 타임아웃 시 `ImageWaitTimeout`.
