@@ -1,0 +1,36 @@
+# coord-smith demo flow recipe — exercises the multi-step pipeline against
+# the deterministic demo page at tests/fixtures/demo/ticketing.html
+#
+# Four-step click sequence:
+#   1. Buy Tickets       → state buy → seat-1
+#   2. Seat A1           → state seat-1 → seat-2 (region-restricted to left half)
+#   3. Confirm Seat      → state seat-2 → confirm
+#   4. Confirm Purchase  → state confirm → success
+#
+# Each step's image template was cropped from a Playwright screenshot of the
+# corresponding state. Region restrictions on step 2 prevent the A2-on-A1
+# ambiguity (the two seat templates differ only by one character; at default
+# confidence the wrong region wins without an explicit search restriction).
+#
+# Used by tests/integration/test_demo_flow_with_real_opencv.py — that test
+# wires pyautogui.screenshot to return the matching state PNG so the same
+# recipe runs end-to-end without ever touching the real screen.
+
+version: 1
+steps:
+  - name: open-buy
+    image: templates/buy-button.png
+    confidence: 0.9
+
+  - name: select-seat-a1
+    image: templates/seat-a1.png
+    region: [0, 0, 640, 800]    # left half of the seat row
+    confidence: 0.9
+
+  - name: confirm-seat
+    image: templates/confirm-seat.png
+    confidence: 0.9
+
+  - name: confirm-purchase
+    image: templates/confirm-purchase.png
+    confidence: 0.9

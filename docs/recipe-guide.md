@@ -344,6 +344,93 @@ print(json.dumps(ClickRecipe.model_json_schema(), indent=2))
 |------|----------|
 | [`docs/recipes/multi-step-flow.yaml`](recipes/multi-step-flow.yaml) | **Multi-step happy path** — three sequential image-anchored clicks |
 | [`docs/recipes/multi-step-with-fallback.yaml`](recipes/multi-step-with-fallback.yaml) | **Multi-step + fallback** — image primary, coord fallback per step (with per-step `prefer: coord` override) |
+| [`tests/fixtures/demo/demo-flow.yaml`](../tests/fixtures/demo/demo-flow.yaml) | **End-to-end tutorial** — four-step recipe against the bundled demo page (see Tutorial below) |
+| [`tests/fixtures/demo/demo-flow-with-guards.yaml`](../tests/fixtures/demo/demo-flow-with-guards.yaml) | **End-to-end tutorial + guards** — same flow with `verify_transition` + `post_click_signal` per step |
 | [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml) | Single-step (legacy `missions:` shape) — fixed pixel coordinate |
 | [`docs/recipes/image-click.yaml`](recipes/image-click.yaml) | Single-step (legacy) — template match + transition check |
 | [`docs/recipes/image-click-with-signal.yaml`](recipes/image-click-with-signal.yaml) | Single-step (legacy) — template match + post-click signal polling |
+
+---
+
+## Tutorial — End-to-End on the Bundled Demo Page
+
+The repo ships a deterministic 5-state demo page at
+[`tests/fixtures/demo/ticketing.html`](../tests/fixtures/demo/ticketing.html)
+(fixed 1280×800 viewport, no animations, distinct background tint per
+state). It exists to let you exercise the complete coord-smith loop —
+template extraction → recipe authoring → multi-step dispatch → guard
+validation — without an external service.
+
+### 1. Render each state to PNG
+
+```bash
+for state in buy seat-1 seat-2 confirm success; do
+  npx playwright screenshot --viewport-size=1280,800 \
+    "file://$(pwd)/tests/fixtures/demo/ticketing.html?state=${state}" \
+    "tests/fixtures/demo/state-${state}.png"
+done
+```
+
+The page accepts a `?state=<name>` query param so the renderer can jump
+directly to each state without simulating clicks.
+
+### 2. Crop button templates from the rendered states
+
+The button positions are stable across states (the panel switches but
+the layout grid does not). A short Python script crops each step's
+target button into `tests/fixtures/demo/templates/`:
+
+```python
+from PIL import Image
+from pathlib import Path
+
+DEMO = Path("tests/fixtures/demo")
+crops = [
+    ("state-buy.png",     "buy-button.png",       (495, 460, 785, 530)),
+    ("state-seat-1.png",  "seat-a1.png",          (370, 460, 580, 530)),
+    ("state-seat-1.png",  "seat-a2.png",          (700, 460, 910, 530)),
+    ("state-seat-2.png",  "confirm-seat.png",     (495, 540, 785, 615)),
+    ("state-confirm.png", "confirm-purchase.png", (495, 600, 785, 675)),
+]
+for src, dst, box in crops:
+    Image.open(DEMO / src).crop(box).save(DEMO / "templates" / dst)
+```
+
+### 3. Write the recipe
+
+[`tests/fixtures/demo/demo-flow.yaml`](../tests/fixtures/demo/demo-flow.yaml)
+is the canonical four-step recipe. Note the `region:` constraint on
+step 2 — the Seat A1 and Seat A2 templates differ by one character, so
+without a search restriction OpenCV can match the wrong button at
+default `confidence=0.9`.
+
+### 4. Disambiguation pitfall — region restriction
+
+When two on-screen buttons share most pixels (`Seat A1` vs `Seat A2`,
+two list items with the same shape), the template match is ambiguous.
+Three ways to disambiguate, in increasing strength:
+
+1. Raise `confidence` (e.g. `0.97`) — usually enough but brittle to
+   font hinting changes.
+2. Add `region: [x, y, w, h]` to the step — restrict the search to the
+   half / quadrant where the intended button lives. **Preferred.**
+3. Use a more distinctive template — crop a wider area that includes
+   surrounding text (e.g., the seat row's row-label).
+
+### 5. Run the recipe (or the integration test)
+
+```bash
+# Real run — moves the live cursor (macOS Accessibility required).
+uv run coord-smith --click-recipe tests/fixtures/demo/demo-flow.yaml \
+  --session-ref demo --expected-auth-state authenticated \
+  --target-page-url file://demo --site-identity demo
+
+# Or run the integration test — never touches the real cursor.
+uv run pytest tests/integration/test_demo_flow_with_real_opencv.py -v
+```
+
+The integration test uses `pyautogui.locate(template, screenshot_file)`
+in place of `pyautogui.locateCenterOnScreen`, so OpenCV matching is
+real but the screen surrogate returns the next state's PNG after each
+click. This is the recommended pattern for testing recipes against a
+fixed demo without disturbing the real screen.
