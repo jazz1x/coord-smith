@@ -19,7 +19,6 @@ from coord_smith.adapters.execution.client import (
 from coord_smith.adapters.page_transition import PageTransitionVerifier
 from coord_smith.config.click_recipe import (
     ClickRecipe,
-    MissionClick,
     MissionImageClick,
     PostClickSignal,
     Step,
@@ -247,36 +246,6 @@ class PyAutoGUIAdapter:
         if image.size == (0, 0):
             raise ScreenCaptureUnavailable("preflight screenshot returned empty image")
 
-    def _resolve_click_coords(
-        self, mission: str, payload: dict[str, object]
-    ) -> tuple[int, int] | None:
-        """Resolve click coordinates: payload > recipe(coord) > recipe(image) > None.
-
-        Payload-provided coords (typically from an external caller like
-        OpenClaw) take precedence. Otherwise, the static per-mission recipe
-        is consulted: a coordinate target returns its fixed pixel pair, while
-        an image target is matched against the live screen via
-        ``pyautogui.locateCenterOnScreen`` (OpenCV-backed). Returning None
-        means this mission performs no click.
-        """
-        px = payload.get("x")
-        py = payload.get("y")
-        if (
-            not isinstance(px, bool)
-            and isinstance(px, (int, float))
-            and not isinstance(py, bool)
-            and isinstance(py, (int, float))
-        ):
-            return (int(px), int(py))
-        if self._click_recipe is not None:
-            coord = self._click_recipe.coords_for(mission)
-            if coord is not None:
-                return coord
-            image_target = self._click_recipe.image_target_for(mission)
-            if image_target is not None:
-                return self._locate_image_target(mission, image_target)
-        return None
-
     def _locate_image_target(
         self, mission: str, target: MissionImageClick
     ) -> tuple[int, int]:
@@ -438,14 +407,6 @@ class PyAutoGUIAdapter:
                     raise ImageWaitTimeout(msg) from last_exc
                 raise ImageWaitTimeout(msg)
             await asyncio.sleep(interval)
-
-    def _mission_target(
-        self, mission: str
-    ) -> MissionClick | MissionImageClick | None:
-        """Return the per-mission recipe entry that drives transition/signal options."""
-        if self._click_recipe is None:
-            return None
-        return self._click_recipe.missions.get(mission)
 
     def _verify_page_transition(
         self,

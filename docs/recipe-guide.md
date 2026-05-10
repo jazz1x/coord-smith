@@ -67,46 +67,69 @@ The priority order is enforced by the runtime and cannot be changed by a recipe.
 Recipes are YAML (preferred) or JSON. The file extension determines the parser:
 `.yaml` / `.yml` → YAML, anything else → JSON.
 
-### Minimal structure
+### Minimal structure (multi-step — preferred)
+
+```yaml
+version: 1
+steps:
+  - name: <step_name>
+    image: <path>      # at least one of image / coord required per step
+    coord: { x, y }    # optional; presence forms an implicit fallback chain
+    # ... per-step options ...
+```
+
+Each step is one click. Steps execute serially within a single
+`coord-smith` invocation; per-run setup (`attach_session`, `prepare_session`)
+and teardown (`run_completion`) frame the step list automatically. An empty
+or omitted `steps` list is a smoke target — the run completes without any
+click.
+
+### Legacy single-mission structure (backwards-compat)
 
 ```yaml
 version: 1
 missions:
-  <mission_name>: <target>
+  click_dispatch: <target>
 ```
 
-Only `click_dispatch` is the typical mission to configure. Other missions in the
-12-step pipeline do not perform clicks and ignore recipe entries.
+The legacy `missions: {name: target}` shape is auto-normalized to a
+single-step recipe at load time. This emits a one-shot `DeprecationWarning`
+and is preserved only for existing recipes; new recipes should use `steps:`.
 
-### Mission names (released pipeline order)
+### Released pipeline (per-run + per-step)
 
 ```
-attach_session → prepare_session → benchmark_validation → page_ready_observation
-→ sync_observation → target_actionability_observation → armed_state_entry
-→ trigger_wait → click_dispatch → click_completion → success_observation
-→ run_completion
+attach_session → prepare_session → (step_observe → step_dispatch →
+step_capture)×N → run_completion
 ```
+
+The per-step block runs N times for an N-step recipe; with N=0 the per-step
+block is skipped and `prepare_session` connects directly to `run_completion`.
 
 ---
 
 ## Target Types
 
-### A. Coordinate click
+### A. Coordinate click (single-step example)
 
 ```yaml
-missions:
-  click_dispatch:
-    x: 800      # required — pixel X from left edge
-    y: 500      # required — pixel Y from top edge
+steps:
+  - name: click-buy
+    coord:
+      x: 800      # required — pixel X from left edge
+      y: 500      # required — pixel Y from top edge
 ```
 
-Use when the caller (OpenClaw) already knows the exact pixel position.
+Use when the caller (OpenClaw) already knows the exact pixel position and
+the screen layout is fixed across runs. Coord-only steps are brittle to
+DPI / resolution changes; prefer image-anchored or hybrid forms when the
+recipe is shared across machines.
 
 ### B. Image-template click
 
 ```yaml
-missions:
-  click_dispatch:
+steps:
+  - name: click-buy
     image: templates/buy-button.png   # required — path relative to recipe file
     confidence: 0.9                   # 0.0–1.0, default 0.9
     region: [0, 400, 1920, 400]       # optional — [left, top, width, height]
@@ -120,11 +143,31 @@ Failure modes:
 - `ImageTemplateNotFound` (exit 1) — template file does not exist.
 - `ImageMatchConfidenceLow` (exit 1) — template on screen but below `confidence`.
 
-### C. Hybrid — image click + post-click verification
+### C. Hybrid — image primary with coord fallback
 
 ```yaml
-missions:
-  click_dispatch:
+steps:
+  - name: click-buy
+    image: templates/buy-button.png
+    coord: { x: 800, y: 500 }       # implicit fallback when image misses
+    confidence: 0.9
+    # prefer: image                  # default; explicit prefer only when flipping
+```
+
+When a step declares both `image` and `coord`, the runtime forms an implicit
+fallback chain: the field named in `prefer` (default `image`) is tried first,
+the other is tried if the primary fails. Set `prefer: coord` per step to
+flip the order (rare — only when image matching is known to be noisy on a
+particular target while the coord is stable).
+
+There is no separate `fallback:` field. The chain is derived from which
+fields the step declares.
+
+### D. Image click + post-click verification
+
+```yaml
+steps:
+  - name: click-buy
     image: templates/buy-button.png
     confidence: 0.9
 
@@ -148,6 +191,23 @@ area is below `transition_threshold`, `PageTransitionNotDetected` is raised
 `post_click_signal` polls `locateCenterOnScreen` until the signal image appears.
 Timeout raises `ImageWaitTimeout` (exit 1).
 
+### E. Pre-click guard (`wait_for`)
+
+```yaml
+steps:
+  - name: select-seat
+    wait_for:
+      image: templates/seat-panel.png   # poll until visible before clicking
+      timeout: 5.0
+      interval: 0.1
+    image: templates/available-seat.png
+    region: [200, 300, 800, 600]
+```
+
+`wait_for` blocks the step until the named image appears on screen, then
+proceeds with the click. Replaces the legacy `trigger_wait` mission and
+binds the wait to the step that needs it.
+
 ---
 
 ## Full Field Reference
@@ -157,31 +217,42 @@ Timeout raises `ImageWaitTimeout` (exit 1).
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `version` | int | `1` | Schema version. Always `1` for now. |
-| `missions` | map | `{}` | Mission name → target. |
+| `steps` | list of Step | `null` | Multi-step click sequence (preferred). |
+| `missions` | map | `{}` | **Deprecated.** Legacy single-mission map; auto-normalized to a single-step recipe with a one-shot `DeprecationWarning`. |
 
-### `MissionClick` (coord target — triggered when `x` and `y` are present)
+### `Step` (multi-step recipe entry — at least one of `image` or `coord` required)
+
+| Field | Type | Default | Required |
+|-------|------|---------|----------|
+| `name` | str | — | yes (unique within recipe) |
+| `image` | str (path) | `null` | one of `image`/`coord` |
+| `coord` | StepCoord | `null` | one of `image`/`coord` |
+| `region` | [int×4] | `null` | image-only |
+| `confidence` | float 0–1 | `null` (= 0.9) | image-only |
+| `grayscale` | bool | `null` (= false) | image-only |
+| `prefer` | `"image"` \| `"coord"` | resolved by validator | when both are declared |
+| `wait_for` | WaitFor | `null` | no — pre-click guard |
+| `verify_transition` | bool | `false` | no |
+| `transition_threshold` | float 0–1 | `0.01` | no |
+| `transition_region` | [int×4] | `null` | no |
+| `post_click_signal` | PostClickSignal | `null` | no |
+
+### `StepCoord`
 
 | Field | Type | Default | Required |
 |-------|------|---------|----------|
 | `x` | int | — | yes |
 | `y` | int | — | yes |
-| `verify_transition` | bool | `false` | no |
-| `transition_threshold` | float 0–1 | `0.01` | no |
-| `transition_region` | [int×4] | `null` | no |
-| `post_click_signal` | PostClickSignal | `null` | no |
 
-### `MissionImageClick` (image target — triggered when `image` is present)
+### `WaitFor` (pre-click guard — wait until image appears on screen)
 
 | Field | Type | Default | Required |
 |-------|------|---------|----------|
 | `image` | str (path) | — | yes |
 | `confidence` | float 0–1 | `0.9` | no |
+| `timeout` | float > 0 | `5.0` | no |
+| `interval` | float > 0 | `0.1` | no |
 | `region` | [int×4] | `null` | no |
-| `grayscale` | bool | `false` | no |
-| `verify_transition` | bool | `false` | no |
-| `transition_threshold` | float 0–1 | `0.01` | no |
-| `transition_region` | [int×4] | `null` | no |
-| `post_click_signal` | PostClickSignal | `null` | no |
 
 ### `PostClickSignal`
 
@@ -195,6 +266,14 @@ Timeout raises `ImageWaitTimeout` (exit 1).
 > Image paths are resolved relative to the recipe file's directory.
 > Absolute paths are accepted unchanged.
 
+### Legacy `MissionClick` / `MissionImageClick` (deprecated)
+
+The legacy `missions: {name: target}` shape still loads — the runtime
+auto-normalizes it to `steps: [Step]` at parse time. New recipes should use
+`steps:` directly. The legacy field schemas remain in
+`coord_smith.config.click_recipe` only for backwards-compat parsing; do
+not author new recipes against them.
+
 ---
 
 ## Artifacts Output
@@ -207,19 +286,21 @@ artifacts/
   action-log/
     attach-session.jsonl
     prepare-session.jsonl
-    ...
-    click-dispatched.jsonl      ← structured click event
+    step-observed.jsonl         ← per-step pre-click observation
+    step-dispatched.jsonl       ← per-step click event
+    step-captured.jsonl         ← per-step post-click capture
     release-ceiling-stop.jsonl  ← final proof of runCompletion
   screenshot/
-    prepare-session-fallback.png
-    click-dispatched-fallback.png
+    attach-session-fallback.png
+    step-dispatched.png
     ...
 ```
 
-Each `.jsonl` file contains one JSON object per line with at minimum:
+Each `.jsonl` file contains one JSON object per line. Per-step events also
+carry `step_idx` and `step_name`:
 
 ```json
-{"ts": "2026-05-02T11:00:00+00:00", "mission_name": "click_dispatch", "event": "click-dispatched"}
+{"ts": "2026-05-02T11:00:00+00:00", "mission_name": "step_dispatch", "event": "step-dispatched", "step_idx": 0, "step_name": "open-buy"}
 ```
 
 The `release-ceiling-stop.jsonl` file is the authoritative proof that the run
@@ -261,6 +342,8 @@ print(json.dumps(ClickRecipe.model_json_schema(), indent=2))
 
 | File | Use case |
 |------|----------|
-| [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml) | Fixed pixel coordinate |
-| [`docs/recipes/image-click.yaml`](recipes/image-click.yaml) | Template match + transition check |
-| [`docs/recipes/image-click-with-signal.yaml`](recipes/image-click-with-signal.yaml) | Template match + post-click signal polling |
+| [`docs/recipes/multi-step-flow.yaml`](recipes/multi-step-flow.yaml) | **Multi-step happy path** — three sequential image-anchored clicks |
+| [`docs/recipes/multi-step-with-fallback.yaml`](recipes/multi-step-with-fallback.yaml) | **Multi-step + fallback** — image primary, coord fallback per step (with per-step `prefer: coord` override) |
+| [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml) | Single-step (legacy `missions:` shape) — fixed pixel coordinate |
+| [`docs/recipes/image-click.yaml`](recipes/image-click.yaml) | Single-step (legacy) — template match + transition check |
+| [`docs/recipes/image-click-with-signal.yaml`](recipes/image-click-with-signal.yaml) | Single-step (legacy) — template match + post-click signal polling |

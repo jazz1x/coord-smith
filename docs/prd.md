@@ -133,6 +133,21 @@ The following are not in scope for casual change:
   between `OpenClaw` and `coord-smith` is CLI subprocess (`coord-smith --click-recipe`
   → exit code + `artifacts/`). Prior `mcp_stdio` scaffold modules were
   removed; reviving MCP requires a new PRD that supersedes this decision.
+- Stateful long-running session — permanently out of scope. `coord-smith`
+  is invoked, runs to `runCompletion`, and exits. There is no persistent
+  process accepting click-at-a-time over stdin or socket. Multi-step
+  flows are expressed declaratively as a step list inside a single
+  invocation; orchestrators that need mid-flow reasoning split steps
+  across multiple invocations (stateless chain). Reviving a stateful
+  daemon mode requires a new PRD that supersedes this decision.
+- Modeled missions beyond `runCompletion` — permanently out of scope.
+  The seven control-tier missions that previously sat above the released
+  ceiling (`release_gate_evaluation`, `retry_or_stop_decision`,
+  `work_rag_update`, `work_rag_compression`, `lesson_promotion`,
+  `e2e_replay_or_comparison`, `python_validation_execution`) plus
+  `benchmark_validation` are removed. `ALL_MISSIONS` equals
+  `RELEASED_MISSIONS`. Reviving any of them requires a new PRD that
+  supersedes this decision.
 
 ## Invariant Reading
 

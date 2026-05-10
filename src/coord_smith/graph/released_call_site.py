@@ -101,7 +101,10 @@ def seed_action_log_marker(
 
     For per-step missions, ``step_idx`` and ``step_name`` are recorded in the
     payload so the action log contains enough context to reconstruct the
-    step sequence after the run.
+    step sequence after the run. The record is **appended** to the action-log
+    file: per-step missions share a single file (``step-observed.jsonl`` etc.)
+    across all step iterations, so every iteration must accumulate rather than
+    overwrite.
     """
 
     require_existing_run_root(run_root=run_root)
@@ -130,7 +133,8 @@ def seed_action_log_marker(
         payload["step_idx"] = step_idx
     if step_name is not None:
         payload["step_name"] = step_name
-    path.write_text(json.dumps(payload, ensure_ascii=False) + "\n", encoding="utf-8")
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(payload, ensure_ascii=False) + "\n")
     return path
 
 

@@ -1,0 +1,29 @@
+# Multi-step flow recipe — image primary with coord fallback per step.
+#
+# Each step declares both an `image` and a `coord` target. The default
+# `prefer: image` is implicit (no explicit `prefer` line means image-first,
+# the most environment-portable choice). When the image template fails to
+# match, the runtime falls back to the fixed coordinate.
+#
+# This shape suits flows that target stable UI in known screen positions
+# but want layout-tolerant primary matching. Override per step with
+# `prefer: coord` when a particular step is known to be coord-stable but
+# image-noisy (e.g., dynamic timestamp overlays).
+
+version: 1
+steps:
+  - name: open-buy
+    image: templates/buy-button.png
+    coord: { x: 1820, y: 580 }      # fallback when image not matched
+
+  - name: select-seat
+    image: templates/available-seat.png
+    coord: { x: 640, y: 480 }
+    region: [200, 300, 800, 600]    # restricts image search; ignored for coord
+    confidence: 0.85
+
+  - name: confirm
+    image: templates/confirm.png
+    coord: { x: 960, y: 720 }
+    prefer: coord                    # explicit override: try coord first
+    verify_transition: true

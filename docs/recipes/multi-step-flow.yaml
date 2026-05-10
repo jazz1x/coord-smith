@@ -1,0 +1,31 @@
+# Multi-step flow recipe — happy path.
+#
+# Three sequential clicks anchored by image templates. Each step waits for
+# the previous click to settle before the next dispatch (post_click_signal
+# + verify_transition guard the boundary). This is the canonical shape for
+# a deterministic flow such as a ticketing buy → seat → confirm chain.
+#
+# All image paths are relative to this recipe file. The runtime resolves
+# them at load time and rejects the recipe if a referenced template is
+# missing.
+
+version: 1
+steps:
+  - name: open-buy
+    image: templates/buy-button.png
+    confidence: 0.9
+    post_click_signal:
+      image: templates/seat-panel.png
+      timeout: 5.0
+      interval: 0.1
+
+  - name: select-seat
+    image: templates/available-seat.png
+    region: [200, 300, 800, 600]
+    confidence: 0.85
+    verify_transition: true
+    transition_threshold: 0.02
+
+  - name: confirm
+    image: templates/confirm.png
+    confidence: 0.9
