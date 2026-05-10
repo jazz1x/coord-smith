@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>coord-smith · Flow Architecture · Decision Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FAF7F2;
+    --paper-deep: #F2EDE4;
+    --ink: #1C1A18;
+    --ink-soft: #45413C;
+    --ink-mute: #807A70;
+    --rule: #C9C2B5;
+    --rule-soft: #E5DFD3;
+    --rust: #B0411F;
+    --rust-soft: #C26840;
+    --green: #4A6E48;
+    --red: #8E3325;
+    --amber: #8C6418;
+    --tint-good: #EFF1E4;
+    --tint-bad: #F4E5DF;
+    --tint-mid: #F5EDD9;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Newsreader', 'EB Garamond', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.55;
+    text-wrap: pretty;
+    font-feature-settings: "ss01", "kern";
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 64px 56px 96px;
+  }
+
+  /* HEADER */
+  .masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 18px;
+    margin-bottom: 56px;
+  }
+  .masthead .brand {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .masthead .meta {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.04em;
+  }
+
+  /* HERO */
+  .hero h1 {
+    font-family: 'Newsreader', serif;
+    font-weight: 500;
+    font-size: 44px;
+    line-height: 1.12;
+    margin: 0 0 20px;
+    letter-spacing: -0.01em;
+  }
+  .hero .deck {
+    font-size: 18px;
+    color: var(--ink-soft);
+    line-height: 1.45;
+    max-width: 56ch;
+    margin: 0 0 40px;
+  }
+  .hero .doctype {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-bottom: 14px;
+  }
+
+  /* TL;DR — most prominent block above the fold */
+  .verdict {
+    background: var(--paper-deep);
+    border-left: 3px solid var(--rust);
+    padding: 28px 32px;
+    margin: 0 0 64px;
+    position: relative;
+  }
+  .verdict .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--rust);
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .verdict p {
+    margin: 0;
+    font-size: 21px;
+    line-height: 1.4;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+  }
+  .verdict .rust { color: var(--rust); font-style: italic; }
+
+  /* SECTION ANCHORS */
+  section { margin-bottom: 72px; }
+  section > h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    font-weight: 500;
+    margin: 0 0 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dotted var(--rule);
+  }
+  section > h2 .num {
+    color: var(--rust);
+    margin-right: 14px;
+    font-weight: 500;
+  }
+  section > h3 {
+    font-family: 'Newsreader', serif;
+    font-weight: 500;
+    font-size: 26px;
+    line-height: 1.2;
+    margin: 14px 0 24px;
+    letter-spacing: -0.005em;
+  }
+
+  p, li { font-size: 15.5px; line-height: 1.62; }
+  p strong { font-weight: 600; color: var(--ink); }
+
+  /* ARCHITECTURE DIAGRAM */
+  .diagram {
+    background: var(--paper-deep);
+    padding: 36px 32px;
+    margin: 24px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--ink-soft);
+    border: 1px solid var(--rule-soft);
+  }
+  .diagram .node {
+    display: inline-block;
+    background: var(--paper);
+    padding: 8px 14px;
+    border: 1px solid var(--ink-soft);
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .diagram .node.accent {
+    border-color: var(--rust);
+    color: var(--rust);
+    background: #FFF;
+  }
+  .diagram .arrow {
+    color: var(--ink-mute);
+    margin: 0 8px;
+  }
+  .diagram .label {
+    color: var(--ink-mute);
+    font-style: italic;
+    font-size: 11.5px;
+  }
+  .diagram .row {
+    display: flex;
+    align-items: center;
+    margin: 12px 0;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .diagram .indent { padding-left: 32px; }
+  .diagram .pipe {
+    color: var(--ink-mute);
+    margin: 0 6px;
+    font-weight: 400;
+  }
+
+  /* AXES grid */
+  .axes {
+    display: grid;
+    grid-template-columns: 1fr;
+    border-top: 1px solid var(--rule);
+    margin-top: 24px;
+  }
+  .axis {
+    display: grid;
+    grid-template-columns: 80px 1fr 200px;
+    gap: 24px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .axis .mark {
+    font-family: 'Newsreader', serif;
+    font-size: 28px;
+    line-height: 1;
+    font-weight: 500;
+  }
+  .axis.good .mark { color: var(--green); }
+  .axis.mid  .mark { color: var(--amber); }
+  .axis.bad  .mark { color: var(--red); }
+  .axis .name {
+    font-family: 'Newsreader', serif;
+    font-size: 19px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .axis .desc {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .axis .status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--ink-mute);
+    text-align: right;
+  }
+  .axis .status .pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 2px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .axis.good .pill { background: var(--tint-good); color: var(--green); }
+  .axis.mid  .pill { background: var(--tint-mid); color: var(--amber); }
+  .axis.bad  .pill { background: var(--tint-bad); color: var(--red); }
+
+  /* OPTIONS comparison */
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    margin: 28px 0 0;
+    border-top: 2px solid var(--ink);
+  }
+  .option {
+    border-right: 1px solid var(--rule);
+    padding: 24px 24px 28px;
+    position: relative;
+    background: var(--paper);
+  }
+  .option:last-child { border-right: none; }
+  .option.recommended {
+    background: linear-gradient(to bottom, var(--paper-deep) 0%, var(--paper) 100%);
+  }
+  .option.recommended::before {
+    content: 'Recommended';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    background: var(--rust);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    font-weight: 500;
+  }
+  .option.escape::before {
+    content: 'Escape Hatch';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    font-weight: 500;
+  }
+  .option.rejected::before {
+    content: 'Rejected';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    background: var(--red);
+    color: var(--paper);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    font-weight: 500;
+  }
+  .option .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+    margin-top: 28px;
+  }
+  .option h4 {
+    font-family: 'Newsreader', serif;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.25;
+    margin: 4px 0 14px;
+  }
+  .option .summary {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin: 0 0 18px;
+  }
+  .option .pros, .option .cons {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.55;
+    margin: 0 0 8px;
+  }
+  .option .pros li::marker { color: var(--green); }
+  .option .cons li::marker { color: var(--red); }
+  .option ul {
+    padding-left: 16px;
+    margin: 4px 0 12px;
+  }
+  .option li { font-size: 12px; line-height: 1.5; margin-bottom: 4px; color: var(--ink-soft); }
+
+  /* RECIPE / CODE blocks */
+  .recipe {
+    background: var(--paper-deep);
+    border: 1px solid var(--rule-soft);
+    padding: 18px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 16px 0;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .recipe .key { color: var(--rust); }
+  .recipe .comment { color: var(--ink-mute); font-style: italic; }
+  .recipe .str { color: var(--green); }
+
+  /* PRD CARD */
+  .prd {
+    background: var(--paper);
+    border: 1px solid var(--ink-soft);
+    padding: 28px 32px;
+    margin: 28px 0 0;
+  }
+  .prd .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px dotted var(--rule);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .prd .title {
+    font-family: 'Newsreader', serif;
+    font-size: 18px;
+    font-weight: 500;
+  }
+  .prd .stamp {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--rust);
+  }
+  .prd-grid {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 12px 24px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .prd-grid .k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    padding-top: 2px;
+  }
+  .prd-grid .v ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+  .prd-grid .v li {
+    font-size: 13.5px;
+    margin-bottom: 4px;
+    color: var(--ink-soft);
+  }
+  .prd-grid .v li code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--ink);
+    background: var(--paper-deep);
+    padding: 1px 6px;
+    border-radius: 1px;
+  }
+
+  /* DECISIONS NEEDED */
+  .decisions {
+    border-top: 2px solid var(--ink);
+    padding-top: 32px;
+    margin-top: 80px;
+  }
+  .decisions h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--rust);
+    font-weight: 500;
+    margin: 0 0 24px;
+  }
+  .check-list { list-style: none; padding: 0; margin: 0; }
+  .check-list li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px dotted var(--rule);
+    align-items: baseline;
+  }
+  .check-list li:last-child { border-bottom: none; }
+  .check-list .box {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--ink);
+    display: inline-block;
+    transform: translateY(2px);
+  }
+  .check-list .q {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .check-list .q .hint {
+    display: block;
+    font-size: 12.5px;
+    color: var(--ink-mute);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* AXIS C zoom */
+  .zoom {
+    background: var(--paper-deep);
+    padding: 28px 32px;
+    margin: 24px 0;
+    border-left: 2px solid var(--ink);
+  }
+  .zoom .q {
+    font-family: 'Newsreader', serif;
+    font-style: italic;
+    font-size: 19px;
+    line-height: 1.4;
+    color: var(--ink);
+    margin: 0 0 14px;
+    letter-spacing: -0.003em;
+  }
+  .zoom .a {
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .zoom .a code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+    background: var(--paper);
+    padding: 1px 6px;
+    border-radius: 1px;
+  }
+
+  /* signature: drop cap on hero deck disabled, use one in verdict */
+  .verdict p::first-letter {
+    font-size: 1.18em;
+    font-weight: 600;
+  }
+
+  /* mobile */
+  @media (max-width: 700px) {
+    main { padding: 32px 24px; }
+    .options { grid-template-columns: 1fr; }
+    .option { border-right: none; border-bottom: 1px solid var(--rule); }
+    .axis { grid-template-columns: 60px 1fr; }
+    .axis .status { grid-column: 2; text-align: left; margin-top: 6px; }
+    .hero h1 { font-size: 32px; }
+  }
+
+  /* print */
+  @media print {
+    body { background: white; }
+    main { padding: 24px; max-width: 100%; }
+    section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- MASTHEAD -->
+  <header class="masthead">
+    <div class="brand">coord-smith · v0.0.1</div>
+    <div class="meta">2026-05-10 · audience: 1 · 30-sec read</div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <span class="doctype">Architectural Decision Brief</span>
+    <h1>1회 invocation = 1 click 제약을 풀어야 한다.</h1>
+    <p class="deck">사용자가 짚은 진짜 사용성 3축 — 시간 정합성 · 좌표/이미지 fallback · flow chaining — 중에서 처음 둘은 코드에 거의 들어 있고, <em>flow</em>가 미해결이다. 진입축은 여기 하나에 모인다.</p>
+  </section>
+
+  <!-- TL;DR -->
+  <div class="verdict">
+    <div class="label">Verdict</div>
+    <p>Recipe를 <span class="rust">multi-step DSL</span>로 확장하고, 단일-step 호출은 stateless escape hatch로 보존. Stateful session(stdin/socket)은 거부 — 직전에 정리한 단일 진입의 단순성을 다시 무너뜨린다.</p>
+  </div>
+
+  <!-- NOW -->
+  <section>
+    <h2><span class="num">01</span>현재 — 1회 invocation = 1 click</h2>
+    <h3>호출자가 recipe를 짜고, coord-smith가 12-mission lifecycle 한 번을 돌린다.</h3>
+
+    <div class="diagram">
+      <div class="row">
+        <span class="node">external head</span>
+        <span class="label">— OpenClaw / 다른 LLM 에이전트 / 손작성</span>
+      </div>
+      <div class="row indent">
+        <span class="arrow">↓</span><span class="label">recipe.yaml 작성·전달</span>
+      </div>
+      <div class="row">
+        <span class="node accent">coord-smith CLI</span>
+        <span class="label">— --click-recipe path · --session-ref · --target-page-url</span>
+      </div>
+      <div class="row indent">
+        <span class="arrow">↓</span>
+      </div>
+      <div class="row">
+        <span class="node">12-mission LangGraph</span>
+        <span class="pipe">·</span>
+        <span class="label">attach → prepare → benchmark → ready → sync → actionable → armed → trigger →</span>
+        <span class="node accent">click_dispatch</span>
+        <span class="label">→ completion → success → done</span>
+      </div>
+      <div class="row indent">
+        <span class="arrow">↓</span>
+      </div>
+      <div class="row">
+        <span class="node">artifacts/runs/&lt;id&gt;/</span>
+        <span class="pipe">·</span>
+        <span class="label">action-log JSONL · screenshot PNG · transition diff</span>
+      </div>
+      <div class="row indent">
+        <span class="arrow">↓</span><span class="label">exit code 0/1/2/3</span>
+      </div>
+    </div>
+
+    <p style="font-size: 14px; color: var(--ink-mute); margin-top: 10px; font-style: italic;">12개 mission은 <em>한 번의 click</em>의 lifecycle이다. <em>여러 click의 sequence</em>가 아니다.</p>
+  </section>
+
+  <!-- 3 AXES -->
+  <section>
+    <h2><span class="num">02</span>사용성 3축 — 어디까지 풀려있는가</h2>
+
+    <div class="axes">
+
+      <div class="axis good">
+        <div class="mark">A</div>
+        <div>
+          <div class="name">시간 정합성 (Timing coherence)</div>
+          <div class="desc">click 전후 settle, page-transition pixel diff, post-click signal polling. Recipe에서 선언적으로 켜면 된다.</div>
+        </div>
+        <div class="status">
+          <span class="pill">대체로 충족</span><br>
+          <span style="display:block; margin-top:6px;">갭 — settle 시간 하드코딩 (configurable 아님)</span>
+        </div>
+      </div>
+
+      <div class="axis mid">
+        <div class="mark">B</div>
+        <div>
+          <div class="name">좌표 + 이미지 fallback</div>
+          <div class="desc">payload &gt; recipe coord &gt; recipe image &gt; no-click 우선순위는 있다. 하지만 한 step 안에서 <em>"image 매칭 실패 시 coord로 fallback"</em> 같은 try-then-fallback chain은 없다.</div>
+        </div>
+        <div class="status">
+          <span class="pill">선언만 됨</span><br>
+          <span style="display:block; margin-top:6px;">갭 — step-내 retry-fallback DSL 부재</span>
+        </div>
+      </div>
+
+      <div class="axis bad">
+        <div class="mark">C</div>
+        <div>
+          <div class="name">Flow chaining (coord1 → coord2 → coord3)</div>
+          <div class="desc">현재 1 invocation = 1 click. 여러 클릭을 하나의 흐름으로 표현할 채널이 없다 — 외부에서 N번 호출하거나, 아키텍처를 바꿔야 한다.</div>
+        </div>
+        <div class="status">
+          <span class="pill">미해결</span><br>
+          <span style="display:block; margin-top:6px;">진짜 fork는 여기</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- AXIS C ZOOM -->
+  <section>
+    <h2><span class="num">03</span>Axis C — 무엇을 풀어야 하는가</h2>
+
+    <div class="zoom">
+      <p class="q">"좌표1에서 좌표2 인식을 시키는 건 어떻게 할 것인가?"</p>
+      <p class="a">코드 사실: 1번 클릭 후 페이지가 바뀌면, 다음 anchor는 <strong>화면 위에 새로 나타난 image template</strong>으로 잡는 게 자연스럽다 — DOM이 안 열리는 환경(anti-bot, 데스크톱 앱)에서도 일관됨. 즉 답은 <code>image-template anchoring per step</code>. 이걸 declarative로 표현하려면 recipe가 <strong>step 시퀀스</strong>가 되어야 한다.</p>
+    </div>
+  </section>
+
+  <!-- 3 OPTIONS -->
+  <section>
+    <h2><span class="num">04</span>3 Options — 비교</h2>
+
+    <div class="options">
+
+      <div class="option recommended">
+        <div class="num">Option 1</div>
+        <h4>Multi-step recipe<br><span style="font-size:13px;color:var(--ink-mute);font-style:italic;">한 invocation에서 N steps 직렬</span></h4>
+        <p class="summary">Recipe가 step list. coord-smith가 step 사이의 settle/wait/match를 직접 처리. 1 recipe = 1 flow.</p>
+        <ul class="pros">
+          <li>결정적 — 외부 추론 라운드트립 0</li>
+          <li>한 번 작성, 끝까지 자동</li>
+          <li>artifact가 한 트리에 묶임</li>
+        </ul>
+        <ul class="cons">
+          <li>mid-flow 분기 표현 제한</li>
+          <li>schema 확장 필요</li>
+        </ul>
+      </div>
+
+      <div class="option escape">
+        <div class="num">Option 2</div>
+        <h4>Stateless chain<br><span style="font-size:13px;color:var(--ink-mute);font-style:italic;">현재 구조 유지, head가 매번 호출</span></h4>
+        <p class="summary">Step마다 head가 직전 screenshot 보고 다음 recipe 작성. 1 click = 1 invocation.</p>
+        <ul class="pros">
+          <li>head 추론력 최대 — 분기 자유</li>
+          <li>현재 invariant 0건 깨짐</li>
+          <li>Option 1과 공존 가능 (1-step recipe)</li>
+        </ul>
+        <ul class="cons">
+          <li>per-step subprocess 비용</li>
+          <li>브라우저 세션 owner 모호</li>
+        </ul>
+      </div>
+
+      <div class="option rejected">
+        <div class="num">Option 3</div>
+        <h4>Stateful session<br><span style="font-size:13px;color:var(--ink-mute);font-style:italic;">long-running coord-smith</span></h4>
+        <p class="summary">stdin / socket으로 click-at-a-time. 세션 lifetime이 클라이언트와 묶임.</p>
+        <ul class="pros">
+          <li>Option 1+2의 장점 융합</li>
+          <li>per-step 오버헤드 없음</li>
+        </ul>
+        <ul class="cons">
+          <li>단순성 후퇴 — 직전에 정리한 MCP 스캐폴드의 재발</li>
+          <li>"한 번 실행, exit cleanly" invariant 깨짐</li>
+          <li>동시 실행/격리 새 문제 도입</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RECOMMENDATION DETAIL -->
+  <section>
+    <h2><span class="num">05</span>권장 = Option 1 + Option 2 (escape)</h2>
+    <h3>Multi-step recipe가 1차 시민. 단일-step 호출은 그대로 작동 — 0 deprecation.</h3>
+
+    <p>이유 셋:</p>
+    <ol style="line-height: 1.65; margin-top: 8px;">
+      <li><strong>실제 사용 패턴 대부분이 결정적 시퀀스</strong>다. 티켓팅 "buy → seat → confirm → pay" 같은 흐름은 head가 step마다 끼어들 일이 적다. Option 1로 충분.</li>
+      <li><strong>Option 2는 Option 1의 부분집합</strong>으로 자연스럽게 표현된다. 단일-step recipe N번 호출 = stateless chain. 즉 head가 끼어들고 싶을 때 그대로 쓸 수 있다.</li>
+      <li><strong>Option 3은 단순성 후퇴</strong>. 방금 MCP 스캐폴드를 영구 out-of-scope로 못박은 그 결정과 같은 결의 결정을 다시 깨는 셈. spec 일관성이 중요하다.</li>
+    </ol>
+
+    <h3 style="margin-top: 32px;">예상 recipe 모양</h3>
+    <div class="recipe"><span class="key">version</span>: 1
+<span class="key">steps</span>:
+  - <span class="key">name</span>: open-buy
+    <span class="key">image</span>: <span class="str">templates/buy-button.png</span>
+    <span class="key">after</span>:
+      <span class="key">wait_for</span>: { <span class="key">image</span>: <span class="str">templates/seat-panel.png</span>, <span class="key">timeout</span>: 5 }
+  - <span class="key">name</span>: select-seat
+    <span class="key">image</span>: <span class="str">templates/available-seat.png</span>
+    <span class="key">region</span>: [200, 300, 800, 600]
+    <span class="key">fallback</span>:                          <span class="comment"># axis B 통합</span>
+      <span class="key">coord</span>: { <span class="key">x</span>: 400, <span class="key">y</span>: 450 }
+  - <span class="key">name</span>: confirm
+    <span class="key">image</span>: <span class="str">templates/confirm.png</span>
+    <span class="key">verify_transition</span>: <span class="key">true</span></div>
+  </section>
+
+  <!-- SPINE PRD -->
+  <section>
+    <h2><span class="num">06</span>다음 작업 — Spine PRD 미리보기</h2>
+
+    <div class="prd">
+      <div class="head">
+        <div class="title">PRD: multi-step flow recipe + step-level fallback</div>
+        <div class="stamp">draft · 1 PR</div>
+      </div>
+
+      <div class="prd-grid">
+        <div class="k">scope</div>
+        <div class="v"><ul>
+          <li>recipe schema 확장: <code>steps: list[Step]</code> (기존 <code>missions: dict</code>와 공존)</li>
+          <li>Step DSL: <code>name · image | coord · region · confidence · fallback · post_click_signal · verify_transition · retry?</code></li>
+          <li>adapter: step list 직렬 실행, 사이 settle/wait, fallback chain 시도, 모두 실패 시 typed error + 부분 artifact</li>
+          <li>12-mission graph 안의 click_dispatch 자리에 "step list 실행" 노드로 surface 변경</li>
+          <li>단일-step recipe 그대로 동작 (backwards-compat 검증)</li>
+          <li>tests: 단일 step 회귀 / 3-step happy / mid-step fallback / mid-step 실패 + 부분 artifact</li>
+        </ul></div>
+
+        <div class="k">out of scope</div>
+        <div class="v"><ul>
+          <li>stateful session (Option 3 — 영구 거부)</li>
+          <li>mid-flow head reasoning (head가 끼어들고 싶으면 step 끊어 호출)</li>
+          <li>DPI/resolution 정규화 — 별 PRD</li>
+          <li>retry/jitter — 별 PRD (anti-bot 대비 시)</li>
+        </ul></div>
+
+        <div class="k">success</div>
+        <div class="v"><ul>
+          <li>3-step recipe로 tickets.interpark.com 같은 anti-bot 사이트에서 buy → seat → confirm 한 번에 자동 실행</li>
+          <li>코드 invariant 0건 깨지지 않음</li>
+          <li>단일-step 사용자 누구도 마이그레이션 필요 없음</li>
+        </ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DECISIONS NEEDED -->
+  <section class="decisions">
+    <h2>Confirm — 의사결정자 입력 필요</h2>
+    <ul class="check-list">
+      <li>
+        <span class="box"></span>
+        <div class="q">
+          Option 1 + Option 2 escape 노선에 동의?
+          <span class="hint">동의 시 Option 3은 영구 out-of-scope로 prd.md §Non-Goals에 명시.</span>
+        </div>
+      </li>
+      <li>
+        <span class="box"></span>
+        <div class="q">
+          Step DSL에서 image-first 강제 (coord는 fallback)?
+          <span class="hint">현재는 image와 coord가 동등 우선순위. step 단위로 좁히면 portability ↑, 단일-step 사용자에게 친숙도 ↓.</span>
+        </div>
+      </li>
+      <li>
+        <span class="box"></span>
+        <div class="q">
+          Multi-step을 12-mission graph 안에 끼울지 / 12-mission을 step list 위 1 step으로 격하?
+          <span class="hint">전자 = 변경 작음, surface 추함. 후자 = 깔끔, mission contract 재정의 필요.</span>
+        </div>
+      </li>
+      <li>
+        <span class="box"></span>
+        <div class="q">
+          Spine PRD 다음에 우선해야 할 별 PRD 순서?
+          <span class="hint">후보: DPI 정규화 / cross-platform preflight / 모델드 7 mission 처리 / retry+jitter / OpenClaw skill 1개 시연.</span>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- footer -->
+  <footer style="margin-top: 96px; padding-top: 24px; border-top: 1px dotted var(--rule); font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--ink-mute); letter-spacing: 0.06em;">
+    coord-smith · architectural decision brief · 2026-05-10 · ../decisions/2026-05-flow-architecture-brief.html
+  </footer>
+
+</main>
+</body>
+</html>
