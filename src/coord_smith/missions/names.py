@@ -41,22 +41,3 @@ def mission_is_browser_facing(mission_name: str) -> bool:
     collapses to a simple membership check.
     """
     return mission_name in BROWSER_FACING_MISSIONS
-
-
-def released_anchor_for_mission(mission_name: str) -> str | None:
-    """Return the human-readable anchor name for a released mission, if any.
-
-    Anchors are short camelCase labels used in cross-mission diagnostics
-    (release ceiling messages, scope reports). Only the missions that
-    represent a meaningful run-level checkpoint carry one; the per-step
-    missions (``step_*``) do not, since their meaning is bound to a step
-    index rather than a fixed run-level anchor.
-    """
-    if mission_name not in ALL_MISSIONS:
-        msg = f"Unknown mission name: {mission_name}"
-        raise ValueError(msg)
-    if mission_name == "prepare_session":
-        return "prepareSession"
-    if mission_name == "run_completion":
-        return "runCompletion"
-    return None

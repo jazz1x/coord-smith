@@ -15,24 +15,18 @@
 
 ## 파이프라인
 
-런타임은 12 개 미션을 정해진 순서로 통과합니다. 각 미션은 결정적이며, 다음 미션이 시작되기 전에 evidence 를 디스크에 남깁니다.
+런타임은 **6 개 미션**을 통과합니다 — per-run 셋업/종결이 per-step 블록을 감싸고, per-step은 recipe의 각 step마다 한 번씩 실행됩니다. 각 미션은 결정적이며, 다음 미션이 시작되기 전에 evidence 를 디스크에 남깁니다.
 
-| 미션 | 역할 |
-|------|------|
-| `attach_session` | session-ref 로 기존 브라우저 세션에 부착. |
-| `prepare_session` | 기대 인증 상태 / 대상 페이지 URL 검증. |
-| `benchmark_validation` | 기록된 벤치마크에 대해 실행 검증. |
-| `page_ready_observation` | 스크린샷으로 페이지 준비 상태 확인. |
-| `sync_observation` | 로컬 상태와 페이지 상태 동기화. |
-| `target_actionability_observation` | 대상이 클릭 가능한 상태인지 확인. |
-| `armed_state_entry` | 클릭 발사 직전 armed 상태 진입. |
-| `trigger_wait` | 결정적 트리거 신호 대기. |
-| `click_dispatch` | 클릭 발사 — payload 좌표 / recipe 좌표 / recipe 이미지. |
-| `click_completion` | 클릭 후 evidence (스크린샷, 전환 diff) 캡처. |
-| `success_observation` | 기대한 상태 변화가 발생했는지 검증. |
-| `run_completion` | sealed 상태 코드로 실행 종료. |
+| 미션 | Phase | 역할 |
+|------|-------|------|
+| `attach_session` | per-run | session-ref 로 기존 브라우저 세션에 부착. |
+| `prepare_session` | per-run | 기대 인증 상태 / 대상 페이지 URL 검증. |
+| `step_observe` | per-step | step의 pre-click 화면 상태 캡처. |
+| `step_dispatch` | per-step | step의 클릭 실행 (image-or-coord prefer/fallback chain). |
+| `step_capture` | per-step | post-click evidence (스크린샷, transition diff, optional signal) 캡처. |
+| `run_completion` | per-run | sealed 상태 코드로 실행 종료. |
 
-각 미션은 고정된 과거형 action key (예: `click_dispatch` → `click-dispatched`) 를 emit 하므로 action log 를 grep 으로 추적할 수 있습니다.
+N-step recipe면 per-step 블록이 선언 순서대로 N번; N=0이면 per-step 블록 생략 (smoke target). 각 미션은 고정된 과거형 action key (예: `step_dispatch` → `step-dispatched`) 를 emit 하므로 action log 를 grep 으로 추적할 수 있습니다.
 
 ```
  OpenClaw (외부 LLM)

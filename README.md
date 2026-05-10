@@ -15,24 +15,18 @@ A run is a 12-mission pipeline driven by a LangGraph state machine. Each mission
 
 ## Pipeline
 
-The runtime walks 12 missions in order. Every mission is deterministic and produces evidence on disk before the next mission is allowed to start.
+The runtime walks **six missions** — three per-run (setup / teardown) wrapping a per-step block that runs once for each step in the recipe. Every mission is deterministic and produces evidence on disk before the next mission is allowed to start.
 
-| Mission | Role |
-|---------|------|
-| `attach_session` | Attach to an existing browser session via session-ref. |
-| `prepare_session` | Verify expected auth state and target page URL. |
-| `benchmark_validation` | Validate the run against the recorded benchmark. |
-| `page_ready_observation` | Confirm the page is ready via screenshot evidence. |
-| `sync_observation` | Sync local state with the page state. |
-| `target_actionability_observation` | Confirm the target is actionable. |
-| `armed_state_entry` | Enter the armed state ready for click dispatch. |
-| `trigger_wait` | Wait for the deterministic trigger signal. |
-| `click_dispatch` | Execute the click — payload coords, recipe coords, or recipe image. |
-| `click_completion` | Capture post-click evidence (screenshot, transition diff). |
-| `success_observation` | Verify the click produced the expected state change. |
-| `run_completion` | Close the run with a sealed status code. |
+| Mission | Phase | Role |
+|---------|-------|------|
+| `attach_session` | per-run | Attach to an existing browser session via session-ref. |
+| `prepare_session` | per-run | Verify expected auth state and target page URL. |
+| `step_observe` | per-step | Capture pre-click on-screen state for a step. |
+| `step_dispatch` | per-step | Execute the step's click (image-or-coord with prefer/fallback). |
+| `step_capture` | per-step | Capture post-click evidence (screenshot, transition diff, optional signal). |
+| `run_completion` | per-run | Close the run with a sealed status code. |
 
-Each mission emits a fixed past-tense action key (e.g. `click_dispatch` → `click-dispatched`) so the action log is machine-greppable.
+For an N-step recipe the per-step trio runs N times in declaration order; with N=0 the per-step block is skipped (smoke target). Each mission emits a fixed past-tense action key (e.g. `step_dispatch` → `step-dispatched`) so the action log is machine-greppable.
 
 ```
  OpenClaw (external LLM)
