@@ -8,15 +8,25 @@ changeable and subordinate to `docs/prd.md`.
 ## Snapshot
 
 - Python 3.14 pinned (`requires-python = ">=3.14,<3.15"`).
-- Released ceiling: `runCompletion` — all 12 missions released.
-- Test count: 721 passing, 1 skipped, 4 deselected (`-m real`).
+- Released ceiling: `runCompletion`. Six released missions (3 per-run +
+  3 per-step): `attach_session` · `prepare_session` · `step_observe` ·
+  `step_dispatch` · `step_capture` · `run_completion`. Modeled tier
+  permanently removed.
+- Test count: 218 passing, 1 skipped, 4 deselected (`-m real`).
 - Static checks: ruff clean, mypy strict clean, pre-commit clean.
+- Platform: macOS (Accessibility + Screen Recording permissions). Linux
+  / Windows preflight not implemented.
 
 ## Architecture
 
 - **LLM-free runtime.** The coord-smith runtime graph contains no LLM inference.
   Each LangGraph node is deterministic: state setup, adapter call, evidence
   collection.
+- **Multi-step flow.** `ClickRecipe.steps: list[Step]` declares an N-step
+  click sequence. The graph topology is built statically per recipe
+  (per-run setup → N×(observe → dispatch → capture) → run_completion).
+  Legacy single-mission `missions:` recipes auto-normalize to a
+  one-step recipe with a deprecation warning.
 - **CUA engine.** `src/coord_smith/adapters/pyautogui_adapter.py` implements
   `ExecutionAdapter.execute()` using `pyautogui.click()` /
   `pyautogui.screenshot()` only. Wired via
@@ -25,8 +35,16 @@ changeable and subordinate to `docs/prd.md`.
   not part of the execution backend. OS-level coordinates and pixels only.
 - **Visual click verification.** Image-template click via OpenCV,
   optional pre/post page-transition diff via `PIL.ImageChops`, optional
-  post-click signal polling via `pyautogui.locateCenterOnScreen`. All
-  three are deterministic and default-off in click recipes.
+  post-click signal polling via `pyautogui.locateCenterOnScreen`,
+  optional pre-click `wait_for` guard. All four are deterministic and
+  default-off in click recipes.
+- **Failure evidence.** Typed dispatch failures
+  (`ImageMatchConfidenceLow` / `ClickCoordinatesOutOfBounds` /
+  `ClickExecutionUnverified` / `PageTransitionNotDetected` /
+  `ImageWaitTimeout` / `ImageTemplateNotFound`) write a screenshot to
+  `runs/<id>/artifacts/failure/<idx>-<step>-<error>.png` and a
+  structured record to `action-log/failure.jsonl` before propagating.
+  Earlier steps' artifacts are preserved.
 
 ## Scope
 

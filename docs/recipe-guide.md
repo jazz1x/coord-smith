@@ -306,6 +306,47 @@ carry `step_idx` and `step_name`:
 The `release-ceiling-stop.jsonl` file is the authoritative proof that the run
 reached `runCompletion`. If it is absent after exit 0, the run was incomplete.
 
+### Failure Artifacts
+
+When a step's dispatch fails with a typed adapter error
+(`ImageMatchConfidenceLow`, `ImageTemplateNotFound`,
+`ClickCoordinatesOutOfBounds`, `ClickExecutionUnverified`,
+`PageTransitionNotDetected`, `ImageWaitTimeout`), the run aborts at that
+step but evidence of the failure is captured before the exit:
+
+```
+artifacts/
+  failure/
+    01-confirm-purchase-ImageMatchConfidenceLow.png   ← screen at failure
+  action-log/
+    failure.jsonl                                      ← structured record
+```
+
+`failure.jsonl` carries a single JSON object per failure with:
+
+```json
+{
+  "ts": "2026-05-02T11:00:00+00:00",
+  "mission_name": "step_dispatch",
+  "event": "step-dispatch-failed",
+  "step_idx": 1,
+  "step_name": "confirm-purchase",
+  "error_class": "ImageMatchConfidenceLow",
+  "error_message": "image template not matched at confidence>=0.9: ...",
+  "screenshot": "/abs/path/to/01-confirm-purchase-ImageMatchConfidenceLow.png"
+}
+```
+
+Earlier steps' artifacts (`step-dispatched.jsonl` records, screenshots)
+are preserved — the failure record is appended, not overwritten. The
+caller (e.g. OpenClaw) can read this record to diagnose why the step
+failed and decide what to do next (retry with adjusted confidence,
+re-crop the template against the captured failure screenshot,
+escalate, etc.).
+
+The CLI maps any of the above typed errors to **exit code 1** (runtime
+error). `exit 0` always means the run reached `runCompletion`.
+
 ---
 
 ## Decision Guide for Agents

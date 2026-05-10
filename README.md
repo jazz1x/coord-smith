@@ -32,7 +32,7 @@ For an N-step recipe the per-step trio runs N times in declaration order; with N
  OpenClaw (external LLM)
       │  decisions, coords, image refs
       ▼
- coord-smith CLI ──▶ LangGraph state machine ──▶ 12 missions
+ coord-smith CLI ──▶ LangGraph state machine ──▶ 6 missions
                                               │
                             evidence envelope (JSONL + PNG)
                                               │

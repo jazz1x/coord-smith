@@ -9,6 +9,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from coord_smith import __version__
 from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
 from coord_smith.config.click_recipe import ClickRecipe, load_click_recipe
 from coord_smith.graph.released_cli_shim import run_released_scope_from_argv_env
@@ -17,25 +18,49 @@ from coord_smith.models.errors import ConfigError, ExecutionTransportError
 ENV_CLICK_RECIPE = "COORDSMITH_CLICK_RECIPE"
 
 _USAGE = """\
-Usage: coord-smith [--click-recipe PATH] \\
-             --session-ref STR --expected-auth-state STR \\
+Usage: coord-smith [OPTIONS] --session-ref STR --expected-auth-state STR \\
              --target-page-url URL --site-identity STR
 
+A deterministic OS-level click executor for autonomous agents (e.g. OpenClaw).
+Reads a click recipe, runs the released-scope LangGraph, and writes typed
+evidence artifacts (action-log JSONL + screenshots) under artifacts/runs/.
+
 Options:
-  --click-recipe PATH   YAML or JSON recipe mapping mission_name -> click target.
-                        Also accepts the COORDSMITH_CLICK_RECIPE env var.
-                        Required for actual browser clicks when no external
-                        caller injects payload coords.
+  --click-recipe PATH   YAML or JSON recipe (preferred: YAML). Also accepts the
+                        COORDSMITH_CLICK_RECIPE env var. Required for actual
+                        clicks when no external caller injects payload coords.
+  --dry-run             Validate the recipe and run the graph without
+                        dispatching any real click. Exit 0 if everything
+                        loads and resolves cleanly.
   --session-ref         Required. Session identifier (env: COORDSMITH_SESSION_REF).
   --expected-auth-state Required. (env: COORDSMITH_EXPECTED_AUTH_STATE).
   --target-page-url     Required. (env: COORDSMITH_TARGET_PAGE_URL).
   --site-identity       Required. (env: COORDSMITH_SITE_IDENTITY).
+  -V, --version         Print the package version and exit.
+  -h, --help            Show this message and exit.
+
+Examples:
+  # Smoke target — no clicks, just verify env + permissions + writeable run root.
+  coord-smith --session-ref demo --expected-auth-state authenticated \\
+              --target-page-url https://example.com --site-identity example
+
+  # Multi-step recipe (clicks the steps in order).
+  coord-smith --click-recipe ./flow.yaml \\
+              --session-ref demo --expected-auth-state authenticated \\
+              --target-page-url https://example.com --site-identity example
+
+  # Validate a recipe without clicking.
+  coord-smith --dry-run --click-recipe ./flow.yaml \\
+              --session-ref demo --expected-auth-state authenticated \\
+              --target-page-url https://example.com --site-identity example
 
 Exit codes:
   0 normal      1 runtime error     2 permission preflight failed
   3 recipe load error (missing / invalid YAML or JSON / schema)
 
-See README §Click Recipes and §Permissions (macOS) for details.
+Platform: macOS only at present. Linux / Windows preflight is not implemented;
+the adapter assumes macOS Accessibility + Screen Recording permissions for
+the host terminal app. See README §Permissions for setup.
 """
 
 
@@ -43,12 +68,24 @@ def _wants_help(argv: Sequence[str]) -> bool:
     return any(a in ("-h", "--help") for a in argv)
 
 
-def _extract_click_recipe_arg(argv: Sequence[str]) -> tuple[Path | None, list[str]]:
-    """Strip --click-recipe from argv and return (recipe_path, remaining argv)."""
+def _wants_version(argv: Sequence[str]) -> bool:
+    return any(a in ("-V", "--version") for a in argv)
+
+
+def _extract_known_flags(
+    argv: Sequence[str],
+) -> tuple[Path | None, bool, list[str]]:
+    """Strip CLI-only flags and return (recipe_path, dry_run, remaining argv).
+
+    The remaining argv is forwarded to the released-scope shim, which only
+    parses session/auth/url/site-identity. Anything we want the shim NOT to
+    see (--click-recipe, --dry-run) must be peeled off here.
+    """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--click-recipe", dest="click_recipe", type=Path)
+    parser.add_argument("--dry-run", dest="dry_run", action="store_true")
     namespace, remaining = parser.parse_known_args(list(argv))
-    return namespace.click_recipe, remaining
+    return namespace.click_recipe, namespace.dry_run, remaining
 
 
 def _resolve_click_recipe(
@@ -71,12 +108,27 @@ async def _run(
     argv: Sequence[str] | None = None,
     base_dir: Path = Path("."),
 ) -> int:
-    """Instantiate PyAutoGUIAdapter, preflight OS permissions, then run the graph."""
+    """Instantiate PyAutoGUIAdapter, preflight OS permissions, then run the graph.
+
+    ``--dry-run`` short-circuits after recipe load + preflight: it confirms
+    the recipe parses, every referenced template resolves on disk, and the
+    host has the required OS permissions, then exits cleanly without
+    executing any click. Used by orchestrators (e.g. OpenClaw) to validate
+    a recipe before committing the user's screen to a real run.
+    """
     argv_list = list(argv or [])
-    recipe_path, remaining_argv = _extract_click_recipe_arg(argv_list)
+    recipe_path, dry_run, remaining_argv = _extract_known_flags(argv_list)
     recipe = _resolve_click_recipe(cli_path=recipe_path)
     adapter = PyAutoGUIAdapter(run_root=base_dir, click_recipe=recipe)
     await adapter.preflight()
+    if dry_run:
+        step_count = len(recipe.steps) if recipe and recipe.steps else 0
+        print(
+            f"coord-smith: dry-run OK — preflight passed, "
+            f"{step_count} step(s) resolved.",
+            file=sys.stderr,
+        )
+        return 0
     recipe_steps = list(recipe.steps) if recipe is not None and recipe.steps else None
     await run_released_scope_from_argv_env(
         adapter=adapter,
@@ -92,6 +144,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     argv_list = list(argv) if argv is not None else sys.argv[1:]
     if _wants_help(argv_list):
         print(_USAGE)
+        return 0
+    if _wants_version(argv_list):
+        print(f"coord-smith {__version__}")
         return 0
     try:
         return asyncio.run(_run(argv=argv_list))

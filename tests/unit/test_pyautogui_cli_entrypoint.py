@@ -82,16 +82,43 @@ def test_main_returns_exit_code_2_when_preflight_fails(tmp_path: Path) -> None:
     assert exit_code == 2
 
 
-def test_extract_click_recipe_arg_returns_path_and_strips(tmp_path: Path) -> None:
-    from coord_smith.graph.pyautogui_cli_entrypoint import _extract_click_recipe_arg
+def test_extract_known_flags_returns_path_dry_run_and_strips(tmp_path: Path) -> None:
+    from coord_smith.graph.pyautogui_cli_entrypoint import _extract_known_flags
 
-    recipe_path, remaining = _extract_click_recipe_arg(
-        ["--session-ref", "s", "--click-recipe", "/tmp/r.json", "--site-identity", "x"]
+    recipe_path, dry_run, remaining = _extract_known_flags(
+        [
+            "--session-ref", "s", "--click-recipe", "/tmp/r.json",
+            "--dry-run", "--site-identity", "x",
+        ]
     )
     assert recipe_path == Path("/tmp/r.json")
+    assert dry_run is True
     assert "--click-recipe" not in remaining
     assert "/tmp/r.json" not in remaining
+    assert "--dry-run" not in remaining
     assert "--session-ref" in remaining
+
+
+def test_extract_known_flags_dry_run_defaults_false(tmp_path: Path) -> None:
+    from coord_smith.graph.pyautogui_cli_entrypoint import _extract_known_flags
+
+    recipe_path, dry_run, remaining = _extract_known_flags(["--session-ref", "s"])
+    assert recipe_path is None
+    assert dry_run is False
+    assert remaining == ["--session-ref", "s"]
+
+
+def test_main_version_flag_returns_zero_and_prints_version(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from coord_smith import __version__
+    from coord_smith.graph.pyautogui_cli_entrypoint import main
+
+    for flag in ["-V", "--version"]:
+        exit_code = main(argv=[flag])
+        captured = capsys.readouterr()
+        assert exit_code == 0, flag
+        assert __version__ in captured.out, flag
 
 
 def test_resolve_click_recipe_cli_wins_over_env(tmp_path: Path) -> None:

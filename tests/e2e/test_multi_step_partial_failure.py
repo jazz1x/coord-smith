@@ -149,6 +149,8 @@ async def test_runtime_image_match_failure_preserves_earlier_step_artifacts(
 
     cursor = _MovingCursor()
 
+    from coord_smith.models.errors import ImageMatchConfidenceLow
+
     with (
         patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
         patch("pyautogui.screenshot", side_effect=_fake_screenshot),
@@ -158,19 +160,16 @@ async def test_runtime_image_match_failure_preserves_earlier_step_artifacts(
         patch("pyautogui.size", return_value=_FakeSize()),
         patch("pyautogui.locateCenterOnScreen", side_effect=fake_locate),
     ):
-        exit_code = await _run(
-            argv=["--click-recipe", str(recipe), *_COMMON_ARGV],
-            base_dir=tmp_path,
-        )
-
-    # Step-1 image-only failure raises ImageMatchConfidenceLow inside the
-    # adapter; the graph propagates it; the CLI maps to exit 1 (runtime).
-    # Currently the adapter swallows the locate failure silently (returns
-    # None coords, no click). The flow continues to step 1's capture and
-    # then run_completion. The contract here is that step 0's artifacts
-    # are intact regardless of exit semantics — that's the partial-failure
-    # invariant we care about.
-    assert exit_code in (0, 1), f"unexpected exit code {exit_code}"
+        # Step-1 is image-only with no coord fallback; the adapter
+        # re-raises ``ImageMatchConfidenceLow`` instead of silently no-op'ing
+        # so the caller (e.g. OpenClaw) sees a real diagnosis. ``main()``
+        # would map this to exit 1; ``_run`` propagates the typed exception
+        # directly so the test asserts the type.
+        with pytest.raises(ImageMatchConfidenceLow):
+            await _run(
+                argv=["--click-recipe", str(recipe), *_COMMON_ARGV],
+                base_dir=tmp_path,
+            )
 
     action_log = _find_action_log_dir(tmp_path)
     dispatched = _read_jsonl_lines(action_log / "step-dispatched.jsonl")

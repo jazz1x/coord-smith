@@ -510,6 +510,14 @@ class PyAutoGUIAdapter:
         ``prefer`` field decides the primary attempt and the other becomes
         the fallback. ``verify_transition`` and ``post_click_signal`` apply
         to the dispatched click when present on the step.
+
+        On any typed dispatch failure (image-not-matched, out-of-bounds,
+        click-unverified, transition-not-detected, signal-timeout), a
+        diagnostic screenshot of the current screen plus a structured
+        action-log record are written to the run's ``failure/`` directory
+        BEFORE the exception propagates. This gives the caller (e.g.
+        OpenClaw) a self-contained record of what the screen looked like
+        at the moment of failure.
         """
         step_data = payload.get("step")
         if not isinstance(step_data, dict):
@@ -518,6 +526,27 @@ class PyAutoGUIAdapter:
                 "(serialized Step model)"
             )
         step = Step.model_validate(step_data)
+        step_idx_obj = payload.get("step_idx")
+        step_idx = int(step_idx_obj) if isinstance(step_idx_obj, int) else -1
+
+        try:
+            await self._dispatch_with_step(step)
+        except (
+            ImageTemplateNotFound,
+            ImageMatchConfidenceLow,
+            ClickCoordinatesOutOfBounds,
+            ClickExecutionUnverified,
+            PageTransitionNotDetected,
+            ImageWaitTimeout,
+        ) as exc:
+            self._capture_failure_evidence(
+                step_idx=step_idx, step_name=step.name, error=exc
+            )
+            raise
+
+    async def _dispatch_with_step(self, step: Step) -> None:
+        """Inner click logic — separated so the failure-capture wrapper above
+        can stay focused on exception interception."""
         coords = self._resolve_step_click_coords(step)
         if coords is None:
             return  # step had no resolvable target — execution is a no-op
@@ -554,40 +583,100 @@ class PyAutoGUIAdapter:
                 mission=step.name, signal=step.post_click_signal
             )
 
+    def _capture_failure_evidence(
+        self,
+        *,
+        step_idx: int,
+        step_name: str,
+        error: Exception,
+    ) -> None:
+        """Write a failure screenshot + action-log record before re-raising.
+
+        Best-effort: any failure to capture the screen (e.g. screen-recording
+        permission denied) is swallowed silently — the original error is the
+        one that matters for the caller. The record path follows the
+        convention ``runs/<id>/artifacts/failure/<idx>-<step>-<error>.png``
+        and the action-log file is ``runs/<id>/artifacts/action-log/failure.jsonl``.
+        """
+        error_class = type(error).__name__
+        # Sanitize fragments so the filename is portable.
+        safe_step = step_name.replace("/", "-").replace(" ", "_") or "step"
+        idx_label = f"{step_idx:02d}" if step_idx >= 0 else "xx"
+        png_path = (
+            self._run_root
+            / "artifacts"
+            / "failure"
+            / f"{idx_label}-{safe_step}-{error_class}.png"
+        )
+        png_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            shot = pyautogui.screenshot()
+            if isinstance(shot, PILImage):
+                shot.save(str(png_path))
+        except Exception:
+            # Capture failure is itself non-fatal — we still write the log
+            # entry below so the caller knows the run failed even when the
+            # screen could not be photographed.
+            pass
+
+        log_path = (
+            self._run_root
+            / "artifacts"
+            / "action-log"
+            / "failure.jsonl"
+        )
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        entry: dict[str, object] = {
+            "ts": datetime.now(tz=UTC).isoformat(),
+            "mission_name": "step_dispatch",
+            "event": "step-dispatch-failed",
+            "step_idx": step_idx,
+            "step_name": step_name,
+            "error_class": error_class,
+            "error_message": str(error),
+            "screenshot": str(png_path) if png_path.exists() else None,
+        }
+        with log_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
     def _resolve_step_click_coords(self, step: Step) -> tuple[int, int] | None:
         """Resolve a step's click coordinates using prefer + fallback chain.
 
-        When both ``image`` and ``coord`` are declared, ``step.prefer``
-        decides the primary attempt; if the primary fails (image mismatch
-        or out-of-bounds coord), the other is tried. When only one is
-        declared, no fallback chain runs.
+        Three regimes, in order of precedence:
+
+        1. **Both image and coord declared** — ``step.prefer`` decides the
+           primary; if the primary fails (image not matched, coord
+           out-of-bounds), the fallback is tried. If both fail, the
+           primary's typed exception is re-raised so the caller sees a
+           real diagnosis instead of a silent no-op.
+        2. **Single target declared** — image-only or coord-only. The
+           target's typed exception (if any) propagates directly; no
+           silent swallowing.
+        3. **Neither declared** — returns None. The Step Pydantic
+           validator normally rejects this, but ``Step.model_construct``
+           bypasses validation, so a graceful no-op is the safe
+           behavior.
         """
         if step.image is None and step.coord is None:
             return None
 
-        primary_kind: str = step.prefer or (
-            "image" if step.image is not None else "coord"
-        )
+        # Single-target regime — no fallback chain, exceptions propagate.
+        if step.image is not None and step.coord is None:
+            return self._locate_image_for_step(step)
+        if step.coord is not None and step.image is None:
+            return (step.coord.x, step.coord.y)
+
+        # Dual-target regime — primary then fallback, both swallow once.
+        primary_kind: str = step.prefer or "image"
 
         def _try_image() -> tuple[int, int] | None:
-            if step.image is None:
-                return None
-            target = MissionImageClick(
-                image=step.image,
-                confidence=step.confidence
-                if step.confidence is not None
-                else 0.9,
-                region=step.region,
-                grayscale=step.grayscale if step.grayscale is not None else False,
-            )
             try:
-                return self._locate_image_target(step.name, target)
+                return self._locate_image_for_step(step)
             except (ImageTemplateNotFound, ImageMatchConfidenceLow):
                 return None
 
         def _try_coord() -> tuple[int, int] | None:
-            if step.coord is None:
-                return None
+            assert step.coord is not None
             return (step.coord.x, step.coord.y)
 
         primary, fallback = (
@@ -598,4 +687,29 @@ class PyAutoGUIAdapter:
         result = primary()
         if result is not None:
             return result
-        return fallback()
+        result = fallback()
+        if result is not None:
+            return result
+        # Both failed — synthesize a typed error so the caller learns
+        # something actionable. We re-run the image attempt without the
+        # try-swallow so its exception (the more specific of the two)
+        # surfaces.
+        return self._locate_image_for_step(step)
+
+    def _locate_image_for_step(self, step: Step) -> tuple[int, int]:
+        """Locate the step's image template via the existing helper.
+
+        Raises ``ImageTemplateNotFound`` / ``ImageMatchConfidenceLow``
+        directly — the caller decides whether to swallow (dual-target
+        fallback) or propagate (single-target).
+        """
+        assert step.image is not None
+        target = MissionImageClick(
+            image=step.image,
+            confidence=step.confidence
+            if step.confidence is not None
+            else 0.9,
+            region=step.region,
+            grayscale=step.grayscale if step.grayscale is not None else False,
+        )
+        return self._locate_image_target(step.name, target)

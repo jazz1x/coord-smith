@@ -52,3 +52,6 @@ skills-lock.json
 .claude/skills/python-performance-optimization
 .claude/skills/python-testing-patterns
 .claude/skills/python-type-safety
+
+# OpenClaw walkthrough demo (dev-only artifacts)
+_openclaw_session/

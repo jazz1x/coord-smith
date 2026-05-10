@@ -32,7 +32,7 @@ N-step recipe면 per-step 블록이 선언 순서대로 N번; N=0이면 per-step
  OpenClaw (외부 LLM)
       │  결정 / 좌표 / 이미지 ref
       ▼
- coord-smith CLI ──▶ LangGraph 상태 머신 ──▶ 12 미션
+ coord-smith CLI ──▶ LangGraph 상태 머신 ──▶ 6 미션
                                               │
                             evidence envelope (JSONL + PNG)
                                               │
