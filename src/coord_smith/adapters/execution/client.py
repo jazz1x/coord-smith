@@ -121,9 +121,10 @@ def validate_execution_request(request: ExecutionRequest) -> None:
         required_keys = ("target_page_url", "site_identity")
     elif request.mission_name == "attach_session":
         required_keys = ("session_ref", "expected_auth_state")
-    elif request.mission_name == "benchmark_validation":
-        required_keys = ("target_page_url",)
     else:
+        # step_observe / step_dispatch / step_capture / run_completion carry
+        # structured payloads (step_idx + step dict / step_count int) whose
+        # shape is validated downstream (adapter + validate_execution_result).
         required_keys = ()
 
     for key in required_keys:
@@ -226,7 +227,18 @@ def validate_execution_result(result: ExecutionResult) -> None:
     observed = set(result.evidence_refs)
 
     required_sets: tuple[set[str], ...]
-    if result.mission_name == "prepare_session":
+    if result.mission_name == "attach_session":
+        primary = {
+            "evidence://text/session-attached",
+            "evidence://text/auth-state-confirmed",
+            "evidence://action-log/attach-session",
+        }
+        fallback = {
+            "evidence://screenshot/attach-session-fallback",
+            "evidence://action-log/attach-session",
+        }
+        required_sets = (primary, fallback)
+    elif result.mission_name == "prepare_session":
         primary = {
             "evidence://text/session-viable",
             "evidence://action-log/prepare-session",
@@ -236,96 +248,26 @@ def validate_execution_result(result: ExecutionResult) -> None:
             "evidence://action-log/prepare-session",
         }
         required_sets = (primary, fallback)
-    elif result.mission_name == "benchmark_validation":
+    elif result.mission_name == "step_observe":
+        # The DOM-free runtime relies on action-log + screenshot pairs as the
+        # canonical evidence shape for per-step observations.
         primary = {
-            "evidence://action-log/enter-target-page",
-            "evidence://dom/target-page-entered",
+            "evidence://action-log/step-observed",
+            "evidence://screenshot/step-observed",
         }
-        fallback = {
-            "evidence://action-log/enter-target-page",
-            "evidence://screenshot/target-page-entered-fallback",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "page_ready_observation":
+        required_sets = (primary,)
+    elif result.mission_name == "step_dispatch":
         primary = {
-            "evidence://dom/page-shell-ready",
-            "evidence://action-log/page-ready-observed",
+            "evidence://action-log/step-dispatched",
+            "evidence://screenshot/step-dispatched",
         }
-        fallback = {
-            "evidence://screenshot/page-shell-ready-fallback",
-            "evidence://action-log/page-ready-observed",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "sync_observation":
+        required_sets = (primary,)
+    elif result.mission_name == "step_capture":
         primary = {
-            "evidence://clock/server-time-synced",
-            "evidence://action-log/sync-observed",
+            "evidence://action-log/step-captured",
+            "evidence://screenshot/step-captured",
         }
-        fallback = {
-            "evidence://screenshot/sync-fallback",
-            "evidence://action-log/sync-observed",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "target_actionability_observation":
-        primary = {
-            "evidence://dom/target-actionable",
-            "evidence://action-log/target-actionable-observed",
-        }
-        fallback = {
-            "evidence://screenshot/target-actionable-fallback",
-            "evidence://action-log/target-actionable-observed",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "armed_state_entry":
-        primary = {
-            "evidence://text/armed-state-entered",
-            "evidence://action-log/armed-state",
-        }
-        fallback = {
-            "evidence://screenshot/armed-state-fallback",
-            "evidence://action-log/armed-state",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "trigger_wait":
-        primary = {
-            "evidence://clock/trigger-received",
-            "evidence://action-log/trigger-wait-complete",
-        }
-        fallback = {
-            "evidence://screenshot/trigger-wait-fallback",
-            "evidence://action-log/trigger-wait-complete",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "click_dispatch":
-        primary = {
-            "evidence://action-log/click-dispatched",
-            "evidence://dom/click-target-clicked",
-        }
-        fallback = {
-            "evidence://screenshot/click-dispatched-fallback",
-            "evidence://action-log/click-dispatched",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "click_completion":
-        primary = {
-            "evidence://dom/click-effect-confirmed",
-            "evidence://action-log/click-completed",
-        }
-        fallback = {
-            "evidence://screenshot/click-completed-fallback",
-            "evidence://action-log/click-completed",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "success_observation":
-        primary = {
-            "evidence://dom/success-observed",
-            "evidence://action-log/success-observation",
-        }
-        fallback = {
-            "evidence://screenshot/success-observation-fallback",
-            "evidence://action-log/success-observation",
-        }
-        required_sets = (primary, fallback)
+        required_sets = (primary,)
     elif result.mission_name == "run_completion":
         primary = {
             "evidence://action-log/release-ceiling-stop",
@@ -333,17 +275,6 @@ def validate_execution_result(result: ExecutionResult) -> None:
         fallback = {
             "evidence://screenshot/run-completion-fallback",
             "evidence://action-log/release-ceiling-stop",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "attach_session":
-        primary = {
-            "evidence://text/session-attached",
-            "evidence://text/auth-state-confirmed",
-            "evidence://action-log/attach-session",
-        }
-        fallback = {
-            "evidence://screenshot/attach-session-fallback",
-            "evidence://action-log/attach-session",
         }
         required_sets = (primary, fallback)
     else:

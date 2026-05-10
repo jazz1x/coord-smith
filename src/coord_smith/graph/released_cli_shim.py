@@ -11,6 +11,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from coord_smith.adapters.execution.client import ExecutionAdapter
+from coord_smith.config.click_recipe import Step
 from coord_smith.config.released_inputs import (
     ReleasedScopeInputs,
     resolve_released_scope_inputs,
@@ -37,6 +38,7 @@ async def run_released_scope_from_argv_env(
     argv: Sequence[str] | None = None,
     env: Mapping[str, str] | None = None,
     base_dir: Path = Path("."),
+    recipe_steps: list[Step] | None = None,
 ) -> ReleasedEntrypointResult:
     """Run the released-scope graph using inputs resolved from argv/env."""
 
@@ -48,4 +50,5 @@ async def run_released_scope_from_argv_env(
         target_page_url=inputs.target_page_url,
         site_identity=inputs.site_identity,
         base_dir=base_dir,
+        recipe_steps=recipe_steps,
     )

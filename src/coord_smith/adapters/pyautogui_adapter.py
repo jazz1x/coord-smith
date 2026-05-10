@@ -22,12 +22,14 @@ from coord_smith.config.click_recipe import (
     MissionClick,
     MissionImageClick,
     PostClickSignal,
+    Step,
 )
 from coord_smith.evidence.envelope import parse_released_evidence_ref
 from coord_smith.models.errors import (
     AccessibilityPermissionDenied,
     ClickCoordinatesOutOfBounds,
     ClickExecutionUnverified,
+    ConfigError,
     ImageMatchConfidenceLow,
     ImageTemplateNotFound,
     ImageWaitTimeout,
@@ -37,53 +39,29 @@ from coord_smith.models.errors import (
 )
 
 _FALLBACK_REFS: dict[str, tuple[str, ...]] = {
+    "attach_session": (
+        "evidence://screenshot/attach-session-fallback",
+        "evidence://action-log/attach-session",
+    ),
     "prepare_session": (
         "evidence://screenshot/prepare-session-fallback",
         "evidence://action-log/prepare-session",
     ),
-    "benchmark_validation": (
-        "evidence://action-log/enter-target-page",
-        "evidence://screenshot/target-page-entered-fallback",
+    "step_observe": (
+        "evidence://screenshot/step-observed",
+        "evidence://action-log/step-observed",
     ),
-    "page_ready_observation": (
-        "evidence://screenshot/page-shell-ready-fallback",
-        "evidence://action-log/page-ready-observed",
+    "step_dispatch": (
+        "evidence://screenshot/step-dispatched",
+        "evidence://action-log/step-dispatched",
     ),
-    "sync_observation": (
-        "evidence://screenshot/sync-fallback",
-        "evidence://action-log/sync-observed",
-    ),
-    "target_actionability_observation": (
-        "evidence://screenshot/target-actionable-fallback",
-        "evidence://action-log/target-actionable-observed",
-    ),
-    "armed_state_entry": (
-        "evidence://screenshot/armed-state-fallback",
-        "evidence://action-log/armed-state",
-    ),
-    "trigger_wait": (
-        "evidence://screenshot/trigger-wait-fallback",
-        "evidence://action-log/trigger-wait-complete",
-    ),
-    "click_dispatch": (
-        "evidence://screenshot/click-dispatched-fallback",
-        "evidence://action-log/click-dispatched",
-    ),
-    "click_completion": (
-        "evidence://screenshot/click-completed-fallback",
-        "evidence://action-log/click-completed",
-    ),
-    "success_observation": (
-        "evidence://screenshot/success-observation-fallback",
-        "evidence://action-log/success-observation",
+    "step_capture": (
+        "evidence://screenshot/step-captured",
+        "evidence://action-log/step-captured",
     ),
     "run_completion": (
         "evidence://screenshot/run-completion-fallback",
         "evidence://action-log/release-ceiling-stop",
-    ),
-    "attach_session": (
-        "evidence://screenshot/attach-session-fallback",
-        "evidence://action-log/attach-session",
     ),
 }
 
@@ -342,7 +320,7 @@ class PyAutoGUIAdapter:
         """Return the canonical action-log key for a mission.
 
         Most mission names map to a past-tense action key
-        (``click_dispatch`` -> ``click-dispatched``) which is held in the
+        (``step_dispatch`` -> ``step-dispatched``) which is held in the
         evidence fallback table. Missions absent from the table fall back to
         a literal underscore-to-hyphen substitution.
         """
@@ -538,19 +516,53 @@ class PyAutoGUIAdapter:
     async def execute(
         self, request: ExecutionRequest
     ) -> ExecutionResult:
-        """Execute a mission using OS-level coordinate click and screenshot."""
+        """Execute a mission using OS-level coordinate click and screenshot.
+
+        Dispatch table:
+
+        * ``step_dispatch`` — perform the actual click using
+          ``payload['step']`` (an image-or-coord step decoded from a Step
+          model). Honors ``prefer`` for primary/fallback ordering when both
+          ``image`` and ``coord`` are declared, and applies any declared
+          ``verify_transition`` / ``post_click_signal`` post-click guards.
+        * ``step_observe`` / ``step_capture`` / ``attach_session`` /
+          ``prepare_session`` / ``run_completion`` — no click; emit the
+          per-mission evidence pair (action-log + screenshot) and return.
+        """
         mission = request.mission_name
         payload = request.payload
 
-        coords = self._resolve_click_coords(mission, payload)
-        target = self._mission_target(mission)
+        if mission == "step_dispatch":
+            await self._execute_step_dispatch(payload)
+
+        evidence_refs = self._gather_evidence(mission)
+        return ExecutionResult(
+            mission_name=mission,
+            evidence_refs=evidence_refs,
+        )
+
+    async def _execute_step_dispatch(self, payload: dict[str, object]) -> None:
+        """Perform a click for a single step from a multi-step recipe.
+
+        Resolves the click target from ``payload['step']`` (the serialized
+        Step model). When both ``image`` and ``coord`` are declared, the
+        ``prefer`` field decides the primary attempt and the other becomes
+        the fallback. ``verify_transition`` and ``post_click_signal`` apply
+        to the dispatched click when present on the step.
+        """
+        step_data = payload.get("step")
+        if not isinstance(step_data, dict):
+            raise ConfigError(
+                "step_dispatch payload must include a 'step' dict "
+                "(serialized Step model)"
+            )
+        step = Step.model_validate(step_data)
+        coords = self._resolve_step_click_coords(step)
+        if coords is None:
+            return  # step had no resolvable target — execution is a no-op
 
         baseline_frame: PILImage | None = None
-        if (
-            coords is not None
-            and target is not None
-            and target.verify_transition
-        ):
+        if step.verify_transition:
             try:
                 shot = pyautogui.screenshot()
             except Exception as exc:
@@ -564,30 +576,65 @@ class PyAutoGUIAdapter:
                 )
             baseline_frame = shot
 
-        if coords is not None:
-            ix, iy = coords
-            self._validate_bounds(ix, iy)
-            await self._verified_click(ix, iy)
+        ix, iy = coords
+        self._validate_bounds(ix, iy)
+        await self._verified_click(ix, iy)
 
-        if baseline_frame is not None and target is not None:
+        if baseline_frame is not None:
             self._verify_page_transition(
-                mission=mission,
+                mission=step.name,
                 baseline=baseline_frame,
-                threshold=target.transition_threshold,
-                region=target.transition_region,
+                threshold=step.transition_threshold,
+                region=step.transition_region,
             )
 
-        if (
-            coords is not None
-            and target is not None
-            and target.post_click_signal is not None
-        ):
+        if step.post_click_signal is not None:
             await self._await_post_click_signal(
-                mission=mission, signal=target.post_click_signal
+                mission=step.name, signal=step.post_click_signal
             )
 
-        evidence_refs = self._gather_evidence(mission)
-        return ExecutionResult(
-            mission_name=mission,
-            evidence_refs=evidence_refs,
+    def _resolve_step_click_coords(self, step: Step) -> tuple[int, int] | None:
+        """Resolve a step's click coordinates using prefer + fallback chain.
+
+        When both ``image`` and ``coord`` are declared, ``step.prefer``
+        decides the primary attempt; if the primary fails (image mismatch
+        or out-of-bounds coord), the other is tried. When only one is
+        declared, no fallback chain runs.
+        """
+        if step.image is None and step.coord is None:
+            return None
+
+        primary_kind: str = step.prefer or (
+            "image" if step.image is not None else "coord"
         )
+
+        def _try_image() -> tuple[int, int] | None:
+            if step.image is None:
+                return None
+            target = MissionImageClick(
+                image=step.image,
+                confidence=step.confidence
+                if step.confidence is not None
+                else 0.9,
+                region=step.region,
+                grayscale=step.grayscale if step.grayscale is not None else False,
+            )
+            try:
+                return self._locate_image_target(step.name, target)
+            except (ImageTemplateNotFound, ImageMatchConfidenceLow):
+                return None
+
+        def _try_coord() -> tuple[int, int] | None:
+            if step.coord is None:
+                return None
+            return (step.coord.x, step.coord.y)
+
+        primary, fallback = (
+            (_try_image, _try_coord)
+            if primary_kind == "image"
+            else (_try_coord, _try_image)
+        )
+        result = primary()
+        if result is not None:
+            return result
+        return fallback()

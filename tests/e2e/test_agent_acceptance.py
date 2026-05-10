@@ -74,7 +74,7 @@ async def test_yaml_coord_recipe_exits_0_and_writes_artifacts(tmp_path: Path) ->
     assert exit_code == 0
 
     action_log = _find_action_log_dir(tmp_path)
-    assert (action_log / "click-dispatched.jsonl").exists(), "click evidence missing"
+    assert (action_log / "step-dispatched.jsonl").exists(), "click evidence missing"
     assert (action_log / "release-ceiling-stop.jsonl").exists(), "ceiling-stop proof missing"
 
     stop = _read_last_jsonl(action_log / "release-ceiling-stop.jsonl")

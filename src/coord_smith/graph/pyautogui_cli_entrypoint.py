@@ -77,8 +77,13 @@ async def _run(
     recipe = _resolve_click_recipe(cli_path=recipe_path)
     adapter = PyAutoGUIAdapter(run_root=base_dir, click_recipe=recipe)
     await adapter.preflight()
+    recipe_steps = list(recipe.steps) if recipe is not None and recipe.steps else None
     await run_released_scope_from_argv_env(
-        adapter=adapter, argv=remaining_argv, env=dict(os.environ), base_dir=base_dir
+        adapter=adapter,
+        argv=remaining_argv,
+        env=dict(os.environ),
+        base_dir=base_dir,
+        recipe_steps=recipe_steps,
     )
     return 0
 

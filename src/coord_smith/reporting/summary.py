@@ -13,8 +13,6 @@ def summarize_graph_plan(plan: RuntimeGraphPlan) -> str:
 
     return (
         f"released={len(plan.released_nodes)} "
-        f"modeled={len(plan.modeled_nodes)} "
-        f"control={len(plan.control_nodes)} "
         f"ceiling={plan.approved_scope_ceiling}"
     )
 

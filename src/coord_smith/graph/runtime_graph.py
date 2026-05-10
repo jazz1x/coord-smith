@@ -2,11 +2,7 @@
 
 from dataclasses import dataclass
 
-from coord_smith.missions.names import (
-    CONTROL_MISSIONS,
-    MODELED_MISSIONS,
-    RELEASED_MISSIONS,
-)
+from coord_smith.missions.names import RELEASED_MISSIONS
 from coord_smith.models.checkpoint import TransitionCheckpointCollection
 from coord_smith.models.failure import (
     TransitionFailureCode,
@@ -23,11 +19,14 @@ from coord_smith.models.transition import TransitionArtifact, build_transition_a
 
 @dataclass(frozen=True, slots=True)
 class RuntimeGraphPlan:
-    """Static graph plan pinned to the current PRD set."""
+    """Static graph plan pinned to the current PRD set.
+
+    With modeled / control-only tiers removed, every released node carries
+    its own slot. The legacy ``modeled_nodes`` / ``control_nodes`` fields
+    are gone; callers that read them should now read ``released_nodes``.
+    """
 
     released_nodes: tuple[str, ...]
-    modeled_nodes: tuple[str, ...]
-    control_nodes: tuple[str, ...]
     approved_scope_ceiling: str
 
 
@@ -46,7 +45,7 @@ class TransitionDecision:
         return failure_code_for_stop_reason(self.stop_reason)
 
 
-FORWARD_MISSION_SEQUENCE: tuple[str, ...] = (*RELEASED_MISSIONS, *MODELED_MISSIONS)
+FORWARD_MISSION_SEQUENCE: tuple[str, ...] = RELEASED_MISSIONS
 
 
 def _node_name(mission_name: str) -> str:
@@ -214,7 +213,5 @@ def build_runtime_graph_plan() -> RuntimeGraphPlan:
 
     return RuntimeGraphPlan(
         released_nodes=tuple(_node_name(name) for name in RELEASED_MISSIONS),
-        modeled_nodes=tuple(_node_name(name) for name in MODELED_MISSIONS),
-        control_nodes=tuple(_node_name(name) for name in CONTROL_MISSIONS),
         approved_scope_ceiling="runCompletion",
     )
