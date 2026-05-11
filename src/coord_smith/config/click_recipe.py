@@ -99,6 +99,15 @@ class Step(BaseModel):
     transition_threshold: float = Field(default=0.01, ge=0.0, le=1.0)
     transition_region: tuple[int, int, int, int] | None = None
     post_click_signal: PostClickSignal | None = None
+    settle_ms: int = Field(default=300, ge=0, le=10_000)
+    """Post-click settle delay before reading cursor and (if configured)
+    capturing the post-click frame for transition diff. The legacy hard-coded
+    50 ms was too tight for React/DOM-driven web UI — frequently the visual
+    update completed *after* the settle window, producing false
+    ``PageTransitionNotDetected`` failures even on successful clicks. The new
+    default of 300 ms accommodates typical web render latency while keeping
+    instant-visual scenarios responsive. Set lower (e.g. ``50``) for native
+    UI that toggles instantly; set higher (e.g. ``800``) for heavy SPAs."""
 
     @model_validator(mode="after")
     def _validate_target_and_prefer(self) -> Step:

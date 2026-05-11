@@ -5,7 +5,10 @@ from __future__ import annotations
 import argparse
 import asyncio
 import os
+import platform
+import subprocess
 import sys
+import time
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -29,6 +32,13 @@ Options:
   --click-recipe PATH   YAML or JSON recipe (preferred: YAML). Also accepts the
                         COORDSMITH_CLICK_RECIPE env var. Required for actual
                         clicks when no external caller injects payload coords.
+  --target-window NAME  macOS app name (e.g. "Google Chrome") to activate
+                        before dispatch. coord-smith captures the whole
+                        screen; if the target window is not foreground at
+                        click time, the locate fails. This option runs
+                        `osascript -e 'tell application "<name>" to activate'`
+                        before preflight. macOS only; ignored elsewhere.
+                        Env: COORDSMITH_TARGET_WINDOW.
   --dry-run             Validate the recipe and run the graph without
                         dispatching any real click. Exit 0 if everything
                         loads and resolves cleanly.
@@ -74,18 +84,76 @@ def _wants_version(argv: Sequence[str]) -> bool:
 
 def _extract_known_flags(
     argv: Sequence[str],
-) -> tuple[Path | None, bool, list[str]]:
-    """Strip CLI-only flags and return (recipe_path, dry_run, remaining argv).
+) -> tuple[Path | None, bool, str | None, list[str]]:
+    """Strip CLI-only flags.
 
-    The remaining argv is forwarded to the released-scope shim, which only
-    parses session/auth/url/site-identity. Anything we want the shim NOT to
-    see (--click-recipe, --dry-run) must be peeled off here.
+    Returns ``(recipe_path, dry_run, target_window, remaining_argv)``. The
+    remaining argv is forwarded to the released-scope shim, which only parses
+    session/auth/url/site-identity. Anything we want the shim NOT to see
+    (``--click-recipe``, ``--dry-run``, ``--target-window``) must be peeled
+    off here.
     """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--click-recipe", dest="click_recipe", type=Path)
     parser.add_argument("--dry-run", dest="dry_run", action="store_true")
+    parser.add_argument("--target-window", dest="target_window", type=str)
     namespace, remaining = parser.parse_known_args(list(argv))
-    return namespace.click_recipe, namespace.dry_run, remaining
+    return (
+        namespace.click_recipe,
+        namespace.dry_run,
+        namespace.target_window,
+        remaining,
+    )
+
+
+def _resolve_target_window(
+    *, cli_value: str | None, env: dict[str, str] | None = None
+) -> str | None:
+    """CLI --target-window overrides COORDSMITH_TARGET_WINDOW; both optional."""
+    if cli_value:
+        return cli_value
+    env_map = env if env is not None else dict(os.environ)
+    env_value = env_map.get("COORDSMITH_TARGET_WINDOW")
+    return env_value or None
+
+
+def _activate_target_window(name: str, *, settle_seconds: float = 1.0) -> bool:
+    """Activate the named macOS application via osascript.
+
+    Best-effort: returns True if osascript ran successfully, False otherwise.
+    Sleeps ``settle_seconds`` to let the system finish the activation handoff
+    before the caller proceeds to screenshot. Linux / Windows: no-op (returns
+    False).
+
+    The caller is responsible for keeping the activated window front for the
+    duration of the run; this helper only triggers a one-shot activation,
+    not a continuous focus guard.
+    """
+    if platform.system() != "Darwin":
+        print(
+            "coord-smith: --target-window is currently macOS-only; "
+            "no activation attempted on this platform.",
+            file=sys.stderr,
+        )
+        return False
+    script = f'tell application "{name}" to activate'
+    try:
+        subprocess.run(
+            ["osascript", "-e", script],
+            check=True,
+            capture_output=True,
+            timeout=5,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
+        print(
+            f"coord-smith: target-window activation failed "
+            f"({type(exc).__name__}): {exc}",
+            file=sys.stderr,
+        )
+        return False
+    if settle_seconds > 0:
+        time.sleep(settle_seconds)
+    return True
 
 
 def _resolve_click_recipe(
@@ -115,9 +183,19 @@ async def _run(
     host has the required OS permissions, then exits cleanly without
     executing any click. Used by orchestrators (e.g. OpenClaw) to validate
     a recipe before committing the user's screen to a real run.
+
+    ``--target-window`` (macOS) activates the named app immediately before
+    preflight + dispatch so the target window is front-most when
+    ``pyautogui.screenshot()`` runs. See ``docs/architecture-boundaries.md``
+    §Window Ownership for caller responsibilities.
     """
     argv_list = list(argv or [])
-    recipe_path, dry_run, remaining_argv = _extract_known_flags(argv_list)
+    recipe_path, dry_run, target_window, remaining_argv = _extract_known_flags(
+        argv_list
+    )
+    target_window = _resolve_target_window(cli_value=target_window)
+    if target_window:
+        _activate_target_window(target_window)
     recipe = _resolve_click_recipe(cli_path=recipe_path)
     adapter = PyAutoGUIAdapter(run_root=base_dir, click_recipe=recipe)
     await adapter.preflight()

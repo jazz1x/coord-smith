@@ -102,24 +102,31 @@ the released-scope invariant *"OS coordinates and pixels only — no app
 control."* The current `pyautogui` surface stays in that lane;
 activation belongs to whoever orchestrates the screen.
 
-## Known Constraints in `verify_transition`
+## `verify_transition` settle timing (`Step.settle_ms`)
 
 The Step-level ``verify_transition: true`` guard captures a baseline
-frame immediately before the click and a post-click frame after the
-adapter's fixed ``_POST_CLICK_SETTLE_SECONDS`` (50 ms) sleep. Real web
-pages updating via React / DOM mutation frequently complete their visual
-update *after* that 50 ms window — leading to a false-zero diff and a
-``PageTransitionNotDetected`` raise even on a successful click.
+frame immediately before the click and a post-click frame after a
+configurable settle delay. The delay is set per step via
+``Step.settle_ms`` (integer milliseconds; default **300 ms**, range
+``0–10000``).
 
-**Workaround until a configurable settle is added:**
-- Prefer ``post_click_signal`` over ``verify_transition`` for any
-  recipe that targets dynamic web UI. The signal polls for an image
-  to appear and naturally accommodates render latency up to ``timeout``.
-- Use ``verify_transition`` only for instantaneous-visual-feedback
-  scenarios (e.g., button press toggling its own colour).
+Recipe authors should pick a value to match the target UI:
 
-A follow-up PRD should add ``Step.settle_ms: int = 300`` (or similar)
-and remove the hard-coded constant.
+| UI class | Suggested `settle_ms` |
+|----------|----------------------|
+| Native widgets that flip state synchronously (toggles, colour swaps) | `0` – `50` |
+| Standard web pages (default React render cycle) | `300` (default) |
+| Heavy SPAs with animation / virtualised lists | `500` – `1000` |
+
+History: prior versions of this adapter used a hard-coded 50 ms settle.
+Real web pages updating via React / DOM mutation frequently completed
+their visual update *after* that window, producing a false-zero diff
+and a spurious ``PageTransitionNotDetected`` raise on otherwise
+successful clicks. The default was raised to 300 ms once
+``Step.settle_ms`` made it configurable; recipes that previously worked
+around the gap with ``post_click_signal`` can now choose either guard
+based on intent (signal = "wait for X to appear", transition = "screen
+changed at all").
 
 ## Templates That Look Alike — Disambiguation Patterns
 

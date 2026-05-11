@@ -110,6 +110,43 @@ def test_step_with_verify_transition_post_click_diff() -> None:
     assert step.transition_region == (0, 100, 1920, 800)
 
 
+def test_step_settle_ms_defaults_to_300() -> None:
+    """settle_ms defaults to 300 ms — chosen to absorb React/DOM render latency
+    before verify_transition reads the post-click frame. The legacy 50 ms
+    constant was tight enough that web UI updates often completed *after* the
+    settle window."""
+    step = Step(name="click", image="x.png")
+    assert step.settle_ms == 300
+
+
+def test_step_settle_ms_can_be_overridden() -> None:
+    """Recipe author can dial settle_ms up for heavy SPAs or down for native UI."""
+    fast = Step(name="instant-toggle", image="x.png", settle_ms=50)
+    slow = Step(name="heavy-spa", image="x.png", settle_ms=800)
+    assert fast.settle_ms == 50
+    assert slow.settle_ms == 800
+
+
+def test_step_settle_ms_accepts_zero() -> None:
+    """settle_ms=0 disables the post-click pause — used by tests and synchronous
+    native UI where any sleep is wasted."""
+    step = Step(name="x", image="x.png", settle_ms=0)
+    assert step.settle_ms == 0
+
+
+def test_step_settle_ms_rejects_negative() -> None:
+    """Negative settle_ms is nonsensical and must be rejected at schema time."""
+    with pytest.raises(ValidationError):
+        Step(name="x", image="x.png", settle_ms=-1)
+
+
+def test_step_settle_ms_rejects_above_ceiling() -> None:
+    """settle_ms upper bound (10 s) prevents accidental run hangs from a typo'd
+    value (e.g. someone writing seconds instead of ms)."""
+    with pytest.raises(ValidationError):
+        Step(name="x", image="x.png", settle_ms=10_001)
+
+
 # ---- Validation failure paths ---------------------------------------
 
 

@@ -68,7 +68,10 @@ _GENERIC_ACTION_LOG_REF = "evidence://action-log/pyautogui-executed"
 
 # Post-click cursor position tolerance (display scaling / animation jitter).
 _CLICK_POSITION_TOLERANCE_PX = 2
-# Sleep after click so OS event loop flushes the cursor move before we read it.
+# Default sleep after a low-level cursor probe (preflight / non-step cases).
+# Step-driven clicks override this via ``Step.settle_ms``. The 50 ms value
+# is intentionally tight here — preflight only verifies that the OS event
+# pump flushed the cursor move, not that an entire SPA finished rendering.
 _POST_CLICK_SETTLE_SECONDS = 0.05
 
 
@@ -149,9 +152,26 @@ class PyAutoGUIAdapter:
                 f"({size.width}x{size.height})"
             )
 
-    async def _verified_click(self, x: int, y: int) -> None:
+    async def _verified_click(
+        self, x: int, y: int, *, settle_seconds: float | None = None
+    ) -> None:
+        """Click and verify the OS actually moved the cursor.
+
+        ``settle_seconds`` controls the pause between the click call and the
+        cursor-position read used to detect silent permission failures. The
+        same delay is honored by callers (e.g. ``_dispatch_with_step``)
+        before they snap the post-click frame for transition diff, so step
+        recipes get one consistent settle knob.
+
+        When ``settle_seconds`` is ``None`` the legacy 50 ms constant is
+        used. Step-driven clicks always pass ``step.settle_ms / 1000.0``;
+        the ``None`` default exists for non-step callers (preflight,
+        ad-hoc tests).
+        """
+        delay = _POST_CLICK_SETTLE_SECONDS if settle_seconds is None else settle_seconds
         pyautogui.click(x, y)
-        await asyncio.sleep(_POST_CLICK_SETTLE_SECONDS)
+        if delay > 0:
+            await asyncio.sleep(delay)
         actual = pyautogui.position()
         if (
             abs(actual.x - x) > _CLICK_POSITION_TOLERANCE_PX
@@ -568,7 +588,8 @@ class PyAutoGUIAdapter:
 
         ix, iy = coords
         self._validate_bounds(ix, iy)
-        await self._verified_click(ix, iy)
+        settle_seconds = step.settle_ms / 1000.0
+        await self._verified_click(ix, iy, settle_seconds=settle_seconds)
 
         if baseline_frame is not None:
             self._verify_page_transition(

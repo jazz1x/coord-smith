@@ -4,7 +4,7 @@
 
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![tests](https://img.shields.io/badge/tests-721%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-238%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 
 **coord-smith** 는 *손* 입니다. *머리* — OpenClaw 같은 외부 LLM — 가 무엇을 어디서 클릭할지 정하면, coord-smith 는 그 결정을 OS 위에서 좌표 클릭과 스크린샷 증거로 실행합니다. 추론은 런타임 바깥에 있고, 런타임 자체에는 LLM 호출이 0건입니다.
@@ -74,7 +74,7 @@ uv python install 3.14
 ### 2. 검증
 
 ```bash
-uv run pytest -q                # 721 passed, 1 skipped, 4 deselected
+uv run pytest -q                # 238 passed, 4 deselected (real-binary)
 uv run ruff check .
 uv run mypy
 ```

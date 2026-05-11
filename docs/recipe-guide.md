@@ -171,6 +171,11 @@ steps:
     image: templates/buy-button.png
     confidence: 0.9
 
+    # Optional — adjust the post-click pause before reading the post-click
+    # frame for verify_transition (default 300 ms; 0–10000 ms allowed).
+    # Lower for native widgets that flip instantly; raise for heavy SPAs.
+    settle_ms: 500
+
     # Optional — verify the page changed after click
     verify_transition: true
     transition_threshold: 0.02        # fraction of region that must change (0–1)
@@ -186,10 +191,16 @@ steps:
 
 `verify_transition` diffs a pre-click and post-click screenshot. If the changed
 area is below `transition_threshold`, `PageTransitionNotDetected` is raised
-(exit 1).
+(exit 1). The pre-click frame is captured immediately; the post-click frame is
+captured after `settle_ms` so React/DOM updates have time to flush.
 
 `post_click_signal` polls `locateCenterOnScreen` until the signal image appears.
 Timeout raises `ImageWaitTimeout` (exit 1).
+
+`settle_ms` defaults to **300 ms** — chosen so a standard web-app render cycle
+completes before the post-click diff. Use `settle_ms: 0` (or a small value like
+`50`) for native widgets where waiting is wasted; use `settle_ms: 800`–`1000`
+for SPAs with heavy animation or virtualised lists.
 
 ### E. Pre-click guard (`wait_for`)
 
@@ -236,6 +247,7 @@ binds the wait to the step that needs it.
 | `transition_threshold` | float 0–1 | `0.01` | no |
 | `transition_region` | [int×4] | `null` | no |
 | `post_click_signal` | PostClickSignal | `null` | no |
+| `settle_ms` | int 0–10000 | `300` | no — post-click pause in ms before verify_transition reads the post-click frame |
 
 ### `StepCoord`
 

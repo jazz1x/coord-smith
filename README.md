@@ -4,7 +4,7 @@
 
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![tests](https://img.shields.io/badge/tests-721%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-238%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 
 **coord-smith** is the *hands*. The *head* — an external LLM such as OpenClaw — decides what to click; coord-smith executes those decisions on the OS as coordinate clicks and screenshot evidence. Reasoning lives outside the runtime; the runtime itself contains zero LLM calls.
@@ -74,7 +74,7 @@ uv python install 3.14
 ### 2. Verify
 
 ```bash
-uv run pytest -q                # 721 passed, 1 skipped, 4 deselected
+uv run pytest -q                # 238 passed, 4 deselected (real-binary)
 uv run ruff check .
 uv run mypy
 ```
@@ -113,6 +113,18 @@ coord-smith --click-recipe ./recipe.yaml \
       --target-page-url https://example.com \
       --site-identity example
 ```
+
+On macOS, when the target browser may not be foreground at invocation
+time (e.g. the calling shell competes for focus), add
+`--target-window "Google Chrome"` (or the equivalent app name). The CLI
+runs `osascript -e 'tell application "<name>" to activate'` and waits
+~1 s for the system to finish the focus handoff before preflight and
+dispatch. The same value can be passed via the
+`COORDSMITH_TARGET_WINDOW` environment variable; the CLI flag wins when
+both are set. See [docs/architecture-boundaries.md §Window Ownership]
+(docs/architecture-boundaries.md#window-ownership) for the caller's
+responsibilities (the activation is a one-shot; keeping the window
+foreground for the duration of the run is up to the orchestrator).
 
 A minimal coordinate recipe:
 
