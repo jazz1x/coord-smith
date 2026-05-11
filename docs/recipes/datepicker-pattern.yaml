@@ -1,0 +1,40 @@
+# Datepicker recipe pattern — wide-context image template
+#
+# Date-grid cells (e.g., "15") are visually almost-identical to other
+# cells ("11", "12", "13", "14"). At default confidence 0.9 the template
+# can match the wrong cell. Two reliable patterns:
+#
+# A. Wide-context crop (this file) — the template includes adjacent cells
+#    so the combination is unique. The match center falls on the centre
+#    cell of the cropped strip, which is the target.
+#
+# B. Caller-computed coord (no image needed) — for grids with known cell
+#    sizes the caller (e.g. OpenClaw) computes pixel coords directly and
+#    ships a coord-only Step. Not shown here; see
+#    docs/architecture-boundaries.md §Templates That Look Alike.
+#
+# Replace ``templates/datepicker-row-with-15.png`` with a 3-cell-wide
+# crop centred on the day-15 cell from the LIVE renderer (Playwright
+# render and Chrome live render diverge enough to drop confidence).
+
+version: 1
+steps:
+  - name: open-datepicker
+    image: templates/calendar-input.png
+    confidence: 0.9
+    # post_click_signal: poll until the calendar panel renders
+    post_click_signal:
+      image: templates/calendar-month-header.png
+      timeout: 3.0
+      interval: 0.1
+
+  - name: pick-day-15
+    image: templates/datepicker-row-with-15.png   # 3 cells wide (14-15-16)
+    region: [60, 200, 280, 200]                    # calendar bbox on screen
+    confidence: 0.85
+    # verify_transition is unreliable on React-rendered selection state —
+    # use post_click_signal instead (polls for an image to appear)
+    post_click_signal:
+      image: templates/day-15-selected.png         # selected-state highlight
+      timeout: 1.5
+      interval: 0.05

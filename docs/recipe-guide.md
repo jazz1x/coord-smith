@@ -385,6 +385,7 @@ print(json.dumps(ClickRecipe.model_json_schema(), indent=2))
 |------|----------|
 | [`docs/recipes/multi-step-flow.yaml`](recipes/multi-step-flow.yaml) | **Multi-step happy path** — three sequential image-anchored clicks |
 | [`docs/recipes/multi-step-with-fallback.yaml`](recipes/multi-step-with-fallback.yaml) | **Multi-step + fallback** — image primary, coord fallback per step (with per-step `prefer: coord` override) |
+| [`docs/recipes/datepicker-pattern.yaml`](recipes/datepicker-pattern.yaml) | **Datepicker / grid widget** — wide-context template + region restriction for visually-similar cells |
 | [`tests/fixtures/demo/demo-flow.yaml`](../tests/fixtures/demo/demo-flow.yaml) | **End-to-end tutorial** — four-step recipe against the bundled demo page (see Tutorial below) |
 | [`tests/fixtures/demo/demo-flow-with-guards.yaml`](../tests/fixtures/demo/demo-flow-with-guards.yaml) | **End-to-end tutorial + guards** — same flow with `verify_transition` + `post_click_signal` per step |
 | [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml) | Single-step (legacy `missions:` shape) — fixed pixel coordinate |
