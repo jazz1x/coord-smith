@@ -22,6 +22,7 @@ from coord_smith.config.click_recipe import (
     MissionImageClick,
     PostClickSignal,
     Step,
+    WaitFor,
 )
 from coord_smith.evidence.envelope import parse_released_evidence_ref
 from coord_smith.models.errors import (
@@ -399,19 +400,23 @@ class PyAutoGUIAdapter:
         timeout: float = 5.0,
         interval: float = 0.1,
         confidence: float = 0.9,
+        region: tuple[int, int, int, int] | None = None,
     ) -> tuple[int, int]:
         """Poll ``locateCenterOnScreen`` until the template appears or timeout elapses.
 
         Returns the matched center coordinates. Raises ``ImageWaitTimeout``
         when the template never appears within ``timeout`` seconds.
         ``interval`` controls polling cadence; smaller values increase CPU.
+        ``region`` (optional ``(left, top, width, height)``) restricts the
+        search rectangle on each poll — used by ``Step.wait_for`` when the
+        anchor element has a known screen location.
         """
         deadline = time.monotonic() + timeout
         last_exc: Exception | None = None
         while True:
             try:
                 located = pyautogui.locateCenterOnScreen(
-                    path, confidence=confidence
+                    path, confidence=confidence, region=region
                 )
             except pyautogui.ImageNotFoundException as exc:
                 located = None
@@ -466,6 +471,73 @@ class PyAutoGUIAdapter:
                 f"page transition below threshold for mission '{mission}': "
                 f"change_ratio={result.change_ratio:.4f} < {threshold:.4f}"
             )
+
+    def _write_wait_for_log(
+        self,
+        *,
+        mission: str,
+        template: str,
+        confidence: float,
+        elapsed: float,
+        x: int,
+        y: int,
+    ) -> None:
+        """Append a pre-click wait_for hit record to the mission action log.
+
+        Symmetric to ``_write_signal_log`` but namespaced with ``wait_for_*``
+        keys so a downstream audit can distinguish the pre-click guard from
+        the post-click signal.
+        """
+        ts = datetime.now(tz=UTC).isoformat()
+        action_key = self._action_key_for_mission(mission)
+        entry: dict[str, object] = {
+            "ts": ts,
+            "mission_name": mission,
+            "event": action_key,
+            "wait_for_template": template,
+            "wait_for_confidence": confidence,
+            "wait_for_elapsed_seconds": elapsed,
+            "wait_for_x": x,
+            "wait_for_y": y,
+        }
+        path = self._action_log_path(action_key)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+
+    async def _await_pre_click_wait_for(
+        self, *, mission: str, wait_for: WaitFor
+    ) -> None:
+        """Poll for the configured pre-click image before dispatching the click.
+
+        Mirrors ``_await_post_click_signal`` but runs *before* the click,
+        gating whether the dispatch happens at all. Honors the optional
+        ``region`` field so callers can scope the search to a known panel
+        area. Timeout raises ``ImageWaitTimeout``; missing template raises
+        ``ImageTemplateNotFound``.
+        """
+        wait_path = Path(wait_for.image)
+        if not wait_path.exists():
+            raise ImageTemplateNotFound(
+                f"pre-click wait_for template not found for mission "
+                f"'{mission}': {wait_path}"
+            )
+        start = time.monotonic()
+        x, y = await self.wait_for_image(
+            path=str(wait_path),
+            timeout=wait_for.timeout,
+            interval=wait_for.interval,
+            confidence=wait_for.confidence,
+            region=wait_for.region,
+        )
+        elapsed = time.monotonic() - start
+        self._write_wait_for_log(
+            mission=mission,
+            template=str(wait_path),
+            confidence=wait_for.confidence,
+            elapsed=elapsed,
+            x=x,
+            y=y,
+        )
 
     async def _await_post_click_signal(
         self, *, mission: str, signal: PostClickSignal
@@ -566,7 +638,21 @@ class PyAutoGUIAdapter:
 
     async def _dispatch_with_step(self, step: Step) -> None:
         """Inner click logic — separated so the failure-capture wrapper above
-        can stay focused on exception interception."""
+        can stay focused on exception interception.
+
+        Ordering: pre-click ``wait_for`` guard (if declared) →
+        resolve click coords → optional ``verify_transition`` baseline →
+        click → optional post-click verification → optional
+        ``post_click_signal`` poll. ``wait_for`` runs *before* coord
+        resolution so timing-sensitive templates (e.g. an anchor element
+        that animates in) get a chance to appear before the matcher even
+        looks at the click target.
+        """
+        if step.wait_for is not None:
+            await self._await_pre_click_wait_for(
+                mission=step.name, wait_for=step.wait_for
+            )
+
         coords = self._resolve_step_click_coords(step)
         if coords is None:
             return  # step had no resolvable target — execution is a no-op

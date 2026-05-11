@@ -12,10 +12,15 @@ changeable and subordinate to `docs/prd.md`.
   3 per-step): `attach_session` · `prepare_session` · `step_observe` ·
   `step_dispatch` · `step_capture` · `run_completion`. Modeled tier
   permanently removed.
-- Test count: 218 passing, 1 skipped, 4 deselected (`-m real`).
+- Test count: 243 passing, 4 deselected (`-m real`).
 - Static checks: ruff clean, mypy strict clean, pre-commit clean.
 - Platform: macOS (Accessibility + Screen Recording permissions). Linux
   / Windows preflight not implemented.
+- Operator ergonomics: `--target-window NAME` /
+  `COORDSMITH_TARGET_WINDOW` runs a one-shot AppleScript activate
+  before preflight + dispatch on macOS. Per-step `settle_ms`
+  (default 300 ms) drives the post-click pause used by
+  `verify_transition`.
 
 ## Architecture
 
@@ -36,8 +41,11 @@ changeable and subordinate to `docs/prd.md`.
 - **Visual click verification.** Image-template click via OpenCV,
   optional pre/post page-transition diff via `PIL.ImageChops`, optional
   post-click signal polling via `pyautogui.locateCenterOnScreen`,
-  optional pre-click `wait_for` guard. All four are deterministic and
-  default-off in click recipes.
+  optional pre-click `wait_for` guard (polled with the same primitive,
+  scoped by `WaitFor.region`). All four are deterministic and
+  default-off in click recipes. The `wait_for` poll precedes coord
+  resolution; on success a `wait_for_*` action-log entry is recorded
+  under the step's name.
 - **Failure evidence.** Typed dispatch failures
   (`ImageMatchConfidenceLow` / `ClickCoordinatesOutOfBounds` /
   `ClickExecutionUnverified` / `PageTransitionNotDetected` /
