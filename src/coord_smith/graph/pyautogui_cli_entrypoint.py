@@ -16,7 +16,11 @@ from coord_smith import __version__
 from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
 from coord_smith.config.click_recipe import ClickRecipe, load_click_recipe
 from coord_smith.graph.released_cli_shim import run_released_scope_from_argv_env
-from coord_smith.models.errors import ConfigError, ExecutionTransportError
+from coord_smith.models.errors import (
+    AccessibilityPermissionDenied,
+    ConfigError,
+    ScreenCapturePermissionDenied,
+)
 
 ENV_CLICK_RECIPE = "COORDSMITH_CLICK_RECIPE"
 
@@ -231,9 +235,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     except ConfigError as exc:
         print(f"coord-smith: config error: {exc}", file=sys.stderr)
         return 3
-    except ExecutionTransportError as exc:
+    except (AccessibilityPermissionDenied, ScreenCapturePermissionDenied) as exc:
+        # Permission-class transport errors raised by preflight or screen
+        # capture. The "grant permission and retry" hint is genuinely
+        # actionable here. Other ExecutionTransportError subclasses
+        # (ImageMatchConfidenceLow, PageTransitionNotDetected, etc.) are
+        # runtime dispatch failures — they fall through to the generic
+        # handler below and return exit code 1, because the screen state
+        # / template / network is the issue, not host permissions.
         print(
-            f"coord-smith: preflight failed ({type(exc).__name__}): {exc}",
+            f"coord-smith: permission preflight failed ({type(exc).__name__}): {exc}",
             file=sys.stderr,
         )
         print(
@@ -243,7 +254,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 2
     except Exception as exc:  # noqa: BLE001
-        print(f"coord-smith: fatal error: {exc}", file=sys.stderr)
+        print(
+            f"coord-smith: runtime error ({type(exc).__name__}): {exc}",
+            file=sys.stderr,
+        )
         return 1
 
 

@@ -53,6 +53,17 @@ changeable and subordinate to `docs/prd.md`.
   `runs/<id>/artifacts/failure/<idx>-<step>-<error>.png` and a
   structured record to `action-log/failure.jsonl` before propagating.
   Earlier steps' artifacts are preserved.
+- **Fail-fast multi-step contract.** A typed dispatch failure on step
+  `k` aborts the run: steps `k+1..N-1` do not execute and
+  `run_completion` is not reached (no `release-ceiling-stop.jsonl`).
+  Callers diagnosing a failed run can rely on the absence of
+  `release-ceiling-stop.jsonl` to detect an aborted run without
+  parsing exit codes.
+- **CLI exit code mapping.** `0` clean, `1` runtime dispatch error
+  (any non-permission `ExecutionTransportError` — image match, page
+  transition, click verification, etc.), `2` permission preflight
+  failed (only `AccessibilityPermissionDenied` /
+  `ScreenCapturePermissionDenied`), `3` recipe load or schema error.
 
 ## Scope
 

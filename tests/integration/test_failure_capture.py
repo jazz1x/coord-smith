@@ -210,3 +210,133 @@ async def test_image_match_failure_in_step_2_preserves_step_1_artifacts(
     record = json.loads(failure_log.read_text(encoding="utf-8").strip())
     assert record["step_idx"] == 1
     assert record["step_name"] == "never-appears"
+
+
+@pytest.mark.asyncio
+async def test_step_failure_is_fail_fast_and_skips_remaining_steps(
+    tmp_path: Path,
+) -> None:
+    """A 3-step recipe whose step 1 fails must NOT execute step 2.
+
+    LangGraph propagates the exception out of ``ainvoke`` once a node
+    raises; subsequent edges (including the per-step sub-block for the
+    next step) are not traversed. The caller (e.g. OpenClaw) relies on
+    this contract — after a failure record appears for step k, no
+    side effects from step k+1 or later may exist.
+    """
+
+    # Step 0 = open-buy (matches state-buy.png) — succeeds.
+    # Step 1 = panel-success (never on state-buy.png) — fails.
+    # Step 2 = open-buy again — would succeed if reached, but must NOT run.
+    recipe = tmp_path / "fail-fast.yaml"
+    recipe.write_text(
+        "version: 1\n"
+        "steps:\n"
+        "  - name: open-buy-step-0\n"
+        f"    image: {DEMO_DIR / 'templates' / 'buy-button.png'}\n"
+        "    confidence: 0.9\n"
+        "  - name: failing-step-1\n"
+        f"    image: {DEMO_DIR / 'templates' / 'panel-success.png'}\n"
+        "    confidence: 0.9\n"
+        "  - name: must-not-run-step-2\n"
+        f"    image: {DEMO_DIR / 'templates' / 'buy-button.png'}\n"
+        "    confidence: 0.9\n",
+        encoding="utf-8",
+    )
+
+    cursor = _MovingCursor()
+
+    def patched_locate_center(image: object, **kwargs: object) -> object:
+        located = pag.locate(image, _fake_screenshot(), **kwargs)
+        if located is None:
+            return None
+        cx = located.left + located.width / 2
+        cy = located.top + located.height / 2
+        Pt = type("Pt", (), {"x": cx, "y": cy})
+        return Pt()
+
+    with (
+        patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
+        patch("pyautogui.screenshot", side_effect=_fake_screenshot),
+        patch(
+            "pyautogui.locateCenterOnScreen", side_effect=patched_locate_center
+        ),
+        patch("pyautogui.click", side_effect=cursor.click),
+        patch("pyautogui.moveTo", side_effect=cursor.move_to),
+        patch("pyautogui.position", side_effect=cursor.position),
+        patch("pyautogui.size", return_value=_FakeSize()),
+    ):
+        from coord_smith.models.errors import ImageMatchConfidenceLow
+
+        with pytest.raises(ImageMatchConfidenceLow):
+            await _run(
+                argv=["--click-recipe", str(recipe), *_COMMON],
+                base_dir=tmp_path,
+            )
+
+    run_root = _find_run_root(tmp_path)
+
+    # Failure record names step 1.
+    failure_log = run_root / "artifacts" / "action-log" / "failure.jsonl"
+    record = json.loads(failure_log.read_text(encoding="utf-8").strip())
+    assert record["step_idx"] == 1
+    assert record["step_name"] == "failing-step-1"
+
+    # Step 2 (idx=2) must have NO action-log seed in any of the per-step files.
+    step_dispatched = (
+        run_root / "artifacts" / "action-log" / "step-dispatched.jsonl"
+    )
+    assert step_dispatched.is_file(), "step 0 still writes its dispatched entry"
+    seeds = [
+        json.loads(line)
+        for line in step_dispatched.read_text(encoding="utf-8")
+        .strip()
+        .splitlines()
+        if "step_idx" in line
+    ]
+    step_idxs = {r["step_idx"] for r in seeds}
+    assert 0 in step_idxs, "step 0 must have run"
+    assert 2 not in step_idxs, (
+        "step 2 must NOT run after step 1 failure — got dispatched entries "
+        f"for step indices {sorted(step_idxs)}"
+    )
+
+    # And run_completion must NOT have written its sealed exit proof.
+    assert not (
+        run_root / "artifacts" / "action-log" / "release-ceiling-stop.jsonl"
+    ).exists(), (
+        "release-ceiling-stop.jsonl must be absent on dispatch failure — its "
+        "presence would claim a clean sealed exit that never happened"
+    )
+
+
+def test_main_returns_exit_code_1_on_dispatch_failure(tmp_path: Path) -> None:
+    """Main maps any typed dispatch failure to exit 1 (runtime error)."""
+    from coord_smith.graph.pyautogui_cli_entrypoint import main
+
+    recipe = tmp_path / "fail.yaml"
+    recipe.write_text(
+        "version: 1\n"
+        "steps:\n"
+        "  - name: missing-target\n"
+        f"    image: {DEMO_DIR / 'templates' / 'panel-success.png'}\n"
+        "    confidence: 0.9\n",
+        encoding="utf-8",
+    )
+
+    cursor = _MovingCursor()
+
+    with (
+        patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
+        patch("pyautogui.screenshot", side_effect=_fake_screenshot),
+        patch("pyautogui.locateCenterOnScreen", return_value=None),
+        patch("pyautogui.click", side_effect=cursor.click),
+        patch("pyautogui.moveTo", side_effect=cursor.move_to),
+        patch("pyautogui.position", side_effect=cursor.position),
+        patch("pyautogui.size", return_value=_FakeSize()),
+    ):
+        exit_code = main(argv=["--click-recipe", str(recipe), *_COMMON])
+
+    assert exit_code == 1, (
+        f"typed dispatch failure must map to exit 1 (runtime error), got {exit_code}"
+    )
