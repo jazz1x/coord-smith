@@ -343,11 +343,28 @@ artifacts/
   "event": "step-dispatch-failed",
   "step_idx": 1,
   "step_name": "confirm-purchase",
+  "phase": "dispatch",
   "error_class": "ImageMatchConfidenceLow",
   "error_message": "image template not matched at confidence>=0.9: ...",
   "screenshot": "/abs/path/to/01-confirm-purchase-ImageMatchConfidenceLow.png"
 }
 ```
+
+`phase` is one of:
+
+| Value | Origin |
+|-------|--------|
+| `pre_click` | Step's `wait_for` guard timed out or template missing |
+| `dispatch` | Coord resolution, click execution, baseline screenshot |
+| `post_click` | `verify_transition` failed or `post_click_signal` timed out |
+
+The same `error_class` can originate from multiple phases (e.g.
+`ImageWaitTimeout` from `wait_for` versus `post_click_signal`); `phase`
+is the disambiguator. Callers debugging a failure should branch on
+`phase` first — pre-click failures usually indicate the page isn't
+ready, dispatch failures indicate template/coord/permission issues,
+post-click failures indicate the click went through but the expected
+outcome didn't appear.
 
 Earlier steps' artifacts (`step-dispatched.jsonl` records, screenshots)
 are preserved — the failure record is appended, not overwritten. The

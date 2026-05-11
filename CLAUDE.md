@@ -39,22 +39,44 @@ click_rule:            # 선택. 없으면 클릭 없이 통과.
 
 ### 클릭 규칙 포맷 (YAML — 사람과 AI 모두 이 형태로 작성)
 
+권장 형태는 `steps:` 다 — N개의 click을 한 invocation에서 순차 실행한다.
+한 클릭만 필요한 단발 시나리오도 `steps: [- name: ...]`로 표현해야 한다.
+(legacy `missions: {name: target}` shape도 여전히 받지만 deprecated —
+load 시 `DeprecationWarning`이 emit 되고, 자동으로 `steps`로 normalize 된다.
+새 recipe는 `steps:`로 작성한다.)
+
 ```yaml
 version: 1
-missions:
-  click_dispatch:
-    # 방법 A: 고정 픽셀 좌표
-    x: 400
-    y: 300
+steps:
+  # Step 0 — 좌표 클릭. 한 step에서 image와 coord를 모두 선언하면 prefer가
+  # primary를 결정하고 다른 쪽이 fallback이 된다 (단일 선언이면 그것만 사용).
+  - name: open-buy
+    coord: { x: 400, y: 300 }
 
-    # 방법 B: 스크린샷 템플릿 매칭 (OpenCV)
-    # image: templates/submit-button.png
-    # confidence: 0.9          # 0~1, 기본 0.9
-    # region: [0, 500, 1920, 600]  # [x, y, width, height]
+  # Step 1 — 이미지 템플릿 매칭 + 사전/사후 가드 풀세트.
+  - name: confirm-purchase
+    # 사전 가드: anchor 이미지가 나타날 때까지 click을 보류한다.
+    # trigger_wait 미션의 후속. region으로 검색 영역을 좁힐 수 있다.
+    wait_for:
+      image: templates/confirm-enabled.png
+      timeout: 5.0
+      interval: 0.1
+      # region: [700, 100, 600, 800]   # 선택 — 검색 사각형 한정
+
+    image: templates/submit-button.png
+    confidence: 0.9                 # 0~1, 기본 0.9
+    # region: [0, 500, 1920, 600]   # 선택 — 매칭 영역 [x, y, w, h]
+    # grayscale: false              # 선택 — 색 무시
+    # prefer: image                 # image+coord 동시 선언 시 priority 명시
+
+    # 클릭 후 OS event flush + DOM render를 위한 settle (default 300 ms).
+    # 0~10000 ms. 헤비 SPA면 500–1000, 즉시 반응 native UI면 0–50.
+    settle_ms: 300
 
     # 선택: 클릭 후 페이지 전환 감지
     verify_transition: true
     transition_threshold: 0.01
+    # transition_region: [0, 100, 1920, 800]   # 선택
 
     # 선택: 클릭 후 특정 이미지가 나타날 때까지 폴링
     post_click_signal:
@@ -63,6 +85,11 @@ missions:
       timeout: 5.0
       interval: 0.1
 ```
+
+좌표 우선순위는 step 내부에서도 글로벌과 동일하다:
+`payload(OpenClaw) > step.coord > step.image > no-click`.
+step 하나에 image와 coord를 모두 선언하고 `prefer: image`(default)로 두면
+image matching 실패 시 자동으로 coord로 fallback 한다.
 
 AI에게 레시피 생성을 요청할 때는 Pydantic 스키마를 프롬프트에 첨부한다:
 

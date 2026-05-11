@@ -75,6 +75,26 @@ _CLICK_POSITION_TOLERANCE_PX = 2
 # pump flushed the cursor move, not that an entire SPA finished rendering.
 _POST_CLICK_SETTLE_SECONDS = 0.05
 
+# Failure-record phase labels. Attached to a typed exception via
+# ``_tag_phase`` inside ``_dispatch_with_step`` so the failure capture
+# wrapper can record which step sub-phase produced the error.
+# The phase set is part of the failure.jsonl public schema (see
+# docs/recipe-guide.md §Failure Artifacts).
+_PHASE_PRE_CLICK = "pre_click"          # step.wait_for raised
+_PHASE_DISPATCH = "dispatch"            # coord resolution / click execution
+_PHASE_POST_CLICK = "post_click"        # verify_transition / post_click_signal
+
+_PHASE_ATTR = "_coord_smith_phase"
+
+
+def _tag_phase(exc: BaseException, phase: str) -> BaseException:
+    """Mark an exception with the dispatch phase that produced it."""
+    # Attribute set on the exception instance — Python allows arbitrary
+    # attributes on Exception instances. Read via ``getattr`` so
+    # untagged legacy paths still degrade gracefully.
+    setattr(exc, _PHASE_ATTR, phase)
+    return exc
+
 
 class PyAutoGUIAdapter:
     """OS-level coordinate-click adapter implementing ExecutionAdapter protocol.
@@ -647,48 +667,67 @@ class PyAutoGUIAdapter:
         resolution so timing-sensitive templates (e.g. an anchor element
         that animates in) get a chance to appear before the matcher even
         looks at the click target.
+
+        Each phase is wrapped to tag any escaping exception with a
+        phase label (``pre_click`` / ``dispatch`` / ``post_click``) so
+        the failure-capture wrapper above can record which sub-phase
+        fired. The same typed exception class can originate from
+        multiple phases (e.g. ``ImageWaitTimeout`` from ``wait_for`` vs
+        ``post_click_signal``); the phase tag is what disambiguates
+        them for callers reading ``failure.jsonl``.
         """
         if step.wait_for is not None:
-            await self._await_pre_click_wait_for(
-                mission=step.name, wait_for=step.wait_for
-            )
-
-        coords = self._resolve_step_click_coords(step)
-        if coords is None:
-            return  # step had no resolvable target — execution is a no-op
-
-        baseline_frame: PILImage | None = None
-        if step.verify_transition:
             try:
-                shot = pyautogui.screenshot()
-            except Exception as exc:
-                raise ScreenCaptureUnavailable(
-                    f"baseline screenshot failed: {exc!r}"
-                ) from exc
-            if not isinstance(shot, PILImage):
-                raise ScreenCaptureUnavailable(
-                    "baseline screenshot returned unexpected type: "
-                    f"expected PIL.Image, got {type(shot)!r}"
+                await self._await_pre_click_wait_for(
+                    mission=step.name, wait_for=step.wait_for
                 )
-            baseline_frame = shot
+            except BaseException as exc:
+                raise _tag_phase(exc, _PHASE_PRE_CLICK) from exc.__cause__
 
-        ix, iy = coords
-        self._validate_bounds(ix, iy)
-        settle_seconds = step.settle_ms / 1000.0
-        await self._verified_click(ix, iy, settle_seconds=settle_seconds)
+        # --- dispatch phase: coord resolution + click execution -----
+        try:
+            coords = self._resolve_step_click_coords(step)
+            if coords is None:
+                return  # step had no resolvable target — execution is a no-op
 
-        if baseline_frame is not None:
-            self._verify_page_transition(
-                mission=step.name,
-                baseline=baseline_frame,
-                threshold=step.transition_threshold,
-                region=step.transition_region,
-            )
+            baseline_frame: PILImage | None = None
+            if step.verify_transition:
+                try:
+                    shot = pyautogui.screenshot()
+                except Exception as exc:
+                    raise ScreenCaptureUnavailable(
+                        f"baseline screenshot failed: {exc!r}"
+                    ) from exc
+                if not isinstance(shot, PILImage):
+                    raise ScreenCaptureUnavailable(
+                        "baseline screenshot returned unexpected type: "
+                        f"expected PIL.Image, got {type(shot)!r}"
+                    )
+                baseline_frame = shot
 
-        if step.post_click_signal is not None:
-            await self._await_post_click_signal(
-                mission=step.name, signal=step.post_click_signal
-            )
+            ix, iy = coords
+            self._validate_bounds(ix, iy)
+            settle_seconds = step.settle_ms / 1000.0
+            await self._verified_click(ix, iy, settle_seconds=settle_seconds)
+        except BaseException as exc:
+            raise _tag_phase(exc, _PHASE_DISPATCH) from exc.__cause__
+
+        # --- post-click phase: transition diff + signal poll --------
+        try:
+            if baseline_frame is not None:
+                self._verify_page_transition(
+                    mission=step.name,
+                    baseline=baseline_frame,
+                    threshold=step.transition_threshold,
+                    region=step.transition_region,
+                )
+
+            if step.post_click_signal is not None:
+                await self._await_post_click_signal(
+                    mission=step.name, signal=step.post_click_signal
+                )
+        except BaseException as exc:
+            raise _tag_phase(exc, _PHASE_POST_CLICK) from exc.__cause__
 
     def _capture_failure_evidence(
         self,
@@ -733,12 +772,18 @@ class PyAutoGUIAdapter:
             / "failure.jsonl"
         )
         log_path.parent.mkdir(parents=True, exist_ok=True)
+        # Phase tag attached by ``_dispatch_with_step``. Defaults to
+        # ``dispatch`` for legacy paths that didn't tag (the most
+        # common origin), keeping the field present so callers don't
+        # need a presence check.
+        phase = getattr(error, _PHASE_ATTR, _PHASE_DISPATCH)
         entry: dict[str, object] = {
             "ts": datetime.now(tz=UTC).isoformat(),
             "mission_name": "step_dispatch",
             "event": "step-dispatch-failed",
             "step_idx": step_idx,
             "step_name": step_name,
+            "phase": phase,
             "error_class": error_class,
             "error_message": str(error),
             "screenshot": str(png_path) if png_path.exists() else None,

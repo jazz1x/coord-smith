@@ -33,10 +33,14 @@ REQUIRED_KEYS: dict[str, type] = {
     "event": str,
     "step_idx": int,
     "step_name": str,
+    "phase": str,
     "error_class": str,
     "error_message": str,
     # screenshot is documented as a path-or-null, so we accept both.
 }
+
+# Phase tag values are a small fixed set; callers branch on them.
+ALLOWED_PHASES = {"pre_click", "dispatch", "post_click"}
 
 
 def _write_template(tmp_path: Path, name: str = "anchor.png") -> Path:
@@ -124,6 +128,14 @@ async def test_failure_jsonl_record_matches_documented_schema(
     assert record["step_name"] == "confirm-purchase"
     assert record["error_class"] == "ImageWaitTimeout"
     assert record["error_message"], "error_message must be non-empty"
+    # phase value belongs to the documented enum.
+    assert record["phase"] in ALLOWED_PHASES, (
+        f"failure.jsonl phase must be one of {sorted(ALLOWED_PHASES)}, "
+        f"got {record['phase']!r}"
+    )
+    # This particular failure originated from step.wait_for, so the
+    # phase must say pre_click — that's the whole point of the field.
+    assert record["phase"] == "pre_click"
 
 
 @pytest.mark.asyncio
