@@ -198,6 +198,62 @@ def test_image_with_signal_recipe_carries_post_click_signal() -> None:
     assert step.post_click_signal.image  # path resolution may not run on raw model_validate
 
 
+# ---- multi-step example recipes: schema-smoke ----------------------------
+
+
+@pytest.mark.parametrize(
+    "fixture_name,expected_step_count",
+    [
+        ("multi-step-flow.yaml", 3),
+        ("multi-step-with-fallback.yaml", None),  # count not pinned
+        ("multi-step-with-wait-for.yaml", 3),
+        ("datepicker-pattern.yaml", None),  # count not pinned
+    ],
+)
+def test_multi_step_example_recipes_parse(
+    fixture_name: str, expected_step_count: int | None
+) -> None:
+    """Each docs/recipes/multi-step*.yaml parses to a valid ClickRecipe.
+
+    This guards against drift: a recipe checked into the public examples
+    directory must remain a valid coord-smith recipe even as the schema
+    evolves. The check is schema-only (no template-existence check) so
+    the YAML files can reference symbolic paths.
+    """
+    fixture = Path("docs/recipes") / fixture_name
+    assert fixture.is_file(), f"missing example recipe: {fixture}"
+    data = yaml.safe_load(fixture.read_text(encoding="utf-8"))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        recipe = ClickRecipe.model_validate(data)
+    assert recipe.steps is not None and len(recipe.steps) > 0, (
+        f"{fixture_name} must declare at least one step"
+    )
+    if expected_step_count is not None:
+        assert len(recipe.steps) == expected_step_count
+
+
+def test_wait_for_example_recipe_uses_wait_for_field() -> None:
+    """multi-step-with-wait-for.yaml must actually exercise the wait_for
+    field on at least one step — otherwise the example doesn't deliver
+    on its filename promise."""
+    fixture = Path("docs/recipes/multi-step-with-wait-for.yaml")
+    data = yaml.safe_load(fixture.read_text(encoding="utf-8"))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        recipe = ClickRecipe.model_validate(data)
+    assert recipe.steps is not None
+    assert any(step.wait_for is not None for step in recipe.steps), (
+        "multi-step-with-wait-for.yaml must have at least one step with "
+        "a populated wait_for field"
+    )
+    assert any(step.settle_ms != 300 for step in recipe.steps), (
+        "multi-step-with-wait-for.yaml must demonstrate settle_ms tuning "
+        "(at least one step overrides the 300 ms default) so readers see "
+        "the knob in action"
+    )
+
+
 # ---- coords_for / image_target_for legacy helpers preserved --------------
 
 
