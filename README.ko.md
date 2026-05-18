@@ -190,7 +190,7 @@ missions:
 | Test (real) | `uv run pytest -m real -q` | macOS Accessibility + Screen Recording 필요 |
 | Pre-commit | `uv run pre-commit run --all-files` | 전수 검사 |
 
-GitHub Actions 는 Python 3.14 단일 버전 (Ubuntu, pyautogui import 용 xvfb) + 별도 pre-commit job 을 실행합니다.
+CI 는 아직 연결되지 않았습니다 — 매 커밋마다 로컬에서 도는 pre-commit 훅이 현재의 게이트입니다. ruff + mypy + pytest 를 도는 GitHub Actions 워크플로우는 제품화 backlog 에 있습니다 (`docs/backlog.md` 참고).
 
 ## 불변식
 

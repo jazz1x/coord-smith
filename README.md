@@ -202,7 +202,7 @@ Polls `locateCenterOnScreen` until the signal image appears. Timeout raises `Ima
 | Tests (real binary) | `uv run pytest -m real -q` | macOS Accessibility + Screen Recording |
 | Pre-commit | `uv run pre-commit run --all-files` | Full sweep |
 
-GitHub Actions runs Python 3.14 only (Ubuntu, xvfb for pyautogui import) plus a separate pre-commit job.
+Continuous integration is not wired yet — the pre-commit hooks (run on every commit locally) are the gate today. A GitHub Actions workflow running ruff + mypy + pytest is on the productization backlog (see `docs/backlog.md`).
 
 ## Invariants
 

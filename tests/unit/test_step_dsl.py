@@ -217,3 +217,70 @@ def test_step_coord_requires_int_fields() -> None:
     """StepCoord x and y must be integers (pixel coordinates)."""
     with pytest.raises(ValidationError):
         StepCoord(x=10.5, y=20)  # type: ignore[arg-type]
+
+
+# ---- Recipe-level: step name uniqueness ---------------------------
+
+
+def test_clickrecipe_rejects_duplicate_step_names() -> None:
+    """Two steps sharing the same name would collide in the per-step
+    action-log JSONL file. The schema rejects it at parse time so the
+    recipe author sees a clear error instead of a confusing artifact
+    tree at run time.
+    """
+    from coord_smith.config.click_recipe import ClickRecipe
+
+    with pytest.raises(ValidationError) as exc_info:
+        ClickRecipe.model_validate(
+            {
+                "version": 1,
+                "steps": [
+                    {"name": "confirm", "coord": {"x": 10, "y": 20}},
+                    {"name": "select", "coord": {"x": 30, "y": 40}},
+                    {"name": "confirm", "coord": {"x": 50, "y": 60}},
+                ],
+            }
+        )
+    assert "must be unique" in str(exc_info.value)
+    assert "'confirm'" in str(exc_info.value)
+
+
+def test_clickrecipe_accepts_single_step() -> None:
+    """A one-step recipe trivially has unique names — the validator
+    short-circuits and doesn't error."""
+    from coord_smith.config.click_recipe import ClickRecipe
+
+    recipe = ClickRecipe.model_validate(
+        {
+            "version": 1,
+            "steps": [{"name": "only-step", "coord": {"x": 1, "y": 2}}],
+        }
+    )
+    assert recipe.steps is not None
+    assert len(recipe.steps) == 1
+
+
+def test_clickrecipe_reports_all_duplicates_in_one_error() -> None:
+    """When a recipe has multiple distinct duplicate groups, the error
+    message names each — the author shouldn't have to fix-rerun-fix-rerun."""
+    import warnings
+
+    from coord_smith.config.click_recipe import ClickRecipe
+
+    with pytest.raises(ValidationError) as exc_info, warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        ClickRecipe.model_validate(
+            {
+                "version": 1,
+                "steps": [
+                    {"name": "a", "coord": {"x": 1, "y": 2}},
+                    {"name": "b", "coord": {"x": 3, "y": 4}},
+                    {"name": "a", "coord": {"x": 5, "y": 6}},
+                    {"name": "b", "coord": {"x": 7, "y": 8}},
+                    {"name": "c", "coord": {"x": 9, "y": 10}},
+                ],
+            }
+        )
+    msg = str(exc_info.value)
+    assert "'a'" in msg
+    assert "'b'" in msg

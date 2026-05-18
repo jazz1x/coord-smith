@@ -267,6 +267,41 @@ class ClickRecipe(BaseModel):
             ]
         return self
 
+    @model_validator(mode="after")
+    def _validate_step_names_unique(self) -> ClickRecipe:
+        """Reject recipes whose step names collide.
+
+        The adapter writes per-step action-log entries to JSONL files
+        named after ``step.name`` (see ``_action_key_for_mission``).
+        Two steps with the same name would silently append into the
+        same file, making post-hoc per-step audit impossible. Failing
+        at parse time gives the recipe author an immediate, actionable
+        error instead of producing a confusing artifact tree at run
+        time.
+
+        Runs after ``_normalize_steps`` so the check covers both the
+        canonical ``steps:`` shape and the legacy ``missions:`` shape
+        (which is normalized to steps before this validator fires).
+        """
+        if self.steps is None or len(self.steps) < 2:
+            return self
+        seen: set[str] = set()
+        duplicates: list[str] = []
+        for step in self.steps:
+            if step.name in seen and step.name not in duplicates:
+                duplicates.append(step.name)
+            seen.add(step.name)
+        if duplicates:
+            raise ValueError(
+                "ClickRecipe step names must be unique within a recipe — "
+                "duplicate names cause per-step action-log JSONL files to "
+                "collide on disk, making per-step audit ambiguous. "
+                f"Duplicates: {duplicates}. "
+                "Rename one of each pair, e.g. add a suffix "
+                "('confirm' → 'confirm-1' / 'confirm-2')."
+            )
+        return self
+
     def coords_for(self, mission_name: str) -> tuple[int, int] | None:
         """Return static coordinates for the step with the given name.
 

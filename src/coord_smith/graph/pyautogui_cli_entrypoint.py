@@ -232,6 +232,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     try:
         return asyncio.run(_run(argv=argv_list))
+    except KeyboardInterrupt:
+        # User or supervisor (Ctrl-C, SIGINT) requested stop. ``except
+        # Exception`` below does NOT catch ``KeyboardInterrupt`` because
+        # it inherits from ``BaseException`` — handle it explicitly so
+        # the caller (OpenClaw) sees a deterministic exit code and a
+        # stderr line instead of the Python default exit 130 with a
+        # bare traceback. Exit 1 (runtime error) is documented; we
+        # don't introduce a new code for this rare path.
+        print(
+            "coord-smith: interrupted by user / supervisor (KeyboardInterrupt)",
+            file=sys.stderr,
+        )
+        return 1
     except ConfigError as exc:
         print(f"coord-smith: config error: {exc}", file=sys.stderr)
         return 3

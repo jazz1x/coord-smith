@@ -82,6 +82,35 @@ def test_main_returns_exit_code_2_when_preflight_fails(tmp_path: Path) -> None:
     assert exit_code == 2
 
 
+def test_main_handles_keyboard_interrupt_with_exit_1(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Ctrl-C / SIGINT raises KeyboardInterrupt which inherits from
+    BaseException, NOT Exception. Without an explicit handler the
+    bare ``except Exception`` below would miss it and Python would
+    exit 130 with a traceback — invisible to OpenClaw, no stderr line,
+    no recoverable diagnostic. main() must catch it deterministically.
+    """
+    from coord_smith.graph.pyautogui_cli_entrypoint import main
+
+    with patch.object(
+        PyAutoGUIAdapter,
+        "preflight",
+        new_callable=AsyncMock,
+        side_effect=KeyboardInterrupt(),
+    ):
+        exit_code = main(argv=[])
+
+    assert exit_code == 1, (
+        "KeyboardInterrupt must map to a deterministic exit code "
+        "(not Python's default 130) so the caller can react"
+    )
+    err = capsys.readouterr().err
+    assert "interrupted" in err.lower(), (
+        "stderr must include a recognizable interrupt marker"
+    )
+
+
 def test_extract_known_flags_returns_path_dry_run_and_strips(tmp_path: Path) -> None:
     from coord_smith.graph.pyautogui_cli_entrypoint import _extract_known_flags
 
