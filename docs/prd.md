@@ -84,6 +84,14 @@ Released CLI surface:
   (macOS only; best-effort AppleScript activate before preflight).
 - `coord-smith --dry-run` for recipe + preflight validation without
   click dispatch.
+- per-host advisory lock (`fcntl.flock` on
+  `<base_dir>/artifacts/.coord-smith.lock`) acquired before
+  preflight; second invocation exits with code 4 (host busy).
+- top-level `run.json` summary written on every exit path
+  (success / failure / interrupted / host_busy) so callers can
+  read outcome from a single file.
+- documented exit-code surface: `0` success, `1` runtime,
+  `2` permissions, `3` recipe load / schema, `4` host busy.
 - intentional stop at the released ceiling.
 
 No missions are currently modeled-only. All stages are released.

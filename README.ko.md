@@ -114,30 +114,52 @@ coord-smith --click-recipe ./recipe.yaml \
       --site-identity example
 ```
 
+macOS 에서 호출 직전 대상 브라우저가 포그라운드가 아닐 가능성이 있으면 (예: 호출 셸이 포커스를 빼앗길 수 있는 환경), `--target-window "Google Chrome"` (혹은 동등한 앱 이름) 을 붙입니다. CLI 가 `osascript -e 'tell application "<name>" to activate'` 를 실행하고 약 1초 settle 후 preflight + dispatch 로 진행합니다. 환경변수 `COORDSMITH_TARGET_WINDOW` 로도 같은 값을 줄 수 있고, CLI 플래그가 환경변수보다 우선합니다. caller 책임 (실행 도중 윈도우를 포그라운드로 유지) 은 [docs/architecture-boundaries.md §Window Ownership](docs/architecture-boundaries.md#window-ownership) 참고.
+
 최소 좌표 recipe:
 
 ```yaml
 version: 1
-missions:
-  click_dispatch:
-    x: 800
-    y: 500
+steps:
+  - name: click-buy
+    coord: { x: 800, y: 500 }
 ```
 
 레이아웃 변화에 강건한 이미지 recipe (권장):
 
 ```yaml
 version: 1
-missions:
-  click_dispatch:
+steps:
+  - name: click-buy
     image: templates/buy-button.png
     confidence: 0.9
     grayscale: false
 ```
 
-YAML이 정식 포맷이며, `.json` 파일은 backwards compatibility 용으로 받아들여집니다 (확장자 기반 자동 라우팅). 전체 스키마와 에이전트 계약은 [docs/recipe-guide.md](docs/recipe-guide.md) 참고.
+YAML이 정식 포맷이며, `.json` 파일은 backwards compatibility 용으로 받아들여집니다 (확장자 기반 자동 라우팅). 레거시 `missions: {name: target}` shape 는 여전히 로드되지만 `DeprecationWarning` 이 emit 됩니다 — 새 recipe 는 반드시 `steps:` 로 작성. 전체 스키마와 에이전트 계약은 [docs/recipe-guide.md](docs/recipe-guide.md) 참고.
 
-**좌표 우선순위**: payload (OpenClaw) → recipe 좌표 → recipe 이미지 → no-click.
+**좌표 우선순위**: payload (OpenClaw) → step.coord → step.image → no-click.
+
+## 결과 읽기
+
+모든 invocation 은 하나의 `run.json` summary 를 남깁니다 — caller 가 JSONL 파일들을 하나씩 grep 하지 않고 한 번에 결과를 인식할 수 있습니다:
+
+```jsonc
+// artifacts/runs/<run_id>/run.json  (또는 run root 가 없는 경우 base_dir/run.json)
+{
+  "schema_version": 1,
+  "run_id": "20260518-123045-...",
+  "status": "success",       // success | failure | interrupted | host_busy
+  "exit_code": 0,            // 0 성공 · 1 런타임 · 2 권한 · 3 recipe · 4 host busy
+  "started_at": "...",
+  "ended_at": "...",
+  "elapsed_seconds": 1.2345,
+  "step_count": 3,
+  "failure": null            // 실패 시 compact diagnosis block
+}
+```
+
+실패 시 `run.json.failure` 가 `step_idx`, `step_name`, `phase` (`pre_click` / `dispatch` / `post_click`), `error_class`, screenshot 경로, 그리고 전체 `failure.jsonl` 포인터를 담고 있습니다.
 
 ## Click Recipes
 
@@ -152,33 +174,32 @@ YAML이 정식 포맷이며, `.json` 파일은 backwards compatibility 용으로
 
 실패 모드는 모두 타입 있는 예외: `ImageTemplateNotFound`, `ImageMatchConfidenceLow`.
 
-### 페이지 전환 검증 (옵션, 기본 off)
+### Step 가드 — `wait_for` / `settle_ms` / `verify_transition` / `post_click_signal`
+
+각 step 은 사전 anchor (`wait_for`), 클릭 후 settle 지연 (`settle_ms`, 기본 300 ms),
+페이지 전환 검증 (`verify_transition` + 임계값), 클릭 후 신호 폴링 (`post_click_signal`) 을 가질 수 있습니다.
 
 ```yaml
-missions:
-  click_dispatch:
-    image: templates/buy.png
-    verify_transition: true
-    transition_threshold: 0.02
-    transition_region: [0, 100, 1920, 800]
-```
-
-클릭 직전 스크린샷 → 클릭 → 클릭 직후 스크린샷 → `PIL.ImageChops.difference` bbox 면적 / 영역 면적 > threshold 면 통과. 미달 시 `PageTransitionNotDetected` 예외.
-
-### Post-click 신호 폴링 (옵션, 기본 off)
-
-```yaml
-missions:
-  click_dispatch:
-    image: templates/buy.png
-    post_click_signal:
-      image: templates/loading-spinner.png
-      confidence: 0.85
+steps:
+  - name: confirm-purchase
+    wait_for:
+      image: templates/confirm-enabled.png
       timeout: 5.0
       interval: 0.1
+    image: templates/confirm-button.png
+    confidence: 0.9
+    settle_ms: 500          # 무거운 SPA 면 500–1000, 즉시 반응 native 면 0–50
+    verify_transition: true
+    transition_threshold: 0.02
+    post_click_signal:
+      image: templates/success-toast.png
+      timeout: 6.0
 ```
 
-지정 이미지가 화면에 나타날 때까지 `locateCenterOnScreen` 폴링. 타임아웃 시 `ImageWaitTimeout`.
+`wait_for` 타임아웃 → `ImageWaitTimeout` (phase `pre_click`).
+`verify_transition` 미달 → `PageTransitionNotDetected` (phase `post_click`).
+`post_click_signal` 타임아웃 → `ImageWaitTimeout` (phase `post_click`).
+같은 error class 라도 `phase` 필드로 구별됩니다 — `failure.jsonl` 참고.
 
 ## CI & 검사
 

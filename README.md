@@ -130,26 +130,46 @@ A minimal coordinate recipe:
 
 ```yaml
 version: 1
-missions:
-  click_dispatch:
-    x: 800
-    y: 500
+steps:
+  - name: click-buy
+    coord: { x: 800, y: 500 }
 ```
 
 A layout-tolerant image recipe (recommended):
 
 ```yaml
 version: 1
-missions:
-  click_dispatch:
+steps:
+  - name: click-buy
     image: templates/buy-button.png
     confidence: 0.9
     grayscale: false
 ```
 
-YAML is canonical; `.json` files are accepted for backwards compatibility (extension-routed). See [docs/recipe-guide.md](docs/recipe-guide.md) for the full schema and agent contract.
+YAML is canonical; `.json` files are accepted for backwards compatibility (extension-routed). The legacy `missions: {name: target}` shape still loads but emits a `DeprecationWarning` — new recipes must use `steps:`. See [docs/recipe-guide.md](docs/recipe-guide.md) for the full schema and agent contract.
 
-**Coordinate priority**: payload (OpenClaw) → recipe coord → recipe image → no-click.
+**Coordinate priority**: payload (OpenClaw) → step coord → step image → no-click.
+
+## Reading the result
+
+Every invocation writes a single `run.json` summary that the caller can read in one go to determine outcome — no need to grep individual JSONL files:
+
+```jsonc
+// artifacts/runs/<run_id>/run.json  (or base_dir/run.json when no run root exists)
+{
+  "schema_version": 1,
+  "run_id": "20260518-123045-...",
+  "status": "success",       // success | failure | interrupted | host_busy
+  "exit_code": 0,            // 0 success · 1 runtime · 2 perms · 3 recipe · 4 host busy
+  "started_at": "...",
+  "ended_at": "...",
+  "elapsed_seconds": 1.2345,
+  "step_count": 3,
+  "failure": null            // compact failure block when status=failure
+}
+```
+
+On failure, `run.json.failure` carries `step_idx`, `step_name`, `phase` (`pre_click` / `dispatch` / `post_click`), `error_class`, `screenshot` path, and a pointer to the full `failure.jsonl`.
 
 ## Click Recipes
 
@@ -167,8 +187,8 @@ Failure modes are typed: `ImageTemplateNotFound`, `ImageMatchConfidenceLow`.
 ### Page-transition verification (optional, off by default)
 
 ```yaml
-missions:
-  click_dispatch:
+steps:
+  - name: click-buy
     image: templates/buy.png
     verify_transition: true
     transition_threshold: 0.02
@@ -180,8 +200,8 @@ Pre-click screenshot → click → post-click screenshot → `PIL.ImageChops.dif
 ### Post-click signal polling (optional, off by default)
 
 ```yaml
-missions:
-  click_dispatch:
+steps:
+  - name: click-buy
     image: templates/buy.png
     post_click_signal:
       image: templates/loading-spinner.png

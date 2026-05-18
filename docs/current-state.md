@@ -61,9 +61,22 @@ changeable and subordinate to `docs/prd.md`.
   parsing exit codes.
 - **CLI exit code mapping.** `0` clean, `1` runtime dispatch error
   (any non-permission `ExecutionTransportError` — image match, page
-  transition, click verification, etc.), `2` permission preflight
-  failed (only `AccessibilityPermissionDenied` /
-  `ScreenCapturePermissionDenied`), `3` recipe load or schema error.
+  transition, click verification, etc., plus caught
+  `KeyboardInterrupt`), `2` permission preflight failed (only
+  `AccessibilityPermissionDenied` / `ScreenCapturePermissionDenied`),
+  `3` recipe load or schema error, `4` host busy (another
+  coord-smith process holds the per-host advisory lock).
+- **Per-host advisory lock.** Acquired in ``_run`` before preflight
+  via ``graph.host_lock``; the lock guards the process-global
+  pyautogui state (cursor + screen). A second invocation that
+  cannot acquire the lock within 10 s exits with code 4 and a
+  named error so callers can back off + retry. See
+  ``docs/architecture-boundaries.md §Host Exclusivity``.
+- **Top-level `run.json` envelope.** Every invocation writes a
+  single summary file at ``runs/<run_id>/run.json`` (or
+  ``base_dir/run.json`` when no run root was created) describing
+  status / exit_code / elapsed / step_count / failure block. See
+  ``docs/recipe-guide.md §Run Summary Schema``.
 
 ## Scope
 

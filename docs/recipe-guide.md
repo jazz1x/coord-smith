@@ -42,10 +42,11 @@ the pipeline with no click (useful for smoke-testing the evidence pipeline).
 
 | Code | Meaning | Agent action |
 |------|---------|--------------|
-| `0` | Success — pipeline reached `runCompletion` | Read artifacts, proceed |
-| `1` | Unhandled runtime error | Inspect `artifacts/action-log/` for the last event |
-| `2` | macOS Accessibility or Screen Recording permission denied | Cannot fix via recipe; escalate |
+| `0` | Success — pipeline reached `runCompletion` | Read `run.json` / `artifacts/`, proceed |
+| `1` | Unhandled runtime error (incl. typed dispatch failure, `KeyboardInterrupt`) | Read `run.json.failure` for the compact diagnosis |
+| `2` | macOS Accessibility or Screen Recording permission denied | Cannot fix via recipe; escalate to operator |
 | `3` | Recipe file missing or schema invalid | Fix the recipe and retry |
+| `4` | Host busy — another coord-smith process held the per-host lock | Back off 1–5 s and retry; see `docs/architecture-boundaries.md §Host Exclusivity` |
 
 ---
 
@@ -375,6 +376,68 @@ escalate, etc.).
 
 The CLI maps any of the above typed errors to **exit code 1** (runtime
 error). `exit 0` always means the run reached `runCompletion`.
+
+## Run Summary Schema (`run.json`)
+
+Every coord-smith invocation writes exactly one ``run.json`` summary
+envelope. The caller (e.g. OpenClaw) should read it **first** to
+determine outcome instead of grepping individual JSONL files.
+
+Location:
+
+```
+artifacts/runs/<run_id>/run.json     # normal case
+<base_dir>/run.json                  # when no run root was created
+                                     # (host_busy / config error
+                                     # before the graph started)
+```
+
+Schema (`schema_version: 1`):
+
+```jsonc
+{
+  "schema_version": 1,
+  "run_id": "20260518-123045-abc12345",  // or null when no run root
+  "status": "success",                    // see enum below
+  "exit_code": 0,                         // matches CLI exit code
+  "started_at": "2026-05-18T12:30:45+00:00",
+  "ended_at":   "2026-05-18T12:30:46+00:00",
+  "elapsed_seconds": 1.2345,
+  "step_count": 3,                        // distinct step_idx values seen
+  "failure": null                         // populated when status=failure
+}
+```
+
+`status` enum (one of):
+
+| Value | Exit code | Meaning |
+|-------|-----------|---------|
+| `success` | 0 | Run reached `run_completion`. `failure: null`. |
+| `failure` | 1 (or 2 / 3) | Typed dispatch failure, permission failure, or config error. `failure` block populated when the run actually started. |
+| `interrupted` | 1 | `KeyboardInterrupt` (Ctrl-C / SIGINT) was caught. |
+| `host_busy` | 4 | Another coord-smith process held the per-host lock. Retry after back-off. |
+
+When `status == "failure"` and the run created a run root, the `failure`
+block is a compact summary plus a pointer to the full record:
+
+```jsonc
+{
+  "step_idx":     1,
+  "step_name":    "confirm-purchase",
+  "phase":        "pre_click",   // pre_click | dispatch | post_click
+  "error_class":  "ImageWaitTimeout",
+  "screenshot":   "/abs/path/01-confirm-purchase-ImageWaitTimeout.png",
+  "failure_jsonl":"/abs/path/.../action-log/failure.jsonl"
+}
+```
+
+For deeper diagnostics (e.g. additional records in `failure.jsonl`,
+the full per-step action-log files), follow the `failure_jsonl`
+pointer and the `runs/<run_id>/artifacts/` tree.
+
+`run.json` is written atomically (tmp + rename) on every exit path
+including `KeyboardInterrupt` and writer-side failures (writer never
+masks the caller's exit code).
 
 ---
 
