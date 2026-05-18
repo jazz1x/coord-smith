@@ -632,12 +632,23 @@ class PyAutoGUIAdapter:
         at the moment of failure.
         """
         step_data = payload.get("step")
-        if not isinstance(step_data, dict):
+        # Producer (released_call_site.py) passes the Step instance
+        # directly to avoid an in-process model_dump → dict →
+        # model_validate round-trip (parse-don't-validate: the model
+        # was already parsed at recipe load time, no benefit in
+        # re-parsing it across an in-process boundary). The dict path
+        # is retained so external tests / future transports that
+        # serialise across an actual process boundary still work.
+        if isinstance(step_data, Step):
+            step = step_data
+        elif isinstance(step_data, dict):
+            step = Step.model_validate(step_data)
+        else:
             raise ConfigError(
-                "step_dispatch payload must include a 'step' dict "
-                "(serialized Step model)"
+                "step_dispatch payload must include a 'step' entry: "
+                "either a Step instance (in-process) or a dict "
+                "(serialised Step model)"
             )
-        step = Step.model_validate(step_data)
         step_idx_obj = payload.get("step_idx")
         step_idx = int(step_idx_obj) if isinstance(step_idx_obj, int) else -1
 

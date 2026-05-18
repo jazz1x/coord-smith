@@ -240,7 +240,7 @@ async def execute_step_observe_node(
     result = await execute_within_scope(
         adapter=adapter,
         mission_name="step_observe",
-        payload={"step_idx": step_idx, "step": step.model_dump(mode="json")},
+        payload={"step_idx": step_idx, "step": step},
         approved_scope_ceiling=run.approved_scope_ceiling,
         run_root=run.run_root,
     )
@@ -280,7 +280,7 @@ async def execute_step_dispatch_node(
     result = await execute_within_scope(
         adapter=adapter,
         mission_name="step_dispatch",
-        payload={"step_idx": step_idx, "step": step.model_dump(mode="json")},
+        payload={"step_idx": step_idx, "step": step},
         approved_scope_ceiling=run.approved_scope_ceiling,
         run_root=run.run_root,
     )
@@ -319,7 +319,7 @@ async def execute_step_capture_node(
     result = await execute_within_scope(
         adapter=adapter,
         mission_name="step_capture",
-        payload={"step_idx": step_idx, "step": step.model_dump(mode="json")},
+        payload={"step_idx": step_idx, "step": step},
         approved_scope_ceiling=run.approved_scope_ceiling,
         run_root=run.run_root,
     )

@@ -7,7 +7,9 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
+
+from pydantic import BaseModel
 
 from coord_smith.evidence.envelope import parse_released_evidence_ref
 from coord_smith.missions.names import ALL_MISSIONS, mission_is_browser_facing
@@ -17,6 +19,26 @@ from coord_smith.models.runtime import (
     format_scope_ceiling_detail,
     mission_is_within_approved_scope,
 )
+
+
+def _payload_json_default(value: object) -> Any:
+    """``json.dumps`` ``default=`` callback that knows how to serialize
+    Pydantic models inside an ``ExecutionRequest`` payload.
+
+    The in-process producer (``released_call_site.py``) passes Step
+    instances directly to avoid an eager ``model_dump → dict →
+    model_validate`` round-trip on the consumer side (the adapter).
+    The transport-neutral JSON-serializability contract is still
+    honoured: a future external transport can ``json.dumps`` the
+    payload using this default, getting the same shape it would
+    have got from ``step.model_dump(mode="json")``.
+    """
+    if isinstance(value, BaseModel):
+        return value.model_dump(mode="json")
+    raise TypeError(
+        f"object of type {type(value).__name__!r} is not JSON-serializable "
+        "inside an ExecutionRequest payload"
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,7 +133,9 @@ def validate_execution_request(request: ExecutionRequest) -> None:
             )
             raise ValueError(msg)
     try:
-        json.dumps(request.payload, allow_nan=False)
+        json.dumps(
+            request.payload, allow_nan=False, default=_payload_json_default
+        )
     except (TypeError, ValueError) as exc:
         msg = "OpenClaw execution request payload must be JSON-serializable"
         raise TypeError(msg) from exc

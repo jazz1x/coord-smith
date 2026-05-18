@@ -17,6 +17,7 @@ from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
 from coord_smith.config.click_recipe import ClickRecipe, load_click_recipe
 from coord_smith.graph.host_lock import HostBusyError, acquire_host_lock
 from coord_smith.graph.released_cli_shim import run_released_scope_from_argv_env
+from coord_smith.graph.run_summary import RunSummaryWriter
 from coord_smith.models.errors import (
     AccessibilityPermissionDenied,
     ConfigError,
@@ -241,8 +242,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     if _wants_version(argv_list):
         print(f"coord-smith {__version__}")
         return 0
+
+    # base_dir is "." for the production CLI path. _run accepts a
+    # different base_dir for tests; main always uses the cwd.
+    base_dir = Path(".")
+    summary_writer = RunSummaryWriter(base_dir=base_dir)
+    exit_code: int = 1
+    status: str = "failure"
     try:
-        return asyncio.run(_run(argv=argv_list))
+        exit_code = asyncio.run(_run(argv=argv_list, base_dir=base_dir))
+        status = "success" if exit_code == 0 else "failure"
+        return exit_code
     except KeyboardInterrupt:
         # User or supervisor (Ctrl-C, SIGINT) requested stop. ``except
         # Exception`` below does NOT catch ``KeyboardInterrupt`` because
@@ -255,17 +265,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             "coord-smith: interrupted by user / supervisor (KeyboardInterrupt)",
             file=sys.stderr,
         )
-        return 1
+        exit_code, status = 1, "interrupted"
+        return exit_code
     except ConfigError as exc:
         print(f"coord-smith: config error: {exc}", file=sys.stderr)
-        return 3
+        exit_code, status = 3, "failure"
+        return exit_code
     except HostBusyError as exc:
         # Another coord-smith process holds the per-host lock. Exit 4
         # is documented in --help so callers (e.g. OpenClaw) can back
         # off and retry instead of treating this as a generic runtime
         # error.
         print(f"coord-smith: host busy: {exc}", file=sys.stderr)
-        return 4
+        exit_code, status = 4, "host_busy"
+        return exit_code
     except (AccessibilityPermissionDenied, ScreenCapturePermissionDenied) as exc:
         # Permission-class transport errors raised by preflight or screen
         # capture. The "grant permission and retry" hint is genuinely
@@ -283,13 +296,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             "the host terminal app and retry.",
             file=sys.stderr,
         )
-        return 2
+        exit_code, status = 2, "failure"
+        return exit_code
     except Exception as exc:  # noqa: BLE001
         print(
             f"coord-smith: runtime error ({type(exc).__name__}): {exc}",
             file=sys.stderr,
         )
-        return 1
+        exit_code, status = 1, "failure"
+        return exit_code
+    finally:
+        # Best-effort write of run.json so the caller (OpenClaw) has
+        # a single-file summary regardless of which exit path fired.
+        # ``status`` and ``exit_code`` carry whatever the relevant
+        # branch set; default "failure" / 1 covers any path that
+        # forgot to update them.
+        summary_writer.flush(status=status, exit_code=exit_code)
 
 
 if __name__ == "__main__":
