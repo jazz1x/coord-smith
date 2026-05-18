@@ -15,6 +15,7 @@ from pathlib import Path
 from coord_smith import __version__
 from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
 from coord_smith.config.click_recipe import ClickRecipe, load_click_recipe
+from coord_smith.graph.host_lock import HostBusyError, acquire_host_lock
 from coord_smith.graph.released_cli_shim import run_released_scope_from_argv_env
 from coord_smith.models.errors import (
     AccessibilityPermissionDenied,
@@ -71,6 +72,7 @@ Examples:
 Exit codes:
   0 normal      1 runtime error     2 permission preflight failed
   3 recipe load error (missing / invalid YAML or JSON / schema)
+  4 host busy (another coord-smith process holds the per-host lock)
 
 Platform: macOS only at present. Linux / Windows preflight is not implemented;
 the adapter assumes macOS Accessibility + Screen Recording permissions for
@@ -202,23 +204,32 @@ async def _run(
         _activate_target_window(target_window)
     recipe = _resolve_click_recipe(cli_path=recipe_path)
     adapter = PyAutoGUIAdapter(run_root=base_dir, click_recipe=recipe)
-    await adapter.preflight()
-    if dry_run:
-        step_count = len(recipe.steps) if recipe and recipe.steps else 0
-        print(
-            f"coord-smith: dry-run OK — preflight passed, "
-            f"{step_count} step(s) resolved.",
-            file=sys.stderr,
+    # Acquire the per-host advisory lock BEFORE preflight so a busy
+    # neighbour does not get blamed for a permission failure. The
+    # lock guards against pyautogui's process-global cursor/screen
+    # (see graph/host_lock.py docstring). ``dry_run`` still holds
+    # the lock — a parallel dry-run probe would still trigger the
+    # real preflight cursor movements that race with another run.
+    with acquire_host_lock(base_dir=base_dir):
+        await adapter.preflight()
+        if dry_run:
+            step_count = len(recipe.steps) if recipe and recipe.steps else 0
+            print(
+                f"coord-smith: dry-run OK — preflight passed, "
+                f"{step_count} step(s) resolved.",
+                file=sys.stderr,
+            )
+            return 0
+        recipe_steps = (
+            list(recipe.steps) if recipe is not None and recipe.steps else None
         )
-        return 0
-    recipe_steps = list(recipe.steps) if recipe is not None and recipe.steps else None
-    await run_released_scope_from_argv_env(
-        adapter=adapter,
-        argv=remaining_argv,
-        env=dict(os.environ),
-        base_dir=base_dir,
-        recipe_steps=recipe_steps,
-    )
+        await run_released_scope_from_argv_env(
+            adapter=adapter,
+            argv=remaining_argv,
+            env=dict(os.environ),
+            base_dir=base_dir,
+            recipe_steps=recipe_steps,
+        )
     return 0
 
 
@@ -248,6 +259,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     except ConfigError as exc:
         print(f"coord-smith: config error: {exc}", file=sys.stderr)
         return 3
+    except HostBusyError as exc:
+        # Another coord-smith process holds the per-host lock. Exit 4
+        # is documented in --help so callers (e.g. OpenClaw) can back
+        # off and retry instead of treating this as a generic runtime
+        # error.
+        print(f"coord-smith: host busy: {exc}", file=sys.stderr)
+        return 4
     except (AccessibilityPermissionDenied, ScreenCapturePermissionDenied) as exc:
         # Permission-class transport errors raised by preflight or screen
         # capture. The "grant permission and retry" hint is genuinely
