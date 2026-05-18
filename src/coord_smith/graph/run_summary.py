@@ -29,10 +29,17 @@ import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 SUMMARY_FILENAME = "run.json"
 SCHEMA_VERSION = 1
+
+# Closed enum of run.json ``status`` values. Documented in
+# docs/recipe-guide.md §Run Summary Schema and consumed by
+# external orchestrators (e.g. OpenClaw) for branching logic.
+# Adding a new value here is a public-contract change — keep the
+# docs and the schema_version bumped in lockstep.
+RunStatus = Literal["success", "failure", "interrupted", "host_busy"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,7 +53,7 @@ class RunSummary:
 
     schema_version: int
     run_id: str | None
-    status: str  # "success" | "failure" | "interrupted" | "host_busy"
+    status: RunStatus
     exit_code: int
     started_at: str  # ISO 8601 UTC
     ended_at: str  # ISO 8601 UTC
@@ -108,9 +115,7 @@ def _read_failure_record(run_root: Path) -> dict[str, Any] | None:
     return record
 
 
-def _step_count_from_recipe(
-    *, base_dir: Path, run_root: Path | None
-) -> int:
+def _step_count_from_recipe(*, run_root: Path | None) -> int:
     """Best-effort step count recovered from the action-log artifacts.
 
     We could thread the recipe step count down from ``_run`` instead,
@@ -137,7 +142,6 @@ def _step_count_from_recipe(
         except (json.JSONDecodeError, OSError):
             continue
     return len(step_idxs)
-    _ = base_dir  # kwarg kept for forward compatibility
 
 
 def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -192,7 +196,7 @@ class RunSummaryWriter:
     def flush(
         self,
         *,
-        status: str,
+        status: RunStatus,
         exit_code: int,
         run_root: Path | None = None,
     ) -> Path:
@@ -212,9 +216,7 @@ class RunSummaryWriter:
         elapsed = time.monotonic() - self._started_at_mono
 
         run_id: str | None = run_root.name if run_root is not None else None
-        step_count = _step_count_from_recipe(
-            base_dir=self._base_dir, run_root=run_root
-        )
+        step_count = _step_count_from_recipe(run_root=run_root)
 
         failure_record: dict[str, Any] | None = None
         if status == "failure" and run_root is not None:

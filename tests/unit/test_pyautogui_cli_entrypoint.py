@@ -193,30 +193,35 @@ def test_resolve_target_window_treats_empty_env_as_unset() -> None:
     assert result is None
 
 
-def test_activate_target_window_non_darwin_is_noop_and_warns(
+async def test_activate_target_window_non_darwin_is_noop_and_warns(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """On non-macOS platforms, activation is a no-op that warns on stderr."""
     from coord_smith.graph import pyautogui_cli_entrypoint as cli
 
     with patch.object(cli.platform, "system", return_value="Linux"):
-        ok = cli._activate_target_window("Google Chrome", settle_seconds=0.0)
+        ok = await cli._activate_target_window("Google Chrome", settle_seconds=0.0)
 
     assert ok is False
     err = capsys.readouterr().err
     assert "macOS-only" in err
 
 
-def test_activate_target_window_calls_osascript_on_darwin() -> None:
+async def test_activate_target_window_calls_osascript_on_darwin() -> None:
     """On macOS, _activate_target_window runs osascript with the right script."""
     from coord_smith.graph import pyautogui_cli_entrypoint as cli
 
     with (
         patch.object(cli.platform, "system", return_value="Darwin"),
         patch.object(cli.subprocess, "run") as mock_run,
-        patch.object(cli.time, "sleep") as mock_sleep,
+        patch(
+            "coord_smith.graph.pyautogui_cli_entrypoint.asyncio.sleep",
+            new_callable=AsyncMock,
+        ) as mock_sleep,
     ):
-        ok = cli._activate_target_window("Google Chrome", settle_seconds=0.0)
+        ok = await cli._activate_target_window(
+            "Google Chrome", settle_seconds=0.0
+        )
 
     assert ok is True
     mock_run.assert_called_once()
@@ -228,7 +233,26 @@ def test_activate_target_window_calls_osascript_on_darwin() -> None:
     mock_sleep.assert_not_called()  # settle_seconds=0.0
 
 
-def test_activate_target_window_returns_false_on_osascript_failure(
+async def test_activate_target_window_uses_asyncio_sleep_not_time_sleep() -> None:
+    """The settle pause must use asyncio.sleep, not time.sleep — a 1 s
+    time.sleep inside an async coroutine blocks the entire event loop
+    for that second."""
+    from coord_smith.graph import pyautogui_cli_entrypoint as cli
+
+    with (
+        patch.object(cli.platform, "system", return_value="Darwin"),
+        patch.object(cli.subprocess, "run"),
+        patch(
+            "coord_smith.graph.pyautogui_cli_entrypoint.asyncio.sleep",
+            new_callable=AsyncMock,
+        ) as mock_async_sleep,
+    ):
+        await cli._activate_target_window("Safari", settle_seconds=0.5)
+
+    mock_async_sleep.assert_awaited_once_with(0.5)
+
+
+async def test_activate_target_window_returns_false_on_osascript_failure(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A non-zero osascript exit must be swallowed and reported on stderr."""
@@ -246,7 +270,9 @@ def test_activate_target_window_returns_false_on_osascript_failure(
             ),
         ),
     ):
-        ok = cli._activate_target_window("NonExistentApp", settle_seconds=0.0)
+        ok = await cli._activate_target_window(
+            "NonExistentApp", settle_seconds=0.0
+        )
 
     assert ok is False
     err = capsys.readouterr().err
@@ -259,7 +285,7 @@ async def test_run_activates_target_window_before_preflight(tmp_path: Path) -> N
 
     call_order: list[str] = []
 
-    def _record_activate(name: str, **_kw: object) -> bool:
+    async def _record_activate(name: str, **_kw: object) -> bool:
         call_order.append(f"activate:{name}")
         return True
 

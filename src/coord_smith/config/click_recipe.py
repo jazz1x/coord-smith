@@ -251,7 +251,12 @@ class ClickRecipe(BaseModel):
                 "is the source of truth. Migrate the recipe to use 'steps:' "
                 "exclusively — 'missions' is deprecated.",
                 DeprecationWarning,
-                stacklevel=2,
+                # Pydantic invokes model validators ~3 frames deep from the
+                # caller's ``model_validate`` / load_click_recipe call. A
+                # ``stacklevel=2`` would point at Pydantic internals; bump
+                # to a level that lands closer to user code without being
+                # so high it overshoots into the test runner.
+                stacklevel=4,
             )
             return self
         if not has_steps and has_missions:
@@ -259,7 +264,7 @@ class ClickRecipe(BaseModel):
                 "ClickRecipe 'missions' shape is deprecated; auto-normalizing "
                 "to 'steps'. Migrate the recipe to use 'steps:'.",
                 DeprecationWarning,
-                stacklevel=2,
+                stacklevel=4,
             )
             self.steps = [
                 _mission_to_step(name, target)

@@ -8,7 +8,6 @@ import os
 import platform
 import subprocess
 import sys
-import time
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -17,7 +16,7 @@ from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
 from coord_smith.config.click_recipe import ClickRecipe, load_click_recipe
 from coord_smith.graph.host_lock import HostBusyError, acquire_host_lock
 from coord_smith.graph.released_cli_shim import run_released_scope_from_argv_env
-from coord_smith.graph.run_summary import RunSummaryWriter
+from coord_smith.graph.run_summary import RunStatus, RunSummaryWriter
 from coord_smith.models.errors import (
     AccessibilityPermissionDenied,
     ConfigError,
@@ -71,7 +70,10 @@ Examples:
               --target-page-url https://example.com --site-identity example
 
 Exit codes:
-  0 normal      1 runtime error     2 permission preflight failed
+  0 normal
+  1 runtime error (typed dispatch failure OR caught KeyboardInterrupt /
+    SIGINT — distinguished from a crash by run.json.status="interrupted")
+  2 permission preflight failed
   3 recipe load error (missing / invalid YAML or JSON / schema)
   4 host busy (another coord-smith process holds the per-host lock)
 
@@ -124,13 +126,19 @@ def _resolve_target_window(
     return env_value or None
 
 
-def _activate_target_window(name: str, *, settle_seconds: float = 1.0) -> bool:
+async def _activate_target_window(
+    name: str, *, settle_seconds: float = 1.0
+) -> bool:
     """Activate the named macOS application via osascript.
 
     Best-effort: returns True if osascript ran successfully, False otherwise.
     Sleeps ``settle_seconds`` to let the system finish the activation handoff
     before the caller proceeds to screenshot. Linux / Windows: no-op (returns
     False).
+
+    Async because the caller (`_run`) runs inside ``asyncio.run`` and we
+    don't want to block the event loop for a full second on the settle
+    nap. ``time.sleep`` would do exactly that.
 
     The caller is responsible for keeping the activated window front for the
     duration of the run; this helper only triggers a one-shot activation,
@@ -145,6 +153,11 @@ def _activate_target_window(name: str, *, settle_seconds: float = 1.0) -> bool:
         return False
     script = f'tell application "{name}" to activate'
     try:
+        # ``subprocess.run`` itself blocks but is fast (<200 ms typically)
+        # and runs once per invocation; we accept the brief block rather
+        # than pulling in ``asyncio.create_subprocess_exec`` for a single
+        # one-shot call. The long pause is the settle, which we now
+        # ``await asyncio.sleep`` properly.
         subprocess.run(
             ["osascript", "-e", script],
             check=True,
@@ -159,7 +172,7 @@ def _activate_target_window(name: str, *, settle_seconds: float = 1.0) -> bool:
         )
         return False
     if settle_seconds > 0:
-        time.sleep(settle_seconds)
+        await asyncio.sleep(settle_seconds)
     return True
 
 
@@ -202,7 +215,7 @@ async def _run(
     )
     target_window = _resolve_target_window(cli_value=target_window)
     if target_window:
-        _activate_target_window(target_window)
+        await _activate_target_window(target_window)
     recipe = _resolve_click_recipe(cli_path=recipe_path)
     adapter = PyAutoGUIAdapter(run_root=base_dir, click_recipe=recipe)
     # Acquire the per-host advisory lock BEFORE preflight so a busy
@@ -243,12 +256,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"coord-smith {__version__}")
         return 0
 
-    # base_dir is "." for the production CLI path. _run accepts a
-    # different base_dir for tests; main always uses the cwd.
-    base_dir = Path(".")
+    # base_dir resolves to an absolute path so the per-host advisory
+    # lock and the run.json target both refer to the same filesystem
+    # location regardless of which directory coord-smith was invoked
+    # from. ``Path(".")`` alone would let two callers with different
+    # cwd's silently bypass the lock — same machine, same artifacts/
+    # tree under the resolved path, different relative strings.
+    # See docs/architecture-boundaries.md §Host Exclusivity.
+    base_dir = Path(".").resolve()
     summary_writer = RunSummaryWriter(base_dir=base_dir)
     exit_code: int = 1
-    status: str = "failure"
+    status: RunStatus = "failure"
     try:
         exit_code = asyncio.run(_run(argv=argv_list, base_dir=base_dir))
         status = "success" if exit_code == 0 else "failure"

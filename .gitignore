@@ -3,6 +3,10 @@ out
 dist
 *.tgz
 runs/
+# coord-smith artifact tree (run roots + lock + run.json land here)
+artifacts/
+# top-level run.json written when no run root exists yet (host_busy / config error)
+/run.json
 
 # local browser profiles
 data/openclaw/profiles/

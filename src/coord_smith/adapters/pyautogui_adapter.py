@@ -693,7 +693,15 @@ class PyAutoGUIAdapter:
                     mission=step.name, wait_for=step.wait_for
                 )
             except BaseException as exc:
-                raise _tag_phase(exc, _PHASE_PRE_CLICK) from exc.__cause__
+                # Mutate the exception in place (attach phase tag) and
+                # re-raise with a bare ``raise``. This preserves
+                # Python's implicit ``__context__`` chain — using
+                # ``raise X from exc.__cause__`` would null out the
+                # chain whenever the inner raise was a plain
+                # ``raise SomethingError(...)`` (no explicit cause),
+                # which is the common case in this codebase.
+                _tag_phase(exc, _PHASE_PRE_CLICK)
+                raise
 
         # --- dispatch phase: coord resolution + click execution -----
         try:
@@ -721,7 +729,10 @@ class PyAutoGUIAdapter:
             settle_seconds = step.settle_ms / 1000.0
             await self._verified_click(ix, iy, settle_seconds=settle_seconds)
         except BaseException as exc:
-            raise _tag_phase(exc, _PHASE_DISPATCH) from exc.__cause__
+            # See pre_click branch above — mutate-and-bare-raise
+            # preserves the implicit ``__context__`` chain.
+            _tag_phase(exc, _PHASE_DISPATCH)
+            raise
 
         # --- post-click phase: transition diff + signal poll --------
         try:
@@ -738,7 +749,10 @@ class PyAutoGUIAdapter:
                     mission=step.name, signal=step.post_click_signal
                 )
         except BaseException as exc:
-            raise _tag_phase(exc, _PHASE_POST_CLICK) from exc.__cause__
+            # See pre_click branch above — mutate-and-bare-raise
+            # preserves the implicit ``__context__`` chain.
+            _tag_phase(exc, _PHASE_POST_CLICK)
+            raise
 
     def _capture_failure_evidence(
         self,
@@ -839,7 +853,16 @@ class PyAutoGUIAdapter:
                 return None
 
         def _try_coord() -> tuple[int, int] | None:
-            assert step.coord is not None
+            # Pydantic schema guarantees ``coord`` is populated whenever
+            # ``prefer == "coord"`` or coord is the only declared
+            # target — this branch is structurally unreachable for
+            # invalid Step instances. Use a raise (not bare assert) so
+            # ``python -O`` doesn't disable the safety net.
+            if step.coord is None:  # pragma: no cover — schema-enforced
+                raise ConfigError(
+                    f"Step '{step.name}' reached _try_coord with coord=None — "
+                    "violates the Step schema's prefer/target invariant"
+                )
             return (step.coord.x, step.coord.y)
 
         primary, fallback = (
@@ -866,7 +889,15 @@ class PyAutoGUIAdapter:
         directly — the caller decides whether to swallow (dual-target
         fallback) or propagate (single-target).
         """
-        assert step.image is not None
+        # Schema-enforced (Pydantic): callers only reach this when
+        # ``prefer == "image"`` or image is the sole declared target.
+        # Raise rather than bare-assert so ``python -O`` keeps the
+        # safety net.
+        if step.image is None:  # pragma: no cover — schema-enforced
+            raise ConfigError(
+                f"Step '{step.name}' reached _locate_image_for_step "
+                "with image=None — violates the Step schema invariant"
+            )
         target = MissionImageClick(
             image=step.image,
             confidence=step.confidence
