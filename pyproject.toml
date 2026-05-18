@@ -5,9 +5,35 @@ build-backend = "hatchling.build"
 [project]
 name = "coord-smith"
 version = "0.0.1"
-description = "Python-first runtime scaffold for coord-smith."
+description = "Deterministic OS-level click executor for autonomous LLM agents — no browser, no runtime inference."
 readme = "README.md"
+license = {file = "LICENSE"}
 requires-python = ">=3.14,<3.15"
+authors = [
+  {name = "coord-smith contributors"},
+]
+keywords = [
+  "automation",
+  "click",
+  "screenshot",
+  "langgraph",
+  "agent",
+  "cua",
+  "pyautogui",
+  "opencv",
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: MacOS X",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS :: MacOS X",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
 dependencies = [
   "langchain>=0.3.0",
   "langgraph>=0.3.0",
@@ -16,6 +42,12 @@ dependencies = [
   "pydantic>=2.8.0",
   "pyyaml>=6.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/coord-smith/coord-smith"
+Repository = "https://github.com/coord-smith/coord-smith"
+Issues = "https://github.com/coord-smith/coord-smith/issues"
+Changelog = "https://github.com/coord-smith/coord-smith/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
@@ -33,6 +65,9 @@ coord-smith = "coord_smith.graph.pyautogui_cli_entrypoint:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/coord_smith"]
+# PEP 561: include the py.typed marker so downstream mypy/pyright
+# see coord-smith as a typed package.
+include = ["src/coord_smith/py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
