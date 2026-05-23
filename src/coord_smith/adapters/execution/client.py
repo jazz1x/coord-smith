@@ -12,6 +12,7 @@ from typing import Any, Protocol
 from pydantic import BaseModel
 
 from coord_smith.evidence.envelope import parse_released_evidence_ref
+from coord_smith.missions.evidence_specs import MISSION_EVIDENCE_SPECS
 from coord_smith.missions.names import ALL_MISSIONS, mission_is_browser_facing
 from coord_smith.models.errors import AppError, ExecutionTransportError, ValidationError
 from coord_smith.models.runtime import (
@@ -250,57 +251,17 @@ def validate_execution_result(result: ExecutionResult) -> None:
 
     observed = set(result.evidence_refs)
 
-    required_sets: tuple[set[str], ...]
-    if result.mission_name == "attach_session":
-        primary = {
-            "evidence://text/session-attached",
-            "evidence://text/auth-state-confirmed",
-            "evidence://action-log/attach-session",
-        }
-        fallback = {
-            "evidence://screenshot/attach-session-fallback",
-            "evidence://action-log/attach-session",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "prepare_session":
-        primary = {
-            "evidence://text/session-viable",
-            "evidence://action-log/prepare-session",
-        }
-        fallback = {
-            "evidence://screenshot/prepare-session-fallback",
-            "evidence://action-log/prepare-session",
-        }
-        required_sets = (primary, fallback)
-    elif result.mission_name == "step_observe":
-        # The DOM-free runtime relies on action-log + screenshot pairs as the
-        # canonical evidence shape for per-step observations.
-        primary = {
-            "evidence://action-log/step-observed",
-            "evidence://screenshot/step-observed",
-        }
-        required_sets = (primary,)
-    elif result.mission_name == "step_dispatch":
-        primary = {
-            "evidence://action-log/step-dispatched",
-            "evidence://screenshot/step-dispatched",
-        }
-        required_sets = (primary,)
-    elif result.mission_name == "step_capture":
-        primary = {
-            "evidence://action-log/step-captured",
-            "evidence://screenshot/step-captured",
-        }
-        required_sets = (primary,)
-    elif result.mission_name == "run_completion":
-        primary = {
-            "evidence://action-log/release-ceiling-stop",
-        }
-        fallback = {
-            "evidence://screenshot/run-completion-fallback",
-            "evidence://action-log/release-ceiling-stop",
-        }
-        required_sets = (primary, fallback)
+    # Derive required_sets from the single source of truth in
+    # MISSION_EVIDENCE_SPECS rather than re-declaring inline.
+    spec = MISSION_EVIDENCE_SPECS.get(result.mission_name)
+    if spec is not None:
+        if spec.fallback_refs:
+            required_sets: tuple[frozenset[str], ...] = (
+                spec.primary_refs,
+                spec.fallback_refs,
+            )
+        else:
+            required_sets = (spec.primary_refs,)
     else:
         required_sets = ()
 
@@ -308,7 +269,7 @@ def validate_execution_result(result: ExecutionResult) -> None:
         required.issubset(observed) for required in required_sets
     ):
 
-        def format_missing(required: set[str]) -> str:
+        def format_missing(required: frozenset[str]) -> str:
             missing = sorted(required - observed)
             return ", ".join(missing) if missing else "none"
 

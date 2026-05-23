@@ -25,6 +25,7 @@ from coord_smith.config.click_recipe import (
     WaitFor,
 )
 from coord_smith.evidence.envelope import parse_released_evidence_ref
+from coord_smith.missions.evidence_specs import MISSION_EVIDENCE_SPECS
 from coord_smith.models.errors import (
     AccessibilityPermissionDenied,
     ClickCoordinatesOutOfBounds,
@@ -38,31 +39,18 @@ from coord_smith.models.errors import (
     ScreenCaptureUnavailable,
 )
 
+# Derived from MISSION_EVIDENCE_SPECS — single source of truth.
+# Each tuple is (screenshot_ref, action_log_ref) matching the fallback_refs set
+# for the mission, ordered screenshot-first for backwards-compatible artifact
+# ordering.  Missions with empty fallback_refs use their primary screenshot +
+# action-log pair instead (step_observe / step_dispatch / step_capture).
 _FALLBACK_REFS: dict[str, tuple[str, ...]] = {
-    "attach_session": (
-        "evidence://screenshot/attach-session-fallback",
-        "evidence://action-log/attach-session",
-    ),
-    "prepare_session": (
-        "evidence://screenshot/prepare-session-fallback",
-        "evidence://action-log/prepare-session",
-    ),
-    "step_observe": (
-        "evidence://screenshot/step-observed",
-        "evidence://action-log/step-observed",
-    ),
-    "step_dispatch": (
-        "evidence://screenshot/step-dispatched",
-        "evidence://action-log/step-dispatched",
-    ),
-    "step_capture": (
-        "evidence://screenshot/step-captured",
-        "evidence://action-log/step-captured",
-    ),
-    "run_completion": (
-        "evidence://screenshot/run-completion-fallback",
-        "evidence://action-log/release-ceiling-stop",
-    ),
+    name: (
+        tuple(sorted(spec.fallback_refs, key=lambda r: "screenshot" not in r))
+        if spec.fallback_refs
+        else tuple(sorted(spec.primary_refs, key=lambda r: "screenshot" not in r))
+    )
+    for name, spec in MISSION_EVIDENCE_SPECS.items()
 }
 
 _GENERIC_ACTION_LOG_REF = "evidence://action-log/pyautogui-executed"
