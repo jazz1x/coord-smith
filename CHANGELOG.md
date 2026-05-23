@@ -130,3 +130,13 @@ Nothing yet — the next batch lives in `docs/backlog.md`.
 ## [0.0.1] — initial scaffold
 
 Pre-public scaffold release. Tracked here only as a baseline.
+
+<!--
+Compare-URL footers (Keep-a-Changelog convention). Each version
+heading is a clickable diff once the corresponding tag exists on
+github.com/jazz1x/coord-smith.
+-->
+
+[Unreleased]: https://github.com/jazz1x/coord-smith/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/jazz1x/coord-smith/compare/v0.0.1...v0.1.0
+[0.0.1]: https://github.com/jazz1x/coord-smith/releases/tag/v0.0.1
