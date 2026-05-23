@@ -12,6 +12,7 @@ import pyautogui
 from PIL import UnidentifiedImageError
 from PIL.Image import Image as PILImage
 
+from coord_smith.adapters.action_log_writer import ActionLogWriter
 from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
@@ -105,31 +106,19 @@ class PyAutoGUIAdapter:
         pyautogui.FAILSAFE = True
         self._run_root = run_root
         self._click_recipe = click_recipe
+        self._log = ActionLogWriter(run_root)
 
     def with_run_root(self, *, run_root: Path) -> PyAutoGUIAdapter:
         """Return a copy of this adapter bound to a different run root."""
         return PyAutoGUIAdapter(run_root=run_root, click_recipe=self._click_recipe)
 
     def _action_log_path(self, key: str) -> Path:
-        path = self._run_root / "artifacts" / "action-log" / f"{key}.jsonl"
-        path.parent.mkdir(parents=True, exist_ok=True)
-        return path
+        return self._log.action_log_path(key)
 
     def _screenshot_path(self, key: str) -> Path:
         path = self._run_root / "artifacts" / "screenshot" / f"{key}.png"
         path.parent.mkdir(parents=True, exist_ok=True)
         return path
-
-    def _write_action_log(self, *, key: str, mission_name: str) -> None:
-        ts = datetime.now(tz=UTC).isoformat()
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission_name,
-            "event": key,
-        }
-        path = self._action_log_path(key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
 
     def _capture_screenshot(self, key: str) -> None:
         """Capture a screenshot or raise a typed error.
@@ -195,12 +184,12 @@ class PyAutoGUIAdapter:
         mission_refs = _FALLBACK_REFS.get(mission)
         if mission_refs is None:
             action_key = mission.replace("_", "-")
-            self._write_action_log(key=action_key, mission_name=mission)
+            self._log.write_action_log(key=action_key, mission_name=mission)
             return (_GENERIC_ACTION_LOG_REF,)
         for ref in mission_refs:
             kind, key = parse_released_evidence_ref(ref)
             if kind == "action-log":
-                self._write_action_log(key=key, mission_name=mission)
+                self._log.write_action_log(key=key, mission_name=mission)
             elif kind == "screenshot":
                 self._capture_screenshot(key)
         return mission_refs
@@ -305,7 +294,7 @@ class PyAutoGUIAdapter:
         if located is None:
             raise ImageMatchConfidenceLow(_not_matched)
         cx, cy = int(located.x), int(located.y)
-        self._write_image_match_log(
+        self._log.write_image_match(
             mission=mission,
             template=str(template_path),
             confidence=target.confidence,
@@ -313,41 +302,6 @@ class PyAutoGUIAdapter:
             y=cy,
         )
         return (cx, cy)
-
-    def _action_key_for_mission(self, mission: str) -> str:
-        """Return the canonical action-log key for a mission.
-
-        Most mission names map to a past-tense action key
-        (``step_dispatch`` -> ``step-dispatched``) which is held in the
-        evidence fallback table. Missions absent from the table fall back to
-        a literal underscore-to-hyphen substitution.
-        """
-        refs = _FALLBACK_REFS.get(mission)
-        if refs is not None:
-            for ref in refs:
-                kind, key = parse_released_evidence_ref(ref)
-                if kind == "action-log":
-                    return key
-        return mission.replace("_", "-")
-
-    def _write_image_match_log(
-        self, *, mission: str, template: str, confidence: float, x: int, y: int
-    ) -> None:
-        """Append a structured image-match record to the mission action log."""
-        ts = datetime.now(tz=UTC).isoformat()
-        action_key = self._action_key_for_mission(mission)
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission,
-            "event": action_key,
-            "image_template": template,
-            "match_confidence": confidence,
-            "match_x": x,
-            "match_y": y,
-        }
-        path = self._action_log_path(action_key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
 
     def _write_transition_log(
         self,
@@ -358,21 +312,13 @@ class PyAutoGUIAdapter:
         bbox: tuple[int, int, int, int] | None,
         threshold: float,
     ) -> None:
-        """Append a page-transition verification record to the mission action log."""
-        ts = datetime.now(tz=UTC).isoformat()
-        action_key = self._action_key_for_mission(mission)
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission,
-            "event": action_key,
-            "transition_changed": changed,
-            "transition_change_ratio": change_ratio,
-            "transition_threshold": threshold,
-            "transition_bbox": list(bbox) if bbox is not None else None,
-        }
-        path = self._action_log_path(action_key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+        self._log.write_transition(
+            mission=mission,
+            changed=changed,
+            change_ratio=change_ratio,
+            bbox=bbox,
+            threshold=threshold,
+        )
 
     def _write_signal_log(
         self,
@@ -384,22 +330,14 @@ class PyAutoGUIAdapter:
         x: int,
         y: int,
     ) -> None:
-        """Append a post-click-signal hit record to the mission action log."""
-        ts = datetime.now(tz=UTC).isoformat()
-        action_key = self._action_key_for_mission(mission)
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission,
-            "event": action_key,
-            "post_click_signal_template": template,
-            "post_click_signal_confidence": confidence,
-            "post_click_signal_elapsed_seconds": elapsed,
-            "post_click_signal_x": x,
-            "post_click_signal_y": y,
-        }
-        path = self._action_log_path(action_key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+        self._log.write_signal(
+            mission=mission,
+            template=template,
+            confidence=confidence,
+            elapsed=elapsed,
+            x=x,
+            y=y,
+        )
 
     async def wait_for_image(
         self,
@@ -490,27 +428,14 @@ class PyAutoGUIAdapter:
         x: int,
         y: int,
     ) -> None:
-        """Append a pre-click wait_for hit record to the mission action log.
-
-        Symmetric to ``_write_signal_log`` but namespaced with ``wait_for_*``
-        keys so a downstream audit can distinguish the pre-click guard from
-        the post-click signal.
-        """
-        ts = datetime.now(tz=UTC).isoformat()
-        action_key = self._action_key_for_mission(mission)
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission,
-            "event": action_key,
-            "wait_for_template": template,
-            "wait_for_confidence": confidence,
-            "wait_for_elapsed_seconds": elapsed,
-            "wait_for_x": x,
-            "wait_for_y": y,
-        }
-        path = self._action_log_path(action_key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+        self._log.write_wait_for(
+            mission=mission,
+            template=template,
+            confidence=confidence,
+            elapsed=elapsed,
+            x=x,
+            y=y,
+        )
 
     async def _await_pre_click_wait_for(
         self, *, mission: str, wait_for: WaitFor
