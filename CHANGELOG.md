@@ -5,6 +5,128 @@ All notable changes to **coord-smith** are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Nothing yet — the next batch lives in `docs/backlog.md`.
+
+---
+
+## [0.1.1] — 2026-05-23 — audit-closure patch release
+
+This release closes findings from two parallel 4-axis re-audits
+(Clean Architecture / ROP / Production gaps / Industry hygiene)
+of the v0.1.0 sweep. No new features — pure hygiene, bug fixes,
+and documentation precision. Safe drop-in upgrade from 0.1.0.
+
+### Fixed — caller-facing
+- **docs/recipe-guide.md exit-code-1 row** branches on
+  `run.json.status` instead of blindly directing callers to
+  read the `failure` key (which is `null` on
+  `status: interrupted` — previous wording misled literal
+  readers on `KeyboardInterrupt`).
+- **`--cleanup` doc carve-out**: docs/recipe-guide.md
+  §Run Summary Schema and docs/architecture-boundaries.md
+  §How callers should read a run result both clarify that
+  `--cleanup` does NOT write `run.json`. Automation polling
+  the file must skip cleanup invocations.
+- **`run.json` on host_busy is locked by a regression test**
+  — previously the exit-4 contract was tested but the
+  artifact contract (`status: "host_busy"`, `exit_code: 4`)
+  was not. Adding the assertion closes the silent-regression
+  window.
+- **Wrong GitHub org URLs** corrected in pyproject.toml
+  `[project.urls]`, README CI badges, and README clone
+  snippets (was `coord-smith/coord-smith` placeholder; now
+  `jazz1x/coord-smith`).
+- **`run.json.failure` phantom field name** — text used to
+  read as if `run.json.failure` were a file path; rewritten
+  to "the `failure` key inside `run.json`".
+- **CLAUDE.md exit_codes block** now includes exit 4 (host
+  busy). Agent reading CLAUDE.md first will apply the
+  back-off strategy instead of treating it as an opaque
+  runtime error.
+- **`run.json.step_count` on dry-run** matches the log line
+  ("preflight passed, N step(s) resolved"). Previously was 0
+  because the empirical recovery from action-log JSONL files
+  ran before any file existed.
+
+### Changed — parse-don't-validate finishing touches
+- `validate_execution_mission_name` trusts the `MissionName`
+  brand and only checks `mission_is_browser_facing` (was
+  re-running 5 shape checks upstream of the parser).
+- `validate_action_log_artifacts_contain_ref_events` accepts
+  `MissionName` instead of `str`; drops the same shape
+  ladder. Caller `execute_within_scope` typed end-to-end.
+- `run_released_scope_via_langgraph` takes typed identifiers
+  directly; single parse boundary lives in
+  `released_cli_shim.resolve_released_scope_inputs`. Removed
+  the in-function double-parse.
+
+### Changed — Clean Architecture polish
+- `_FALLBACK_REFS` duplicate dict-comprehension removed —
+  both `pyautogui_adapter.py` and `action_log_writer.py`
+  import `MISSION_FALLBACK_REFS` from
+  `missions.evidence_specs`.
+- `graph/run_summary.py` moved to `reporting/run_summary.py`
+  (zero graph imports — pure infrastructure).
+- `adapters/execution/execution.py` vestigial double-shim
+  deleted.
+- `reporting/summary.py` (unused, layer-inverted) deleted.
+- `_payload_json_default` removed from `client.py.__all__`.
+- `artifact_io._require_run_root_dir` promoted to public
+  `require_run_root_dir`; `client.execute_within_scope`
+  imports it at module top (no more lazy function-body
+  import).
+- `PyAutoGUIAdapter._assert_template_exists` helper
+  deduplicates 3 image-template existence-check sites.
+
+### Changed — packaging / CI
+- `[project]` uses `dynamic = ["version"]` +
+  `[tool.hatch.version]` reading `src/coord_smith/__init__.py`.
+  Single source of truth for the version string.
+- `.pre-commit-config.yaml` local hooks switched from
+  hardcoded `.venv/bin/python` to `uv run --frozen --`.
+  Portable across fresh clones, CI runners, Windows, and
+  non-uv setups.
+- `[tool.hatch.build.targets.wheel] include` entry removed
+  (redundant — hatchling auto-bundles `packages`).
+- CHANGELOG compare-URL footers added (Keep-a-Changelog
+  convention).
+- `.github/workflows/ci.yml` matrix pin to py3.14
+  documented as intentional; new
+  `workflow_dispatch.inputs.python_smoke` + `smoke-py` job
+  (continue-on-error) provide a future-minor smoke path.
+
+### Changed — production safety
+- `--cleanup` acquires the per-host advisory lock before
+  pruning — a concurrent dispatch run cannot have its dir
+  removed mid-flight.
+- `--cleanup` with click-related flags emits a WARNING
+  (cleanup still runs; operator notified the click flags
+  were ignored).
+- `--cleanup` returns exit 1 when `CleanupReport.errors > 0`.
+  Cron-based callers detect partial failures.
+- `_read_failure_record` logs a WARNING on JSON parse
+  failure instead of silently returning `None`.
+
+### Industry hygiene
+- `SECURITY.md` "email the maintainers (placeholder)" →
+  GitHub private vulnerability reporting URL.
+- README install sections lead with
+  `uv pip install coord-smith` / `pip install coord-smith`
+  before the source-checkout instructions.
+
+### Deferred (P3 backlog)
+- B-CA-4 step-guard extraction (adapter still 892 lines).
+- B-CA-5 run-summary lifecycle context manager.
+- B-POLISH-3 PyPI version + downloads badges (post-publish).
+
+### Test count
+- Tests: **360 passing**, 4 deselected (real-binary).
+- ruff: clean · mypy strict: clean · pre-commit: clean.
+
+---
+
 ## [0.1.0] — 2026-05-13 — productization milestone
 
 This is the first release that an external orchestrator (OpenClaw,
@@ -121,12 +243,6 @@ against without bespoke patches. The headline change set:
 
 ---
 
-## [Unreleased]
-
-Nothing yet — the next batch lives in `docs/backlog.md`.
-
----
-
 ## [0.0.1] — initial scaffold
 
 Pre-public scaffold release. Tracked here only as a baseline.
@@ -137,6 +253,7 @@ heading is a clickable diff once the corresponding tag exists on
 github.com/jazz1x/coord-smith.
 -->
 
-[Unreleased]: https://github.com/jazz1x/coord-smith/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/jazz1x/coord-smith/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/jazz1x/coord-smith/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/jazz1x/coord-smith/compare/v0.0.1...v0.1.0
 [0.0.1]: https://github.com/jazz1x/coord-smith/releases/tag/v0.0.1
