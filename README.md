@@ -4,12 +4,13 @@
 
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![tests](https://img.shields.io/badge/tests-238%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-307%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
+[![CI](https://github.com/coord-smith/coord-smith/actions/workflows/ci.yml/badge.svg)](https://github.com/coord-smith/coord-smith/actions/workflows/ci.yml)
 
 **coord-smith** is the *hands*. The *head* — an external LLM such as OpenClaw — decides what to click; coord-smith executes those decisions on the OS as coordinate clicks and screenshot evidence. Reasoning lives outside the runtime; the runtime itself contains zero LLM calls.
 
-A run is a 12-mission pipeline driven by a LangGraph state machine. Each mission produces an evidence envelope (action-log JSONL, screenshots, transition diffs) before the next mission is allowed to start. No browser internals (Playwright / CDP / Chromium) are touched — only OS-level coordinates and pixels.
+A run is a 6-mission pipeline (3 per-run + 3 per-step, repeated for each recipe step) driven by a LangGraph state machine. Each mission produces an evidence envelope (action-log JSONL, screenshots, transition diffs) before the next mission is allowed to start. No browser internals (Playwright / CDP / Chromium) are touched — only OS-level coordinates and pixels.
 
 [한국어](./README.ko.md)
 
@@ -222,7 +223,7 @@ Polls `locateCenterOnScreen` until the signal image appears. Timeout raises `Ima
 | Tests (real binary) | `uv run pytest -m real -q` | macOS Accessibility + Screen Recording |
 | Pre-commit | `uv run pre-commit run --all-files` | Full sweep |
 
-Continuous integration is not wired yet — the pre-commit hooks (run on every commit locally) are the gate today. A GitHub Actions workflow running ruff + mypy + pytest is on the productization backlog (see `docs/backlog.md`).
+GitHub Actions runs on every push to `main` and every pull request — see [`.github/workflows/ci.yml`](.github/workflows/ci.yml). The workflow installs Python 3.14 + xvfb (Ubuntu only, so `import pyautogui` succeeds without a real display) and runs ruff + mypy + pytest, plus a separate pre-commit job. Locally, the same gates run via the pre-commit hooks installed by `uv run pre-commit install`.
 
 ## Architecture decisions
 

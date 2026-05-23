@@ -1,0 +1,43 @@
+# Dependabot configuration — keeps Python deps and Actions fresh
+# without flooding the PR queue.
+#
+# Two ecosystems:
+#  - pip (covers pyproject.toml's [project.dependencies] +
+#    [project.optional-dependencies].dev, via uv.lock)
+#  - github-actions (the actions used in .github/workflows/*.yml)
+#
+# Weekly cadence with a small open-PR ceiling so updates accumulate
+# into one easy-to-review batch rather than 12 separate PRs.
+
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore(deps)"
+    # Group all non-major bumps into a single PR per week so the
+    # review surface stays manageable.
+    groups:
+      python-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "chore(deps)"

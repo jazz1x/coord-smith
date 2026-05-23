@@ -4,12 +4,13 @@
 
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![tests](https://img.shields.io/badge/tests-238%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-307%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
+[![CI](https://github.com/coord-smith/coord-smith/actions/workflows/ci.yml/badge.svg)](https://github.com/coord-smith/coord-smith/actions/workflows/ci.yml)
 
 **coord-smith** 는 *손* 입니다. *머리* — OpenClaw 같은 외부 LLM — 가 무엇을 어디서 클릭할지 정하면, coord-smith 는 그 결정을 OS 위에서 좌표 클릭과 스크린샷 증거로 실행합니다. 추론은 런타임 바깥에 있고, 런타임 자체에는 LLM 호출이 0건입니다.
 
-한 번의 실행은 LangGraph 상태 머신이 12 개 미션을 순서대로 통과시키는 파이프라인입니다. 각 미션은 다음 미션이 시작되기 전에 evidence envelope (action-log JSONL, 스크린샷, 전환 diff) 를 디스크에 남깁니다. 브라우저 내부 (Playwright / CDP / Chromium) 는 건드리지 않습니다 — OS 좌표와 픽셀만 사용합니다.
+한 번의 실행은 LangGraph 상태 머신이 6 개 미션 (per-run 3개 + per-step 3개, recipe step 마다 반복) 을 순서대로 통과시키는 파이프라인입니다. 각 미션은 다음 미션이 시작되기 전에 evidence envelope (action-log JSONL, 스크린샷, 전환 diff) 를 디스크에 남깁니다. 브라우저 내부 (Playwright / CDP / Chromium) 는 건드리지 않습니다 — OS 좌표와 픽셀만 사용합니다.
 
 [English](./README.md)
 
@@ -211,7 +212,7 @@ steps:
 | Test (real) | `uv run pytest -m real -q` | macOS Accessibility + Screen Recording 필요 |
 | Pre-commit | `uv run pre-commit run --all-files` | 전수 검사 |
 
-CI 는 아직 연결되지 않았습니다 — 매 커밋마다 로컬에서 도는 pre-commit 훅이 현재의 게이트입니다. ruff + mypy + pytest 를 도는 GitHub Actions 워크플로우는 제품화 backlog 에 있습니다 (`docs/backlog.md` 참고).
+GitHub Actions 가 `main` 으로의 push 와 모든 PR 에서 동작합니다 — [`.github/workflows/ci.yml`](.github/workflows/ci.yml) 참고. 워크플로우는 Python 3.14 + xvfb (Ubuntu, `import pyautogui` 가 실제 display 없이도 성공하도록) 를 설치한 뒤 ruff + mypy + pytest 를 돌리고, 별도 pre-commit job 도 함께 실행합니다. 로컬에서는 `uv run pre-commit install` 로 깔리는 pre-commit 훅이 같은 게이트입니다.
 
 ## 불변식
 

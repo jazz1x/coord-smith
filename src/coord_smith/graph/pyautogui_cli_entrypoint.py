@@ -17,6 +17,11 @@ from coord_smith.cli_logging import configure_logging, get_logger
 from coord_smith.config.click_recipe import ClickRecipe, load_click_recipe
 from coord_smith.graph.host_lock import HostBusyError, acquire_host_lock
 from coord_smith.graph.released_cli_shim import run_released_scope_from_argv_env
+from coord_smith.graph.run_cleanup import (
+    DEFAULT_MAX_AGE_DAYS,
+    DEFAULT_MAX_RUNS,
+    cleanup_runs,
+)
 from coord_smith.graph.run_summary import RunStatus, RunSummaryWriter
 from coord_smith.models.errors import (
     AccessibilityPermissionDenied,
@@ -54,6 +59,13 @@ Options:
                         exit 0. Useful when an external agent needs the
                         schema to validate or generate a recipe without
                         spawning a Python interpreter.
+  --cleanup             Prune artifacts/runs/ to fit retention bounds and
+                        exit 0. Use with --max-runs N (default 100) and
+                        --max-age-days N (default 14). Run roots
+                        containing a `.keep` sentinel file are never
+                        removed.
+  --max-runs N          Retention bound used by --cleanup (default 100).
+  --max-age-days N      Retention bound used by --cleanup (default 14).
   --verbose, -v         Set log level to DEBUG (overrides
                         COORDSMITH_LOG_LEVEL).
   --quiet, -q           Set log level to WARNING (overrides
@@ -154,7 +166,13 @@ def _resolve_log_level(argv: Sequence[str]) -> str | None:
 def _strip_verbosity_flags(argv: Sequence[str]) -> list[str]:
     """Remove ``--verbose`` / ``-v`` / ``--quiet`` / ``-q`` /
     ``--recipe-schema`` so the released-scope shim does not see
-    them. These flags are handled at the CLI boundary."""
+    them. These flags are handled at the CLI boundary.
+
+    Note: ``--cleanup`` and its bounds (``--max-runs`` / ``--max-age-days``)
+    are not stripped here — the cleanup path short-circuits in
+    ``main()`` before the shim is reached, so the shim never sees
+    them.
+    """
     consumed = {"--verbose", "-v", "--quiet", "-q", "--recipe-schema"}
     return [a for a in argv if a not in consumed]
 
@@ -289,6 +307,66 @@ async def _run(
     return 0
 
 
+def _wants_cleanup(argv: Sequence[str]) -> bool:
+    return any(a == "--cleanup" for a in argv)
+
+
+def _extract_cleanup_bounds(
+    argv: Sequence[str],
+) -> tuple[int, int]:
+    """Pull ``--max-runs`` / ``--max-age-days`` out of argv.
+
+    Returns ``(max_runs, max_age_days)`` with their respective
+    defaults when the flags are absent. Invalid integer values raise
+    ``ConfigError`` so the CLI maps to exit code 3 (caller fed
+    nonsense; recipe-style error).
+    """
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        "--max-runs", dest="max_runs", type=int, default=DEFAULT_MAX_RUNS
+    )
+    parser.add_argument(
+        "--max-age-days",
+        dest="max_age_days",
+        type=int,
+        default=DEFAULT_MAX_AGE_DAYS,
+    )
+    try:
+        namespace, _ = parser.parse_known_args(list(argv))
+    except SystemExit as exc:
+        # argparse exits the process on integer parse failure; we
+        # convert to a typed error the main() handler can render
+        # with exit code 3 instead of exiting underneath us.
+        raise ConfigError(
+            f"--cleanup bounds must be integers (argparse rejected with code "
+            f"{exc.code})"
+        ) from exc
+    if namespace.max_runs < 0:
+        raise ConfigError(
+            f"--max-runs must be >= 0, got {namespace.max_runs}"
+        )
+    if namespace.max_age_days < 0:
+        raise ConfigError(
+            f"--max-age-days must be >= 0, got {namespace.max_age_days}"
+        )
+    return namespace.max_runs, namespace.max_age_days
+
+
+def _run_cleanup(base_dir: Path, argv: Sequence[str]) -> int:
+    """Execute ``coord-smith --cleanup`` end-to-end.
+
+    Reads the bounds from argv, runs ``cleanup_runs``, and prints
+    the summary at INFO level. Returns 0 on success, 3 on bad
+    arguments.
+    """
+    max_runs, max_age_days = _extract_cleanup_bounds(argv)
+    report = cleanup_runs(
+        base_dir=base_dir, max_runs=max_runs, max_age_days=max_age_days
+    )
+    _log.info("cleanup: %s", report.summary_line())
+    return 0
+
+
 def _emit_recipe_schema() -> int:
     """Print the ClickRecipe Pydantic JSON Schema to stdout.
 
@@ -324,6 +402,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     # handler. CLI flags > COORDSMITH_LOG_LEVEL > default INFO.
     configure_logging(level=_resolve_log_level(argv_list))
     argv_list = _strip_verbosity_flags(argv_list)
+
+    if _wants_cleanup(argv_list):
+        # ``--cleanup`` is an operator command, not a click run.
+        # It does not need the host lock, the run.json envelope,
+        # or the released-scope graph — short-circuit here so we
+        # don't write a spurious run.json for a cleanup pass.
+        try:
+            return _run_cleanup(Path(".").resolve(), argv_list)
+        except ConfigError as exc:
+            _log.error("config error: %s", exc)
+            return 3
 
     # base_dir resolves to an absolute path so the per-host advisory
     # lock and the run.json target both refer to the same filesystem
