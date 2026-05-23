@@ -461,6 +461,20 @@ Do I need to confirm a specific element appeared (e.g. spinner, toast)?
 
 ## Getting the Schema Programmatically
 
+The preferred path — no Python interpreter spawn, works against any
+installed `coord-smith` wheel:
+
+```bash
+coord-smith --recipe-schema > recipe-schema.json
+```
+
+The output is the standard Pydantic v2 ``model_json_schema()`` and is
+stable across patch releases. The schema version is the recipe's
+own ``version`` field (currently ``1``); the JSON Schema dialect is
+managed by Pydantic.
+
+Equivalent, useful pre-install or in dev checkouts:
+
 ```bash
 uv run python -c "
 import json
@@ -468,6 +482,22 @@ from coord_smith.config.click_recipe import ClickRecipe
 print(json.dumps(ClickRecipe.model_json_schema(), indent=2))
 "
 ```
+
+## Diagnostic logging (caller-side control)
+
+coord-smith emits diagnostics through the stdlib `logging` framework
+under the ``coord_smith`` logger. Default level is ``INFO``. Knobs:
+
+| Knob | Effect |
+|------|--------|
+| `--verbose` / `-v` | Set level to ``DEBUG`` (overrides env). |
+| `--quiet` / `-q` | Set level to ``WARNING`` (overrides env). |
+| `COORDSMITH_LOG_LEVEL` | Set level (`DEBUG` / `INFO` / `WARNING` / `ERROR` / `CRITICAL`) — case-insensitive. Wins over the default. |
+
+Records propagate to the root logger so embedding applications can
+intercept via standard `logging.basicConfig()` or pytest's `caplog`
+fixture. The CLI installs a single `StreamHandler` to stderr with
+format ``coord-smith: <LEVEL>: <message>``.
 
 ---
 

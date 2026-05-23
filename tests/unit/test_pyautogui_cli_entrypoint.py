@@ -83,21 +83,27 @@ def test_main_returns_exit_code_2_when_preflight_fails(tmp_path: Path) -> None:
 
 
 def test_main_handles_keyboard_interrupt_with_exit_1(
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Ctrl-C / SIGINT raises KeyboardInterrupt which inherits from
     BaseException, NOT Exception. Without an explicit handler the
     bare ``except Exception`` below would miss it and Python would
-    exit 130 with a traceback — invisible to OpenClaw, no stderr line,
-    no recoverable diagnostic. main() must catch it deterministically.
+    exit 130 with a traceback — invisible to OpenClaw, no diagnostic
+    log line, no recoverable diagnostic. main() must catch it
+    deterministically and emit a recognizable log record.
     """
+    import logging
+
     from coord_smith.graph.pyautogui_cli_entrypoint import main
 
-    with patch.object(
-        PyAutoGUIAdapter,
-        "preflight",
-        new_callable=AsyncMock,
-        side_effect=KeyboardInterrupt(),
+    with (
+        patch.object(
+            PyAutoGUIAdapter,
+            "preflight",
+            new_callable=AsyncMock,
+            side_effect=KeyboardInterrupt(),
+        ),
+        caplog.at_level(logging.WARNING, logger="coord_smith.cli"),
     ):
         exit_code = main(argv=[])
 
@@ -105,10 +111,10 @@ def test_main_handles_keyboard_interrupt_with_exit_1(
         "KeyboardInterrupt must map to a deterministic exit code "
         "(not Python's default 130) so the caller can react"
     )
-    err = capsys.readouterr().err
-    assert "interrupted" in err.lower(), (
-        "stderr must include a recognizable interrupt marker"
-    )
+    assert any(
+        "interrupted" in record.getMessage().lower()
+        for record in caplog.records
+    ), "log records must include a recognizable interrupt marker"
 
 
 def test_extract_known_flags_returns_path_dry_run_and_strips(tmp_path: Path) -> None:
@@ -194,17 +200,24 @@ def test_resolve_target_window_treats_empty_env_as_unset() -> None:
 
 
 async def test_activate_target_window_non_darwin_is_noop_and_warns(
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """On non-macOS platforms, activation is a no-op that warns on stderr."""
+    """On non-macOS platforms, activation is a no-op that emits a
+    WARNING-level log record."""
+    import logging
+
     from coord_smith.graph import pyautogui_cli_entrypoint as cli
 
-    with patch.object(cli.platform, "system", return_value="Linux"):
+    with (
+        patch.object(cli.platform, "system", return_value="Linux"),
+        caplog.at_level(logging.WARNING, logger="coord_smith.cli"),
+    ):
         ok = await cli._activate_target_window("Google Chrome", settle_seconds=0.0)
 
     assert ok is False
-    err = capsys.readouterr().err
-    assert "macOS-only" in err
+    assert any(
+        "macOS-only" in record.getMessage() for record in caplog.records
+    )
 
 
 async def test_activate_target_window_calls_osascript_on_darwin() -> None:
@@ -253,9 +266,11 @@ async def test_activate_target_window_uses_asyncio_sleep_not_time_sleep() -> Non
 
 
 async def test_activate_target_window_returns_false_on_osascript_failure(
-    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """A non-zero osascript exit must be swallowed and reported on stderr."""
+    """A non-zero osascript exit must be swallowed and reported via a
+    WARNING-level log record."""
+    import logging
     import subprocess
 
     from coord_smith.graph import pyautogui_cli_entrypoint as cli
@@ -269,13 +284,14 @@ async def test_activate_target_window_returns_false_on_osascript_failure(
                 1, ["osascript"], stderr=b"missing app"
             ),
         ),
+        caplog.at_level(logging.WARNING, logger="coord_smith.cli"),
     ):
         ok = await cli._activate_target_window(
             "NonExistentApp", settle_seconds=0.0
         )
 
     assert ok is False
-    err = capsys.readouterr().err
+    err = "\n".join(record.getMessage() for record in caplog.records)
     assert "activation failed" in err
 
 
@@ -405,6 +421,70 @@ def test_main_prints_usage_for_help_and_returns_zero(capsys: pytest.CaptureFixtu
         assert exit_code == 0, flag
         assert "Usage: coord-smith" in captured.out, flag
         assert "--click-recipe" in captured.out, flag
+
+
+def test_main_recipe_schema_emits_json_schema(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """``--recipe-schema`` dumps the Pydantic JSON Schema to stdout.
+
+    Designed for autonomous agents that paste the schema into a
+    prompt — must be valid JSON, must declare ``$defs`` / ``properties``
+    (the standard JSON Schema vocabulary), and must reference our
+    own field names (``steps``, ``version``).
+    """
+    import json
+
+    from coord_smith.graph.pyautogui_cli_entrypoint import main
+
+    exit_code = main(argv=["--recipe-schema"])
+    out = capsys.readouterr().out
+
+    assert exit_code == 0
+    schema = json.loads(out)
+    # Schema is a dict at the top-level, with object semantics.
+    assert isinstance(schema, dict)
+    assert schema.get("type") == "object" or "$defs" in schema
+    # Properties pin our canonical recipe fields — if the JSON schema
+    # generator drops these, the agent contract is silently broken.
+    properties = schema.get("properties", {})
+    assert "steps" in properties or "$defs" in schema
+    assert "version" in properties
+
+
+def test_resolve_log_level_verbose_wins() -> None:
+    from coord_smith.graph.pyautogui_cli_entrypoint import _resolve_log_level
+
+    assert _resolve_log_level(["--verbose"]) == "DEBUG"
+    assert _resolve_log_level(["-v"]) == "DEBUG"
+    assert _resolve_log_level(["--quiet"]) == "WARNING"
+    assert _resolve_log_level(["-q"]) == "WARNING"
+    # When both are present, verbose wins (more useful default).
+    assert _resolve_log_level(["--verbose", "--quiet"]) == "DEBUG"
+    # No verbosity flags → None → defer to env / default.
+    assert _resolve_log_level([]) is None
+
+
+def test_strip_verbosity_flags_removes_cli_only_flags() -> None:
+    from coord_smith.graph.pyautogui_cli_entrypoint import _strip_verbosity_flags
+
+    remaining = _strip_verbosity_flags(
+        [
+            "--session-ref", "s",
+            "--verbose",
+            "--target-page-url", "https://x",
+            "-q",
+            "--recipe-schema",
+            "--site-identity", "z",
+        ]
+    )
+    assert "--verbose" not in remaining
+    assert "-q" not in remaining
+    assert "--recipe-schema" not in remaining
+    # Real session-graph flags pass through.
+    assert "--session-ref" in remaining
+    assert "--target-page-url" in remaining
+    assert "--site-identity" in remaining
 
 
 async def test_run_passes_os_environ_as_env_to_graph(tmp_path: Path) -> None:

@@ -94,6 +94,10 @@ image matching 실패 시 자동으로 coord로 fallback 한다.
 AI에게 레시피 생성을 요청할 때는 Pydantic 스키마를 프롬프트에 첨부한다:
 
 ```bash
+# preferred — drop-in CLI flag, no Python interpreter spawn
+coord-smith --recipe-schema
+
+# legacy — equivalent, useful if the wheel is not installed yet
 python -c "import json; from coord_smith.config.click_recipe import ClickRecipe; \
            print(json.dumps(ClickRecipe.model_json_schema(), indent=2))"
 ```

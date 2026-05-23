@@ -13,6 +13,7 @@ from pathlib import Path
 
 from coord_smith import __version__
 from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
+from coord_smith.cli_logging import configure_logging, get_logger
 from coord_smith.config.click_recipe import ClickRecipe, load_click_recipe
 from coord_smith.graph.host_lock import HostBusyError, acquire_host_lock
 from coord_smith.graph.released_cli_shim import run_released_scope_from_argv_env
@@ -24,6 +25,8 @@ from coord_smith.models.errors import (
 )
 
 ENV_CLICK_RECIPE = "COORDSMITH_CLICK_RECIPE"
+
+_log = get_logger("cli")
 
 _USAGE = """\
 Usage: coord-smith [OPTIONS] --session-ref STR --expected-auth-state STR \\
@@ -47,6 +50,14 @@ Options:
   --dry-run             Validate the recipe and run the graph without
                         dispatching any real click. Exit 0 if everything
                         loads and resolves cleanly.
+  --recipe-schema       Emit the JSON Schema for ClickRecipe to stdout and
+                        exit 0. Useful when an external agent needs the
+                        schema to validate or generate a recipe without
+                        spawning a Python interpreter.
+  --verbose, -v         Set log level to DEBUG (overrides
+                        COORDSMITH_LOG_LEVEL).
+  --quiet, -q           Set log level to WARNING (overrides
+                        COORDSMITH_LOG_LEVEL).
   --session-ref         Required. Session identifier (env: COORDSMITH_SESSION_REF).
   --expected-auth-state Required. (env: COORDSMITH_EXPECTED_AUTH_STATE).
   --target-page-url     Required. (env: COORDSMITH_TARGET_PAGE_URL).
@@ -101,6 +112,10 @@ def _extract_known_flags(
     session/auth/url/site-identity. Anything we want the shim NOT to see
     (``--click-recipe``, ``--dry-run``, ``--target-window``) must be peeled
     off here.
+
+    Verbosity flags (``--verbose`` / ``--quiet``) and ``--recipe-schema``
+    are handled separately in :func:`main` — they bypass ``_run`` and so
+    do not need to be stripped from the shim's argv.
     """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--click-recipe", dest="click_recipe", type=Path)
@@ -113,6 +128,35 @@ def _extract_known_flags(
         namespace.target_window,
         remaining,
     )
+
+
+def _wants_recipe_schema(argv: Sequence[str]) -> bool:
+    return any(a == "--recipe-schema" for a in argv)
+
+
+def _resolve_log_level(argv: Sequence[str]) -> str | None:
+    """``--verbose`` / ``-v`` → DEBUG; ``--quiet`` / ``-q`` → WARNING.
+
+    Returns ``None`` if neither flag is present so the env var
+    (``COORDSMITH_LOG_LEVEL``) or the default INFO can take over.
+    Order of precedence when both flags appear: ``--verbose`` wins
+    over ``--quiet`` (more useful default in debugging contexts).
+    """
+    has_verbose = any(a in ("--verbose", "-v") for a in argv)
+    has_quiet = any(a in ("--quiet", "-q") for a in argv)
+    if has_verbose:
+        return "DEBUG"
+    if has_quiet:
+        return "WARNING"
+    return None
+
+
+def _strip_verbosity_flags(argv: Sequence[str]) -> list[str]:
+    """Remove ``--verbose`` / ``-v`` / ``--quiet`` / ``-q`` /
+    ``--recipe-schema`` so the released-scope shim does not see
+    them. These flags are handled at the CLI boundary."""
+    consumed = {"--verbose", "-v", "--quiet", "-q", "--recipe-schema"}
+    return [a for a in argv if a not in consumed]
 
 
 def _resolve_target_window(
@@ -145,10 +189,9 @@ async def _activate_target_window(
     not a continuous focus guard.
     """
     if platform.system() != "Darwin":
-        print(
-            "coord-smith: --target-window is currently macOS-only; "
-            "no activation attempted on this platform.",
-            file=sys.stderr,
+        _log.warning(
+            "--target-window is currently macOS-only; "
+            "no activation attempted on this platform."
         )
         return False
     script = f'tell application "{name}" to activate'
@@ -165,10 +208,10 @@ async def _activate_target_window(
             timeout=5,
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
-        print(
-            f"coord-smith: target-window activation failed "
-            f"({type(exc).__name__}): {exc}",
-            file=sys.stderr,
+        _log.warning(
+            "target-window activation failed (%s): %s",
+            type(exc).__name__,
+            exc,
         )
         return False
     if settle_seconds > 0:
@@ -228,10 +271,9 @@ async def _run(
         await adapter.preflight()
         if dry_run:
             step_count = len(recipe.steps) if recipe and recipe.steps else 0
-            print(
-                f"coord-smith: dry-run OK — preflight passed, "
-                f"{step_count} step(s) resolved.",
-                file=sys.stderr,
+            _log.info(
+                "dry-run OK — preflight passed, %d step(s) resolved.",
+                step_count,
             )
             return 0
         recipe_steps = (
@@ -247,6 +289,25 @@ async def _run(
     return 0
 
 
+def _emit_recipe_schema() -> int:
+    """Print the ClickRecipe Pydantic JSON Schema to stdout.
+
+    Designed for autonomous agents that attach the schema to their
+    prompt without spawning a Python interpreter:
+
+        coord-smith --recipe-schema > /tmp/recipe-schema.json
+
+    The output is the standard ``model_json_schema()`` produced by
+    Pydantic v2 — JSON-RFC-compliant and stable across patch
+    releases (schema version is the ``ClickRecipe.version`` field,
+    not the JSON Schema dialect).
+    """
+    import json as _json  # local — keep top-level imports lean
+
+    print(_json.dumps(ClickRecipe.model_json_schema(), indent=2))
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     argv_list = list(argv) if argv is not None else sys.argv[1:]
     if _wants_help(argv_list):
@@ -255,6 +316,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     if _wants_version(argv_list):
         print(f"coord-smith {__version__}")
         return 0
+    if _wants_recipe_schema(argv_list):
+        return _emit_recipe_schema()
+
+    # Configure the coord_smith logger BEFORE any other work so the
+    # first diagnostic line (if any) lands through the configured
+    # handler. CLI flags > COORDSMITH_LOG_LEVEL > default INFO.
+    configure_logging(level=_resolve_log_level(argv_list))
+    argv_list = _strip_verbosity_flags(argv_list)
 
     # base_dir resolves to an absolute path so the per-host advisory
     # lock and the run.json target both refer to the same filesystem
@@ -279,14 +348,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         # stderr line instead of the Python default exit 130 with a
         # bare traceback. Exit 1 (runtime error) is documented; we
         # don't introduce a new code for this rare path.
-        print(
-            "coord-smith: interrupted by user / supervisor (KeyboardInterrupt)",
-            file=sys.stderr,
+        _log.warning(
+            "interrupted by user / supervisor (KeyboardInterrupt)"
         )
         exit_code, status = 1, "interrupted"
         return exit_code
     except ConfigError as exc:
-        print(f"coord-smith: config error: {exc}", file=sys.stderr)
+        _log.error("config error: %s", exc)
         exit_code, status = 3, "failure"
         return exit_code
     except HostBusyError as exc:
@@ -294,7 +362,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         # is documented in --help so callers (e.g. OpenClaw) can back
         # off and retry instead of treating this as a generic runtime
         # error.
-        print(f"coord-smith: host busy: {exc}", file=sys.stderr)
+        _log.error("host busy: %s", exc)
         exit_code, status = 4, "host_busy"
         return exit_code
     except (AccessibilityPermissionDenied, ScreenCapturePermissionDenied) as exc:
@@ -305,22 +373,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         # runtime dispatch failures — they fall through to the generic
         # handler below and return exit code 1, because the screen state
         # / template / network is the issue, not host permissions.
-        print(
-            f"coord-smith: permission preflight failed ({type(exc).__name__}): {exc}",
-            file=sys.stderr,
+        _log.error(
+            "permission preflight failed (%s): %s",
+            type(exc).__name__,
+            exc,
         )
-        print(
-            "coord-smith: grant macOS Accessibility + Screen Recording permission to "
-            "the host terminal app and retry.",
-            file=sys.stderr,
+        _log.error(
+            "grant macOS Accessibility + Screen Recording permission to "
+            "the host terminal app and retry."
         )
         exit_code, status = 2, "failure"
         return exit_code
     except Exception as exc:  # noqa: BLE001
-        print(
-            f"coord-smith: runtime error ({type(exc).__name__}): {exc}",
-            file=sys.stderr,
-        )
+        _log.error("runtime error (%s): %s", type(exc).__name__, exc)
         exit_code, status = 1, "failure"
         return exit_code
     finally:
