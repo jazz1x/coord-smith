@@ -134,6 +134,41 @@ def test_run_summary_counts_step_idxs_from_action_log(tmp_path: Path) -> None:
     assert record["step_count"] == 3
 
 
+def test_run_summary_logs_warning_on_malformed_failure_jsonl(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """If failure.jsonl's first line is malformed JSON,
+    _read_failure_record logs a WARNING and returns None (run.json
+    failure key becomes null). The log line is the operator's
+    breadcrumb that something unusual happened — silent return-None
+    hides real bugs (truncated writes, concurrent edits, manual
+    tampering)."""
+    import logging
+
+    run_root = tmp_path / "artifacts" / "runs" / "20260518-000099-malformed"
+    action_log = run_root / "artifacts" / "action-log"
+    action_log.mkdir(parents=True)
+    # Plant a first line that is NOT valid JSON.
+    (action_log / "failure.jsonl").write_text(
+        "this is not json\n", encoding="utf-8"
+    )
+
+    writer = RunSummaryWriter(base_dir=tmp_path)
+    with caplog.at_level(logging.WARNING, logger="coord_smith.run_summary"):
+        writer.flush(status="failure", exit_code=1)
+
+    assert any(
+        "could not parse first line of failure.jsonl" in record.getMessage()
+        for record in caplog.records
+    )
+    # And the summary still lands with failure=null so the caller's
+    # status branching works.
+    summary = json.loads(
+        (run_root / SUMMARY_FILENAME).read_text(encoding="utf-8")
+    )
+    assert summary["failure"] is None
+
+
 def test_run_summary_writer_does_not_raise_when_target_unwritable(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

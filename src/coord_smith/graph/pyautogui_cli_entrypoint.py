@@ -352,18 +352,64 @@ def _extract_cleanup_bounds(
     return namespace.max_runs, namespace.max_age_days
 
 
+_CLEANUP_COFLAG_PREFIXES = (
+    "--click-recipe",
+    "--session-ref",
+    "--expected-auth-state",
+    "--target-page-url",
+    "--site-identity",
+    "--target-window",
+    "--dry-run",
+)
+
+
 def _run_cleanup(base_dir: Path, argv: Sequence[str]) -> int:
     """Execute ``coord-smith --cleanup`` end-to-end.
 
-    Reads the bounds from argv, runs ``cleanup_runs``, and prints
-    the summary at INFO level. Returns 0 on success, 3 on bad
-    arguments.
+    Reads the bounds from argv, runs ``cleanup_runs`` while holding
+    the per-host advisory lock (so a concurrent click run cannot
+    have its directory deleted from under it — see ADR-005 +
+    docs/architecture-boundaries.md §Host Exclusivity), and logs
+    the summary at INFO level.
+
+    Returns:
+        0 — success, all targeted runs removed (or no runs to remove)
+        1 — partial failure (CleanupReport.errors > 0; some
+            directories could not be deleted, e.g. permission denied)
+        3 — bad argument (negative bound — handled upstream as
+            ConfigError before this function runs)
+        4 — host busy (another coord-smith process holds the lock;
+            HostBusyError propagates to main's handler)
+
+    Co-flags (``--click-recipe`` and session args) are silently
+    ignored when paired with ``--cleanup``; we emit a WARNING-level
+    log so the operator notices the misuse without aborting the
+    cleanup pass.
     """
+    co_flags = [a for a in argv if a.split("=", 1)[0] in _CLEANUP_COFLAG_PREFIXES]
+    if co_flags:
+        _log.warning(
+            "--cleanup: ignoring co-passed flags %s — cleanup runs "
+            "in isolation and does not dispatch clicks",
+            co_flags,
+        )
+
     max_runs, max_age_days = _extract_cleanup_bounds(argv)
-    report = cleanup_runs(
-        base_dir=base_dir, max_runs=max_runs, max_age_days=max_age_days
-    )
+    # Acquire the host lock so a concurrent click run cannot have
+    # its run root removed mid-flight. cleanup_runs sorts by mtime
+    # and could otherwise classify an active run as "stale" under
+    # a tight --max-runs bound.
+    with acquire_host_lock(base_dir=base_dir):
+        report = cleanup_runs(
+            base_dir=base_dir, max_runs=max_runs, max_age_days=max_age_days
+        )
     _log.info("cleanup: %s", report.summary_line())
+    if report.errors > 0:
+        _log.warning(
+            "cleanup: %d directory deletion error(s); see prior log records",
+            report.errors,
+        )
+        return 1
     return 0
 
 
@@ -405,14 +451,22 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if _wants_cleanup(argv_list):
         # ``--cleanup`` is an operator command, not a click run.
-        # It does not need the host lock, the run.json envelope,
-        # or the released-scope graph — short-circuit here so we
-        # don't write a spurious run.json for a cleanup pass.
+        # It DOES acquire the per-host advisory lock (so a concurrent
+        # click run cannot have its dir deleted mid-flight — see
+        # ADR-005), but it does NOT write the run.json envelope
+        # (cleanup is not a "run" in the dispatch sense — see
+        # _run_cleanup docstring).
         try:
             return _run_cleanup(Path(".").resolve(), argv_list)
         except ConfigError as exc:
             _log.error("config error: %s", exc)
             return 3
+        except HostBusyError as exc:
+            # Same back-off semantics as a click run: exit 4 signals
+            # to the operator to retry after another invocation
+            # releases the lock.
+            _log.error("host busy: %s", exc)
+            return 4
 
     # base_dir resolves to an absolute path so the per-host advisory
     # lock and the run.json target both refer to the same filesystem

@@ -238,3 +238,99 @@ def test_cli_cleanup_uses_documented_defaults() -> None:
     """The CLI defaults match the documented values (--help, ADR text)."""
     assert DEFAULT_MAX_AGE_DAYS == 14
     assert DEFAULT_MAX_RUNS == 100
+
+
+def test_cli_cleanup_warns_on_coflag(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """--cleanup ignores click-related co-flags but logs a WARNING so the
+    operator notices the misuse instead of silently performing a cleanup
+    when a click was intended."""
+    import logging
+
+    from coord_smith.graph.pyautogui_cli_entrypoint import main
+
+    old_cwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        with caplog.at_level(logging.WARNING, logger="coord_smith.cli"):
+            exit_code = main(
+                argv=["--cleanup", "--click-recipe", "/tmp/nonexistent.yaml"]
+            )
+    finally:
+        os.chdir(old_cwd)
+
+    assert exit_code == 0
+    assert any(
+        "ignoring co-passed flags" in record.getMessage()
+        for record in caplog.records
+    )
+
+
+def test_cli_cleanup_returns_exit_1_when_errors_present(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """When rmtree fails on at least one run dir, --cleanup exits 1 so
+    automated callers can detect partial failure."""
+    import logging
+
+    from coord_smith.graph.pyautogui_cli_entrypoint import main
+
+    # Create a stale run that cleanup will try to remove.
+    _make_run(tmp_path, "stale", age_days=60)
+    # Patch shutil.rmtree to fail unconditionally so the cleanup
+    # report carries errors > 0.
+    with patch(
+        "coord_smith.graph.run_cleanup.shutil.rmtree",
+        side_effect=OSError("simulated"),
+    ):
+        old_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            with caplog.at_level(logging.WARNING, logger="coord_smith.cli"):
+                exit_code = main(argv=["--cleanup"])
+        finally:
+            os.chdir(old_cwd)
+
+    assert exit_code == 1, (
+        "CleanupReport.errors > 0 must map to exit 1 so the operator's "
+        "cron job can detect partial deletion failure"
+    )
+    assert any(
+        "deletion error" in record.getMessage() for record in caplog.records
+    )
+
+
+def test_cleanup_acquires_host_lock_before_pruning(
+    tmp_path: Path,
+) -> None:
+    """A concurrent click run must not have its dir removed mid-flight.
+    --cleanup acquires the per-host advisory lock; if it's held, the
+    cleanup waits / fails per the documented host-busy semantics."""
+    import fcntl
+    import sys
+
+    from coord_smith.graph.pyautogui_cli_entrypoint import main
+
+    if sys.platform == "win32":
+        pytest.skip("fcntl-based lock is Unix-only")
+
+    (tmp_path / "artifacts").mkdir(parents=True)
+    lock_path = tmp_path / "artifacts" / ".coord-smith.lock"
+    held_fd = lock_path.open("a")
+    fcntl.flock(held_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    try:
+        old_cwd = os.getcwd()
+        os.chdir(tmp_path)
+        try:
+            exit_code = main(argv=["--cleanup"])
+        finally:
+            os.chdir(old_cwd)
+    finally:
+        fcntl.flock(held_fd.fileno(), fcntl.LOCK_UN)
+        held_fd.close()
+
+    # exit 4 = host busy — proves --cleanup went through the lock path.
+    assert exit_code == 4

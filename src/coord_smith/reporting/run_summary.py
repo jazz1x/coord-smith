@@ -31,6 +31,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
+from coord_smith.cli_logging import get_logger
+
+_log = get_logger("run_summary")
+
 SUMMARY_FILENAME = "run.json"
 SCHEMA_VERSION = 1
 
@@ -108,7 +112,18 @@ def _read_failure_record(run_root: Path) -> dict[str, Any] | None:
     first_line = text.splitlines()[0]
     try:
         record = json.loads(first_line)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as exc:
+        # failure.jsonl is supposed to be well-formed JSONL written by
+        # the adapter; if the first line is malformed, something
+        # unusual happened (truncated write, concurrent edit, manual
+        # tampering). The summary writer falls back to a null
+        # failure block — but we log the parse error so the operator
+        # has a breadcrumb. Silent return-None hides real bugs.
+        _log.warning(
+            "could not parse first line of failure.jsonl at %s: %s",
+            failure_log,
+            exc,
+        )
         return None
     if not isinstance(record, dict):
         return None
