@@ -12,7 +12,7 @@ changeable and subordinate to `docs/prd.md`.
   3 per-step): `attach_session` · `prepare_session` · `step_observe` ·
   `step_dispatch` · `step_capture` · `run_completion`. Modeled tier
   permanently removed.
-- Test count: 243 passing, 4 deselected (`-m real`).
+- Test count: 354 passing, 4 deselected (`-m real`).
 - Static checks: ruff clean, mypy strict clean, pre-commit clean.
 - Platform: macOS (Accessibility + Screen Recording permissions). Linux
   / Windows preflight not implemented.

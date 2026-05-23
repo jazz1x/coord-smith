@@ -4,7 +4,8 @@
 
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![tests](https://img.shields.io/badge/tests-307%20passing-brightgreen)
+![version](https://img.shields.io/badge/version-0.1.0-blue)
+![tests](https://img.shields.io/badge/tests-354%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 [![CI](https://github.com/coord-smith/coord-smith/actions/workflows/ci.yml/badge.svg)](https://github.com/coord-smith/coord-smith/actions/workflows/ci.yml)
 
@@ -75,7 +76,7 @@ uv python install 3.14
 ### 2. Verify
 
 ```bash
-uv run pytest -q                # 238 passed, 4 deselected (real-binary)
+uv run pytest -q                # 354 passed, 4 deselected (real-binary)
 uv run ruff check .
 uv run mypy
 ```

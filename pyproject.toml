@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "coord-smith"
-version = "0.0.1"
+version = "0.1.0"
 description = "Deterministic OS-level click executor for autonomous LLM agents — no browser, no runtime inference."
 readme = "README.md"
 license = {file = "LICENSE"}

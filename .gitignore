@@ -59,3 +59,4 @@ skills-lock.json
 
 # OpenClaw walkthrough demo (dev-only artifacts)
 _openclaw_session/
+/tmp/

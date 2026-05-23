@@ -5,92 +5,125 @@ All notable changes to **coord-smith** are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] — 2026-05-13 — productization milestone
 
-### Added
+This is the first release that an external orchestrator (OpenClaw,
+Hermes, or any agent following the same CLI contract) can integrate
+against without bespoke patches. The headline change set:
 
-- **Per-host advisory lock** preventing two coord-smith processes from
-  racing on the process-global pyautogui cursor/screen. Lock is
-  acquired before preflight (``coord_smith.graph.host_lock``). A
-  second invocation that cannot acquire the lock within 10 s exits
-  with new **exit code 4** (`host busy`). See
-  `docs/architecture-boundaries.md §Host Exclusivity`.
-- **Top-level `run.json` summary** envelope written on every exit
-  path (success / failure / interrupted / host_busy). Schema
-  v1: `status`, `exit_code`, timing, `step_count`, compact
-  `failure` block with `phase` + screenshot pointer. Caller can
-  read outcome from a single file. See
+### Added — caller integration surface
+- `coord-smith --recipe-schema` flag — emits the Pydantic JSON
+  Schema for `ClickRecipe` to stdout. Designed for autonomous
+  agents that attach the schema to their prompt without spawning
+  a Python interpreter.
+- `coord-smith --cleanup --max-runs N --max-age-days N` —
+  operator command to prune `artifacts/runs/`. Run roots with a
+  `.keep` sentinel file are never removed. Exit code 3 on
+  invalid bounds; exit 0 with a summary log line on success.
+- `--verbose / -v` and `--quiet / -q` flags, plus
+  `COORDSMITH_LOG_LEVEL` env var. Diagnostic output now flows
+  through the `coord_smith` logger with format
+  `coord-smith: <LEVEL>: <message>` — callers (orchestrators,
+  pytest's `caplog`) can intercept records via the root logger.
+- `run.json` envelope written on every exit path (success,
+  failure, interrupted, host_busy). Single-file outcome contract
+  for callers; schema documented in
   `docs/recipe-guide.md §Run Summary Schema`.
-- **`--target-window NAME` / `COORDSMITH_TARGET_WINDOW`** option
-  (macOS only) — one-shot AppleScript `activate` before preflight
-  so the target app is front-most at screenshot time. CLI flag
-  wins over env.
-- **`Step.settle_ms`** (default 300 ms, range 0–10000) — per-step
-  post-click pause that the `verify_transition` baseline / cursor
-  verification uses before reading the post-click frame. Replaces
-  the prior hard-coded 50 ms; configurable for native vs heavy
-  SPA scenarios.
-- **`Step.wait_for`** — pre-click image guard that polls for an
-  anchor template before dispatching the click. Region-scoped
-  search supported. Subsumes the legacy `trigger_wait` mission.
-- **`failure.jsonl.phase`** field — `pre_click` / `dispatch` /
-  `post_click` — disambiguates same-class errors that originate
-  from different sub-phases (e.g. `ImageWaitTimeout` from
-  `wait_for` vs `post_click_signal`).
-- **Step name uniqueness validation** at recipe parse time —
-  duplicate `step.name` values would silently collide on action-log
-  JSONL files. Now rejected with an actionable error.
-- **KeyboardInterrupt handler** in the CLI — Ctrl-C / SIGINT now
-  produces a deterministic exit 1 with a stderr line and a
-  `run.json` summary, instead of Python's default exit 130 with a
-  traceback and no artifacts.
-- **PEP 561 `py.typed` marker** so downstream `mypy`/`pyright`
-  consumers see coord-smith as a typed package.
-- **LICENSE** file (MIT) at repo root.
-- **pyproject.toml metadata**: classifiers, keywords, authors,
-  project URLs, real description.
-- **Multi-step example recipe with `wait_for`** at
-  `docs/recipes/multi-step-with-wait-for.yaml`.
-- **Contract tests** for `failure.jsonl` schema and the CLAUDE.md
-  recipe example, plus phase-tagging unit tests, host-lock unit
-  tests, run-summary unit tests, fail-fast contract integration
-  tests.
+- Per-step `Step.wait_for` (pre-click anchor poll) and
+  `Step.settle_ms` (configurable post-click pause, default 300 ms).
+- `failure.jsonl.phase` field (`pre_click` / `dispatch` /
+  `post_click`) disambiguating same-class errors from different
+  step sub-phases.
+- `--target-window NAME` / `COORDSMITH_TARGET_WINDOW` for macOS
+  one-shot AppleScript activation before preflight.
+- Per-host advisory lock (`fcntl.flock` on
+  `<base_dir>/artifacts/.coord-smith.lock`). New CLI exit code
+  **4** ("host busy") when a parallel invocation cannot acquire
+  the lock — caller back-off signal.
+- `KeyboardInterrupt` handler — Ctrl-C / SIGINT now produces
+  deterministic exit 1 + a `run.json` with `status: interrupted`
+  + a stderr log record, replacing Python's silent exit 130.
 
-### Changed
+### Added — durable architecture decisions (`adr/`)
+- ADR-001 LLM-free runtime + browser-internals forbidden
+- ADR-002 Multi-step recipe DSL (`steps:` canonical)
+- ADR-003 Coordinate priority (`payload → step.coord → step.image
+  → no-click`)
+- ADR-004 Failure evidence policy (phase-tagged `failure.jsonl`)
+- ADR-005 Per-host advisory lock
+- ADR-006 `run.json` envelope as caller outcome contract
 
-- **Mission graph consolidation** — 12 per-run missions folded into
-  6 (3 per-run + 3 per-step, repeated N times per recipe step).
-  Modeled tier permanently removed.
-- **CLI exit code mapping** — image-match / page-transition / etc.
-  dispatch failures now map to **exit 1** (not 2). Only true
-  permission failures (`AccessibilityPermissionDenied`,
-  `ScreenCapturePermissionDenied`) keep the exit-2 + permission-hint
-  path.
-- **CLAUDE.md recipe example** — switched from legacy `missions:`
-  shape to canonical `steps:` so agent-generated recipes inherit
-  the modern shape and don't trigger `DeprecationWarning`.
-- **Documentation truth-up** — PRD `§Released scope` and
-  `current-state.md` updated to match the actual 6-mission code.
-- **README CI claim** corrected — the original "GitHub Actions
-  runs Python 3.14 + xvfb…" text was aspirational; CI is not
-  wired yet (pre-commit hooks are the gate).
-- **ROP refactor** — eliminated the in-process `Step` dict
-  round-trip (producer passes the Step instance; payload-JSON
-  contract preserved via a `default=` callback). Deduplicated
-  triple-validation of attach/prepare inputs.
+### Added — packaging & community
+- `LICENSE` (MIT) at repo root + `pyproject.toml` `license` field.
+- PEP 561 `py.typed` marker so downstream `mypy`/`pyright`
+  consumers see the package as typed.
+- `pyproject.toml` metadata: classifiers (10), keywords (8),
+  authors, `project.urls`.
+- `CONTRIBUTING.md`, `SECURITY.md`, `.github/PULL_REQUEST_TEMPLATE.md`,
+  `.github/dependabot.yml`.
+- `.github/workflows/ci.yml` — Ubuntu + Python 3.14 + xvfb +
+  ruff + mypy strict + pytest + a separate pre-commit job. CI
+  runs on every push to `main` and every PR.
+
+### Changed — internal architecture cleanups
+- **Mission graph consolidated** from the legacy 12-mission flat
+  pipeline to 6 missions (3 per-run + 3 per-step, repeated per
+  recipe step). Modeled tier permanently removed.
+- **Per-mission evidence manifest unified** into a single
+  `MISSION_EVIDENCE_SPECS` table at
+  `src/coord_smith/missions/evidence_specs.py`. Both the adapter
+  (producer) and the validator (consumer) now read from it —
+  renaming an evidence ref is a one-file edit (B-CA-3).
+- **`adapters/execution/client.py` split** from 738 lines into
+  focused modules: `contracts.py` (5 symbols),
+  `validation.py` (10 symbols), `artifact_io.py` (7 public
+  symbols), `client.py` (~150 lines of orchestration +
+  re-exports). Public import surface unchanged (B-CA-1).
+- **`ActionLogWriter` extracted** from `PyAutoGUIAdapter`. Five
+  per-mission JSON-line writers + the action-key derivation
+  helper now live in
+  `src/coord_smith/adapters/action_log_writer.py` — testable
+  without `patch("pyautogui.*")` (B-CA-2).
+- **NewType identifiers** (`MissionName`, `SessionRef`,
+  `ExpectedAuthState`, `TargetPageUrl`, `SiteIdentity`,
+  `ResolvedImagePath`) with parser functions in
+  `src/coord_smith/models/identifiers.py`. Parse-once at the
+  CLI boundary; internal call sites receive the typed alias
+  (B-ROP-1, B-ROP-3).
+- **Result-style dual-target fallback** in
+  `_resolve_step_click_coords`. Replaced exception-as-control-flow
+  + re-run trick with explicit `_locate_image_or_none(step) →
+  (coords | None, error | None)`. Lazy evaluation preserved
+  (image matcher only runs when needed). Original error
+  instance re-raised on dual-failure (no re-run, no traceback
+  loss) (B-ROP-2).
+- **CLI exit-code categorisation** corrected — only true
+  permission failures map to exit 2; other dispatch failures
+  map to exit 1.
+- **CLAUDE.md recipe example** modernised — canonical `steps:`
+  shape; the deprecated `missions:` shape is documented as
+  legacy only.
+- **Step name uniqueness** enforced at recipe parse time —
+  duplicates collide on action-log JSONL file names.
+- **Test pyramid hygiene** — four adapter-instantiating
+  "unit" tests moved to `tests/integration/` (B-PROD-4).
 
 ### Removed
+- `playwright` from dev dependencies — violated the
+  "Browser-internals forbidden" invariant and was unused.
+- The false "GitHub Actions CI configured" claim from README
+  — real CI now exists (see Added).
+- Legacy 12-mission flat graph (subsumed by 6-mission graph).
 
-- **`playwright`** from dev deps — violated the documented
-  "Browser-internals forbidden" invariant and was unused by any
-  source or test.
-- **Stale test-count badges** (721 passing → current).
+### Test count
+- Tests: **354 passing**, 4 deselected (real-binary).
+- ruff: clean · mypy strict: clean · pre-commit: clean.
 
-### Security
+---
 
-- No new security surface. The MIT LICENSE file makes the existing
-  permission grant explicit; previously implicit in the README
-  badge.
+## [Unreleased]
+
+Nothing yet — the next batch lives in `docs/backlog.md`.
 
 ---
 
