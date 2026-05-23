@@ -39,6 +39,12 @@ from coord_smith.graph.released_call_site import (
 )
 from coord_smith.graph.released_run_root import create_run_root, generate_run_id
 from coord_smith.models.errors import ConfigError, FlowError
+from coord_smith.models.identifiers import (
+    parse_expected_auth_state,
+    parse_session_ref,
+    parse_site_identity,
+    parse_target_page_url,
+)
 from coord_smith.models.runtime import RuntimeState
 
 if TYPE_CHECKING:
@@ -84,55 +90,28 @@ def _bind_adapter_run_root(
 def _require_released_attach_inputs(
     *, session_ref: str, expected_auth_state: str
 ) -> None:
-    for label, value in (
-        ("session_ref", session_ref),
-        ("expected_auth_state", expected_auth_state),
-    ):
-        if not isinstance(value, str):
-            msg = f"Released-scope attach_session input '{label}' must be a string"
-            raise ConfigError(msg)
-        if not value:
-            msg = f"Released-scope attach_session input '{label}' must be non-empty"
-            raise ConfigError(msg)
-        if not value.strip():
-            msg = (
-                f"Released-scope attach_session input '{label}' must not be "
-                "whitespace-only"
-            )
-            raise ConfigError(msg)
-        if value != value.strip():
-            msg = (
-                f"Released-scope attach_session input '{label}' must not have leading "
-                "or trailing whitespace"
-            )
-            raise ConfigError(msg)
+    """Validate attach_session inputs.
+
+    Kept as a thin wrapper around the boundary parsers in
+    ``coord_smith.models.identifiers`` so callers that previously
+    relied on the void-return / raise-on-invalid contract keep
+    working. New code should call ``parse_session_ref`` /
+    ``parse_expected_auth_state`` directly and accept the typed
+    return values (parse-don't-validate).
+    """
+    parse_session_ref(session_ref)
+    parse_expected_auth_state(expected_auth_state)
 
 
 def _require_released_prepare_inputs(
     *, target_page_url: str, site_identity: str
 ) -> None:
-    for label, value in (
-        ("target_page_url", target_page_url),
-        ("site_identity", site_identity),
-    ):
-        if not isinstance(value, str):
-            msg = f"Released-scope prepare_session input '{label}' must be a string"
-            raise ConfigError(msg)
-        if not value:
-            msg = f"Released-scope prepare_session input '{label}' must be non-empty"
-            raise ConfigError(msg)
-        if not value.strip():
-            msg = (
-                f"Released-scope prepare_session input '{label}' must not be "
-                "whitespace-only"
-            )
-            raise ConfigError(msg)
-        if value != value.strip():
-            msg = (
-                f"Released-scope prepare_session input '{label}' must not have leading "
-                "or trailing whitespace"
-            )
-            raise ConfigError(msg)
+    """Validate prepare_session inputs.
+
+    See ``_require_released_attach_inputs`` — same wrapper pattern.
+    """
+    parse_target_page_url(target_page_url)
+    parse_site_identity(site_identity)
 
 
 def build_released_scope_execution_graph(

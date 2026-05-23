@@ -33,6 +33,7 @@ from pydantic import BaseModel, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
 from coord_smith.models.errors import ConfigError
+from coord_smith.models.identifiers import ResolvedImagePath
 
 
 class PostClickSignal(BaseModel):
@@ -383,7 +384,14 @@ def load_click_recipe(path: Path) -> ClickRecipe:
 
     base_dir = path.parent.resolve()
 
-    def _resolve(image: str, *, owner: str, role: str) -> str:
+    def _resolve(image: str, *, owner: str, role: str) -> ResolvedImagePath:
+        """Resolve an image path against the recipe directory AND
+        existence-check it on disk. The return type signals to
+        downstream consumers (image matching, wait_for, signal
+        polling) that the path has been verified and can be used
+        without re-checking ``Path(...).exists()`` — see
+        ``coord_smith.models.identifiers.ResolvedImagePath``.
+        """
         img_path = Path(image)
         if not img_path.is_absolute():
             img_path = (base_dir / img_path).resolve()
@@ -392,7 +400,7 @@ def load_click_recipe(path: Path) -> ClickRecipe:
                 f"click recipe {path} references missing {role} template "
                 f"for {owner}: {img_path}"
             )
-        return str(img_path)
+        return ResolvedImagePath(str(img_path))
 
     # Resolve image paths in legacy ``missions`` (still consumed by callers
     # that haven't migrated to ``steps``).
