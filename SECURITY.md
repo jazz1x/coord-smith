@@ -41,8 +41,9 @@ an external orchestrator (e.g. OpenClaw). Relevant exposures:
 If you believe you've found a security issue:
 
 1. **Do not open a public GitHub issue.**
-2. Email the maintainers (placeholder address until the project
-   is moved to its production org) with:
+2. Use GitHub's private vulnerability reporting:
+   [github.com/jazz1x/coord-smith/security/advisories/new](https://github.com/jazz1x/coord-smith/security/advisories/new)
+   Include:
    - A description of the vulnerability.
    - Reproduction steps or a minimal proof-of-concept recipe.
    - The version / commit hash you observed it on.

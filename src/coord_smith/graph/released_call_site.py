@@ -159,7 +159,7 @@ async def execute_attach_session_node(
 
     result = await execute_within_scope(
         adapter=adapter,
-        mission_name="attach_session",
+        mission_name=MissionName("attach_session"),
         payload={
             "session_ref": session_ref,
             "expected_auth_state": expected_auth_state,
@@ -195,7 +195,7 @@ async def execute_prepare_session_node(
 
     result = await execute_within_scope(
         adapter=adapter,
-        mission_name="prepare_session",
+        mission_name=MissionName("prepare_session"),
         payload={"target_page_url": target_page_url, "site_identity": site_identity},
         approved_scope_ceiling=run.approved_scope_ceiling,
         run_root=run.run_root,
@@ -239,7 +239,7 @@ async def execute_step_observe_node(
 
     result = await execute_within_scope(
         adapter=adapter,
-        mission_name="step_observe",
+        mission_name=MissionName("step_observe"),
         payload={"step_idx": step_idx, "step": step},
         approved_scope_ceiling=run.approved_scope_ceiling,
         run_root=run.run_root,
@@ -279,7 +279,7 @@ async def execute_step_dispatch_node(
 
     result = await execute_within_scope(
         adapter=adapter,
-        mission_name="step_dispatch",
+        mission_name=MissionName("step_dispatch"),
         payload={"step_idx": step_idx, "step": step},
         approved_scope_ceiling=run.approved_scope_ceiling,
         run_root=run.run_root,
@@ -318,7 +318,7 @@ async def execute_step_capture_node(
 
     result = await execute_within_scope(
         adapter=adapter,
-        mission_name="step_capture",
+        mission_name=MissionName("step_capture"),
         payload={"step_idx": step_idx, "step": step},
         approved_scope_ceiling=run.approved_scope_ceiling,
         run_root=run.run_root,
@@ -350,7 +350,7 @@ async def execute_run_completion_node(
 
     result = await execute_within_scope(
         adapter=adapter,
-        mission_name="run_completion",
+        mission_name=MissionName("run_completion"),
         payload={"step_count": len(state.step_results)},
         approved_scope_ceiling=run.approved_scope_ceiling,
         run_root=run.run_root,

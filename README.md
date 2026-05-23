@@ -59,6 +59,17 @@ uv --version
 
 ## Install
 
+For end users (PyPI consumers — preferred once a wheel is published):
+
+```bash
+# uv (recommended)
+uv pip install coord-smith
+# or stock pip
+pip install coord-smith
+```
+
+For development from a source checkout:
+
 ### 1. Bootstrap the project
 
 ```bash

@@ -18,6 +18,7 @@ from pathlib import Path
 # --- artifact_io re-exports ---
 from coord_smith.adapters.execution.artifact_io import (
     action_log_artifact_path,
+    require_run_root_dir,
     validate_action_log_artifacts_contain_ref_events,
     validate_action_log_artifacts_have_minimum_schema,
     validate_action_log_evidence_refs_resolvable,
@@ -46,6 +47,7 @@ from coord_smith.adapters.execution.validation import (
     validate_execution_roundtrip_within_scope,
 )
 from coord_smith.models.errors import AppError, ExecutionTransportError, ValidationError
+from coord_smith.models.identifiers import MissionName
 
 __all__ = [
     # contracts
@@ -78,7 +80,7 @@ __all__ = [
 async def execute_within_scope(
     *,
     adapter: ExecutionAdapter,
-    mission_name: str,
+    mission_name: MissionName,
     payload: dict[str, object],
     approved_scope_ceiling: str,
     run_root: Path | None = None,
@@ -88,8 +90,6 @@ async def execute_within_scope(
     This wrapper hardens request/result contracts and optionally validates action-log
     artifacts under the provided run root.
     """
-
-    from coord_smith.adapters.execution.artifact_io import _require_run_root_dir
 
     try:
         request = build_execution_request_within_scope(
@@ -127,7 +127,7 @@ async def execute_within_scope(
         msg = f"Invalid OpenClaw execution result within released scope: {exc}"
         raise ValidationError(msg) from exc
     if run_root is not None:
-        run_root = _require_run_root_dir(run_root=run_root)
+        run_root = require_run_root_dir(run_root=run_root)
         validate_action_log_evidence_refs_resolvable(
             evidence_refs=result.evidence_refs,
             run_root=run_root,

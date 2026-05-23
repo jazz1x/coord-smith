@@ -59,6 +59,17 @@ uv --version
 
 ## 설치
 
+엔드유저 (PyPI 휠이 게시된 후 권장 경로):
+
+```bash
+# uv (권장)
+uv pip install coord-smith
+# 또는 stock pip
+pip install coord-smith
+```
+
+소스 체크아웃에서 개발할 경우:
+
 ### 1. 프로젝트 부트스트랩
 
 ```bash

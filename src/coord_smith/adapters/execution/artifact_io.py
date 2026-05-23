@@ -10,12 +10,21 @@ from pathlib import Path
 from coord_smith.evidence.envelope import parse_released_evidence_ref
 from coord_smith.missions.names import ALL_MISSIONS
 from coord_smith.models.errors import ValidationError
+from coord_smith.models.identifiers import MissionName
 
 _KEBAB_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
-def _require_run_root_dir(*, run_root: object) -> Path:
-    """Validate that run_root is a Path that exists and is a directory."""
+def require_run_root_dir(*, run_root: object) -> Path:
+    """Validate that ``run_root`` is a Path that exists and is a directory.
+
+    Public surface — sibling modules (``client.py``'s
+    ``execute_within_scope``) call this directly as a precondition
+    check before writing artifacts. Promoted from the private
+    ``_require_run_root_dir`` form to drop the underscore now that
+    a cross-module caller exists, and to remove the lazy import
+    that used to access it through the private name.
+    """
     if not isinstance(run_root, Path):
         msg = "run_root must be a pathlib.Path"
         raise ValidationError(msg)
@@ -31,7 +40,7 @@ def _require_run_root_dir(*, run_root: object) -> Path:
 def action_log_artifact_path(*, run_root: Path, key: str) -> Path:
     """Return the released-scope action-log artifact path for an evidence ref key."""
 
-    run_root = _require_run_root_dir(run_root=run_root)
+    run_root = require_run_root_dir(run_root=run_root)
     if not isinstance(key, str):
         msg = "key must be a string"
         raise ValidationError(msg)
@@ -74,7 +83,7 @@ def validate_action_log_evidence_refs_resolvable(
 ) -> None:
     """Validate released-scope action-log refs can be resolved under the run root."""
 
-    run_root = _require_run_root_dir(run_root=run_root)
+    run_root = require_run_root_dir(run_root=run_root)
 
     for ref in evidence_refs:
         try:
@@ -107,7 +116,7 @@ def validate_action_log_artifacts_have_minimum_schema(
 ) -> None:
     """Validate action-log artifacts contain at least one schema-valid JSON line."""
 
-    run_root = _require_run_root_dir(run_root=run_root)
+    run_root = require_run_root_dir(run_root=run_root)
 
     for ref in evidence_refs:
         try:
@@ -170,27 +179,20 @@ def validate_action_log_artifacts_have_minimum_schema(
 
 
 def validate_action_log_artifacts_contain_ref_events(
-    *, evidence_refs: tuple[str, ...], run_root: Path, expected_mission_name: str
+    *,
+    evidence_refs: tuple[str, ...],
+    run_root: Path,
+    expected_mission_name: MissionName,
 ) -> None:
-    """Validate each action-log ref has a line with matching event+mission."""
+    """Validate each action-log ref has a line with matching event+mission.
 
-    run_root = _require_run_root_dir(run_root=run_root)
-
-    if not isinstance(expected_mission_name, str):
-        msg = "expected_mission_name must be a string"
-        raise ValidationError(msg)
-    if not expected_mission_name:
-        msg = "expected_mission_name must be non-empty"
-        raise ValidationError(msg)
-    if not expected_mission_name.strip():
-        msg = "expected_mission_name must not be whitespace-only"
-        raise ValidationError(msg)
-    if expected_mission_name != expected_mission_name.strip():
-        msg = "expected_mission_name must not have leading or trailing whitespace"
-        raise ValidationError(msg)
-    if expected_mission_name not in ALL_MISSIONS:
-        msg = f"expected_mission_name is not a known mission: '{expected_mission_name}'"
-        raise ValidationError(msg)
+    Parse-don't-validate boundary: ``expected_mission_name`` is a
+    ``MissionName`` (parsed upstream via
+    ``coord_smith.models.identifiers.parse_mission_name``) — the
+    shape and ``ALL_MISSIONS`` membership checks have already
+    fired. This function only consumes the typed value.
+    """
+    run_root = require_run_root_dir(run_root=run_root)
 
     for ref in evidence_refs:
         try:
@@ -250,7 +252,7 @@ def validate_release_ceiling_stop_action_log(
     if "evidence://action-log/release-ceiling-stop" not in evidence_refs:
         return
 
-    run_root = _require_run_root_dir(run_root=run_root)
+    run_root = require_run_root_dir(run_root=run_root)
 
     path = action_log_artifact_path(run_root=run_root, key="release-ceiling-stop")
     try:

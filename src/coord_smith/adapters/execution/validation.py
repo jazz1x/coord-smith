@@ -11,7 +11,7 @@ from coord_smith.adapters.execution.contracts import (
 )
 from coord_smith.evidence.envelope import parse_released_evidence_ref
 from coord_smith.missions.evidence_specs import MISSION_EVIDENCE_SPECS
-from coord_smith.missions.names import ALL_MISSIONS, mission_is_browser_facing
+from coord_smith.missions.names import mission_is_browser_facing
 from coord_smith.models.errors import ConfigError
 from coord_smith.models.identifiers import MissionName, parse_mission_name
 from coord_smith.models.runtime import (
@@ -22,23 +22,15 @@ from coord_smith.models.runtime import (
 
 
 def validate_execution_mission_name(mission_name: MissionName) -> None:
-    """Reject non-browser-facing missions for OpenClaw execution requests."""
+    """Reject non-browser-facing missions for OpenClaw execution requests.
 
-    if not isinstance(mission_name, str):
-        msg = "OpenClaw mission_name must be a string"
-        raise TypeError(msg)
-    if not mission_name:
-        msg = "OpenClaw mission_name must be non-empty"
-        raise ValueError(msg)
-    if not mission_name.strip():
-        msg = "OpenClaw mission_name must not be whitespace-only"
-        raise ValueError(msg)
-    if mission_name != mission_name.strip():
-        msg = "OpenClaw mission_name must not have leading or trailing whitespace"
-        raise ValueError(msg)
-    if mission_name not in ALL_MISSIONS:
-        msg = f"Unknown mission name: {mission_name}"
-        raise ValueError(msg)
+    Parse-don't-validate boundary: callers MUST pre-parse via
+    ``coord_smith.models.identifiers.parse_mission_name`` so the
+    string-shape + ``ALL_MISSIONS`` membership checks have already
+    fired upstream. This function only enforces the *semantic*
+    rule that the mission is browser-facing — non-redundant with
+    the parse step.
+    """
     if not mission_is_browser_facing(mission_name):
         msg = (
             f"Mission '{mission_name}' is not browser-facing and cannot run on OpenClaw"

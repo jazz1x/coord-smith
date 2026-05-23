@@ -118,7 +118,13 @@ def test_acquire_host_lock_falls_back_to_noop_without_fcntl(
 def test_host_busy_error_is_caught_by_cli_main_with_exit_code_4(
     tmp_path: Path,
 ) -> None:
-    """The CLI maps HostBusyError → exit code 4 ('host busy')."""
+    """The CLI maps HostBusyError → exit code 4 ('host busy') AND
+    flushes a run.json envelope with status="host_busy" so the
+    caller can detect the back-off signal from artifacts alone
+    (mirrors the keyboard-interrupt run.json contract)."""
+    import json
+    import os
+
     from coord_smith.graph.pyautogui_cli_entrypoint import main
 
     # Patch _run to raise HostBusyError so we exercise main's handler
@@ -126,9 +132,24 @@ def test_host_busy_error_is_caught_by_cli_main_with_exit_code_4(
     async def _raises(*args: object, **kwargs: object) -> int:
         raise HostBusyError("simulated contention")
 
-    with patch(
-        "coord_smith.graph.pyautogui_cli_entrypoint._run", side_effect=_raises
-    ):
-        exit_code = main(argv=[])
+    old_cwd = os.getcwd()
+    os.chdir(tmp_path)
+    try:
+        with patch(
+            "coord_smith.graph.pyautogui_cli_entrypoint._run", side_effect=_raises
+        ):
+            exit_code = main(argv=[])
+    finally:
+        os.chdir(old_cwd)
 
     assert exit_code == 4
+    # run.json must be written even on host-busy so caller automation
+    # can read status without parsing stderr.
+    summary_path = tmp_path / "run.json"
+    assert summary_path.is_file(), (
+        "host-busy path must flush run.json so callers detect the "
+        "back-off signal from artifacts alone"
+    )
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    assert summary["status"] == "host_busy"
+    assert summary["exit_code"] == 4

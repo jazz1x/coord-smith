@@ -43,7 +43,7 @@ the pipeline with no click (useful for smoke-testing the evidence pipeline).
 | Code | Meaning | Agent action |
 |------|---------|--------------|
 | `0` | Success — pipeline reached `runCompletion` | Read `run.json` / `artifacts/`, proceed |
-| `1` | Unhandled runtime error (incl. typed dispatch failure, `KeyboardInterrupt`) | Read the `failure` key inside `run.json` for the compact diagnosis |
+| `1` | Unhandled runtime error (typed dispatch failure OR caught `KeyboardInterrupt`) | Branch on `run.json.status`: `"failure"` → read the `failure` key for diagnosis; `"interrupted"` → safe to retry (no failure block) |
 | `2` | macOS Accessibility or Screen Recording permission denied | Cannot fix via recipe; escalate to operator |
 | `3` | Recipe file missing or schema invalid | Fix the recipe and retry |
 | `4` | Host busy — another coord-smith process held the per-host lock | Back off 1–5 s and retry; see `docs/architecture-boundaries.md §Host Exclusivity` |
@@ -379,9 +379,16 @@ error). `exit 0` always means the run reached `runCompletion`.
 
 ## Run Summary Schema (`run.json`)
 
-Every coord-smith invocation writes exactly one ``run.json`` summary
-envelope. The caller (e.g. OpenClaw) should read it **first** to
-determine outcome instead of grepping individual JSONL files.
+Every coord-smith **dispatch** invocation writes exactly one
+``run.json`` summary envelope. The caller (e.g. OpenClaw) should
+read it **first** to determine outcome instead of grepping
+individual JSONL files.
+
+**Exception**: ``coord-smith --cleanup`` is an operator-only
+command (not a dispatch run) and does **NOT** write ``run.json`` —
+it only writes a single INFO-level log line summarizing the
+cleanup pass. Automation that polls ``run.json`` after every
+invocation must skip the wait for ``--cleanup`` invocations.
 
 Location:
 

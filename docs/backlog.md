@@ -7,9 +7,38 @@ fold these into unrelated PRs.
 
 The v0.1.0 productization sweep (2026-05-13) closed **9 of the 13
 items** that were listed here previously. See `CHANGELOG.md
-[0.1.0]` for the rolled-up summary. What remains:
+[0.1.0]` for the rolled-up summary. The v0.1.1 audit-closure
+sweep (2026-05-23) added 3 deferred items below (B-CA-4 / B-CA-5 /
+B-POLISH-3). What remains:
+
+## P3 — Architectural refactors (Clean Arch pass #2 deferred)
+
+### B-CA-4 · Extract step-guard helpers from PyAutoGUIAdapter
+
+Adapter is 892 lines after C5/C6 split. Pre/post-click guard
+methods (`_dispatch_with_step`, `_await_pre_click_wait_for`,
+`_run_post_click_checks`, plus the failure-tagging
+`_tag_phase`) form a cluster ~160 lines that can lift to
+``adapters/step_guards.py`` without changing public behaviour.
+Acceptance: adapter < 700 lines, all tests pass unchanged.
+
+### B-CA-5 · Extract run-summary lifecycle context manager
+
+`graph/pyautogui_cli_entrypoint.py` (559 lines) is a hybrid
+CLI router + RunSummaryWriter driver. Extract the
+`writer = ... ; try/finally: writer.flush(...)` lifecycle into
+``reporting/run_summary_lifecycle.py`` as a context manager so
+the CLI just enters/exits it. Removes the second reporting-
+control surface from the entrypoint.
 
 ## P3 — Polish
+
+### B-POLISH-3 · PyPI version + downloads badges (post-publish)
+
+Add `[![PyPI](https://img.shields.io/pypi/v/coord-smith)]`
+and `[![Downloads](https://img.shields.io/pypi/dm/coord-smith)]`
+shields to README.md / README.ko.md once a wheel is actually
+on PyPI. Cosmetic; cannot land before the first PyPI push.
 
 ### B-POLISH-1.5 · Remaining community files
 

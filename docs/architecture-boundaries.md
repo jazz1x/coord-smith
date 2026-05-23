@@ -151,8 +151,15 @@ is a safety net against accidents, not a queue manager.
 
 ## How callers should read a run result (★ critical contract)
 
-Every coord-smith invocation writes exactly one
-``run.json`` envelope. The caller (e.g. OpenClaw) should read it
+Every coord-smith **dispatch** invocation writes exactly one
+``run.json`` envelope. ``coord-smith --cleanup`` is an operator
+command and does NOT write ``run.json`` — its outcome is on
+stderr only (single INFO log line). The decision tree below
+covers dispatch invocations; cleanup callers should branch on
+exit code alone (0 success, 1 partial deletion errors, 4 host
+busy).
+
+The caller (e.g. OpenClaw) should read ``run.json``
 **before** inspecting any other artifact. The decision tree:
 
 ```
