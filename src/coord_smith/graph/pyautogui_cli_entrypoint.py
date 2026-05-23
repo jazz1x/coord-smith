@@ -256,6 +256,7 @@ async def _run(
     *,
     argv: Sequence[str] | None = None,
     base_dir: Path = Path("."),
+    summary_writer: RunSummaryWriter | None = None,
 ) -> int:
     """Instantiate PyAutoGUIAdapter, preflight OS permissions, then run the graph.
 
@@ -293,6 +294,14 @@ async def _run(
                 "dry-run OK — preflight passed, %d step(s) resolved.",
                 step_count,
             )
+            # Stash the count so main()'s try/finally writes a
+            # run.json with step_count matching the log line. Without
+            # this the writer's empirical recovery returns 0 (no run
+            # root created on dry-run), confusing autonomous callers
+            # that read step_count to confirm the recipe matched the
+            # one they sent.
+            if summary_writer is not None:
+                summary_writer.set_pending_step_count(step_count)
             return 0
         recipe_steps = (
             list(recipe.steps) if recipe is not None and recipe.steps else None
@@ -480,7 +489,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     exit_code: int = 1
     status: RunStatus = "failure"
     try:
-        exit_code = asyncio.run(_run(argv=argv_list, base_dir=base_dir))
+        exit_code = asyncio.run(
+            _run(
+                argv=argv_list,
+                base_dir=base_dir,
+                summary_writer=summary_writer,
+            )
+        )
         status = "success" if exit_code == 0 else "failure"
         return exit_code
     except KeyboardInterrupt:

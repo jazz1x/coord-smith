@@ -113,6 +113,38 @@ def test_run_summary_atomic_write_no_partial_file(tmp_path: Path) -> None:
     assert leftover_tmps == []
 
 
+def test_run_summary_step_count_override_wins(tmp_path: Path) -> None:
+    """flush(step_count_override=N) wins over empirical recovery — used
+    by dry-run where no run root exists yet."""
+    run_root = tmp_path / "artifacts" / "runs" / "20260518-000004-dry"
+    run_root.mkdir(parents=True)
+
+    writer = RunSummaryWriter(base_dir=tmp_path)
+    writer.flush(status="success", exit_code=0, step_count_override=7)
+    record = json.loads(
+        (run_root / SUMMARY_FILENAME).read_text(encoding="utf-8")
+    )
+    assert record["step_count"] == 7
+
+
+def test_run_summary_set_pending_step_count_persists_to_flush(
+    tmp_path: Path,
+) -> None:
+    """set_pending_step_count is the stash channel used by the CLI
+    dry-run path — flush() reads it when no explicit override is
+    passed."""
+    run_root = tmp_path / "artifacts" / "runs" / "20260518-000005-pending"
+    run_root.mkdir(parents=True)
+
+    writer = RunSummaryWriter(base_dir=tmp_path)
+    writer.set_pending_step_count(3)
+    writer.flush(status="success", exit_code=0)
+    record = json.loads(
+        (run_root / SUMMARY_FILENAME).read_text(encoding="utf-8")
+    )
+    assert record["step_count"] == 3
+
+
 def test_run_summary_counts_step_idxs_from_action_log(tmp_path: Path) -> None:
     """step_count is recovered from distinct step_idx values in
     step-*.jsonl files (no recipe coupling required)."""

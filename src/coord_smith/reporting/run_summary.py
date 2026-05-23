@@ -207,6 +207,22 @@ class RunSummaryWriter:
         self._base_dir = base_dir
         self._started_at_iso = datetime.now(tz=UTC).isoformat()
         self._started_at_mono = time.monotonic()
+        # Optional step count override that the dry-run path can
+        # stash during ``_run`` execution. ``flush`` reads this if
+        # no explicit ``step_count_override`` argument is passed.
+        # See class docstring for the dry-run UX rationale.
+        self._pending_step_count: int | None = None
+
+    def set_pending_step_count(self, count: int) -> None:
+        """Stash a step count for the upcoming flush.
+
+        Used by the CLI dry-run path: the recipe step count is known
+        before any run root is created, but the writer's empirical
+        recovery from action-log files would return 0 because the
+        graph never ran. Setting this lets the run.json reflect the
+        validated step count.
+        """
+        self._pending_step_count = count
 
     def flush(
         self,
@@ -214,12 +230,21 @@ class RunSummaryWriter:
         status: RunStatus,
         exit_code: int,
         run_root: Path | None = None,
+        step_count_override: int | None = None,
     ) -> Path:
         """Write the summary and return the path it was written to.
 
         Best-effort: a failure inside the writer must not mask the
         caller's exit code. The writer logs the error to stderr but
         does not raise.
+
+        ``step_count_override`` is used by the dry-run path: the
+        recipe step count is known at the CLI boundary, but the
+        graph never ran (no run root, no per-step JSONL files), so
+        the empirical recovery from action-log files would return
+        0 — misleading for callers reading run.json. Passing the
+        validated step count keeps the summary aligned with the
+        log line "preflight passed, N step(s) resolved".
         """
         # Locate the run root if the caller didn't pass one. Most
         # paths will not pass it — the writer resolves it from
@@ -231,7 +256,16 @@ class RunSummaryWriter:
         elapsed = time.monotonic() - self._started_at_mono
 
         run_id: str | None = run_root.name if run_root is not None else None
-        step_count = _step_count_from_recipe(run_root=run_root)
+        # Step count resolution order (highest priority first):
+        # 1. explicit step_count_override kwarg (test/programmatic)
+        # 2. self._pending_step_count (CLI dry-run stash)
+        # 3. empirical recovery from action-log JSONL files (run-then-flush)
+        if step_count_override is not None:
+            step_count = step_count_override
+        elif self._pending_step_count is not None:
+            step_count = self._pending_step_count
+        else:
+            step_count = _step_count_from_recipe(run_root=run_root)
 
         failure_record: dict[str, Any] | None = None
         if status == "failure" and run_root is not None:
