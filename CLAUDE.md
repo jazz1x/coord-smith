@@ -165,13 +165,28 @@ design docs.
 ## Invariants
 
 - **LLM-free runtime.** The coord-smith runtime graph contains no LLM inference.
-  Reasoning lives outside (e.g. OpenClaw).
+  Reasoning lives outside (e.g. OpenClaw). See [ADR-001](adr/ADR-001-llm-free-runtime-and-browser-ban.md).
 - **Browser-internals forbidden.** No Playwright, CDP, or Chromium driver.
-  Only OS-level coordinates and pixels.
+  Only OS-level coordinates and pixels. See [ADR-001](adr/ADR-001-llm-free-runtime-and-browser-ban.md).
 - **`pyautogui.FAILSAFE = True`** is enforced in `PyAutoGUIAdapter.__init__`.
-- **Coordinate priority is fixed.** payload → recipe coord → recipe image →
-  no click. Never the other way.
+- **Coordinate priority is fixed.** payload → step.coord → step.image →
+  no click. Never the other way. See [ADR-003](adr/ADR-003-coordinate-priority.md).
 - **OpenClaw calls coord-smith**, not the reverse.
+- **Per-host advisory lock.** One coord-smith invocation per artifact tree.
+  See [ADR-005](adr/ADR-005-per-host-advisory-lock.md).
+
+## Durable architectural decisions
+
+Spine decisions are recorded in [`adr/`](adr/README.md). Read before
+proposing any change that touches the runtime contract or caller-facing
+API:
+
+- [ADR-001 LLM-free runtime + browser-internals forbidden](adr/ADR-001-llm-free-runtime-and-browser-ban.md)
+- [ADR-002 Multi-step recipe DSL (`steps:` canonical)](adr/ADR-002-multi-step-recipe-dsl.md)
+- [ADR-003 Coordinate priority](adr/ADR-003-coordinate-priority.md)
+- [ADR-004 Failure evidence policy](adr/ADR-004-failure-evidence-policy.md)
+- [ADR-005 Per-host advisory lock](adr/ADR-005-per-host-advisory-lock.md)
+- [ADR-006 `run.json` envelope as caller outcome contract](adr/ADR-006-run-json-envelope.md)
 
 ## Agent Expectations
 

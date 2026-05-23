@@ -9,17 +9,23 @@ narrow. This page tells you where the lines are.
 In priority order:
 
 1. **`docs/prd.md`** — system invariants. Do not violate.
-2. **`docs/current-state.md`** — what's actually released today.
-3. **`docs/architecture-boundaries.md`** — caller / runtime
+2. **[`adr/`](adr/README.md)** — durable architectural decisions
+   (LLM-free runtime, recipe DSL, coordinate priority, failure
+   evidence policy, host lock, run.json envelope). Decisions
+   recorded here cannot be silently reversed in a single PR.
+3. **`docs/current-state.md`** — what's actually released today.
+4. **`docs/architecture-boundaries.md`** — caller / runtime
    contracts (window ownership, host exclusivity, run-result
    reading).
-4. **Source code under `src/coord_smith/`** — authoritative for
+5. **Source code under `src/coord_smith/`** — authoritative for
    the runtime contracts (mission graph, evidence envelope,
    adapter protocol).
-5. **`CLAUDE.md`** — agent-facing operational entrypoint. Keep it
+6. **`CLAUDE.md`** — agent-facing operational entrypoint. Keep it
    in sync with the canonical recipe shape.
 
 When the PRD and a prior assumption disagree, follow the PRD.
+When the PRD and an ADR disagree, the more recent ADR wins (and
+the PRD must be reconciled in the same PR).
 
 ## Hard invariants (PR rejected on violation)
 

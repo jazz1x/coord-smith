@@ -224,6 +224,17 @@ Polls `locateCenterOnScreen` until the signal image appears. Timeout raises `Ima
 
 Continuous integration is not wired yet — the pre-commit hooks (run on every commit locally) are the gate today. A GitHub Actions workflow running ruff + mypy + pytest is on the productization backlog (see `docs/backlog.md`).
 
+## Architecture decisions
+
+Durable spine decisions are recorded in [`adr/`](adr/README.md):
+
+- [ADR-001 LLM-free runtime + browser-internals forbidden](adr/ADR-001-llm-free-runtime-and-browser-ban.md)
+- [ADR-002 Multi-step recipe DSL](adr/ADR-002-multi-step-recipe-dsl.md)
+- [ADR-003 Coordinate priority](adr/ADR-003-coordinate-priority.md)
+- [ADR-004 Failure evidence policy](adr/ADR-004-failure-evidence-policy.md)
+- [ADR-005 Per-host advisory lock](adr/ADR-005-per-host-advisory-lock.md)
+- [ADR-006 `run.json` outcome envelope](adr/ADR-006-run-json-envelope.md)
+
 ## Invariants
 
 coord-smith has four hard invariants. Anything that violates them is rejected at PR time:
