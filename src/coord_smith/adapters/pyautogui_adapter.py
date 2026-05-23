@@ -39,6 +39,7 @@ from coord_smith.models.errors import (
     ScreenCapturePermissionDenied,
     ScreenCaptureUnavailable,
 )
+from coord_smith.models.identifiers import MissionName
 
 # Imported from missions.evidence_specs — single source of truth.
 # Each tuple is ordered screenshot-first for backwards-compatible artifact
@@ -172,7 +173,7 @@ class PyAutoGUIAdapter:
                 "— likely Accessibility permission missing"
             )
 
-    def _gather_evidence(self, mission: str) -> tuple[str, ...]:
+    def _gather_evidence(self, mission: MissionName) -> tuple[str, ...]:
         mission_refs = _FALLBACK_REFS.get(mission)
         if mission_refs is None:
             action_key = mission.replace("_", "-")

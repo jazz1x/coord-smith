@@ -40,6 +40,10 @@ from coord_smith.graph.released_call_site import (
 from coord_smith.graph.released_run_root import create_run_root, generate_run_id
 from coord_smith.models.errors import ConfigError, FlowError
 from coord_smith.models.identifiers import (
+    ExpectedAuthState,
+    SessionRef,
+    SiteIdentity,
+    TargetPageUrl,
     parse_expected_auth_state,
     parse_session_ref,
     parse_site_identity,
@@ -87,46 +91,23 @@ def _bind_adapter_run_root(
     return cast(ExecutionAdapter, bound)
 
 
-def _require_released_attach_inputs(
-    *, session_ref: str, expected_auth_state: str
-) -> None:
-    """Validate attach_session inputs.
-
-    Kept as a thin wrapper around the boundary parsers in
-    ``coord_smith.models.identifiers`` so callers that previously
-    relied on the void-return / raise-on-invalid contract keep
-    working. New code should call ``parse_session_ref`` /
-    ``parse_expected_auth_state`` directly and accept the typed
-    return values (parse-don't-validate).
-    """
-    parse_session_ref(session_ref)
-    parse_expected_auth_state(expected_auth_state)
-
-
-def _require_released_prepare_inputs(
-    *, target_page_url: str, site_identity: str
-) -> None:
-    """Validate prepare_session inputs.
-
-    See ``_require_released_attach_inputs`` — same wrapper pattern.
-    """
-    parse_target_page_url(target_page_url)
-    parse_site_identity(site_identity)
-
-
 def build_released_scope_execution_graph(
     *,
     adapter: ExecutionAdapter,
     run: ReleasedRunContext,
-    session_ref: str,
-    expected_auth_state: str,
-    target_page_url: str,
-    site_identity: str,
+    session_ref: SessionRef,
+    expected_auth_state: ExpectedAuthState,
+    target_page_url: TargetPageUrl,
+    site_identity: SiteIdentity,
     recipe_steps: list[Step] | None = None,
 ) -> CompiledStateGraph[
     _ReleasedGraphState, None, _ReleasedGraphState, _ReleasedGraphState
 ]:
     """Return a compiled released-scope graph that executes only released nodes.
+
+    All four identifier parameters must already be typed (parsed at the entry
+    boundary by ``run_released_scope_via_langgraph``). No inline re-validation
+    is performed here — parse-don't-validate.
 
     ``recipe_steps`` enumerates the per-step click sequence. When ``None`` or
     empty, the per-step loop is skipped (smoke target) and the graph runs
@@ -139,15 +120,6 @@ def build_released_scope_execution_graph(
         raise ConfigError("Released-scope run must be a ReleasedRunContext")
     if not callable(getattr(adapter, "execute", None)):
         raise ConfigError("Released-scope adapter must provide a callable execute()")
-
-    _require_released_attach_inputs(
-        session_ref=session_ref,
-        expected_auth_state=expected_auth_state,
-    )
-    _require_released_prepare_inputs(
-        target_page_url=target_page_url,
-        site_identity=site_identity,
-    )
 
     steps: list[Step] = list(recipe_steps) if recipe_steps else []
 
@@ -284,18 +256,21 @@ async def run_released_scope_via_langgraph(
 ) -> ReleasedLangGraphRunResult:
     """Run the released-scope mission sequence through LangGraph.
 
-    This is scaffold hardening only. ``recipe_steps`` is forwarded to
-    ``build_released_scope_execution_graph`` so the graph topology is
-    fixed at build time to the exact step count.
+    This is the **parse boundary**: raw strings are validated exactly once
+    here via ``parse_*``, producing typed identifiers that flow into every
+    downstream call site without further validation.
 
-    Input validation is delegated to
-    :func:`build_released_scope_execution_graph`. We do not pre-validate
-    here — that would parse the same strings twice (parse-don't-validate
-    violation) and a single source of truth for the input contract is
-    easier to evolve.
+    ``recipe_steps`` is forwarded to ``build_released_scope_execution_graph``
+    so the graph topology is fixed at build time to the exact step count.
     """
     if not isinstance(base_dir, Path):
         raise ConfigError("Released-scope base_dir must be a pathlib.Path")
+
+    typed_session_ref = parse_session_ref(session_ref)
+    typed_expected_auth_state = parse_expected_auth_state(expected_auth_state)
+    typed_target_page_url = parse_target_page_url(target_page_url)
+    typed_site_identity = parse_site_identity(site_identity)
+
     run_id = generate_run_id()
     run_root = create_run_root(base_dir=base_dir, run_id=run_id)
     run = ReleasedRunContext(
@@ -308,10 +283,10 @@ async def run_released_scope_via_langgraph(
     compiled = build_released_scope_execution_graph(
         adapter=adapter,
         run=run,
-        session_ref=session_ref,
-        expected_auth_state=expected_auth_state,
-        target_page_url=target_page_url,
-        site_identity=site_identity,
+        session_ref=typed_session_ref,
+        expected_auth_state=typed_expected_auth_state,
+        target_page_url=typed_target_page_url,
+        site_identity=typed_site_identity,
         recipe_steps=recipe_steps,
     )
 

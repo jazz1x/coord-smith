@@ -12,6 +12,8 @@ from coord_smith.adapters.execution.contracts import (
 from coord_smith.evidence.envelope import parse_released_evidence_ref
 from coord_smith.missions.evidence_specs import MISSION_EVIDENCE_SPECS
 from coord_smith.missions.names import ALL_MISSIONS, mission_is_browser_facing
+from coord_smith.models.errors import ConfigError
+from coord_smith.models.identifiers import MissionName, parse_mission_name
 from coord_smith.models.runtime import (
     effective_scope_ceiling,
     format_scope_ceiling_detail,
@@ -19,7 +21,7 @@ from coord_smith.models.runtime import (
 )
 
 
-def validate_execution_mission_name(mission_name: str) -> None:
+def validate_execution_mission_name(mission_name: MissionName) -> None:
     """Reject non-browser-facing missions for OpenClaw execution requests."""
 
     if not isinstance(mission_name, str):
@@ -263,9 +265,17 @@ def validate_execution_roundtrip_within_scope(
 def build_execution_request(
     *, mission_name: str, payload: dict[str, object]
 ) -> ExecutionRequest:
-    """Build a validated OpenClaw execution request."""
+    """Build a validated OpenClaw execution request.
 
-    request = ExecutionRequest(mission_name=mission_name, payload=payload)
+    ``mission_name`` is a raw string boundary input; it is parsed to
+    ``MissionName`` via ``parse_mission_name`` before construction so the
+    returned dataclass carries the typed identifier.
+    """
+    try:
+        typed_name = parse_mission_name(mission_name)
+    except ConfigError as exc:
+        raise ValueError(str(exc)) from exc
+    request = ExecutionRequest(mission_name=typed_name, payload=payload)
     validate_execution_request(request)
     return request
 
@@ -274,8 +284,11 @@ def build_execution_request_within_scope(
     *, mission_name: str, payload: dict[str, object], approved_scope_ceiling: str
 ) -> ExecutionRequest:
     """Build a validated OpenClaw execution request constrained to released scope."""
-
-    request = ExecutionRequest(mission_name=mission_name, payload=payload)
+    try:
+        typed_name = parse_mission_name(mission_name)
+    except ConfigError as exc:
+        raise ValueError(str(exc)) from exc
+    request = ExecutionRequest(mission_name=typed_name, payload=payload)
     validate_execution_request_within_scope(
         request, approved_scope_ceiling=approved_scope_ceiling
     )
@@ -286,9 +299,12 @@ def build_execution_result(
     *, mission_name: str, evidence_refs: tuple[str, ...]
 ) -> ExecutionResult:
     """Build a validated OpenClaw execution result."""
-
+    try:
+        typed_name = parse_mission_name(mission_name)
+    except ConfigError as exc:
+        raise ValueError(str(exc)) from exc
     result = ExecutionResult(
-        mission_name=mission_name, evidence_refs=evidence_refs
+        mission_name=typed_name, evidence_refs=evidence_refs
     )
     validate_execution_result(result)
     return result
@@ -298,9 +314,12 @@ def build_execution_result_within_scope(
     *, mission_name: str, evidence_refs: tuple[str, ...], approved_scope_ceiling: str
 ) -> ExecutionResult:
     """Build a validated OpenClaw execution result constrained to released scope."""
-
+    try:
+        typed_name = parse_mission_name(mission_name)
+    except ConfigError as exc:
+        raise ValueError(str(exc)) from exc
     result = ExecutionResult(
-        mission_name=mission_name, evidence_refs=evidence_refs
+        mission_name=typed_name, evidence_refs=evidence_refs
     )
     validate_execution_result_within_scope(
         result, approved_scope_ceiling=approved_scope_ceiling

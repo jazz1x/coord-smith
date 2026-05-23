@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from coord_smith.config.released_inputs import resolve_released_scope_inputs
+from coord_smith.models.errors import ConfigError
 
 
 def test_resolve_released_scope_inputs_prefers_cli_args_over_env() -> None:
@@ -72,7 +73,7 @@ def test_resolve_released_scope_inputs_rejects_whitespace_only_values() -> None:
                 "COORDSMITH_SITE_IDENTITY": "env-site",
             },
         )
-    except ValueError as exc:
+    except ConfigError as exc:
         message = str(exc)
         assert "session_ref" in message
         assert "whitespace-only" in message
@@ -90,7 +91,7 @@ def test_resolve_released_scope_inputs_rejects_whitespace_wrapped_values() -> No
                 "COORDSMITH_SITE_IDENTITY": "env-site",
             },
         )
-    except ValueError as exc:
+    except ConfigError as exc:
         message = str(exc)
         assert "session_ref" in message
         assert "leading or trailing whitespace" in message
@@ -118,7 +119,7 @@ def test_resolve_released_scope_inputs_rejects_whitespace_wrapped_values_for_all
                 "COORDSMITH_SITE_IDENTITY": "env-site",
             },
         )
-    except ValueError as exc:
+    except ConfigError as exc:
         message = str(exc)
         assert expected_label in message
         assert "leading or trailing whitespace" in message

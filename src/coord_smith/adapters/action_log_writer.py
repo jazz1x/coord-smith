@@ -14,6 +14,7 @@ from pathlib import Path
 
 from coord_smith.evidence.envelope import parse_released_evidence_ref
 from coord_smith.missions.evidence_specs import MISSION_FALLBACK_REFS
+from coord_smith.models.identifiers import MissionName
 
 # Imported from missions.evidence_specs — single source of truth shared with
 # pyautogui_adapter; no local re-computation.
@@ -71,7 +72,7 @@ class ActionLogWriter:
     # Writers — byte-identical output to the original inline methods
     # ------------------------------------------------------------------
 
-    def write_action_log(self, *, key: str, mission_name: str) -> None:
+    def write_action_log(self, *, key: str, mission_name: MissionName) -> None:
         """Append a bare dispatch record (ts / mission_name / event)."""
         ts = datetime.now(tz=UTC).isoformat()
         entry: dict[str, object] = {

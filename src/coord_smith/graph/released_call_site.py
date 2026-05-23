@@ -35,8 +35,14 @@ from coord_smith.adapters.execution.client import (
 )
 from coord_smith.config.click_recipe import Step
 from coord_smith.evidence.envelope import enforce_evidence_priority_gate
-from coord_smith.missions.names import ALL_MISSIONS
 from coord_smith.models.errors import ConfigError, FlowError
+from coord_smith.models.identifiers import (
+    ExpectedAuthState,
+    MissionName,
+    SessionRef,
+    SiteIdentity,
+    TargetPageUrl,
+)
 from coord_smith.models.runtime import RuntimeState
 
 
@@ -92,12 +98,16 @@ def require_existing_run_root(*, run_root: Path) -> None:
 def seed_action_log_marker(
     *,
     run_root: Path,
-    mission_name: str,
+    mission_name: MissionName,
     key: str,
     step_idx: int | None = None,
     step_name: str | None = None,
 ) -> Path:
     """Seed a released-scope action-log JSONL artifact with a confirming marker.
+
+    ``mission_name`` must already be a validated ``MissionName`` (parsed at the
+    boundary by ``parse_mission_name``). No inline re-validation is performed
+    here — parse-don't-validate.
 
     For per-step missions, ``step_idx`` and ``step_name`` are recorded in the
     payload so the action log contains enough context to reconstruct the
@@ -108,20 +118,6 @@ def seed_action_log_marker(
     """
 
     require_existing_run_root(run_root=run_root)
-    if not isinstance(mission_name, str):
-        raise FlowError("Released-scope mission_name must be a string")
-    if not mission_name:
-        raise FlowError("Released-scope mission_name must be non-empty")
-    if not mission_name.strip():
-        raise FlowError("Released-scope mission_name must not be whitespace-only")
-    if mission_name != mission_name.strip():
-        raise FlowError(
-            "Released-scope mission_name must not have leading or trailing whitespace"
-        )
-    if mission_name not in ALL_MISSIONS:
-        raise FlowError(
-            f"Released-scope mission_name is not a known mission: '{mission_name}'"
-        )
     path = action_log_artifact_path(run_root=run_root, key=key)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload: dict[str, object] = {
@@ -146,8 +142,8 @@ async def execute_attach_session_node(
     state: RuntimeState,
     adapter: ExecutionAdapter,
     run: ReleasedRunContext,
-    session_ref: str,
-    expected_auth_state: str,
+    session_ref: SessionRef,
+    expected_auth_state: ExpectedAuthState,
 ) -> ExecutionResult:
     """Execute the released attach_session node (per-run, runs once)."""
 
@@ -156,7 +152,9 @@ async def execute_attach_session_node(
     state.session_ref = session_ref
 
     seed_action_log_marker(
-        run_root=run.run_root, mission_name="attach_session", key="attach-session"
+        run_root=run.run_root,
+        mission_name=MissionName("attach_session"),
+        key="attach-session",
     )
 
     result = await execute_within_scope(
@@ -179,8 +177,8 @@ async def execute_prepare_session_node(
     state: RuntimeState,
     adapter: ExecutionAdapter,
     run: ReleasedRunContext,
-    target_page_url: str,
-    site_identity: str,
+    target_page_url: TargetPageUrl,
+    site_identity: SiteIdentity,
 ) -> ExecutionResult:
     """Execute the released prepare_session node (per-run, runs once)."""
 
@@ -190,7 +188,9 @@ async def execute_prepare_session_node(
     state.site_identity = site_identity
 
     seed_action_log_marker(
-        run_root=run.run_root, mission_name="prepare_session", key="prepare-session"
+        run_root=run.run_root,
+        mission_name=MissionName("prepare_session"),
+        key="prepare-session",
     )
 
     result = await execute_within_scope(
@@ -231,7 +231,7 @@ async def execute_step_observe_node(
 
     seed_action_log_marker(
         run_root=run.run_root,
-        mission_name="step_observe",
+        mission_name=MissionName("step_observe"),
         key="step-observed",
         step_idx=step_idx,
         step_name=step.name,
@@ -271,7 +271,7 @@ async def execute_step_dispatch_node(
 
     seed_action_log_marker(
         run_root=run.run_root,
-        mission_name="step_dispatch",
+        mission_name=MissionName("step_dispatch"),
         key="step-dispatched",
         step_idx=step_idx,
         step_name=step.name,
@@ -310,7 +310,7 @@ async def execute_step_capture_node(
 
     seed_action_log_marker(
         run_root=run.run_root,
-        mission_name="step_capture",
+        mission_name=MissionName("step_capture"),
         key="step-captured",
         step_idx=step_idx,
         step_name=step.name,
@@ -344,7 +344,7 @@ async def execute_run_completion_node(
 
     seed_action_log_marker(
         run_root=run.run_root,
-        mission_name="run_completion",
+        mission_name=MissionName("run_completion"),
         key="release-ceiling-stop",
     )
 

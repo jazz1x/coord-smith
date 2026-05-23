@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from coord_smith.evidence.envelope import parse_released_evidence_ref
 from coord_smith.models.errors import ValidationError
+from coord_smith.models.identifiers import MissionName
 
 
 def _payload_json_default(value: object) -> Any:
@@ -35,7 +36,7 @@ def _payload_json_default(value: object) -> Any:
 class ExecutionRequest:
     """Typed execution request passed to OpenClaw."""
 
-    mission_name: str
+    mission_name: MissionName
     payload: dict[str, object]
 
 
@@ -43,7 +44,7 @@ class ExecutionRequest:
 class ExecutionResult:
     """Typed execution result returned by OpenClaw."""
 
-    mission_name: str
+    mission_name: MissionName
     evidence_refs: tuple[str, ...]
 
     def __post_init__(self) -> None:

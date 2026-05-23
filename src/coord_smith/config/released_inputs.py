@@ -10,6 +10,17 @@ import argparse
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from coord_smith.models.identifiers import (
+    ExpectedAuthState,
+    SessionRef,
+    SiteIdentity,
+    TargetPageUrl,
+    parse_expected_auth_state,
+    parse_session_ref,
+    parse_site_identity,
+    parse_target_page_url,
+)
+
 ENV_SESSION_REF = "COORDSMITH_SESSION_REF"
 ENV_EXPECTED_AUTH_STATE = "COORDSMITH_EXPECTED_AUTH_STATE"
 ENV_TARGET_PAGE_URL = "COORDSMITH_TARGET_PAGE_URL"
@@ -18,10 +29,10 @@ ENV_SITE_IDENTITY = "COORDSMITH_SITE_IDENTITY"
 
 @dataclass(frozen=True, slots=True)
 class ReleasedScopeInputs:
-    session_ref: str
-    expected_auth_state: str
-    target_page_url: str
-    site_identity: str
+    session_ref: SessionRef
+    expected_auth_state: ExpectedAuthState
+    target_page_url: TargetPageUrl
+    site_identity: SiteIdentity
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -41,23 +52,12 @@ def _pick_value(
     return env.get(env_key)
 
 
-def _require_normalized(*, label: str, value: str | None) -> str:
+def _require_present(*, label: str, value: str | None) -> str:
+    """Raise ``ValueError`` when a resolved CLI/env value is absent (None)."""
     if value is None:
         msg = (
             "Released-scope inputs are required (CLI args then env vars). Missing: "
             + label
-        )
-        raise ValueError(msg)
-    if not value:
-        msg = f"Released-scope input '{label}' must be non-empty"
-        raise ValueError(msg)
-    if not value.strip():
-        msg = f"Released-scope input '{label}' must not be whitespace-only"
-        raise ValueError(msg)
-    if value != value.strip():
-        msg = (
-            f"Released-scope input '{label}' must not have leading or trailing "
-            "whitespace"
         )
         raise ValueError(msg)
     return value
@@ -74,37 +74,46 @@ def resolve_released_scope_inputs(
     1) CLI args
     2) environment variables
     3) error
+
+    Each resolved string is run through the canonical boundary parser
+    (``parse_*`` from ``models.identifiers``) exactly once. Downstream
+    code that accepts ``ReleasedScopeInputs`` can treat the fields as
+    already-validated typed identifiers and skip redundant checks.
     """
 
     effective_env: Mapping[str, str] = {} if env is None else env
     parsed, _ = _parser().parse_known_args([] if argv is None else list(argv))
 
-    session_ref = _pick_value(
+    raw_session_ref = _pick_value(
         arg_value=parsed.session_ref, env=effective_env, env_key=ENV_SESSION_REF
     )
-    expected_auth_state = _pick_value(
+    raw_expected_auth_state = _pick_value(
         arg_value=parsed.expected_auth_state,
         env=effective_env,
         env_key=ENV_EXPECTED_AUTH_STATE,
     )
-    target_page_url = _pick_value(
+    raw_target_page_url = _pick_value(
         arg_value=parsed.target_page_url,
         env=effective_env,
         env_key=ENV_TARGET_PAGE_URL,
     )
-    site_identity = _pick_value(
+    raw_site_identity = _pick_value(
         arg_value=parsed.site_identity,
         env=effective_env,
         env_key=ENV_SITE_IDENTITY,
     )
 
     return ReleasedScopeInputs(
-        session_ref=_require_normalized(label="session_ref", value=session_ref),
-        expected_auth_state=_require_normalized(
-            label="expected_auth_state", value=expected_auth_state
+        session_ref=parse_session_ref(
+            _require_present(label="session_ref", value=raw_session_ref)
         ),
-        target_page_url=_require_normalized(
-            label="target_page_url", value=target_page_url
+        expected_auth_state=parse_expected_auth_state(
+            _require_present(label="expected_auth_state", value=raw_expected_auth_state)
         ),
-        site_identity=_require_normalized(label="site_identity", value=site_identity),
+        target_page_url=parse_target_page_url(
+            _require_present(label="target_page_url", value=raw_target_page_url)
+        ),
+        site_identity=parse_site_identity(
+            _require_present(label="site_identity", value=raw_site_identity)
+        ),
     )

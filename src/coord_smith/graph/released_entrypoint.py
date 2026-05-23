@@ -11,6 +11,12 @@ from coord_smith.graph.langgraph_released_execution import (
     run_released_scope_via_langgraph,
 )
 from coord_smith.graph.released_call_site import ReleasedRunContext
+from coord_smith.models.identifiers import (
+    ExpectedAuthState,
+    SessionRef,
+    SiteIdentity,
+    TargetPageUrl,
+)
 from coord_smith.models.runtime import RuntimeState
 
 
@@ -23,10 +29,10 @@ class ReleasedEntrypointResult:
 async def run_released_scope(
     *,
     adapter: ExecutionAdapter,
-    session_ref: str,
-    expected_auth_state: str,
-    target_page_url: str,
-    site_identity: str,
+    session_ref: SessionRef,
+    expected_auth_state: ExpectedAuthState,
+    target_page_url: TargetPageUrl,
+    site_identity: SiteIdentity,
     base_dir: Path = Path("."),
     recipe_steps: list[Step] | None = None,
 ) -> ReleasedEntrypointResult:
