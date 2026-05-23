@@ -729,16 +729,53 @@ class PyAutoGUIAdapter:
         with log_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
+    def _locate_image_or_none(
+        self, step: Step
+    ) -> tuple[tuple[int, int] | None, BaseException | None]:
+        """Attempt image match; return ``(coords, captured_error)``.
+
+        Explicit Result-style return — the caller pattern-matches
+        on which slot is populated:
+
+        - ``(coords, None)`` — match succeeded; use coords.
+        - ``(None, exc)`` — match failed; ``exc`` is the typed
+          dispatch error preserved for diagnostic re-raise.
+
+        Only ``ImageTemplateNotFound`` and ``ImageMatchConfidenceLow``
+        are captured. Any other exception (OS-level screen capture
+        failure, ScreenCaptureUnavailable, etc.) propagates
+        immediately — those are not "match failed" but "match
+        could not run at all" and the caller cannot recover by
+        trying a coord fallback.
+        """
+        if step.image is None:
+            return (None, None)
+        try:
+            return (self._locate_image_for_step(step), None)
+        except (ImageTemplateNotFound, ImageMatchConfidenceLow) as exc:
+            return (None, exc)
+
+    def _coord_or_none(self, step: Step) -> tuple[int, int] | None:
+        """Return the step's declared coord, or None if absent.
+
+        Trivial helper paired with ``_locate_image_or_none`` so the
+        resolver's pattern-match reads symmetrically.
+        """
+        if step.coord is None:
+            return None
+        return (step.coord.x, step.coord.y)
+
     def _resolve_step_click_coords(self, step: Step) -> tuple[int, int] | None:
         """Resolve a step's click coordinates using prefer + fallback chain.
 
         Three regimes, in order of precedence:
 
         1. **Both image and coord declared** — ``step.prefer`` decides the
-           primary; if the primary fails (image not matched, coord
-           out-of-bounds), the fallback is tried. If both fail, the
-           primary's typed exception is re-raised so the caller sees a
-           real diagnosis instead of a silent no-op.
+           primary; if the primary fails (image not matched), the
+           fallback is tried. If both fail, the primary's typed
+           exception is re-raised (preserved from the original
+           attempt, not synthesized by re-running) so the caller sees
+           the most specific diagnosis.
         2. **Single target declared** — image-only or coord-only. The
            target's typed exception (if any) propagates directly; no
            silent swallowing.
@@ -746,6 +783,17 @@ class PyAutoGUIAdapter:
            validator normally rejects this, but ``Step.model_construct``
            bypasses validation, so a graceful no-op is the safe
            behavior.
+
+        Implementation notes:
+
+        - The image branch returns ``(coords, captured_error)`` so the
+          dual-target failure path can re-raise the *original* error
+          instance with full traceback — no re-running of the
+          matcher (which would lose context and double the cost on
+          a failing run).
+        - Helpers are methods (not local closures) so they are
+          individually testable and the static analyser can see them
+          as part of the adapter's surface.
         """
         if step.image is None and step.coord is None:
             return None
@@ -754,46 +802,50 @@ class PyAutoGUIAdapter:
         if step.image is not None and step.coord is None:
             return self._locate_image_for_step(step)
         if step.coord is not None and step.image is None:
-            return (step.coord.x, step.coord.y)
+            coord_result = self._coord_or_none(step)
+            assert coord_result is not None  # noqa: S101  — schema-guaranteed
+            return coord_result
 
-        # Dual-target regime — primary then fallback, both swallow once.
+        # Dual-target regime — pattern-match on (primary, fallback).
+        # Evaluation is lazy: when the primary succeeds we do NOT
+        # invoke the fallback (image matching has a real side effect
+        # — screenshot + OpenCV call — and ``prefer: coord`` callers
+        # explicitly opt out of paying that cost on the happy path).
         primary_kind: str = step.prefer or "image"
 
-        def _try_image() -> tuple[int, int] | None:
-            try:
-                return self._locate_image_for_step(step)
-            except (ImageTemplateNotFound, ImageMatchConfidenceLow):
-                return None
+        if primary_kind == "image":
+            image_coords, image_error = self._locate_image_or_none(step)
+            if image_coords is not None:
+                return image_coords
+            coord_coords = self._coord_or_none(step)
+            if coord_coords is not None:
+                return coord_coords
+            # Both failed — re-raise the captured image error
+            # (the most specific diagnosis the runtime can offer).
+            if image_error is not None:
+                raise image_error
+        else:
+            # ``prefer: coord`` — coord goes first and (for well-formed
+            # Steps) always succeeds. Image is consulted only when
+            # coord is unexpectedly absent (Step.model_construct path
+            # that bypassed validation).
+            coord_coords = self._coord_or_none(step)
+            if coord_coords is not None:
+                return coord_coords
+            image_coords, image_error = self._locate_image_or_none(step)
+            if image_coords is not None:
+                return image_coords
+            if image_error is not None:
+                raise image_error
 
-        def _try_coord() -> tuple[int, int] | None:
-            # Pydantic schema guarantees ``coord`` is populated whenever
-            # ``prefer == "coord"`` or coord is the only declared
-            # target — this branch is structurally unreachable for
-            # invalid Step instances. Use a raise (not bare assert) so
-            # ``python -O`` doesn't disable the safety net.
-            if step.coord is None:  # pragma: no cover — schema-enforced
-                raise ConfigError(
-                    f"Step '{step.name}' reached _try_coord with coord=None — "
-                    "violates the Step schema's prefer/target invariant"
-                )
-            return (step.coord.x, step.coord.y)
-
-        primary, fallback = (
-            (_try_image, _try_coord)
-            if primary_kind == "image"
-            else (_try_coord, _try_image)
+        # Defensive: schema-unreachable — both targets are absent.
+        # ``_locate_image_for_step`` raises a typed error when image
+        # is set, so the only way to land here is a malformed Step.
+        raise ConfigError(
+            f"Step '{step.name}': dual-target resolve produced no "
+            "coordinates and no diagnostic error — violates the Step "
+            "schema's prefer/target invariant"
         )
-        result = primary()
-        if result is not None:
-            return result
-        result = fallback()
-        if result is not None:
-            return result
-        # Both failed — synthesize a typed error so the caller learns
-        # something actionable. We re-run the image attempt without the
-        # try-swallow so its exception (the more specific of the two)
-        # surfaces.
-        return self._locate_image_for_step(step)
 
     def _locate_image_for_step(self, step: Step) -> tuple[int, int]:
         """Locate the step's image template via the existing helper.
