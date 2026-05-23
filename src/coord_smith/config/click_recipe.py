@@ -388,9 +388,19 @@ def load_click_recipe(path: Path) -> ClickRecipe:
         """Resolve an image path against the recipe directory AND
         existence-check it on disk. The return type signals to
         downstream consumers (image matching, wait_for, signal
-        polling) that the path has been verified and can be used
-        without re-checking ``Path(...).exists()`` — see
+        polling) that THIS path has been verified — see
         ``coord_smith.models.identifiers.ResolvedImagePath``.
+
+        Note: the Pydantic field annotations on ``Step.image`` /
+        ``WaitFor.image`` / ``PostClickSignal.image`` remain ``str``
+        (not ``ResolvedImagePath``) because Pydantic validates on
+        construction, before this resolver has run, and external
+        callers may construct Step instances directly via
+        ``model_construct`` bypassing both Pydantic validators and
+        ``load_click_recipe``. The adapter performs its own
+        defense-in-depth existence check at the boundary via
+        ``PyAutoGUIAdapter._assert_template_exists``. The NewType is
+        documentation-level; the adapter check is the runtime gate.
         """
         img_path = Path(image)
         if not img_path.is_absolute():

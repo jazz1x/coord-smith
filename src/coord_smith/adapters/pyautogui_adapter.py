@@ -257,6 +257,33 @@ class PyAutoGUIAdapter:
         if image.size == (0, 0):
             raise ScreenCaptureUnavailable("preflight screenshot returned empty image")
 
+    def _assert_template_exists(
+        self, image: str, *, owner: str, role: str
+    ) -> Path:
+        """Defense-in-depth existence check for an image template path.
+
+        Paths that flow through ``load_click_recipe._resolve`` are
+        already typed ``ResolvedImagePath`` (see
+        ``coord_smith.models.identifiers``) and have been
+        existence-checked at recipe load time. But Step / WaitFor /
+        PostClickSignal instances can also be constructed directly
+        via Pydantic's ``model_construct`` (test fixtures, future
+        external-caller payloads, hand-built ad-hoc dispatches) —
+        those bypass the resolver. We re-check here so a malformed
+        construction surfaces ``ImageTemplateNotFound`` with a clear
+        owner/role attribution instead of an opaque OpenCV error.
+
+        ``owner`` identifies the mission or step (for log readability);
+        ``role`` distinguishes "click target" / "wait_for anchor" /
+        "post-click signal" in the error message.
+        """
+        path = Path(image)
+        if not path.exists():
+            raise ImageTemplateNotFound(
+                f"{role} template not found for {owner}: {path}"
+            )
+        return path
+
     def _locate_image_target(
         self, mission: str, target: MissionImageClick
     ) -> tuple[int, int]:
@@ -266,11 +293,11 @@ class PyAutoGUIAdapter:
         per-mission action-log entry so a later evidence audit can trace
         which template produced which click.
         """
-        template_path = Path(target.image)
-        if not template_path.exists():
-            raise ImageTemplateNotFound(
-                f"image template not found for mission '{mission}': {template_path}"
-            )
+        template_path = self._assert_template_exists(
+            target.image,
+            owner=f"mission '{mission}'",
+            role="image",
+        )
         _not_matched = (
             f"image template not matched for mission '{mission}' "
             f"at confidence>={target.confidence}: {template_path}"
@@ -441,12 +468,11 @@ class PyAutoGUIAdapter:
         area. Timeout raises ``ImageWaitTimeout``; missing template raises
         ``ImageTemplateNotFound``.
         """
-        wait_path = Path(wait_for.image)
-        if not wait_path.exists():
-            raise ImageTemplateNotFound(
-                f"pre-click wait_for template not found for mission "
-                f"'{mission}': {wait_path}"
-            )
+        wait_path = self._assert_template_exists(
+            wait_for.image,
+            owner=f"mission '{mission}'",
+            role="pre-click wait_for",
+        )
         start = time.monotonic()
         x, y = await self.wait_for_image(
             path=str(wait_path),
@@ -469,12 +495,11 @@ class PyAutoGUIAdapter:
         self, *, mission: str, signal: PostClickSignal
     ) -> None:
         """Poll for the configured post-click image and log the outcome."""
-        signal_path = Path(signal.image)
-        if not signal_path.exists():
-            raise ImageTemplateNotFound(
-                f"post-click signal template not found for mission "
-                f"'{mission}': {signal_path}"
-            )
+        signal_path = self._assert_template_exists(
+            signal.image,
+            owner=f"mission '{mission}'",
+            role="post-click signal",
+        )
         start = time.monotonic()
         x, y = await self.wait_for_image(
             path=str(signal_path),
