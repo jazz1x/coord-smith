@@ -7,7 +7,7 @@
 ![version](https://img.shields.io/badge/version-0.1.0-blue)
 ![tests](https://img.shields.io/badge/tests-354%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
-[![CI](https://github.com/coord-smith/coord-smith/actions/workflows/ci.yml/badge.svg)](https://github.com/coord-smith/coord-smith/actions/workflows/ci.yml)
+[![CI](https://github.com/jazz1x/coord-smith/actions/workflows/ci.yml/badge.svg)](https://github.com/jazz1x/coord-smith/actions/workflows/ci.yml)
 
 **coord-smith** is the *hands*. The *head* — an external LLM such as OpenClaw — decides what to click; coord-smith executes those decisions on the OS as coordinate clicks and screenshot evidence. Reasoning lives outside the runtime; the runtime itself contains zero LLM calls.
 
@@ -62,7 +62,7 @@ uv --version
 ### 1. Bootstrap the project
 
 ```bash
-git clone https://github.com/<your-org>/coord-smith.git
+git clone https://github.com/jazz1x/coord-smith.git
 cd coord-smith
 uv sync --extra dev
 ```
@@ -171,7 +171,7 @@ Every invocation writes a single `run.json` summary that the caller can read in 
 }
 ```
 
-On failure, `run.json.failure` carries `step_idx`, `step_name`, `phase` (`pre_click` / `dispatch` / `post_click`), `error_class`, `screenshot` path, and a pointer to the full `failure.jsonl`.
+On failure, the `failure` key inside `run.json` carries `step_idx`, `step_name`, `phase` (`pre_click` / `dispatch` / `post_click`), `error_class`, `screenshot` path, and a pointer to the full `failure.jsonl`. (Note: `failure` is a JSON field, not a separate `run.json.failure` file.)
 
 ## Click Recipes
 

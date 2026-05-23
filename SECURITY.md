@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-coord-smith is pre-release software (current version `0.0.1`).
+coord-smith is pre-release software (current version `0.1.0`).
 Only the `main` branch / latest commit receives security fixes.
 
 | Version | Supported |

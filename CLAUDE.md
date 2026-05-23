@@ -111,9 +111,10 @@ evidence_types:
   screenshot:  "artifacts/screenshot/<key>.png"
 exit_codes:
   0: 정상
-  1: 런타임 에러
+  1: 런타임 에러 (typed dispatch failure 또는 KeyboardInterrupt — run.json.status="interrupted"로 구별)
   2: macOS Accessibility / Screen Recording 권한 없음
   3: 레시피 파일 누락·스키마 오류
+  4: 호스트 잠금 충돌 (다른 coord-smith 프로세스가 lock 보유 — 1~5초 backoff 후 retry)
 ```
 
 ## Bootstrap

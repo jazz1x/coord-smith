@@ -43,7 +43,7 @@ the pipeline with no click (useful for smoke-testing the evidence pipeline).
 | Code | Meaning | Agent action |
 |------|---------|--------------|
 | `0` | Success — pipeline reached `runCompletion` | Read `run.json` / `artifacts/`, proceed |
-| `1` | Unhandled runtime error (incl. typed dispatch failure, `KeyboardInterrupt`) | Read `run.json.failure` for the compact diagnosis |
+| `1` | Unhandled runtime error (incl. typed dispatch failure, `KeyboardInterrupt`) | Read the `failure` key inside `run.json` for the compact diagnosis |
 | `2` | macOS Accessibility or Screen Recording permission denied | Cannot fix via recipe; escalate to operator |
 | `3` | Recipe file missing or schema invalid | Fix the recipe and retry |
 | `4` | Host busy — another coord-smith process held the per-host lock | Back off 1–5 s and retry; see `docs/architecture-boundaries.md §Host Exclusivity` |

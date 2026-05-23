@@ -7,7 +7,7 @@
 ![version](https://img.shields.io/badge/version-0.1.0-blue)
 ![tests](https://img.shields.io/badge/tests-354%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
-[![CI](https://github.com/coord-smith/coord-smith/actions/workflows/ci.yml/badge.svg)](https://github.com/coord-smith/coord-smith/actions/workflows/ci.yml)
+[![CI](https://github.com/jazz1x/coord-smith/actions/workflows/ci.yml/badge.svg)](https://github.com/jazz1x/coord-smith/actions/workflows/ci.yml)
 
 **coord-smith** 는 *손* 입니다. *머리* — OpenClaw 같은 외부 LLM — 가 무엇을 어디서 클릭할지 정하면, coord-smith 는 그 결정을 OS 위에서 좌표 클릭과 스크린샷 증거로 실행합니다. 추론은 런타임 바깥에 있고, 런타임 자체에는 LLM 호출이 0건입니다.
 
@@ -62,7 +62,7 @@ uv --version
 ### 1. 프로젝트 부트스트랩
 
 ```bash
-git clone https://github.com/<your-org>/coord-smith.git
+git clone https://github.com/jazz1x/coord-smith.git
 cd coord-smith
 uv sync --extra dev
 ```
@@ -161,7 +161,7 @@ YAML이 정식 포맷이며, `.json` 파일은 backwards compatibility 용으로
 }
 ```
 
-실패 시 `run.json.failure` 가 `step_idx`, `step_name`, `phase` (`pre_click` / `dispatch` / `post_click`), `error_class`, screenshot 경로, 그리고 전체 `failure.jsonl` 포인터를 담고 있습니다.
+실패 시 `run.json` 안의 `failure` 키가 `step_idx`, `step_name`, `phase` (`pre_click` / `dispatch` / `post_click`), `error_class`, screenshot 경로, 그리고 전체 `failure.jsonl` 포인터를 담고 있습니다. (`failure` 는 JSON 필드이지, 별도 `run.json.failure` 파일이 아닙니다.)
 
 ## Click Recipes
 

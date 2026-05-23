@@ -44,10 +44,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/coord-smith/coord-smith"
-Repository = "https://github.com/coord-smith/coord-smith"
-Issues = "https://github.com/coord-smith/coord-smith/issues"
-Changelog = "https://github.com/coord-smith/coord-smith/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/jazz1x/coord-smith"
+Repository = "https://github.com/jazz1x/coord-smith"
+Issues = "https://github.com/jazz1x/coord-smith/issues"
+Changelog = "https://github.com/jazz1x/coord-smith/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
