@@ -8,8 +8,18 @@ on:
   # types are opened / synchronize / reopened so the run fires at PR open
   # and on each push to the PR branch.
   pull_request:
-  # Manual invocation from the Actions tab.
+  # Manual invocation from the Actions tab. The `python_smoke` input
+  # exists for ad-hoc smoke-testing a future Python minor (e.g. 3.15)
+  # before loosening pyproject's requires-python. Default empty → no
+  # extra job. Setting it to "3.15" adds a continue-on-error smoke
+  # job alongside the canonical 3.14 matrix so a known-broken
+  # pre-release does not turn the whole CI red.
   workflow_dispatch:
+    inputs:
+      python_smoke:
+        description: 'Optional ad-hoc Python smoke target (e.g. "3.15")'
+        required: false
+        default: ""
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -20,6 +30,14 @@ jobs:
     name: lint + mypy + pytest (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      # The matrix is intentionally pinned to a single version that
+      # matches pyproject's `requires-python = ">=3.14,<3.15"`. A
+      # secondary 3.13 job would be rejected at `uv sync` time
+      # because the wheel's Python-Requires excludes it. To smoke a
+      # FUTURE minor (e.g. 3.15) before loosening the pin, invoke
+      # the workflow with `python_smoke` set — the smoke-py job
+      # below runs that version with continue-on-error so a broken
+      # pre-release does not block the canonical 3.14 path.
       fail-fast: false
       matrix:
         python-version: ["3.14"]
@@ -74,6 +92,41 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y xvfb
 
       - name: Run pre-commit on all files
-        # Hook scripts call `.venv/bin/python -m pytest`; xvfb-run wraps the
-        # whole hook invocation so pyautogui imports inside the pytest hook.
+        # Hook scripts call `uv run --frozen` (see .pre-commit-config.yaml);
+        # xvfb-run wraps the whole hook invocation so pyautogui imports
+        # inside the pytest hook succeed without a real X display.
         run: xvfb-run -a uv run pre-commit run --all-files --show-diff-on-failure
+
+  smoke-py:
+    # Ad-hoc smoke target — only runs when workflow_dispatch supplies
+    # a `python_smoke` input (e.g. "3.15" to smoke a future minor).
+    # continue-on-error so a broken pre-release does NOT mark the
+    # whole workflow as failed; this is intentional — the result is
+    # informational, not gating.
+    name: smoke (py${{ inputs.python_smoke }})
+    if: github.event_name == 'workflow_dispatch' && inputs.python_smoke != ''
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python ${{ inputs.python_smoke }}
+        run: uv python install ${{ inputs.python_smoke }}
+
+      - name: Sync dependencies (dev extras)
+        # If pyproject's requires-python excludes this version, uv sync
+        # will fail loudly — that is the smoke signal. continue-on-error
+        # at the job level lets the canonical 3.14 path still pass.
+        run: uv sync --extra dev --python ${{ inputs.python_smoke }}
+
+      - name: Install xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Pytest smoke
+        run: xvfb-run -a uv run pytest -q
