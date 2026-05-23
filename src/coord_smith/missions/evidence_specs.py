@@ -13,6 +13,10 @@ Public contract:
     single mission.
   - ``MISSION_EVIDENCE_SPECS`` — dict keyed by mission name, parsed exactly
     once at module load (parse-don't-validate).
+  - ``MISSION_FALLBACK_REFS`` — pre-computed mapping of mission name to
+    ordered (screenshot-first) evidence ref tuple.  Defined once here so
+    neither ``pyautogui_adapter`` nor ``action_log_writer`` need to repeat
+    the comprehension.
 """
 
 from __future__ import annotations
@@ -113,4 +117,17 @@ MISSION_EVIDENCE_SPECS: Final[dict[str, MissionEvidenceSpec]] = {
             "evidence://action-log/release-ceiling-stop",
         }),
     ),
+}
+
+# Pre-computed per-mission ordered evidence ref tuples (screenshot-first).
+# Adapters that need to look up fallback refs import this constant directly
+# instead of repeating the same comprehension over MISSION_EVIDENCE_SPECS.
+# Missions with empty fallback_refs fall back to their primary_refs.
+MISSION_FALLBACK_REFS: Final[dict[str, tuple[str, ...]]] = {
+    name: (
+        tuple(sorted(spec.fallback_refs, key=lambda r: "screenshot" not in r))
+        if spec.fallback_refs
+        else tuple(sorted(spec.primary_refs, key=lambda r: "screenshot" not in r))
+    )
+    for name, spec in MISSION_EVIDENCE_SPECS.items()
 }

@@ -22,12 +22,12 @@ from coord_smith.graph.run_cleanup import (
     DEFAULT_MAX_RUNS,
     cleanup_runs,
 )
-from coord_smith.graph.run_summary import RunStatus, RunSummaryWriter
 from coord_smith.models.errors import (
     AccessibilityPermissionDenied,
     ConfigError,
     ScreenCapturePermissionDenied,
 )
+from coord_smith.reporting.run_summary import RunStatus, RunSummaryWriter
 
 ENV_CLICK_RECIPE = "COORDSMITH_CLICK_RECIPE"
 

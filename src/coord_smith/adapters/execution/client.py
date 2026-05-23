@@ -30,7 +30,6 @@ from coord_smith.adapters.execution.contracts import (
     ExecutionBoundary,
     ExecutionRequest,
     ExecutionResult,
-    _payload_json_default,
 )
 
 # --- validation re-exports ---
@@ -54,7 +53,6 @@ __all__ = [
     "ExecutionBoundary",
     "ExecutionRequest",
     "ExecutionResult",
-    "_payload_json_default",
     # validation
     "build_execution_request",
     "build_execution_request_within_scope",

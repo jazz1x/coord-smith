@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from coord_smith.graph.run_summary import (
+from coord_smith.reporting.run_summary import (
     SCHEMA_VERSION,
     SUMMARY_FILENAME,
     RunSummaryWriter,
@@ -141,7 +141,7 @@ def test_run_summary_writer_does_not_raise_when_target_unwritable(
     the writer logs to stderr and returns the intended path."""
     writer = RunSummaryWriter(base_dir=tmp_path)
     with patch(
-        "coord_smith.graph.run_summary._atomic_write_json",
+        "coord_smith.reporting.run_summary._atomic_write_json",
         side_effect=OSError("disk full"),
     ):
         # Must not raise.

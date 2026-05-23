@@ -13,18 +13,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from coord_smith.evidence.envelope import parse_released_evidence_ref
-from coord_smith.missions.evidence_specs import MISSION_EVIDENCE_SPECS
+from coord_smith.missions.evidence_specs import MISSION_FALLBACK_REFS
 
-# Derived from MISSION_EVIDENCE_SPECS — mirrors the private constant in
-# pyautogui_adapter so the key-derivation logic has a single source.
-_FALLBACK_REFS: dict[str, tuple[str, ...]] = {
-    name: (
-        tuple(sorted(spec.fallback_refs, key=lambda r: "screenshot" not in r))
-        if spec.fallback_refs
-        else tuple(sorted(spec.primary_refs, key=lambda r: "screenshot" not in r))
-    )
-    for name, spec in MISSION_EVIDENCE_SPECS.items()
-}
+# Imported from missions.evidence_specs — single source of truth shared with
+# pyautogui_adapter; no local re-computation.
+_FALLBACK_REFS = MISSION_FALLBACK_REFS
 
 
 class ActionLogWriter:
