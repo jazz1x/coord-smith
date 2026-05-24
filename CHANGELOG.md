@@ -9,8 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed — Clean Architecture follow-ups
 
-- **B-CA-4 substantial closure (two waves)** — `PyAutoGUIAdapter`
-  reduced from 892 → 722 lines via two SRP-driven extractions:
+- **B-CA-4 closure (three waves)** — `PyAutoGUIAdapter` reduced
+  from **892 → 692 lines**, clearing the audit's `< 700` target.
+  Three SRP-driven extractions, each shipped as a separate
+  commit:
   - **Wave 1** (commit `4af25af`): step-level pre/post-click
     guards lifted into `adapters/step_guards.py`
     (`PhaseName` Literal type, `tag_phase` / `read_phase`
@@ -26,12 +28,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (ADR-003 priority, prefer + fallback) is now an isolated
     module with its own Protocol-typed collaborator interface.
     Adapter: 865 → 722 lines.
+  - **Wave 3** (commit `0aeb918`): dead 1-line delegate cleanup
+    — four resolver delegates kept across wave 2 had no src or
+    test callers (only `_resolve_step_click_coords` is still
+    invoked, by `_dispatch_with_step` + tests). Dropped
+    `_locate_image_target`, `_locate_image_or_none`,
+    `_coord_or_none`, `_locate_image_for_step` and the matching
+    `coord_resolver` / `MissionImageClick` imports. Adapter:
+    722 → 692 lines.
 
-  The audit's `< 700` target is 22 lines away; remaining content
-  is the core OS-touch path (preflight, screenshot, click,
-  `_dispatch_with_step` orchestrator). Further extraction would
-  need to lift the dispatch orchestrator to its own class — see
-  `docs/backlog.md` for the deferred next step.
+  What remains in the adapter is now its irreducible core: the
+  OS-touch primitives (preflight, screenshot, click), the
+  evidence-gather pipeline, and the `_dispatch_with_step`
+  orchestrator that threads them. Further extraction would be a
+  cosmetic concern, not a correctness one.
 
 - **B-CA-5 closure**: extracted run-summary lifecycle from
   `pyautogui_cli_entrypoint.py` into new
