@@ -7,7 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet — the next batch lives in `docs/backlog.md`.
+### Changed — Clean Architecture follow-ups
+
+- **B-CA-4 partial closure**: extracted step-level pre/post-click
+  guards into new `adapters/step_guards.py` module
+  (`PhaseName` Literal type, `tag_phase` / `read_phase` helpers,
+  `StepGuardCollaborator` Protocol, `run_pre_click_wait_for` and
+  `run_post_click_signal` free functions). `PyAutoGUIAdapter` went
+  892 → 865 lines; the `_await_*_*` methods are now one-line
+  delegates. Reaching the audit's < 700 target requires a further
+  resolver-or-dispatch extraction (deferred — see
+  `docs/backlog.md`).
+- **B-CA-5 closure**: extracted run-summary lifecycle from
+  `pyautogui_cli_entrypoint.py` into new
+  `reporting/run_summary_lifecycle.py` (`RunSummaryLifecycle`
+  context manager with `set_outcome(status, exit_code)`). The
+  CLI's `main()` no longer hand-manages the
+  `writer + status + exit_code + try/finally + flush` quartet —
+  it uses `with RunSummaryLifecycle(...) as summary` and each
+  branch calls `summary.set_outcome(...)`. Reporting concern is
+  out of the CLI routing module.
+
+7 new unit tests pin the lifecycle contract (writer creation,
+default outcome, idempotent set_outcome, exceptions never
+swallowed, flush failure isolated from caller). Test count: 360
+→ 367.
 
 ---
 

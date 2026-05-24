@@ -13,23 +13,42 @@ B-POLISH-3). What remains:
 
 ## P3 — Architectural refactors (Clean Arch pass #2 deferred)
 
-### B-CA-4 · Extract step-guard helpers from PyAutoGUIAdapter
+### B-CA-4 · Continue PyAutoGUIAdapter slimming (PARTIAL — first wave shipped)
 
-Adapter is 892 lines after C5/C6 split. Pre/post-click guard
-methods (`_dispatch_with_step`, `_await_pre_click_wait_for`,
-`_run_post_click_checks`, plus the failure-tagging
-`_tag_phase`) form a cluster ~160 lines that can lift to
-``adapters/step_guards.py`` without changing public behaviour.
-Acceptance: adapter < 700 lines, all tests pass unchanged.
+**Status (2026-05-23)**: First wave landed (commit `4af25af`).
+New `adapters/step_guards.py` owns the phase tagging (PhaseName
+Literal, `tag_phase` / `read_phase` helpers, `_PHASE_*` constants)
+and the pre/post-click guard runners (`run_pre_click_wait_for`,
+`run_post_click_signal`), connected to the adapter via the
+`StepGuardCollaborator` Protocol. Adapter dropped from 892 → 865
+lines.
 
-### B-CA-5 · Extract run-summary lifecycle context manager
+**Remaining**: hit the audit's `< 700` target. Two extractable
+clusters left:
 
-`graph/pyautogui_cli_entrypoint.py` (559 lines) is a hybrid
-CLI router + RunSummaryWriter driver. Extract the
-`writer = ... ; try/finally: writer.flush(...)` lifecycle into
-``reporting/run_summary_lifecycle.py`` as a context manager so
-the CLI just enters/exits it. Removes the second reporting-
-control surface from the entrypoint.
+- `_locate_image_target`, `_locate_image_or_none`,
+  `_coord_or_none`, `_resolve_step_click_coords`,
+  `_locate_image_for_step` → `adapters/coord_resolver.py`
+  (~150 lines).
+- `_dispatch_with_step` body — the orchestration that threads
+  preflight + image-match + click + verify_transition + signal
+  + failure-capture. Could lift to a `StepDispatchOrchestrator`
+  class once the resolver is its own module.
+
+Each of these is its own PRD-level concern because they touch
+the dispatch chain shape. Acceptance for the next wave:
+adapter < 700 lines AND each extracted module has dedicated
+unit-level tests (currently only integration tests cover the
+behaviour).
+
+### B-CA-5 · ✅ CLOSED in commit `<pending>` — run-summary lifecycle CM
+
+Extracted to `reporting/run_summary_lifecycle.py`
+(`RunSummaryLifecycle` context manager with
+`set_outcome(status, exit_code)`). CLI `main()` no longer
+hand-manages the writer + outcome + try/finally + flush
+quartet — one `with` block + per-branch `set_outcome` call.
+7 unit tests pin the contract.
 
 ## P3 — Polish
 

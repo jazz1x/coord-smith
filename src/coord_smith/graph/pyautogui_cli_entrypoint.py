@@ -27,7 +27,8 @@ from coord_smith.models.errors import (
     ConfigError,
     ScreenCapturePermissionDenied,
 )
-from coord_smith.reporting.run_summary import RunStatus, RunSummaryWriter
+from coord_smith.reporting.run_summary import RunSummaryWriter
+from coord_smith.reporting.run_summary_lifecycle import RunSummaryLifecycle
 
 ENV_CLICK_RECIPE = "COORDSMITH_CLICK_RECIPE"
 
@@ -485,74 +486,77 @@ def main(argv: Sequence[str] | None = None) -> int:
     # tree under the resolved path, different relative strings.
     # See docs/architecture-boundaries.md §Host Exclusivity.
     base_dir = Path(".").resolve()
-    summary_writer = RunSummaryWriter(base_dir=base_dir)
-    exit_code: int = 1
-    status: RunStatus = "failure"
-    try:
-        exit_code = asyncio.run(
-            _run(
-                argv=argv_list,
-                base_dir=base_dir,
-                summary_writer=summary_writer,
+    # ``RunSummaryLifecycle`` is the dispatch-run bracket: it
+    # constructs the RunSummaryWriter on entry, exposes
+    # ``set_outcome(...)`` so each except branch declares its
+    # result without managing the writer directly, and flushes
+    # run.json on exit (regardless of exception). Extracted in
+    # B-CA-5 so main() carries one concern (CLI routing) instead
+    # of two (CLI routing + reporting lifecycle).
+    with RunSummaryLifecycle(base_dir=base_dir) as summary:
+        try:
+            exit_code = asyncio.run(
+                _run(
+                    argv=argv_list,
+                    base_dir=base_dir,
+                    summary_writer=summary.writer,
+                )
             )
-        )
-        status = "success" if exit_code == 0 else "failure"
-        return exit_code
-    except KeyboardInterrupt:
-        # User or supervisor (Ctrl-C, SIGINT) requested stop. ``except
-        # Exception`` below does NOT catch ``KeyboardInterrupt`` because
-        # it inherits from ``BaseException`` — handle it explicitly so
-        # the caller (OpenClaw) sees a deterministic exit code and a
-        # stderr line instead of the Python default exit 130 with a
-        # bare traceback. Exit 1 (runtime error) is documented; we
-        # don't introduce a new code for this rare path.
-        _log.warning(
-            "interrupted by user / supervisor (KeyboardInterrupt)"
-        )
-        exit_code, status = 1, "interrupted"
-        return exit_code
-    except ConfigError as exc:
-        _log.error("config error: %s", exc)
-        exit_code, status = 3, "failure"
-        return exit_code
-    except HostBusyError as exc:
-        # Another coord-smith process holds the per-host lock. Exit 4
-        # is documented in --help so callers (e.g. OpenClaw) can back
-        # off and retry instead of treating this as a generic runtime
-        # error.
-        _log.error("host busy: %s", exc)
-        exit_code, status = 4, "host_busy"
-        return exit_code
-    except (AccessibilityPermissionDenied, ScreenCapturePermissionDenied) as exc:
-        # Permission-class transport errors raised by preflight or screen
-        # capture. The "grant permission and retry" hint is genuinely
-        # actionable here. Other ExecutionTransportError subclasses
-        # (ImageMatchConfidenceLow, PageTransitionNotDetected, etc.) are
-        # runtime dispatch failures — they fall through to the generic
-        # handler below and return exit code 1, because the screen state
-        # / template / network is the issue, not host permissions.
-        _log.error(
-            "permission preflight failed (%s): %s",
-            type(exc).__name__,
-            exc,
-        )
-        _log.error(
-            "grant macOS Accessibility + Screen Recording permission to "
-            "the host terminal app and retry."
-        )
-        exit_code, status = 2, "failure"
-        return exit_code
-    except Exception as exc:  # noqa: BLE001
-        _log.error("runtime error (%s): %s", type(exc).__name__, exc)
-        exit_code, status = 1, "failure"
-        return exit_code
-    finally:
-        # Best-effort write of run.json so the caller (OpenClaw) has
-        # a single-file summary regardless of which exit path fired.
-        # ``status`` and ``exit_code`` carry whatever the relevant
-        # branch set; default "failure" / 1 covers any path that
-        # forgot to update them.
-        summary_writer.flush(status=status, exit_code=exit_code)
+            summary.set_outcome(
+                status="success" if exit_code == 0 else "failure",
+                exit_code=exit_code,
+            )
+            return exit_code
+        except KeyboardInterrupt:
+            # User or supervisor (Ctrl-C, SIGINT) requested stop.
+            # ``except Exception`` below does NOT catch
+            # KeyboardInterrupt (BaseException subclass), so we
+            # handle it explicitly. The caller (OpenClaw) sees a
+            # deterministic exit code + stderr line + a run.json
+            # with status="interrupted" instead of Python's
+            # silent exit 130.
+            _log.warning(
+                "interrupted by user / supervisor (KeyboardInterrupt)"
+            )
+            summary.set_outcome(status="interrupted", exit_code=1)
+            return 1
+        except ConfigError as exc:
+            _log.error("config error: %s", exc)
+            summary.set_outcome(status="failure", exit_code=3)
+            return 3
+        except HostBusyError as exc:
+            # Another coord-smith process holds the per-host lock.
+            # Exit 4 is documented in --help so callers (e.g.
+            # OpenClaw) can back off and retry instead of treating
+            # this as a generic runtime error.
+            _log.error("host busy: %s", exc)
+            summary.set_outcome(status="host_busy", exit_code=4)
+            return 4
+        except (AccessibilityPermissionDenied, ScreenCapturePermissionDenied) as exc:
+            # Permission-class transport errors raised by preflight
+            # or screen capture. The "grant permission and retry"
+            # hint is genuinely actionable here. Other
+            # ExecutionTransportError subclasses
+            # (ImageMatchConfidenceLow, PageTransitionNotDetected,
+            # etc.) are runtime dispatch failures — they fall
+            # through to the generic handler below and return exit
+            # code 1 because the screen state / template / network
+            # is the issue, not host permissions.
+            _log.error(
+                "permission preflight failed (%s): %s",
+                type(exc).__name__,
+                exc,
+            )
+            _log.error(
+                "grant macOS Accessibility + Screen Recording permission to "
+                "the host terminal app and retry."
+            )
+            summary.set_outcome(status="failure", exit_code=2)
+            return 2
+        except Exception as exc:  # noqa: BLE001
+            _log.error("runtime error (%s): %s", type(exc).__name__, exc)
+            summary.set_outcome(status="failure", exit_code=1)
+            return 1
 
 
 if __name__ == "__main__":
