@@ -13,35 +13,45 @@ B-POLISH-3). What remains:
 
 ## P3 — Architectural refactors (Clean Arch pass #2 deferred)
 
-### B-CA-4 · Continue PyAutoGUIAdapter slimming (PARTIAL — first wave shipped)
+### B-CA-4 · Continue PyAutoGUIAdapter slimming (PARTIAL — waves 1 + 2 shipped, 22 lines from target)
 
-**Status (2026-05-23)**: First wave landed (commit `4af25af`).
-New `adapters/step_guards.py` owns the phase tagging (PhaseName
-Literal, `tag_phase` / `read_phase` helpers, `_PHASE_*` constants)
-and the pre/post-click guard runners (`run_pre_click_wait_for`,
-`run_post_click_signal`), connected to the adapter via the
-`StepGuardCollaborator` Protocol. Adapter dropped from 892 → 865
-lines.
+**Status (2026-05-24)**: Two waves landed. `PyAutoGUIAdapter`
+went 892 → 722 lines.
 
-**Remaining**: hit the audit's `< 700` target. Two extractable
-clusters left:
+- **Wave 1** (commit `4af25af`): `adapters/step_guards.py` owns
+  the phase tagging (`PhaseName` Literal, `tag_phase` /
+  `read_phase` helpers, `PHASE_PRE_CLICK` / `PHASE_DISPATCH` /
+  `PHASE_POST_CLICK` constants) and the pre/post-click guard
+  runners (`run_pre_click_wait_for`, `run_post_click_signal`),
+  connected to the adapter via the `StepGuardCollaborator`
+  Protocol. Adapter: 892 → 865 lines.
 
-- `_locate_image_target`, `_locate_image_or_none`,
-  `_coord_or_none`, `_resolve_step_click_coords`,
-  `_locate_image_for_step` → `adapters/coord_resolver.py`
-  (~150 lines).
+- **Wave 2** (commit `67f3447`): `adapters/coord_resolver.py`
+  owns the click-coordinate resolution chain
+  (`locate_image_target`, `locate_image_for_step`,
+  `locate_image_or_none`, `coord_or_none`,
+  `resolve_step_click_coords`), connected via the
+  `CoordResolverCollaborator` Protocol. The five adapter
+  methods are now 1-line delegates. Adapter: 865 → 722 lines.
+
+**Remaining (22 lines from target)**: one extractable cluster
+left:
+
 - `_dispatch_with_step` body — the orchestration that threads
   preflight + image-match + click + verify_transition + signal
   + failure-capture. Could lift to a `StepDispatchOrchestrator`
-  class once the resolver is its own module.
+  class. This is the largest remaining method and the only one
+  that still genuinely needs the full adapter context (lock +
+  log + screenshot + capture + clock all participate).
 
-Each of these is its own PRD-level concern because they touch
-the dispatch chain shape. Acceptance for the next wave:
-adapter < 700 lines AND each extracted module has dedicated
-unit-level tests (currently only integration tests cover the
-behaviour).
+Acceptance for full closure: adapter < 700 lines AND the
+dispatch orchestrator has dedicated unit-level tests. The
+current 722-line adapter is **practically clean** — what
+remains is the core OS-touch primitives (preflight, screenshot,
+click, run-id wiring) plus the dispatch orchestrator. Further
+extraction is a polish concern, not a correctness one.
 
-### B-CA-5 · ✅ CLOSED in commit `<pending>` — run-summary lifecycle CM
+### B-CA-5 · ✅ CLOSED in commit `858b1d5` — run-summary lifecycle CM
 
 Extracted to `reporting/run_summary_lifecycle.py`
 (`RunSummaryLifecycle` context manager with

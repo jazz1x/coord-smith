@@ -9,15 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed — Clean Architecture follow-ups
 
-- **B-CA-4 partial closure**: extracted step-level pre/post-click
-  guards into new `adapters/step_guards.py` module
-  (`PhaseName` Literal type, `tag_phase` / `read_phase` helpers,
-  `StepGuardCollaborator` Protocol, `run_pre_click_wait_for` and
-  `run_post_click_signal` free functions). `PyAutoGUIAdapter` went
-  892 → 865 lines; the `_await_*_*` methods are now one-line
-  delegates. Reaching the audit's < 700 target requires a further
-  resolver-or-dispatch extraction (deferred — see
-  `docs/backlog.md`).
+- **B-CA-4 substantial closure (two waves)** — `PyAutoGUIAdapter`
+  reduced from 892 → 722 lines via two SRP-driven extractions:
+  - **Wave 1** (commit `4af25af`): step-level pre/post-click
+    guards lifted into `adapters/step_guards.py`
+    (`PhaseName` Literal type, `tag_phase` / `read_phase`
+    helpers, `StepGuardCollaborator` Protocol,
+    `run_pre_click_wait_for` and `run_post_click_signal` free
+    functions). Adapter: 892 → 865 lines.
+  - **Wave 2** (commit `67f3447`): click-coordinate resolver
+    lifted into `adapters/coord_resolver.py`
+    (`CoordResolverCollaborator` Protocol, `locate_image_target`,
+    `locate_image_for_step`, `locate_image_or_none`,
+    `coord_or_none`, `resolve_step_click_coords`). The
+    `step.coord` vs `step.image` resolution chain
+    (ADR-003 priority, prefer + fallback) is now an isolated
+    module with its own Protocol-typed collaborator interface.
+    Adapter: 865 → 722 lines.
+
+  The audit's `< 700` target is 22 lines away; remaining content
+  is the core OS-touch path (preflight, screenshot, click,
+  `_dispatch_with_step` orchestrator). Further extraction would
+  need to lift the dispatch orchestrator to its own class — see
+  `docs/backlog.md` for the deferred next step.
+
 - **B-CA-5 closure**: extracted run-summary lifecycle from
   `pyautogui_cli_entrypoint.py` into new
   `reporting/run_summary_lifecycle.py` (`RunSummaryLifecycle`
