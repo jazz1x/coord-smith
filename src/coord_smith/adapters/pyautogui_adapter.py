@@ -18,6 +18,16 @@ from coord_smith.adapters.execution.client import (
     ExecutionResult,
 )
 from coord_smith.adapters.page_transition import PageTransitionVerifier
+from coord_smith.adapters.step_guards import (
+    PHASE_DISPATCH,
+    PHASE_POST_CLICK,
+    PHASE_PRE_CLICK,
+    PhaseName,
+    read_phase,
+    run_post_click_signal,
+    run_pre_click_wait_for,
+    tag_phase,
+)
 from coord_smith.config.click_recipe import (
     ClickRecipe,
     MissionImageClick,
@@ -57,25 +67,25 @@ _CLICK_POSITION_TOLERANCE_PX = 2
 # pump flushed the cursor move, not that an entire SPA finished rendering.
 _POST_CLICK_SETTLE_SECONDS = 0.05
 
-# Failure-record phase labels. Attached to a typed exception via
-# ``_tag_phase`` inside ``_dispatch_with_step`` so the failure capture
-# wrapper can record which step sub-phase produced the error.
-# The phase set is part of the failure.jsonl public schema (see
-# docs/recipe-guide.md §Failure Artifacts).
-_PHASE_PRE_CLICK = "pre_click"          # step.wait_for raised
-_PHASE_DISPATCH = "dispatch"            # coord resolution / click execution
-_PHASE_POST_CLICK = "post_click"        # verify_transition / post_click_signal
-
-_PHASE_ATTR = "_coord_smith_phase"
+# Phase labels + tagging helper live in adapters/step_guards.py
+# (extracted per B-CA-4). The aliases below preserve internal
+# call-site syntax (``_tag_phase`` / ``_PHASE_*``); the values
+# are imported above. The phase enum is public contract — see
+# step_guards.PhaseName + ADR-004.
+_PHASE_PRE_CLICK = PHASE_PRE_CLICK
+_PHASE_DISPATCH = PHASE_DISPATCH
+_PHASE_POST_CLICK = PHASE_POST_CLICK
 
 
-def _tag_phase(exc: BaseException, phase: str) -> BaseException:
-    """Mark an exception with the dispatch phase that produced it."""
-    # Attribute set on the exception instance — Python allows arbitrary
-    # attributes on Exception instances. Read via ``getattr`` so
-    # untagged legacy paths still degrade gracefully.
-    setattr(exc, _PHASE_ATTR, phase)
-    return exc
+def _tag_phase(exc: BaseException, phase: PhaseName) -> BaseException:
+    """Thin alias for :func:`step_guards.tag_phase`.
+
+    Kept as a module-level name so existing call sites in
+    ``_dispatch_with_step`` and ``_capture_failure_evidence`` need
+    no edits beyond the imports above. New code should call
+    ``step_guards.tag_phase`` directly.
+    """
+    return tag_phase(exc, phase)
 
 
 class PyAutoGUIAdapter:
@@ -460,61 +470,24 @@ class PyAutoGUIAdapter:
     async def _await_pre_click_wait_for(
         self, *, mission: str, wait_for: WaitFor
     ) -> None:
-        """Poll for the configured pre-click image before dispatching the click.
+        """Delegate to :func:`step_guards.run_pre_click_wait_for`.
 
-        Mirrors ``_await_post_click_signal`` but runs *before* the click,
-        gating whether the dispatch happens at all. Honors the optional
-        ``region`` field so callers can scope the search to a known panel
-        area. Timeout raises ``ImageWaitTimeout``; missing template raises
-        ``ImageTemplateNotFound``.
+        Kept on the adapter as a stable internal entry point —
+        ``_dispatch_with_step`` calls ``self._await_pre_click_wait_for``
+        and gets the step-guards behaviour through this one-line
+        delegation. The body that used to live here moved to
+        ``adapters/step_guards.py`` (B-CA-4).
         """
-        wait_path = self._assert_template_exists(
-            wait_for.image,
-            owner=f"mission '{mission}'",
-            role="pre-click wait_for",
-        )
-        start = time.monotonic()
-        x, y = await self.wait_for_image(
-            path=str(wait_path),
-            timeout=wait_for.timeout,
-            interval=wait_for.interval,
-            confidence=wait_for.confidence,
-            region=wait_for.region,
-        )
-        elapsed = time.monotonic() - start
-        self._write_wait_for_log(
-            mission=mission,
-            template=str(wait_path),
-            confidence=wait_for.confidence,
-            elapsed=elapsed,
-            x=x,
-            y=y,
+        await run_pre_click_wait_for(
+            mission=mission, wait_for=wait_for, collaborator=self
         )
 
     async def _await_post_click_signal(
         self, *, mission: str, signal: PostClickSignal
     ) -> None:
-        """Poll for the configured post-click image and log the outcome."""
-        signal_path = self._assert_template_exists(
-            signal.image,
-            owner=f"mission '{mission}'",
-            role="post-click signal",
-        )
-        start = time.monotonic()
-        x, y = await self.wait_for_image(
-            path=str(signal_path),
-            timeout=signal.timeout,
-            interval=signal.interval,
-            confidence=signal.confidence,
-        )
-        elapsed = time.monotonic() - start
-        self._write_signal_log(
-            mission=mission,
-            template=str(signal_path),
-            confidence=signal.confidence,
-            elapsed=elapsed,
-            x=x,
-            y=y,
+        """Delegate to :func:`step_guards.run_post_click_signal`."""
+        await run_post_click_signal(
+            mission=mission, signal=signal, collaborator=self
         )
 
     async def execute(
@@ -728,11 +701,11 @@ class PyAutoGUIAdapter:
             / "failure.jsonl"
         )
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        # Phase tag attached by ``_dispatch_with_step``. Defaults to
-        # ``dispatch`` for legacy paths that didn't tag (the most
-        # common origin), keeping the field present so callers don't
-        # need a presence check.
-        phase = getattr(error, _PHASE_ATTR, _PHASE_DISPATCH)
+        # Phase tag attached by ``_dispatch_with_step`` via
+        # ``step_guards.tag_phase``. Default ``"dispatch"`` covers
+        # legacy / pre-step-guards paths so the field is always
+        # present and callers don't need a presence check.
+        phase = read_phase(error)
         entry: dict[str, object] = {
             "ts": datetime.now(tz=UTC).isoformat(),
             "mission_name": "step_dispatch",
