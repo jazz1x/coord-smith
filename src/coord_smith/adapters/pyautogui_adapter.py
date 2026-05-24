@@ -13,6 +13,13 @@ from PIL import UnidentifiedImageError
 from PIL.Image import Image as PILImage
 
 from coord_smith.adapters.action_log_writer import ActionLogWriter
+from coord_smith.adapters.coord_resolver import (
+    coord_or_none,
+    locate_image_for_step,
+    locate_image_or_none,
+    locate_image_target,
+    resolve_step_click_coords,
+)
 from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
@@ -297,41 +304,13 @@ class PyAutoGUIAdapter:
     def _locate_image_target(
         self, mission: str, target: MissionImageClick
     ) -> tuple[int, int]:
-        """Match a template image against the live screen and return center coords.
+        """Delegate to :func:`coord_resolver.locate_image_target`.
 
-        Records the located coordinates and effective confidence to the
-        per-mission action-log entry so a later evidence audit can trace
-        which template produced which click.
+        Kept as an adapter method so existing call sites (image
+        matching from inside ``_locate_image_for_step``) need no
+        edits. Body moved to ``adapters/coord_resolver.py`` (B-CA-4).
         """
-        template_path = self._assert_template_exists(
-            target.image,
-            owner=f"mission '{mission}'",
-            role="image",
-        )
-        _not_matched = (
-            f"image template not matched for mission '{mission}' "
-            f"at confidence>={target.confidence}: {template_path}"
-        )
-        try:
-            located = pyautogui.locateCenterOnScreen(
-                str(template_path),
-                confidence=target.confidence,
-                region=target.region,
-                grayscale=target.grayscale,
-            )
-        except pyautogui.ImageNotFoundException as exc:
-            raise ImageMatchConfidenceLow(_not_matched) from exc
-        if located is None:
-            raise ImageMatchConfidenceLow(_not_matched)
-        cx, cy = int(located.x), int(located.y)
-        self._log.write_image_match(
-            mission=mission,
-            template=str(template_path),
-            confidence=target.confidence,
-            x=cx,
-            y=cy,
-        )
-        return (cx, cy)
+        return locate_image_target(mission, target, collaborator=self)
 
     def _write_transition_log(
         self,
@@ -723,143 +702,21 @@ class PyAutoGUIAdapter:
     def _locate_image_or_none(
         self, step: Step
     ) -> tuple[tuple[int, int] | None, BaseException | None]:
-        """Attempt image match; return ``(coords, captured_error)``.
-
-        Explicit Result-style return — the caller pattern-matches
-        on which slot is populated:
-
-        - ``(coords, None)`` — match succeeded; use coords.
-        - ``(None, exc)`` — match failed; ``exc`` is the typed
-          dispatch error preserved for diagnostic re-raise.
-
-        Only ``ImageTemplateNotFound`` and ``ImageMatchConfidenceLow``
-        are captured. Any other exception (OS-level screen capture
-        failure, ScreenCaptureUnavailable, etc.) propagates
-        immediately — those are not "match failed" but "match
-        could not run at all" and the caller cannot recover by
-        trying a coord fallback.
-        """
-        if step.image is None:
-            return (None, None)
-        try:
-            return (self._locate_image_for_step(step), None)
-        except (ImageTemplateNotFound, ImageMatchConfidenceLow) as exc:
-            return (None, exc)
+        """Delegate to :func:`coord_resolver.locate_image_or_none`."""
+        return locate_image_or_none(step, collaborator=self)
 
     def _coord_or_none(self, step: Step) -> tuple[int, int] | None:
-        """Return the step's declared coord, or None if absent.
-
-        Trivial helper paired with ``_locate_image_or_none`` so the
-        resolver's pattern-match reads symmetrically.
-        """
-        if step.coord is None:
-            return None
-        return (step.coord.x, step.coord.y)
+        """Delegate to :func:`coord_resolver.coord_or_none`."""
+        return coord_or_none(step)
 
     def _resolve_step_click_coords(self, step: Step) -> tuple[int, int] | None:
-        """Resolve a step's click coordinates using prefer + fallback chain.
+        """Delegate to :func:`coord_resolver.resolve_step_click_coords`.
 
-        Three regimes, in order of precedence:
-
-        1. **Both image and coord declared** — ``step.prefer`` decides the
-           primary; if the primary fails (image not matched), the
-           fallback is tried. If both fail, the primary's typed
-           exception is re-raised (preserved from the original
-           attempt, not synthesized by re-running) so the caller sees
-           the most specific diagnosis.
-        2. **Single target declared** — image-only or coord-only. The
-           target's typed exception (if any) propagates directly; no
-           silent swallowing.
-        3. **Neither declared** — returns None. The Step Pydantic
-           validator normally rejects this, but ``Step.model_construct``
-           bypasses validation, so a graceful no-op is the safe
-           behavior.
-
-        Implementation notes:
-
-        - The image branch returns ``(coords, captured_error)`` so the
-          dual-target failure path can re-raise the *original* error
-          instance with full traceback — no re-running of the
-          matcher (which would lose context and double the cost on
-          a failing run).
-        - Helpers are methods (not local closures) so they are
-          individually testable and the static analyser can see them
-          as part of the adapter's surface.
+        Body moved to ``adapters/coord_resolver.py`` (B-CA-4 wave 2)
+        — see that module for the prefer/fallback chain semantics.
         """
-        if step.image is None and step.coord is None:
-            return None
-
-        # Single-target regime — no fallback chain, exceptions propagate.
-        if step.image is not None and step.coord is None:
-            return self._locate_image_for_step(step)
-        if step.coord is not None and step.image is None:
-            coord_result = self._coord_or_none(step)
-            assert coord_result is not None  # noqa: S101  — schema-guaranteed
-            return coord_result
-
-        # Dual-target regime — pattern-match on (primary, fallback).
-        # Evaluation is lazy: when the primary succeeds we do NOT
-        # invoke the fallback (image matching has a real side effect
-        # — screenshot + OpenCV call — and ``prefer: coord`` callers
-        # explicitly opt out of paying that cost on the happy path).
-        primary_kind: str = step.prefer or "image"
-
-        if primary_kind == "image":
-            image_coords, image_error = self._locate_image_or_none(step)
-            if image_coords is not None:
-                return image_coords
-            coord_coords = self._coord_or_none(step)
-            if coord_coords is not None:
-                return coord_coords
-            # Both failed — re-raise the captured image error
-            # (the most specific diagnosis the runtime can offer).
-            if image_error is not None:
-                raise image_error
-        else:
-            # ``prefer: coord`` — coord goes first and (for well-formed
-            # Steps) always succeeds. Image is consulted only when
-            # coord is unexpectedly absent (Step.model_construct path
-            # that bypassed validation).
-            coord_coords = self._coord_or_none(step)
-            if coord_coords is not None:
-                return coord_coords
-            image_coords, image_error = self._locate_image_or_none(step)
-            if image_coords is not None:
-                return image_coords
-            if image_error is not None:
-                raise image_error
-
-        # Defensive: schema-unreachable — both targets are absent.
-        # ``_locate_image_for_step`` raises a typed error when image
-        # is set, so the only way to land here is a malformed Step.
-        raise ConfigError(
-            f"Step '{step.name}': dual-target resolve produced no "
-            "coordinates and no diagnostic error — violates the Step "
-            "schema's prefer/target invariant"
-        )
+        return resolve_step_click_coords(step, collaborator=self)
 
     def _locate_image_for_step(self, step: Step) -> tuple[int, int]:
-        """Locate the step's image template via the existing helper.
-
-        Raises ``ImageTemplateNotFound`` / ``ImageMatchConfidenceLow``
-        directly — the caller decides whether to swallow (dual-target
-        fallback) or propagate (single-target).
-        """
-        # Schema-enforced (Pydantic): callers only reach this when
-        # ``prefer == "image"`` or image is the sole declared target.
-        # Raise rather than bare-assert so ``python -O`` keeps the
-        # safety net.
-        if step.image is None:  # pragma: no cover — schema-enforced
-            raise ConfigError(
-                f"Step '{step.name}' reached _locate_image_for_step "
-                "with image=None — violates the Step schema invariant"
-            )
-        target = MissionImageClick(
-            image=step.image,
-            confidence=step.confidence
-            if step.confidence is not None
-            else 0.9,
-            region=step.region,
-            grayscale=step.grayscale if step.grayscale is not None else False,
-        )
-        return self._locate_image_target(step.name, target)
+        """Delegate to :func:`coord_resolver.locate_image_for_step`."""
+        return locate_image_for_step(step, collaborator=self)
