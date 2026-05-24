@@ -13,13 +13,7 @@ from PIL import UnidentifiedImageError
 from PIL.Image import Image as PILImage
 
 from coord_smith.adapters.action_log_writer import ActionLogWriter
-from coord_smith.adapters.coord_resolver import (
-    coord_or_none,
-    locate_image_for_step,
-    locate_image_or_none,
-    locate_image_target,
-    resolve_step_click_coords,
-)
+from coord_smith.adapters.coord_resolver import resolve_step_click_coords
 from coord_smith.adapters.execution.client import (
     ExecutionRequest,
     ExecutionResult,
@@ -37,7 +31,6 @@ from coord_smith.adapters.step_guards import (
 )
 from coord_smith.config.click_recipe import (
     ClickRecipe,
-    MissionImageClick,
     PostClickSignal,
     Step,
     WaitFor,
@@ -300,17 +293,6 @@ class PyAutoGUIAdapter:
                 f"{role} template not found for {owner}: {path}"
             )
         return path
-
-    def _locate_image_target(
-        self, mission: str, target: MissionImageClick
-    ) -> tuple[int, int]:
-        """Delegate to :func:`coord_resolver.locate_image_target`.
-
-        Kept as an adapter method so existing call sites (image
-        matching from inside ``_locate_image_for_step``) need no
-        edits. Body moved to ``adapters/coord_resolver.py`` (B-CA-4).
-        """
-        return locate_image_target(mission, target, collaborator=self)
 
     def _write_transition_log(
         self,
@@ -699,24 +681,12 @@ class PyAutoGUIAdapter:
         with log_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-    def _locate_image_or_none(
-        self, step: Step
-    ) -> tuple[tuple[int, int] | None, BaseException | None]:
-        """Delegate to :func:`coord_resolver.locate_image_or_none`."""
-        return locate_image_or_none(step, collaborator=self)
-
-    def _coord_or_none(self, step: Step) -> tuple[int, int] | None:
-        """Delegate to :func:`coord_resolver.coord_or_none`."""
-        return coord_or_none(step)
-
     def _resolve_step_click_coords(self, step: Step) -> tuple[int, int] | None:
         """Delegate to :func:`coord_resolver.resolve_step_click_coords`.
 
         Body moved to ``adapters/coord_resolver.py`` (B-CA-4 wave 2)
         — see that module for the prefer/fallback chain semantics.
+        Kept as an instance method so test fixtures and the
+        ``_dispatch_with_step`` call site need no edits.
         """
         return resolve_step_click_coords(step, collaborator=self)
-
-    def _locate_image_for_step(self, step: Step) -> tuple[int, int]:
-        """Delegate to :func:`coord_resolver.locate_image_for_step`."""
-        return locate_image_for_step(step, collaborator=self)
