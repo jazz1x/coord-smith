@@ -91,21 +91,26 @@ versioning or `commitizen` `cz bump`.
 
 ## P3 — DX / agent integration
 
-### B-DX-1 · MCP server wrapper (opt-in)
+### B-DX-1 · MCP server wrapper (opt-in) — ✗ REJECTED (forki 2026-05-29)
 
-A thin MCP server that exposes `coord-smith --dry-run` and
-`coord-smith --recipe-schema` as tools, plus a `run-recipe`
-tool that wraps the standard CLI invocation. Lets an LLM-host
-discover and call coord-smith without writing subprocess code.
-PRD must:
+**Status (2026-05-29)**: Closed via a forki decision —
+**pure CLI forever; no MCP facade pursued.** The reduced
+question was *"who owns how an external agent discovers +
+invokes coord-smith — the caller (writes subprocess glue) or
+coord-smith (ships an MCP facade)?"* On the
+maintenance-simplicity ↔ external-discoverability axis the
+maintainer chose simplicity: the permanent upkeep + dependency
+surface of a facade package outweighs sparing callers their
+subprocess glue. PRD's "MCP transport adoption — permanently
+out of scope" stands unchanged; ADR-001 stands. Re-open only if
+a real caller demands MCP discovery. Rationale + the
+primary-source re-verification that surfaced it:
+`docs/reports/2026-05-29-strategic-direction-check.md` §부록 A.
 
-- Pin that the MCP wrapper does NOT extend the runtime contract
-  (ADR-001 stays intact — wrapper is an MCP veneer, not new
-  runtime behaviour).
-- Decide where the wrapper lives (separate sibling package
-  `coord-smith-mcp/`? same wheel with `[mcp]` extra? sibling
-  project entirely?). The audit recommendation is "separate
-  package" so the core wheel stays dependency-light.
+Original (rejected) proposal, kept for the record: a thin MCP
+server exposing `--dry-run` / `--recipe-schema` + a `run-recipe`
+tool wrapping the CLI, in a separate `coord-smith-mcp/` package
+so the core wheel stays dependency-light.
 
 ### B-DX-2 · Telemetry / structured events stream
 
