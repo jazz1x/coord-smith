@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security & supply chain
+- **Pipeline hardening** — three new scanners wired into pre-commit
+  and a CI `security` job:
+  - **gitleaks** secret scan (`.gitleaks.toml` extends the upstream
+    default ruleset + project allowlist). Pre-commit on staged
+    changes; CI scans full history (`fetch-depth: 0`).
+  - **trivy** CVE/secret scan of `uv.lock`, failing CI on any
+    HIGH/CRITICAL.
+  - **import-linter** layers contract (`graph > adapters > evidence
+    > config > reporting > models > missions`) forbidding upward
+    imports and inter-layer cycles. One `TYPE_CHECKING`-only back-edge
+    is ignored with a documented reason.
+- **Cleared 6 HIGH CVEs** by upgrading transitive deps:
+  `langchain-core` 1.2.23 → 1.4.7 (CVE-2026-44843), `langsmith`
+  0.7.22 → 0.8.16 (CVE-2026-45134), `pillow` 12.1.1 → 12.2.0
+  (CVE-2026-40192 / -42311), `urllib3` 2.6.3 → 2.7.0
+  (CVE-2026-44431 / -44432). Post-upgrade scan: 0 findings.
+
+### Fixed — adversarial bug-hunt + usability pass
+Findings from five independent adversarial review agents, each
+verified before fixing and pinned by a regression test
+(`tests/unit/test_adversarial_hardening.py`, +31 tests):
+- **Path-traversal write (HIGH)** — `Step.name` flowed unvalidated
+  into action-log JSONL filenames; a name with `../` or a leading
+  `/` plus any per-step guard wrote JSONL outside the run root.
+  Rejected at parse time + a defense-in-depth containment check in
+  `ActionLogWriter.action_log_path`.
+- **Lost failure evidence (HIGH)** — `ScreenCaptureUnavailable`
+  during a `verify_transition` step bypassed the failure-evidence
+  writer; now caught (permission errors still route to exit 2).
+- **Coordinate priority level 1 (HIGH)** — ADR-003's
+  `payload(x,y) > step.coord` override was documented but never
+  implemented; `_execute_step_dispatch` now honors a payload override
+  (both ints required; partial → `ConfigError`).
+- **`change_ratio` correctness** — page-transition ratio measured
+  bounding-box area, not changed-pixel fraction (scattered 1px
+  changes falsely read as a full transition); now counts genuinely
+  changed pixels.
+- **Schema strictness** — recipe models are `extra="forbid"` (typo'd
+  fields fail instead of silently defaulting); `region` requires
+  positive width/height; `version` constrained to `Literal[1]`;
+  `wait_for`/`post_click_signal` reject `interval > timeout`.
+- **Missing-input exit code** — a missing required input now raises
+  `ConfigError` → exit 3 (was a bare `ValueError` → exit 1,
+  indistinguishable from a runtime click failure) with a message
+  naming the flag + env var. `docs/recipe-guide.md` corrected.
+
 ### Changed — Clean Architecture follow-ups
 
 - **B-CA-4 closure (three waves)** — `PyAutoGUIAdapter` reduced

@@ -113,7 +113,7 @@ exit_codes:
   0: 정상
   1: 런타임 에러 (typed dispatch failure 또는 KeyboardInterrupt — run.json.status="interrupted"로 구별)
   2: macOS Accessibility / Screen Recording 권한 없음
-  3: 레시피 파일 누락·스키마 오류
+  3: 설정 오류 — 레시피 파일 누락·스키마 오류, 또는 필수 입력(session_ref / expected_auth_state / target_page_url / site_identity) 누락
   4: 호스트 잠금 충돌 (다른 coord-smith 프로세스가 lock 보유 — 1~5초 backoff 후 retry)
 ```
 
@@ -122,7 +122,7 @@ exit_codes:
 Fresh checkouts run, in order:
 
 1. `uv sync --extra dev` — installs runtime + dev deps from `pyproject.toml`.
-2. `uv run pytest -q` — expected: 367 passing, 4 deselected.
+2. `uv run pytest -q` — expected: 398 passing, 4 deselected.
 
 If pytest collection fails with `ModuleNotFoundError: PIL|pyautogui`, step 1
 did not complete.
