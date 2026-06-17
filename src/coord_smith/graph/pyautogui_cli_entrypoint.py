@@ -98,7 +98,8 @@ Exit codes:
   1 runtime error (typed dispatch failure OR caught KeyboardInterrupt /
     SIGINT — distinguished from a crash by run.json.status="interrupted")
   2 permission preflight failed
-  3 recipe load error (missing / invalid YAML or JSON / schema)
+  3 config error (recipe missing / invalid YAML or JSON / schema, a required
+    session/auth/url/site input absent, or an invalid --cleanup bound)
   4 host busy (another coord-smith process holds the per-host lock)
 
 Platform: macOS only at present. Linux / Windows preflight is not implemented;

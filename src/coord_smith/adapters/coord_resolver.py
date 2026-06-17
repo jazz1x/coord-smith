@@ -41,7 +41,12 @@ from typing import Protocol
 
 import pyautogui
 
-from coord_smith.config.click_recipe import MissionImageClick, Step
+from coord_smith.config.click_recipe import (
+    DEFAULT_IMAGE_CONFIDENCE,
+    DEFAULT_IMAGE_GRAYSCALE,
+    MissionImageClick,
+    Step,
+)
 from coord_smith.models.errors import (
     ConfigError,
     ImageMatchConfidenceLow,
@@ -151,9 +156,13 @@ def locate_image_for_step(
         )
     target = MissionImageClick(
         image=step.image,
-        confidence=step.confidence if step.confidence is not None else 0.9,
+        confidence=step.confidence
+        if step.confidence is not None
+        else DEFAULT_IMAGE_CONFIDENCE,
         region=step.region,
-        grayscale=step.grayscale if step.grayscale is not None else False,
+        grayscale=step.grayscale
+        if step.grayscale is not None
+        else DEFAULT_IMAGE_GRAYSCALE,
     )
     return locate_image_target(step.name, target, collaborator=collaborator)
 

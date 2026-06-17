@@ -225,6 +225,7 @@ async def run_post_click_signal(
         timeout=signal.timeout,
         interval=signal.interval,
         confidence=signal.confidence,
+        region=signal.region,
     )
     elapsed = time.monotonic() - start
     collaborator._write_signal_log(

@@ -42,6 +42,13 @@ from coord_smith.models.identifiers import ResolvedImagePath
 # a typo must fail loudly (exit 3) rather than mis-click.
 _STRICT = ConfigDict(extra="forbid")
 
+# Image-match defaults applied when a Step omits the optional field. Named
+# once here so the two sites that reconstruct a MissionImageClick from a Step
+# (coord_resolver.locate_image_for_step, ClickRecipe.image_target_for) cannot
+# drift apart. These mirror the Field defaults on MissionImageClick.
+DEFAULT_IMAGE_CONFIDENCE = 0.9
+DEFAULT_IMAGE_GRAYSCALE = False
+
 # A search/comparison rectangle ``(left, top, width, height)``. The origin
 # may sit anywhere on (or off) screen, but width/height must be positive —
 # a zero/negative extent either silently disables transition detection
@@ -109,9 +116,16 @@ class PostClickSignal(BaseModel):
     confidence: float = Field(default=0.9, ge=0.0, le=1.0)
     timeout: float = Field(default=5.0, gt=0.0)
     interval: float = Field(default=0.1, gt=0.0)
+    region: tuple[int, int, int, int] | None = None
+    """Optional search rectangle ``(left, top, width, height)`` to scope the
+    post-click poll, mirroring ``WaitFor.region``. Restricting the search to
+    the area where the signal is expected (e.g. a toast region) speeds up
+    matching and avoids false hits elsewhere on screen. ``None`` polls the
+    full screen."""
 
     @model_validator(mode="after")
-    def _interval_within_timeout(self) -> PostClickSignal:
+    def _validate_fields(self) -> PostClickSignal:
+        _validate_region(self.region)
         if self.interval > self.timeout:
             raise ValueError(
                 f"interval ({self.interval}s) must not exceed timeout "
@@ -174,8 +188,9 @@ class Step(BaseModel):
     ``coord`` on the same step.
 
     Image-match parameters (``region``, ``confidence``, ``grayscale``) are
-    only meaningful when ``image`` is set; they are silently ignored
-    otherwise. ``wait_for`` is a pre-click guard; ``verify_transition`` and
+    only meaningful when ``image`` is set; declaring them on a coord-only
+    step is rejected at parse time (they would otherwise be silently
+    ignored). ``wait_for`` is a pre-click guard; ``verify_transition`` and
     ``post_click_signal`` are post-click guards.
     """
 
@@ -222,6 +237,27 @@ class Step(BaseModel):
             raise ValueError(
                 f"Step '{self.name}': must declare at least one of 'image' or 'coord'"
             )
+        # Image-match parameters are meaningless without an image target.
+        # On a coord-only step they would be silently ignored at dispatch —
+        # which defeats the strict-schema typo guard (a misplaced field would
+        # pass unnoticed). Reject them so the author learns the field has no
+        # effect here, mirroring how extra="forbid" rejects unknown keys.
+        if self.image is None:
+            dead = [
+                n
+                for n, v in (
+                    ("region", self.region),
+                    ("confidence", self.confidence),
+                    ("grayscale", self.grayscale),
+                )
+                if v is not None
+            ]
+            if dead:
+                raise ValueError(
+                    f"Step '{self.name}': image-match field(s) {dead} have no "
+                    "effect on a coord-only step (no 'image' declared). Remove "
+                    "them, or add an 'image' target."
+                )
         # Resolve default prefer. When both are present, default = 'image'
         # (image is more environment-portable; coord works only on a fixed
         # screen layout). When only one is present, prefer matches that one.
@@ -463,17 +499,33 @@ class ClickRecipe(BaseModel):
                     image=step.image,
                     confidence=step.confidence
                     if step.confidence is not None
-                    else 0.9,
+                    else DEFAULT_IMAGE_CONFIDENCE,
                     region=step.region,
                     grayscale=step.grayscale
                     if step.grayscale is not None
-                    else False,
+                    else DEFAULT_IMAGE_GRAYSCALE,
                     verify_transition=step.verify_transition,
                     transition_threshold=step.transition_threshold,
                     transition_region=step.transition_region,
                     post_click_signal=step.post_click_signal,
                 )
         return None
+
+
+def _steps_mirror_missions(
+    steps: list[Step] | None, missions: dict[str, MissionTarget]
+) -> bool:
+    """True when ``steps`` was derived from ``missions`` (legacy-only path).
+
+    ``_normalize_steps`` populates ``steps`` from ``missions`` only when the
+    recipe declared ``missions`` alone; in that case the step names are
+    exactly the mission keys. When a recipe declares BOTH, ``steps`` is the
+    author's own list and does NOT mirror ``missions`` — so the missions
+    block is superseded leftover, not a live source to existence-check.
+    """
+    if not steps or not missions:
+        return False
+    return [s.name for s in steps] == list(missions.keys())
 
 
 def load_click_recipe(path: Path) -> ClickRecipe:
@@ -538,9 +590,18 @@ def load_click_recipe(path: Path) -> ClickRecipe:
             )
         return ResolvedImagePath(str(img_path))
 
-    # Resolve image paths in legacy ``missions`` (still consumed by callers
-    # that haven't migrated to ``steps``).
-    if recipe.missions is not None:
+    # Resolve image paths in legacy ``missions`` ONLY when the missions block
+    # is the live source — i.e. each mission was normalized into a step (the
+    # step list mirrors the missions). When a recipe declares BOTH ``steps``
+    # and ``missions``, ``_normalize_steps`` keeps ``steps`` as the source of
+    # truth and leaves the (now superseded) ``missions`` in place for
+    # backward-compat reads. Existence-checking those dead templates would
+    # hard-fail an otherwise-valid recipe whose live steps are all present,
+    # so skip them — only the live step list (resolved below) gates loading.
+    missions_superseded_by_steps = bool(recipe.missions) and not _steps_mirror_missions(
+        recipe.steps, recipe.missions
+    )
+    if recipe.missions and not missions_superseded_by_steps:
         for mission_name, entry in recipe.missions.items():
             if isinstance(entry, MissionImageClick):
                 entry.image = _resolve(

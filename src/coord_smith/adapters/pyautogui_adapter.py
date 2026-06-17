@@ -152,12 +152,28 @@ class PyAutoGUIAdapter:
     def _action_log_path(self, key: str) -> Path:
         return self._log.action_log_path(key)
 
-    def _screenshot_path(self, key: str) -> Path:
-        path = self._run_root / "artifacts" / "screenshot" / f"{key}.png"
+    def _screenshot_path(self, key: str, *, step_idx: int | None = None) -> Path:
+        """Resolve the on-disk screenshot path for an evidence *key*.
+
+        For per-step missions (``step_observe`` / ``step_dispatch`` /
+        ``step_capture``) the same evidence key recurs on every step
+        iteration, so the filename is prefixed with the zero-padded
+        ``step_idx`` to keep each step's frame distinct on disk. Without
+        the prefix every step would overwrite the previous step's PNG,
+        leaving only the final step's frame — an auditor reading per-step
+        screenshot evidence would get the wrong frame for every earlier
+        step. The failure path already keys by ``step_idx`` (see
+        ``_capture_failure_evidence``); this restores the same per-step
+        identity on the success path. The logical evidence ref
+        (``evidence://screenshot/<key>``) is unchanged — only the on-disk
+        filename gains the prefix.
+        """
+        filename = f"{step_idx:02d}-{key}.png" if step_idx is not None else f"{key}.png"
+        path = self._run_root / "artifacts" / "screenshot" / filename
         path.parent.mkdir(parents=True, exist_ok=True)
         return path
 
-    def _capture_screenshot(self, key: str) -> None:
+    def _capture_screenshot(self, key: str, *, step_idx: int | None = None) -> None:
         """Capture a screenshot or raise a typed error.
 
         macOS screencapture with denied Screen Recording permission yields a
@@ -176,7 +192,7 @@ class PyAutoGUIAdapter:
             raise ScreenCaptureUnavailable(
                 f"pyautogui.screenshot failed: {exc!r}"
             ) from exc
-        path = self._screenshot_path(key)
+        path = self._screenshot_path(key, step_idx=step_idx)
         screenshot.save(str(path))
 
     def _validate_bounds(self, x: int, y: int) -> None:
@@ -217,7 +233,9 @@ class PyAutoGUIAdapter:
                 "— likely Accessibility permission missing"
             )
 
-    def _gather_evidence(self, mission: MissionName) -> tuple[str, ...]:
+    def _gather_evidence(
+        self, mission: MissionName, *, step_idx: int | None = None
+    ) -> tuple[str, ...]:
         mission_refs = _FALLBACK_REFS.get(mission)
         if mission_refs is None:
             action_key = mission.replace("_", "-")
@@ -228,7 +246,10 @@ class PyAutoGUIAdapter:
             if kind == "action-log":
                 self._log.write_action_log(key=key, mission_name=mission)
             elif kind == "screenshot":
-                self._capture_screenshot(key)
+                # step_idx is threaded only for per-step missions; per-run
+                # missions (attach/prepare/run_completion) run once and pass
+                # None, keeping their flat <key>.png filename.
+                self._capture_screenshot(key, step_idx=step_idx)
         return mission_refs
 
     async def preflight(self) -> None:
@@ -507,7 +528,13 @@ class PyAutoGUIAdapter:
         if mission == "step_dispatch":
             await self._execute_step_dispatch(payload)
 
-        evidence_refs = self._gather_evidence(mission)
+        # Per-step missions carry step_idx in the payload; thread it so each
+        # step's success-path screenshot is keyed distinctly on disk instead
+        # of overwriting the previous step's frame. Per-run missions have no
+        # step_idx and keep the flat filename.
+        step_idx_obj = payload.get("step_idx")
+        step_idx = step_idx_obj if isinstance(step_idx_obj, int) else None
+        evidence_refs = self._gather_evidence(mission, step_idx=step_idx)
         return ExecutionResult(
             mission_name=mission,
             evidence_refs=evidence_refs,

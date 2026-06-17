@@ -79,7 +79,9 @@ class RunSummary:
         }
 
 
-def _find_latest_run_root(base_dir: Path) -> Path | None:
+def _find_latest_run_root(
+    base_dir: Path, *, not_before: float | None = None
+) -> Path | None:
     """Locate the most recently created run root under ``base_dir``.
 
     coord-smith generates a fresh ``artifacts/runs/<run_id>/`` dir
@@ -87,10 +89,19 @@ def _find_latest_run_root(base_dir: Path) -> Path | None:
     (graph.host_lock) only one run can be active at a time, so
     "newest by mtime" reliably identifies the current run.
 
-    Returns ``None`` when no run dir exists yet — e.g., the graph
-    raised before creating its root (recipe load error, lock
-    contention). The caller writes a degenerate summary in that
-    case (run_id=None, run_root unknown).
+    ``not_before`` is the wall-clock (``time.time()``) at which the
+    current invocation started. Candidates whose mtime predates it are
+    rejected: a run root created by a *prior* invocation must never be
+    attributed to this one. Without this gate, a second invocation that
+    fails before creating its own root (recipe-load error, missing
+    input, permission denial, host-busy) would resolve to a stale dir
+    and stamp this run's run.json with the prior run's run_id /
+    step_count / failure block — misdirecting a caller that reads
+    run.json to diagnose the exit.
+
+    Returns ``None`` when no qualifying run dir exists — e.g., the graph
+    raised before creating its root. The caller writes a degenerate
+    summary in that case (run_id=None, run_root unknown).
     """
     runs_dir = base_dir / "artifacts" / "runs"
     if not runs_dir.is_dir():
@@ -98,6 +109,14 @@ def _find_latest_run_root(base_dir: Path) -> Path | None:
     candidates = [p for p in runs_dir.iterdir() if p.is_dir()]
     if not candidates:
         return None
+    if not_before is not None:
+        # A small tolerance absorbs coarse filesystem mtime granularity
+        # (some filesystems round to whole seconds) so the *current*
+        # run's own freshly-created root is never wrongly rejected.
+        cutoff = not_before - 1.0
+        candidates = [p for p in candidates if p.stat().st_mtime >= cutoff]
+        if not candidates:
+            return None
     return max(candidates, key=lambda p: p.stat().st_mtime)
 
 
@@ -207,6 +226,10 @@ class RunSummaryWriter:
         self._base_dir = base_dir
         self._started_at_iso = datetime.now(tz=UTC).isoformat()
         self._started_at_mono = time.monotonic()
+        # Wall-clock start, used to reject stale prior-run dirs during
+        # post-hoc run-root discovery (see _find_latest_run_root).
+        # monotonic() can't be compared to a file mtime; time.time() can.
+        self._started_at_wall = time.time()
         # Optional step count override that the dry-run path can
         # stash during ``_run`` execution. ``flush`` reads this if
         # no explicit ``step_count_override`` argument is passed.
@@ -250,7 +273,9 @@ class RunSummaryWriter:
         # paths will not pass it — the writer resolves it from
         # base_dir as a post-hoc lookup.
         if run_root is None:
-            run_root = _find_latest_run_root(self._base_dir)
+            run_root = _find_latest_run_root(
+                self._base_dir, not_before=self._started_at_wall
+            )
 
         ended_iso = datetime.now(tz=UTC).isoformat()
         elapsed = time.monotonic() - self._started_at_mono

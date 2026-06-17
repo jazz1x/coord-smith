@@ -277,10 +277,13 @@ binds the wait to the step that needs it.
 | `image` | str (path) | — | yes |
 | `confidence` | float 0–1 | `0.9` | no |
 | `timeout` | float > 0 | `5.0` | no |
-| `interval` | float > 0 | `0.1` | no |
+| `interval` | float > 0 (≤ `timeout`) | `0.1` | no |
+| `region` | `[left, top, width, height]` | `null` | no |
 
 > Image paths are resolved relative to the recipe file's directory.
-> Absolute paths are accepted unchanged.
+> Absolute paths are accepted unchanged. `region` scopes the post-click
+> poll to a rectangle (e.g. the toast area), mirroring `wait_for.region`;
+> omit it to poll the full screen.
 
 ### Legacy `MissionClick` / `MissionImageClick` (deprecated)
 
