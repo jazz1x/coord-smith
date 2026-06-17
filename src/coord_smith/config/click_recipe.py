@@ -29,20 +29,96 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
 from coord_smith.models.errors import ConfigError
 from coord_smith.models.identifiers import ResolvedImagePath
 
+# Shared strict config for every recipe model. ``extra="forbid"`` turns a
+# misspelled key (e.g. ``confidance:`` for ``confidence:``) into a parse-time
+# error instead of silently dropping it and clicking with a default — a
+# recipe is the one input an autonomous caller or human author controls, so
+# a typo must fail loudly (exit 3) rather than mis-click.
+_STRICT = ConfigDict(extra="forbid")
+
+# A search/comparison rectangle ``(left, top, width, height)``. The origin
+# may sit anywhere on (or off) screen, but width/height must be positive —
+# a zero/negative extent either silently disables transition detection
+# (PIL diff over an empty crop) or raises a raw ``ValueError`` deep in the
+# adapter that bypasses the typed-evidence path. Validated centrally here.
+Region = tuple[int, int, int, int]
+
+
+def _validate_step_name(name: str) -> str:
+    """Reject step names that would escape the run-root when used as a filename.
+
+    ``Step.name`` is interpolated into action-log JSONL paths
+    (``action_log_writer.action_key_for_mission`` → ``<key>.jsonl``). A name
+    containing a path separator (``/`` or ``\\``), a ``..`` traversal segment,
+    a leading separator (absolute path), or a NUL byte is a confirmed
+    filesystem-write-escape vector — a recipe could create/clobber JSONL
+    files anywhere the process can write. This is intentionally narrow:
+    underscores, dots-in-the-middle, hyphens, and unicode are all allowed;
+    only filesystem-escaping shapes are forbidden.
+    """
+    if not name:
+        raise ValueError("Step name must not be empty")
+    if "/" in name or "\\" in name:
+        raise ValueError(
+            f"Step name must not contain a path separator: {name!r}"
+        )
+    if "\x00" in name:
+        raise ValueError("Step name must not contain a NUL byte")
+    # ``..`` as a whole component (or the bare name) is traversal; a literal
+    # ``..`` substring inside a longer token (e.g. ``a..b``) cannot traverse
+    # without a separator, which is already rejected above.
+    if name == "." or name == ".." or name.strip() == "":
+        raise ValueError(f"Step name must not be a path traversal token: {name!r}")
+    return name
+
+
+def _validate_region(region: Region | None) -> Region | None:
+    """Reject region tuples whose width or height is not positive.
+
+    The 4-int arity is already enforced by the tuple annotation; this adds
+    the ``width > 0 and height > 0`` constraint Pydantic cannot express on a
+    bare ``tuple[int, int, int, int]``. A common authoring mistake is using
+    ``[x1, y1, x2, y2]`` (corner pairs) instead of ``[x, y, w, h]`` — that
+    often yields a valid-arity tuple with a nonsensical extent, which this
+    catches at parse time.
+    """
+    if region is None:
+        return None
+    _, _, width, height = region
+    if width <= 0 or height <= 0:
+        raise ValueError(
+            f"region width and height must be positive (got width={width}, "
+            f"height={height}); a region is [left, top, width, height], "
+            "not [x1, y1, x2, y2]"
+        )
+    return region
+
 
 class PostClickSignal(BaseModel):
     """Image template that must appear on screen after a click to confirm completion."""
+
+    model_config = _STRICT
 
     image: str
     confidence: float = Field(default=0.9, ge=0.0, le=1.0)
     timeout: float = Field(default=5.0, gt=0.0)
     interval: float = Field(default=0.1, gt=0.0)
+
+    @model_validator(mode="after")
+    def _interval_within_timeout(self) -> PostClickSignal:
+        if self.interval > self.timeout:
+            raise ValueError(
+                f"interval ({self.interval}s) must not exceed timeout "
+                f"({self.timeout}s) — otherwise the poll fires once and the "
+                "configured polling cadence has no effect"
+            )
+        return self
 
 
 class WaitFor(BaseModel):
@@ -53,11 +129,24 @@ class WaitFor(BaseModel):
     gates whether the click is dispatched at all.
     """
 
+    model_config = _STRICT
+
     image: str
     confidence: float = Field(default=0.9, ge=0.0, le=1.0)
     timeout: float = Field(default=5.0, gt=0.0)
     interval: float = Field(default=0.1, gt=0.0)
     region: tuple[int, int, int, int] | None = None
+
+    @model_validator(mode="after")
+    def _validate_fields(self) -> WaitFor:
+        _validate_region(self.region)
+        if self.interval > self.timeout:
+            raise ValueError(
+                f"interval ({self.interval}s) must not exceed timeout "
+                f"({self.timeout}s) — otherwise the poll fires once and the "
+                "configured polling cadence has no effect"
+            )
+        return self
 
 
 class StepCoord(BaseModel):
@@ -68,6 +157,8 @@ class StepCoord(BaseModel):
     (``coord: {x: 800, y: 500}``) and the click-target shape stays disjoint
     from image-target parameters.
     """
+
+    model_config = _STRICT
 
     x: int
     y: int
@@ -87,6 +178,8 @@ class Step(BaseModel):
     otherwise. ``wait_for`` is a pre-click guard; ``verify_transition`` and
     ``post_click_signal`` are post-click guards.
     """
+
+    model_config = _STRICT
 
     name: str
     image: str | None = None
@@ -112,6 +205,18 @@ class Step(BaseModel):
 
     @model_validator(mode="after")
     def _validate_target_and_prefer(self) -> Step:
+        # Step names flow into action-log JSONL filenames
+        # (action_log_writer.action_key_for_mission). A name with a path
+        # separator or '..' would let a recipe write JSONL files outside the
+        # run root (confirmed path-traversal vector). Reject those at parse
+        # time. Kept permissive otherwise (underscores, dots, unicode are
+        # fine) — only filesystem-escaping characters are forbidden.
+        _validate_step_name(self.name)
+        # Region rectangles must have positive extent (catches the common
+        # [x1,y1,x2,y2]-instead-of-[x,y,w,h] mistake before it reaches the
+        # adapter's PIL crop / locateCenterOnScreen calls).
+        _validate_region(self.region)
+        _validate_region(self.transition_region)
         # At least one of image/coord must be declared.
         if self.image is None and self.coord is None:
             raise ValueError(
@@ -137,12 +242,19 @@ class Step(BaseModel):
 class MissionClick(BaseModel):
     """A single click coordinate targeted at a screen pixel."""
 
+    model_config = _STRICT
+
     x: int
     y: int
     verify_transition: bool = False
     transition_threshold: float = Field(default=0.01, ge=0.0, le=1.0)
     transition_region: tuple[int, int, int, int] | None = None
     post_click_signal: PostClickSignal | None = None
+
+    @model_validator(mode="after")
+    def _validate_region(self) -> MissionClick:
+        _validate_region(self.transition_region)
+        return self
 
 
 class MissionImageClick(BaseModel):
@@ -154,6 +266,8 @@ class MissionImageClick(BaseModel):
     search rectangle to ``(left, top, width, height)`` for speed.
     """
 
+    model_config = _STRICT
+
     image: str
     confidence: float = Field(default=0.9, ge=0.0, le=1.0)
     region: tuple[int, int, int, int] | None = None
@@ -162,6 +276,12 @@ class MissionImageClick(BaseModel):
     transition_threshold: float = Field(default=0.01, ge=0.0, le=1.0)
     transition_region: tuple[int, int, int, int] | None = None
     post_click_signal: PostClickSignal | None = None
+
+    @model_validator(mode="after")
+    def _validate_regions(self) -> MissionImageClick:
+        _validate_region(self.region)
+        _validate_region(self.transition_region)
+        return self
 
 
 # Pydantic v2 "smart" union mode resolves on field shape: dict with x/y →
@@ -220,7 +340,13 @@ class ClickRecipe(BaseModel):
     with a warning. Recipes that declare neither raise ``ValidationError``.
     """
 
-    version: int = 1
+    model_config = _STRICT
+
+    # Only schema v1 exists. Constraining to ``Literal[1]`` makes a recipe
+    # authored against a hypothetical future schema (``version: 2``) fail
+    # fast at parse time instead of loading as if it were v1 — the field
+    # advertises forward-compat gating, so it must actually gate.
+    version: Literal[1] = 1
     steps: list[Step] | None = None
     missions: dict[str, MissionTarget] = Field(default_factory=dict)
 

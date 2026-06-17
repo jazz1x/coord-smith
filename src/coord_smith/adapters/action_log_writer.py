@@ -14,6 +14,7 @@ from pathlib import Path
 
 from coord_smith.evidence.envelope import parse_released_evidence_ref
 from coord_smith.missions.evidence_specs import MISSION_FALLBACK_REFS
+from coord_smith.models.errors import ValidationError
 from coord_smith.models.identifiers import MissionName
 
 # Imported from missions.evidence_specs — single source of truth shared with
@@ -43,8 +44,24 @@ class ActionLogWriter:
     # ------------------------------------------------------------------
 
     def action_log_path(self, key: str) -> Path:
-        """Return the JSONL path for *key*, creating parent dirs on demand."""
-        path = self._run_root / "artifacts" / "action-log" / f"{key}.jsonl"
+        """Return the JSONL path for *key*, creating parent dirs on demand.
+
+        Defense-in-depth: ``key`` is derived from ``step.name`` for per-step
+        guard logs (transition / wait_for / signal). ``Step`` rejects names
+        with path separators at parse time, but a ``model_construct`` escape
+        hatch (test doubles, future transports) bypasses that validator, so
+        the write boundary re-checks. A key that escapes the action-log
+        directory raises rather than writing outside the run root.
+        """
+        base = (self._run_root / "artifacts" / "action-log").resolve()
+        path = (base / f"{key}.jsonl").resolve()
+        # ``path`` must stay strictly inside ``base`` — reject any key that
+        # traverses out (``..``) or is absolute. ``Path.is_relative_to`` is
+        # the explicit containment check.
+        if not path.is_relative_to(base):
+            raise ValidationError(
+                f"action-log key escapes the run root: key={key!r}"
+            )
         path.parent.mkdir(parents=True, exist_ok=True)
         return path
 

@@ -50,17 +50,18 @@ def test_resolve_released_scope_inputs_falls_back_to_env() -> None:
 
 
 def test_resolve_released_scope_inputs_rejects_missing_values() -> None:
-    try:
+    # A missing required input raises ConfigError (not a bare ValueError) so
+    # the CLI maps it to exit code 3, and the message names the flag + env
+    # var to set.
+    with pytest.raises(ConfigError) as exc_info:
         resolve_released_scope_inputs(
             argv=[],
             env={},
         )
-    except ValueError as exc:
-        message = str(exc)
-        assert "Missing:" in message
-        assert "session_ref" in message
-    else:
-        raise AssertionError("Expected missing inputs to be rejected")
+    message = str(exc_info.value)
+    assert "session_ref" in message
+    assert "--session-ref" in message
+    assert "COORDSMITH_SESSION_REF" in message
 
 
 def test_resolve_released_scope_inputs_rejects_whitespace_only_values() -> None:

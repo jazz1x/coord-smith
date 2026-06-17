@@ -109,6 +109,7 @@ source = { editable = "." }
 dependencies = [
     { name = "langchain" },
     { name = "langgraph" },
+    { name = "numpy" },
     { name = "opencv-python" },
     { name = "pyautogui" },
     { name = "pydantic" },
@@ -133,6 +134,7 @@ requires-dist = [
     { name = "langchain", specifier = ">=0.3.0" },
     { name = "langgraph", specifier = ">=0.3.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.11.0" },
+    { name = "numpy", specifier = ">=1.26" },
     { name = "opencv-python", specifier = ">=4.10.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "pyautogui", specifier = ">=0.9.54" },

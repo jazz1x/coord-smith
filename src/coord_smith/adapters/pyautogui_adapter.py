@@ -88,6 +88,40 @@ def _tag_phase(exc: BaseException, phase: PhaseName) -> BaseException:
     return tag_phase(exc, phase)
 
 
+def _payload_override_coords(
+    payload: dict[str, object],
+) -> tuple[int, int] | None:
+    """Extract a caller-injected ``(x, y)`` click override from the payload.
+
+    ADR-003 coordinate priority level 1: when the caller (OpenClaw) supplies
+    runtime-computed coordinates they override the recipe entirely. The
+    override is honored only when BOTH ``x`` and ``y`` are present and are
+    ``int`` (``bool`` excluded — it is an ``int`` subclass but never a valid
+    pixel coordinate). A partial override (one axis present, or a non-int
+    value) raises ``ConfigError`` rather than silently falling through to the
+    recipe: a half-specified override is always a caller mistake, and masking
+    it would click the wrong place with no signal.
+    """
+    has_x = "x" in payload
+    has_y = "y" in payload
+    if not has_x and not has_y:
+        return None
+    x = payload.get("x")
+    y = payload.get("y")
+    if (
+        isinstance(x, int)
+        and not isinstance(x, bool)
+        and isinstance(y, int)
+        and not isinstance(y, bool)
+    ):
+        return (x, y)
+    raise ConfigError(
+        "payload coordinate override must supply BOTH integer 'x' and 'y' "
+        f"(got x={x!r}, y={y!r}); a partial or non-integer override is a "
+        "caller error, not a fall-through to the recipe coords"
+    )
+
+
 class PyAutoGUIAdapter:
     """OS-level coordinate-click adapter implementing ExecutionAdapter protocol.
 
@@ -517,8 +551,16 @@ class PyAutoGUIAdapter:
         step_idx_obj = payload.get("step_idx")
         step_idx = int(step_idx_obj) if isinstance(step_idx_obj, int) else -1
 
+        # Coordinate priority level 1 (ADR-003): a caller (OpenClaw) may
+        # inject runtime-computed coords into the payload. When BOTH x and y
+        # are present and integral, they override the recipe's step.coord /
+        # step.image entirely. Partial (x without y, or non-int) is rejected
+        # rather than silently half-applied — a partial override is always a
+        # caller bug, and falling through to the recipe would mask it.
+        payload_coords = _payload_override_coords(payload)
+
         try:
-            await self._dispatch_with_step(step)
+            await self._dispatch_with_step(step, payload_coords=payload_coords)
         except (
             ImageTemplateNotFound,
             ImageMatchConfidenceLow,
@@ -526,15 +568,33 @@ class PyAutoGUIAdapter:
             ClickExecutionUnverified,
             PageTransitionNotDetected,
             ImageWaitTimeout,
+            ScreenCaptureUnavailable,
         ) as exc:
+            # ScreenCaptureUnavailable is included so a capture failure during
+            # a verify_transition step still writes a failure.jsonl record
+            # (the diagnostic screenshot itself may not be capturable, but the
+            # structured log entry is — see _capture_failure_evidence, which
+            # writes the entry even when the screenshot grab fails). Honors
+            # the documented "any typed dispatch failure writes evidence"
+            # contract. Permission errors are intentionally NOT caught here:
+            # they must reach main()'s exit-2 handler, not be recorded as a
+            # per-step dispatch failure.
             self._capture_failure_evidence(
                 step_idx=step_idx, step_name=step.name, error=exc
             )
             raise
 
-    async def _dispatch_with_step(self, step: Step) -> None:
+    async def _dispatch_with_step(
+        self, step: Step, *, payload_coords: tuple[int, int] | None = None
+    ) -> None:
         """Inner click logic — separated so the failure-capture wrapper above
         can stay focused on exception interception.
+
+        ``payload_coords`` carries an optional caller-injected ``(x, y)``
+        override (ADR-003 priority level 1). When present it is clicked
+        directly and recipe-side coord/image resolution is skipped; the
+        pre-/post-click guards still run as declared. When ``None`` the
+        coords resolve from the recipe step (``step.coord`` / ``step.image``).
 
         Ordering: pre-click ``wait_for`` guard (if declared) →
         resolve click coords → optional ``verify_transition`` baseline →
@@ -570,7 +630,11 @@ class PyAutoGUIAdapter:
 
         # --- dispatch phase: coord resolution + click execution -----
         try:
-            coords = self._resolve_step_click_coords(step)
+            # Payload override (ADR-003 level 1) wins over recipe resolution.
+            if payload_coords is not None:
+                coords: tuple[int, int] | None = payload_coords
+            else:
+                coords = self._resolve_step_click_coords(step)
             if coords is None:
                 return  # step had no resolvable target — execution is a no-op
 

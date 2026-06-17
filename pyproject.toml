@@ -41,6 +41,11 @@ classifiers = [
 dependencies = [
   "langchain>=0.3.0",
   "langgraph>=0.3.0",
+  # numpy is used directly by adapters/page_transition.py for changed-pixel
+  # counting. It already arrives transitively via opencv-python, but is
+  # declared explicitly because the source imports it (a direct import must
+  # be a direct dependency — do not rely on opencv keeping numpy).
+  "numpy>=1.26",
   "opencv-python>=4.10.0",
   "pyautogui>=0.9.54",
   "pydantic>=2.8.0",

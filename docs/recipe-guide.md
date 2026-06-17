@@ -33,7 +33,10 @@ coord-smith \
   --click-recipe       <path/to/recipe.yaml>
 ```
 
-All flags are optional, including `--click-recipe`. Omitting the recipe runs
+The four session/auth/url/site inputs are **required** — each may be supplied
+either as the CLI flag shown above or as its `COORDSMITH_*` environment
+variable. Omitting one exits with code `3` (config error) and a message naming
+the flag + env var to set. `--click-recipe` is **optional**: omitting it runs
 the pipeline with no click (useful for smoke-testing the evidence pipeline).
 
 ---
@@ -45,7 +48,7 @@ the pipeline with no click (useful for smoke-testing the evidence pipeline).
 | `0` | Success — pipeline reached `runCompletion` | Read `run.json` / `artifacts/`, proceed |
 | `1` | Unhandled runtime error (typed dispatch failure OR caught `KeyboardInterrupt`) | Branch on `run.json.status`: `"failure"` → read the `failure` key for diagnosis; `"interrupted"` → safe to retry (no failure block) |
 | `2` | macOS Accessibility or Screen Recording permission denied | Cannot fix via recipe; escalate to operator |
-| `3` | Recipe file missing or schema invalid | Fix the recipe and retry |
+| `3` | Config error — recipe file missing / schema invalid, **or** a required input (`--session-ref` / `--expected-auth-state` / `--target-page-url` / `--site-identity`) is absent | Fix the recipe or supply the named input, then retry |
 | `4` | Host busy — another coord-smith process held the per-host lock | Back off 1–5 s and retry; see `docs/architecture-boundaries.md §Host Exclusivity` |
 
 ---

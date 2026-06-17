@@ -10,6 +10,7 @@ import argparse
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+from coord_smith.models.errors import ConfigError
 from coord_smith.models.identifiers import (
     ExpectedAuthState,
     SessionRef,
@@ -25,6 +26,16 @@ ENV_SESSION_REF = "COORDSMITH_SESSION_REF"
 ENV_EXPECTED_AUTH_STATE = "COORDSMITH_EXPECTED_AUTH_STATE"
 ENV_TARGET_PAGE_URL = "COORDSMITH_TARGET_PAGE_URL"
 ENV_SITE_IDENTITY = "COORDSMITH_SITE_IDENTITY"
+
+# Maps each required input's internal label to the CLI flag + env var an
+# operator would set, so the "missing input" error names the actual fix
+# instead of an internal field name.
+_INPUT_REMEDY: dict[str, tuple[str, str]] = {
+    "session_ref": ("--session-ref", ENV_SESSION_REF),
+    "expected_auth_state": ("--expected-auth-state", ENV_EXPECTED_AUTH_STATE),
+    "target_page_url": ("--target-page-url", ENV_TARGET_PAGE_URL),
+    "site_identity": ("--site-identity", ENV_SITE_IDENTITY),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,13 +64,20 @@ def _pick_value(
 
 
 def _require_present(*, label: str, value: str | None) -> str:
-    """Raise ``ValueError`` when a resolved CLI/env value is absent (None)."""
+    """Raise ``ConfigError`` when a resolved CLI/env value is absent (None).
+
+    ``ConfigError`` (not a bare ``ValueError``) so the CLI maps a missing
+    required input to exit code 3 (recipe/config error) instead of the
+    generic exit 1 (runtime). A caller branching on the exit code can then
+    distinguish "you invoked me wrong" from "a click failed at runtime". The
+    message names the exact flag + env var to set.
+    """
     if value is None:
-        msg = (
-            "Released-scope inputs are required (CLI args then env vars). Missing: "
-            + label
+        flag, env_var = _INPUT_REMEDY[label]
+        raise ConfigError(
+            f"Missing required input '{label}'. "
+            f"Pass {flag} or set {env_var}."
         )
-        raise ValueError(msg)
     return value
 
 
