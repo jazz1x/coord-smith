@@ -1,0 +1,56 @@
+# Multi-step flow recipe with pre-click wait_for guards + settle_ms.
+#
+# When the target UI takes time to paint after a previous action,
+# wait_for blocks the next step until the anchor element appears. This
+# is the recipe-side equivalent of "don't click until the panel is
+# ready" and replaces the legacy trigger_wait mission.
+#
+# settle_ms tunes the post-click pause used by verify_transition. The
+# 300 ms default suits typical React/DOM pages; raise it for heavy
+# SPAs (animation, virtualised lists), lower it for native widgets
+# that toggle synchronously.
+#
+# Field reference: docs/recipe-guide.md §Full Field Reference.
+
+version: 1
+steps:
+  # Step 0: dispatch only — initial click on a static page.
+  - name: open-buy
+    image: templates/buy-button.png
+    confidence: 0.9
+
+  # Step 1: wait_for guard. The seat panel renders asynchronously after
+  # the buy click, so we poll for its container image up to 8 s before
+  # the next click. region restricts the search to the right-hand
+  # column where the panel always appears.
+  - name: select-seat
+    wait_for:
+      image: templates/seat-panel.png
+      timeout: 8.0
+      interval: 0.1
+      confidence: 0.9
+      region: [700, 100, 600, 800]
+    image: templates/available-seat.png
+    region: [700, 100, 600, 800]
+    confidence: 0.85
+    # SPA finishes its seat-selection animation within ~500 ms.
+    settle_ms: 500
+    verify_transition: true
+    transition_threshold: 0.02
+
+  # Step 2: same anchor pattern + post-click polling for the success
+  # toast. wait_for ensures the confirm button is visible; the toast
+  # poll confirms the action took effect.
+  - name: confirm-purchase
+    wait_for:
+      image: templates/confirm-enabled.png
+      timeout: 5.0
+      interval: 0.1
+    image: templates/confirm-button.png
+    confidence: 0.9
+    settle_ms: 300
+    post_click_signal:
+      image: templates/success-toast.png
+      timeout: 6.0
+      interval: 0.1
+      confidence: 0.85

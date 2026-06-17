@@ -39,22 +39,44 @@ click_rule:            # 선택. 없으면 클릭 없이 통과.
 
 ### 클릭 규칙 포맷 (YAML — 사람과 AI 모두 이 형태로 작성)
 
+권장 형태는 `steps:` 다 — N개의 click을 한 invocation에서 순차 실행한다.
+한 클릭만 필요한 단발 시나리오도 `steps: [- name: ...]`로 표현해야 한다.
+(legacy `missions: {name: target}` shape도 여전히 받지만 deprecated —
+load 시 `DeprecationWarning`이 emit 되고, 자동으로 `steps`로 normalize 된다.
+새 recipe는 `steps:`로 작성한다.)
+
 ```yaml
 version: 1
-missions:
-  click_dispatch:
-    # 방법 A: 고정 픽셀 좌표
-    x: 400
-    y: 300
+steps:
+  # Step 0 — 좌표 클릭. 한 step에서 image와 coord를 모두 선언하면 prefer가
+  # primary를 결정하고 다른 쪽이 fallback이 된다 (단일 선언이면 그것만 사용).
+  - name: open-buy
+    coord: { x: 400, y: 300 }
 
-    # 방법 B: 스크린샷 템플릿 매칭 (OpenCV)
-    # image: templates/submit-button.png
-    # confidence: 0.9          # 0~1, 기본 0.9
-    # region: [0, 500, 1920, 600]  # [x, y, width, height]
+  # Step 1 — 이미지 템플릿 매칭 + 사전/사후 가드 풀세트.
+  - name: confirm-purchase
+    # 사전 가드: anchor 이미지가 나타날 때까지 click을 보류한다.
+    # trigger_wait 미션의 후속. region으로 검색 영역을 좁힐 수 있다.
+    wait_for:
+      image: templates/confirm-enabled.png
+      timeout: 5.0
+      interval: 0.1
+      # region: [700, 100, 600, 800]   # 선택 — 검색 사각형 한정
+
+    image: templates/submit-button.png
+    confidence: 0.9                 # 0~1, 기본 0.9
+    # region: [0, 500, 1920, 600]   # 선택 — 매칭 영역 [x, y, w, h]
+    # grayscale: false              # 선택 — 색 무시
+    # prefer: image                 # image+coord 동시 선언 시 priority 명시
+
+    # 클릭 후 OS event flush + DOM render를 위한 settle (default 300 ms).
+    # 0~10000 ms. 헤비 SPA면 500–1000, 즉시 반응 native UI면 0–50.
+    settle_ms: 300
 
     # 선택: 클릭 후 페이지 전환 감지
     verify_transition: true
     transition_threshold: 0.01
+    # transition_region: [0, 100, 1920, 800]   # 선택
 
     # 선택: 클릭 후 특정 이미지가 나타날 때까지 폴링
     post_click_signal:
@@ -64,9 +86,18 @@ missions:
       interval: 0.1
 ```
 
+좌표 우선순위는 step 내부에서도 글로벌과 동일하다:
+`payload(OpenClaw) > step.coord > step.image > no-click`.
+step 하나에 image와 coord를 모두 선언하고 `prefer: image`(default)로 두면
+image matching 실패 시 자동으로 coord로 fallback 한다.
+
 AI에게 레시피 생성을 요청할 때는 Pydantic 스키마를 프롬프트에 첨부한다:
 
 ```bash
+# preferred — drop-in CLI flag, no Python interpreter spawn
+coord-smith --recipe-schema
+
+# legacy — equivalent, useful if the wheel is not installed yet
 python -c "import json; from coord_smith.config.click_recipe import ClickRecipe; \
            print(json.dumps(ClickRecipe.model_json_schema(), indent=2))"
 ```
@@ -80,9 +111,10 @@ evidence_types:
   screenshot:  "artifacts/screenshot/<key>.png"
 exit_codes:
   0: 정상
-  1: 런타임 에러
+  1: 런타임 에러 (typed dispatch failure 또는 KeyboardInterrupt — run.json.status="interrupted"로 구별)
   2: macOS Accessibility / Screen Recording 권한 없음
-  3: 레시피 파일 누락·스키마 오류
+  3: 설정 오류 — 레시피 파일 누락·스키마 오류, 또는 필수 입력(session_ref / expected_auth_state / target_page_url / site_identity) 누락
+  4: 호스트 잠금 충돌 (다른 coord-smith 프로세스가 lock 보유 — 1~5초 backoff 후 retry)
 ```
 
 ## Bootstrap
@@ -90,7 +122,7 @@ exit_codes:
 Fresh checkouts run, in order:
 
 1. `uv sync --extra dev` — installs runtime + dev deps from `pyproject.toml`.
-2. `uv run pytest -q` — expected: 721 passing, 1 skipped, 4 deselected.
+2. `uv run pytest -q` — expected: 398 passing, 4 deselected.
 
 If pytest collection fails with `ModuleNotFoundError: PIL|pyautogui`, step 1
 did not complete.
@@ -138,13 +170,28 @@ design docs.
 ## Invariants
 
 - **LLM-free runtime.** The coord-smith runtime graph contains no LLM inference.
-  Reasoning lives outside (e.g. OpenClaw).
+  Reasoning lives outside (e.g. OpenClaw). See [ADR-001](adr/ADR-001-llm-free-runtime-and-browser-ban.md).
 - **Browser-internals forbidden.** No Playwright, CDP, or Chromium driver.
-  Only OS-level coordinates and pixels.
+  Only OS-level coordinates and pixels. See [ADR-001](adr/ADR-001-llm-free-runtime-and-browser-ban.md).
 - **`pyautogui.FAILSAFE = True`** is enforced in `PyAutoGUIAdapter.__init__`.
-- **Coordinate priority is fixed.** payload → recipe coord → recipe image →
-  no click. Never the other way.
+- **Coordinate priority is fixed.** payload → step.coord → step.image →
+  no click. Never the other way. See [ADR-003](adr/ADR-003-coordinate-priority.md).
 - **OpenClaw calls coord-smith**, not the reverse.
+- **Per-host advisory lock.** One coord-smith invocation per artifact tree.
+  See [ADR-005](adr/ADR-005-per-host-advisory-lock.md).
+
+## Durable architectural decisions
+
+Spine decisions are recorded in [`adr/`](adr/README.md). Read before
+proposing any change that touches the runtime contract or caller-facing
+API:
+
+- [ADR-001 LLM-free runtime + browser-internals forbidden](adr/ADR-001-llm-free-runtime-and-browser-ban.md)
+- [ADR-002 Multi-step recipe DSL (`steps:` canonical)](adr/ADR-002-multi-step-recipe-dsl.md)
+- [ADR-003 Coordinate priority](adr/ADR-003-coordinate-priority.md)
+- [ADR-004 Failure evidence policy](adr/ADR-004-failure-evidence-policy.md)
+- [ADR-005 Per-host advisory lock](adr/ADR-005-per-host-advisory-lock.md)
+- [ADR-006 `run.json` envelope as caller outcome contract](adr/ADR-006-run-json-envelope.md)
 
 ## Agent Expectations
 

@@ -3,6 +3,10 @@ out
 dist
 *.tgz
 runs/
+# coord-smith artifact tree (run roots + lock + run.json land here)
+artifacts/
+# top-level run.json written when no run root exists yet (host_busy / config error)
+/run.json
 
 # local browser profiles
 data/openclaw/profiles/
@@ -52,3 +56,7 @@ skills-lock.json
 .claude/skills/python-performance-optimization
 .claude/skills/python-testing-patterns
 .claude/skills/python-type-safety
+
+# OpenClaw walkthrough demo (dev-only artifacts)
+_openclaw_session/
+/tmp/

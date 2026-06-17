@@ -4,41 +4,37 @@
 
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![tests](https://img.shields.io/badge/tests-721%20passing-brightgreen)
+![version](https://img.shields.io/badge/version-0.1.1-blue)
+![tests](https://img.shields.io/badge/tests-398%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
+[![CI](https://github.com/jazz1x/coord-smith/actions/workflows/ci.yml/badge.svg)](https://github.com/jazz1x/coord-smith/actions/workflows/ci.yml)
 
 **coord-smith** 는 *손* 입니다. *머리* — OpenClaw 같은 외부 LLM — 가 무엇을 어디서 클릭할지 정하면, coord-smith 는 그 결정을 OS 위에서 좌표 클릭과 스크린샷 증거로 실행합니다. 추론은 런타임 바깥에 있고, 런타임 자체에는 LLM 호출이 0건입니다.
 
-한 번의 실행은 LangGraph 상태 머신이 12 개 미션을 순서대로 통과시키는 파이프라인입니다. 각 미션은 다음 미션이 시작되기 전에 evidence envelope (action-log JSONL, 스크린샷, 전환 diff) 를 디스크에 남깁니다. 브라우저 내부 (Playwright / CDP / Chromium) 는 건드리지 않습니다 — OS 좌표와 픽셀만 사용합니다.
+한 번의 실행은 LangGraph 상태 머신이 6 개 미션 (per-run 3개 + per-step 3개, recipe step 마다 반복) 을 순서대로 통과시키는 파이프라인입니다. 각 미션은 다음 미션이 시작되기 전에 evidence envelope (action-log JSONL, 스크린샷, 전환 diff) 를 디스크에 남깁니다. 브라우저 내부 (Playwright / CDP / Chromium) 는 건드리지 않습니다 — OS 좌표와 픽셀만 사용합니다.
 
 [English](./README.md)
 
 ## 파이프라인
 
-런타임은 12 개 미션을 정해진 순서로 통과합니다. 각 미션은 결정적이며, 다음 미션이 시작되기 전에 evidence 를 디스크에 남깁니다.
+런타임은 **6 개 미션**을 통과합니다 — per-run 셋업/종결이 per-step 블록을 감싸고, per-step은 recipe의 각 step마다 한 번씩 실행됩니다. 각 미션은 결정적이며, 다음 미션이 시작되기 전에 evidence 를 디스크에 남깁니다.
 
-| 미션 | 역할 |
-|------|------|
-| `attach_session` | session-ref 로 기존 브라우저 세션에 부착. |
-| `prepare_session` | 기대 인증 상태 / 대상 페이지 URL 검증. |
-| `benchmark_validation` | 기록된 벤치마크에 대해 실행 검증. |
-| `page_ready_observation` | 스크린샷으로 페이지 준비 상태 확인. |
-| `sync_observation` | 로컬 상태와 페이지 상태 동기화. |
-| `target_actionability_observation` | 대상이 클릭 가능한 상태인지 확인. |
-| `armed_state_entry` | 클릭 발사 직전 armed 상태 진입. |
-| `trigger_wait` | 결정적 트리거 신호 대기. |
-| `click_dispatch` | 클릭 발사 — payload 좌표 / recipe 좌표 / recipe 이미지. |
-| `click_completion` | 클릭 후 evidence (스크린샷, 전환 diff) 캡처. |
-| `success_observation` | 기대한 상태 변화가 발생했는지 검증. |
-| `run_completion` | sealed 상태 코드로 실행 종료. |
+| 미션 | Phase | 역할 |
+|------|-------|------|
+| `attach_session` | per-run | session-ref 로 기존 브라우저 세션에 부착. |
+| `prepare_session` | per-run | 기대 인증 상태 / 대상 페이지 URL 검증. |
+| `step_observe` | per-step | step의 pre-click 화면 상태 캡처. |
+| `step_dispatch` | per-step | step의 클릭 실행 (image-or-coord prefer/fallback chain). |
+| `step_capture` | per-step | post-click evidence (스크린샷, transition diff, optional signal) 캡처. |
+| `run_completion` | per-run | sealed 상태 코드로 실행 종료. |
 
-각 미션은 고정된 과거형 action key (예: `click_dispatch` → `click-dispatched`) 를 emit 하므로 action log 를 grep 으로 추적할 수 있습니다.
+N-step recipe면 per-step 블록이 선언 순서대로 N번; N=0이면 per-step 블록 생략 (smoke target). 각 미션은 고정된 과거형 action key (예: `step_dispatch` → `step-dispatched`) 를 emit 하므로 action log 를 grep 으로 추적할 수 있습니다.
 
 ```
  OpenClaw (외부 LLM)
       │  결정 / 좌표 / 이미지 ref
       ▼
- coord-smith CLI ──▶ LangGraph 상태 머신 ──▶ 12 미션
+ coord-smith CLI ──▶ LangGraph 상태 머신 ──▶ 6 미션
                                               │
                             evidence envelope (JSONL + PNG)
                                               │
@@ -63,10 +59,21 @@ uv --version
 
 ## 설치
 
+엔드유저 (PyPI 휠이 게시된 후 권장 경로):
+
+```bash
+# uv (권장)
+uv pip install coord-smith
+# 또는 stock pip
+pip install coord-smith
+```
+
+소스 체크아웃에서 개발할 경우:
+
 ### 1. 프로젝트 부트스트랩
 
 ```bash
-git clone https://github.com/<your-org>/coord-smith.git
+git clone https://github.com/jazz1x/coord-smith.git
 cd coord-smith
 uv sync --extra dev
 ```
@@ -80,7 +87,7 @@ uv python install 3.14
 ### 2. 검증
 
 ```bash
-uv run pytest -q                # 721 passed, 1 skipped, 4 deselected
+uv run pytest -q                # 398 passed, 4 deselected (real-binary)
 uv run ruff check .
 uv run mypy
 ```
@@ -120,30 +127,52 @@ coord-smith --click-recipe ./recipe.yaml \
       --site-identity example
 ```
 
+macOS 에서 호출 직전 대상 브라우저가 포그라운드가 아닐 가능성이 있으면 (예: 호출 셸이 포커스를 빼앗길 수 있는 환경), `--target-window "Google Chrome"` (혹은 동등한 앱 이름) 을 붙입니다. CLI 가 `osascript -e 'tell application "<name>" to activate'` 를 실행하고 약 1초 settle 후 preflight + dispatch 로 진행합니다. 환경변수 `COORDSMITH_TARGET_WINDOW` 로도 같은 값을 줄 수 있고, CLI 플래그가 환경변수보다 우선합니다. caller 책임 (실행 도중 윈도우를 포그라운드로 유지) 은 [docs/architecture-boundaries.md §Window Ownership](docs/architecture-boundaries.md#window-ownership) 참고.
+
 최소 좌표 recipe:
 
 ```yaml
 version: 1
-missions:
-  click_dispatch:
-    x: 800
-    y: 500
+steps:
+  - name: click-buy
+    coord: { x: 800, y: 500 }
 ```
 
 레이아웃 변화에 강건한 이미지 recipe (권장):
 
 ```yaml
 version: 1
-missions:
-  click_dispatch:
+steps:
+  - name: click-buy
     image: templates/buy-button.png
     confidence: 0.9
     grayscale: false
 ```
 
-YAML이 정식 포맷이며, `.json` 파일은 backwards compatibility 용으로 받아들여집니다 (확장자 기반 자동 라우팅). 전체 스키마와 에이전트 계약은 [docs/recipe-guide.md](docs/recipe-guide.md) 참고.
+YAML이 정식 포맷이며, `.json` 파일은 backwards compatibility 용으로 받아들여집니다 (확장자 기반 자동 라우팅). 레거시 `missions: {name: target}` shape 는 여전히 로드되지만 `DeprecationWarning` 이 emit 됩니다 — 새 recipe 는 반드시 `steps:` 로 작성. 전체 스키마와 에이전트 계약은 [docs/recipe-guide.md](docs/recipe-guide.md) 참고.
 
-**좌표 우선순위**: payload (OpenClaw) → recipe 좌표 → recipe 이미지 → no-click.
+**좌표 우선순위**: payload (OpenClaw) → step.coord → step.image → no-click.
+
+## 결과 읽기
+
+모든 invocation 은 하나의 `run.json` summary 를 남깁니다 — caller 가 JSONL 파일들을 하나씩 grep 하지 않고 한 번에 결과를 인식할 수 있습니다:
+
+```jsonc
+// artifacts/runs/<run_id>/run.json  (또는 run root 가 없는 경우 base_dir/run.json)
+{
+  "schema_version": 1,
+  "run_id": "20260518-123045-...",
+  "status": "success",       // success | failure | interrupted | host_busy
+  "exit_code": 0,            // 0 성공 · 1 런타임 · 2 권한 · 3 recipe · 4 host busy
+  "started_at": "...",
+  "ended_at": "...",
+  "elapsed_seconds": 1.2345,
+  "step_count": 3,
+  "failure": null            // 실패 시 compact diagnosis block
+}
+```
+
+실패 시 `run.json` 안의 `failure` 키가 `step_idx`, `step_name`, `phase` (`pre_click` / `dispatch` / `post_click`), `error_class`, screenshot 경로, 그리고 전체 `failure.jsonl` 포인터를 담고 있습니다. (`failure` 는 JSON 필드이지, 별도 `run.json.failure` 파일이 아닙니다.)
 
 ## Click Recipes
 
@@ -158,33 +187,32 @@ YAML이 정식 포맷이며, `.json` 파일은 backwards compatibility 용으로
 
 실패 모드는 모두 타입 있는 예외: `ImageTemplateNotFound`, `ImageMatchConfidenceLow`.
 
-### 페이지 전환 검증 (옵션, 기본 off)
+### Step 가드 — `wait_for` / `settle_ms` / `verify_transition` / `post_click_signal`
+
+각 step 은 사전 anchor (`wait_for`), 클릭 후 settle 지연 (`settle_ms`, 기본 300 ms),
+페이지 전환 검증 (`verify_transition` + 임계값), 클릭 후 신호 폴링 (`post_click_signal`) 을 가질 수 있습니다.
 
 ```yaml
-missions:
-  click_dispatch:
-    image: templates/buy.png
-    verify_transition: true
-    transition_threshold: 0.02
-    transition_region: [0, 100, 1920, 800]
-```
-
-클릭 직전 스크린샷 → 클릭 → 클릭 직후 스크린샷 → `PIL.ImageChops.difference` bbox 면적 / 영역 면적 > threshold 면 통과. 미달 시 `PageTransitionNotDetected` 예외.
-
-### Post-click 신호 폴링 (옵션, 기본 off)
-
-```yaml
-missions:
-  click_dispatch:
-    image: templates/buy.png
-    post_click_signal:
-      image: templates/loading-spinner.png
-      confidence: 0.85
+steps:
+  - name: confirm-purchase
+    wait_for:
+      image: templates/confirm-enabled.png
       timeout: 5.0
       interval: 0.1
+    image: templates/confirm-button.png
+    confidence: 0.9
+    settle_ms: 500          # 무거운 SPA 면 500–1000, 즉시 반응 native 면 0–50
+    verify_transition: true
+    transition_threshold: 0.02
+    post_click_signal:
+      image: templates/success-toast.png
+      timeout: 6.0
 ```
 
-지정 이미지가 화면에 나타날 때까지 `locateCenterOnScreen` 폴링. 타임아웃 시 `ImageWaitTimeout`.
+`wait_for` 타임아웃 → `ImageWaitTimeout` (phase `pre_click`).
+`verify_transition` 미달 → `PageTransitionNotDetected` (phase `post_click`).
+`post_click_signal` 타임아웃 → `ImageWaitTimeout` (phase `post_click`).
+같은 error class 라도 `phase` 필드로 구별됩니다 — `failure.jsonl` 참고.
 
 ## CI & 검사
 
@@ -196,7 +224,7 @@ missions:
 | Test (real) | `uv run pytest -m real -q` | macOS Accessibility + Screen Recording 필요 |
 | Pre-commit | `uv run pre-commit run --all-files` | 전수 검사 |
 
-GitHub Actions 는 Python 3.14 단일 버전 (Ubuntu, pyautogui import 용 xvfb) + 별도 pre-commit job 을 실행합니다.
+GitHub Actions 가 `main` 으로의 push 와 모든 PR 에서 동작합니다 — [`.github/workflows/ci.yml`](.github/workflows/ci.yml) 참고. 워크플로우는 Python 3.14 + xvfb (Ubuntu, `import pyautogui` 가 실제 display 없이도 성공하도록) 를 설치한 뒤 ruff + mypy + pytest 를 돌리고, 별도 pre-commit job 도 함께 실행합니다. 로컬에서는 `uv run pre-commit install` 로 깔리는 pre-commit 훅이 같은 게이트입니다.
 
 ## 불변식
 

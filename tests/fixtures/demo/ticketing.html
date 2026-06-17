@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>coord-smith demo · ticketing flow</title>
+<style>
+  /*
+    Fixed-viewport (1280×800) demo page that walks through five states in a
+    pure-DOM state machine. Used by coord-smith integration tests:
+
+      1. coord-smith renders this page (or a screenshot of it) on screen.
+      2. An image template cropped from each state's button is fed to
+         pyautogui.locateCenterOnScreen — must match deterministically.
+      3. After a click, the page transitions to the next state and the
+         background tint shifts enough that PIL.ImageChops.difference
+         registers a non-trivial change (verify_transition guard).
+
+    No hover/active effects, no gradients, no animations — every pixel
+    must be reproducible across runs and screenshot tools.
+  */
+  :root {
+    --paper: #FAF7F0;      /* state: buy */
+    --cream: #F5EDD8;      /* state: seat-1 */
+    --tan:   #EDE0BC;      /* state: seat-2 */
+    --peach: #F0D9C0;      /* state: confirm */
+    --sage:  #DCE7DA;      /* state: success */
+    --ink: #1C1A18;
+    --ink-mute: #5A554C;
+    --rust: #B0411F;
+    --rust-deep: #8C2F12;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 800px; overflow: hidden; }
+  body {
+    font-family: 'Newsreader', 'EB Garamond', Georgia, serif;
+    color: var(--ink);
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  /* Stage container — background tint changes per state. */
+  .stage {
+    width: 1280px;
+    height: 800px;
+    position: relative;
+    transition: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px;
+  }
+  .stage[data-state="buy"]     { background: var(--paper); }
+  .stage[data-state="seat-1"]  { background: var(--cream); }
+  .stage[data-state="seat-2"]  { background: var(--tan); }
+  .stage[data-state="confirm"] { background: var(--peach); }
+  .stage[data-state="success"] { background: var(--sage); }
+
+  /* State label badge (top-left) — survives across all states for debug. */
+  .state-label {
+    position: absolute;
+    top: 24px;
+    left: 32px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    font-weight: 500;
+  }
+  .state-label .num {
+    color: var(--rust);
+    margin-right: 10px;
+  }
+
+  /* Title block. */
+  h1 {
+    font-family: 'Newsreader', serif;
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .subtitle {
+    font-size: 17px;
+    color: var(--ink-mute);
+    line-height: 1.5;
+    max-width: 56ch;
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  /* Panels — only the matching state's panel is visible. */
+  .panel { display: none; }
+  .stage[data-state="buy"]     .panel.show-buy     { display: block; }
+  .stage[data-state="seat-1"]  .panel.show-seat-1  { display: block; }
+  .stage[data-state="seat-2"]  .panel.show-seat-2  { display: block; }
+  .stage[data-state="confirm"] .panel.show-confirm { display: block; }
+  .stage[data-state="success"] .panel.show-success { display: block; }
+
+  /* Buttons — flat, deterministic, no hover/active visual change.
+     Each button is 280×72 with the rust accent so image-template
+     matching has a strong hit even at moderate confidence. */
+  .btn {
+    display: block;
+    margin: 0 auto;
+    width: 280px;
+    height: 72px;
+    background: var(--rust);
+    color: #FFF;
+    font-family: 'Newsreader', serif;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 72px;
+    padding: 0;
+    /* No hover / active / focus visual change — runs are deterministic. */
+  }
+  .btn:hover, .btn:active, .btn:focus { outline: none; }
+  /* Outlined seat variant — distinct from solid rust for template
+     uniqueness (confidence boost when locating). */
+  .btn--seat {
+    background: transparent;
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    font-size: 19px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 500;
+  }
+  .btn--success {
+    background: transparent;
+    color: var(--ink);
+    pointer-events: none;
+    border: 2px solid var(--rust-deep);
+  }
+  /* Side-by-side seat row. */
+  .seat-row {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+  }
+  .seat-row .btn { width: 200px; }
+
+  /* Confirmation summary block (between subtitle and button). */
+  .summary {
+    background: rgba(0, 0, 0, 0.04);
+    padding: 24px 32px;
+    margin: 0 auto 40px;
+    border-left: 3px solid var(--rust);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--ink);
+    max-width: 460px;
+    line-height: 1.7;
+  }
+
+  /* Footer marker — survives across all states for orientation. */
+  footer {
+    position: absolute;
+    bottom: 24px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-mute);
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" data-state="buy" id="stage">
+
+    <div class="state-label">
+      <span class="num" id="state-num">01 / 05</span>
+      <span id="state-name">buy</span>
+    </div>
+
+    <!-- State 1: buy -->
+    <div class="panel show-buy">
+      <h1>coord-smith demo · ticket purchase</h1>
+      <p class="subtitle">
+        Step 1 of 4 — open the buy intent. The runtime locates the
+        primary action via image template, dispatches a click, then
+        verifies the transition to the seat selection panel.
+      </p>
+      <button class="btn" id="btn-buy" data-action="buy">Buy Tickets</button>
+    </div>
+
+    <!-- State 2: seat-1 (seat selection grid) -->
+    <div class="panel show-seat-1">
+      <h1>Select your seat</h1>
+      <p class="subtitle">
+        Step 2 of 4 — pick a seat. Both options are visually distinct so
+        the recipe can target either via separate image templates if a
+        test wants to assert per-seat behavior.
+      </p>
+      <div class="seat-row">
+        <button class="btn btn--seat" id="btn-seat-a1" data-action="seat-a1">Seat A1</button>
+        <button class="btn btn--seat" id="btn-seat-a2" data-action="seat-a2">Seat A2</button>
+      </div>
+    </div>
+
+    <!-- State 3: seat-2 (one seat selected, confirm enabled) -->
+    <div class="panel show-seat-2">
+      <h1>Confirm your seat</h1>
+      <p class="subtitle">
+        Step 3 of 4 — the chosen seat is locked in. Click the
+        confirmation button to proceed to the purchase summary.
+      </p>
+      <div class="summary" id="seat-summary">Selected seat:&nbsp;A1</div>
+      <button class="btn" id="btn-confirm-seat" data-action="confirm-seat">Confirm Seat</button>
+    </div>
+
+    <!-- State 4: confirm (purchase confirmation) -->
+    <div class="panel show-confirm">
+      <h1>Confirm purchase</h1>
+      <p class="subtitle">
+        Step 4 of 4 — review and submit. This is the last click in the
+        flow; it triggers the run-completion path on the coord-smith side.
+      </p>
+      <div class="summary">
+        Order summary<br>
+        ──────────<br>
+        Event:&nbsp;Demo Concert<br>
+        Seat:&nbsp;<span id="confirm-seat">A1</span><br>
+        Total:&nbsp;¥&nbsp;88,000
+      </div>
+      <button class="btn" id="btn-confirm-purchase" data-action="confirm-purchase">
+        Confirm Purchase
+      </button>
+    </div>
+
+    <!-- State 5: success -->
+    <div class="panel show-success">
+      <h1>Purchase complete</h1>
+      <p class="subtitle">
+        Done — coord-smith reached run-completion. The run artifact tree
+        contains an action-log entry per per-step mission and a
+        screenshot per step capture.
+      </p>
+      <div class="btn btn--success">✓ ticket reserved</div>
+    </div>
+
+    <footer id="footer">
+      tests/fixtures/demo/ticketing.html · viewport 1280×800 · deterministic state machine
+    </footer>
+  </div>
+
+<script>
+  // Pure-DOM state machine. No frameworks, no animation hooks, no random
+  // behavior — every transition is the same on every run, which is the
+  // contract for image-template + transition-diff testing.
+  (function () {
+    const stage = document.getElementById('stage');
+    const stateNum = document.getElementById('state-num');
+    const stateName = document.getElementById('state-name');
+    const seatSummary = document.getElementById('seat-summary');
+    const confirmSeat = document.getElementById('confirm-seat');
+
+    const states = ['buy', 'seat-1', 'seat-2', 'confirm', 'success'];
+    let chosenSeat = 'A1';
+
+    function setState(name) {
+      stage.dataset.state = name;
+      stateName.textContent = name;
+      stateNum.textContent = String(states.indexOf(name) + 1).padStart(2, '0') + ' / 05';
+      // Sync seat references for state-3 + state-4.
+      if (seatSummary) seatSummary.innerHTML = 'Selected seat:&nbsp;' + chosenSeat;
+      if (confirmSeat) confirmSeat.textContent = chosenSeat;
+    }
+
+    document.addEventListener('click', function (ev) {
+      const target = ev.target.closest('[data-action]');
+      if (!target) return;
+      const action = target.dataset.action;
+      if (action === 'buy')               setState('seat-1');
+      else if (action === 'seat-a1')      { chosenSeat = 'A1'; setState('seat-2'); }
+      else if (action === 'seat-a2')      { chosenSeat = 'A2'; setState('seat-2'); }
+      else if (action === 'confirm-seat') setState('confirm');
+      else if (action === 'confirm-purchase') setState('success');
+    });
+
+    // Allow ?state=<name> to jump directly to a specific state — useful for
+    // capturing per-state screenshots without simulating clicks.
+    const params = new URLSearchParams(window.location.search);
+    const initial = params.get('state');
+    if (initial && states.includes(initial)) {
+      setState(initial);
+    } else {
+      setState('buy');
+    }
+  })();
+</script>
+</body>
+</html>

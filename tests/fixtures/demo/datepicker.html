@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>coord-smith demo · datepicker</title>
+<style>
+  body { font-family: 'Newsreader', Georgia, serif; margin: 64px; color: #1C1A18; background: #FAF7F0; }
+  .picker { display: inline-block; background: white; border: 1px solid #ddd; border-radius: 4px; padding: 16px; }
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; }
+  .nav button { background: none; border: 1px solid #ccc; padding: 4px 12px; cursor: pointer; font-family: inherit; }
+  table { border-collapse: collapse; }
+  th, td { width: 36px; height: 36px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  th { color: #888; font-weight: normal; }
+  td.day { cursor: pointer; border-radius: 2px; }
+  td.day:hover, td.day.selected { background: #B0411F; color: white; }
+  td.dimmed { color: #ccc; }
+  caption { font-size: 18px; font-weight: 500; margin-bottom: 8px; color: #1C1A18; }
+</style>
+</head>
+<body>
+
+<h1 style="font-size: 24px; font-weight: 500; margin-bottom: 24px;">Select a date</h1>
+
+<div class="picker" id="picker">
+  <div class="nav">
+    <button id="prev">‹ Prev</button>
+    <strong id="month-label">November 2026</strong>
+    <button id="next">Next ›</button>
+  </div>
+  <table>
+    <thead><tr><th>S</th><th>M</th><th>T</th><th>W</th><th>T</th><th>F</th><th>S</th></tr></thead>
+    <tbody id="grid"></tbody>
+  </table>
+</div>
+
+<p id="result" style="margin-top: 24px; font-size: 14px; color: #5A554C;"></p>
+
+<script>
+const grid = document.getElementById('grid');
+const result = document.getElementById('result');
+// November 2026 starts on Sunday
+const year = 2026, month = 10; // November (0-indexed)
+const firstDow = new Date(year, month, 1).getDay();
+const daysInMonth = new Date(year, month + 1, 0).getDate();
+let cells = [];
+for (let i = 0; i < firstDow; i++) cells.push('');
+for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+while (cells.length % 7 !== 0) cells.push('');
+
+let html = '';
+for (let i = 0; i < cells.length; i += 7) {
+  html += '<tr>';
+  for (let j = 0; j < 7; j++) {
+    const v = cells[i + j];
+    if (v === '') html += '<td class="dimmed">·</td>';
+    else html += `<td class="day" data-day="${v}">${v}</td>`;
+  }
+  html += '</tr>';
+}
+grid.innerHTML = html;
+grid.addEventListener('click', e => {
+  const t = e.target.closest('td.day');
+  if (!t) return;
+  grid.querySelectorAll('td.selected').forEach(el => el.classList.remove('selected'));
+  t.classList.add('selected');
+  result.textContent = `Selected: November ${t.dataset.day}, 2026`;
+});
+</script>
+</body>
+</html>

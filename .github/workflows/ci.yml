@@ -8,8 +8,18 @@ on:
   # types are opened / synchronize / reopened so the run fires at PR open
   # and on each push to the PR branch.
   pull_request:
-  # Manual invocation from the Actions tab.
+  # Manual invocation from the Actions tab. The `python_smoke` input
+  # exists for ad-hoc smoke-testing a future Python minor (e.g. 3.15)
+  # before loosening pyproject's requires-python. Default empty → no
+  # extra job. Setting it to "3.15" adds a continue-on-error smoke
+  # job alongside the canonical 3.14 matrix so a known-broken
+  # pre-release does not turn the whole CI red.
   workflow_dispatch:
+    inputs:
+      python_smoke:
+        description: 'Optional ad-hoc Python smoke target (e.g. "3.15")'
+        required: false
+        default: ""
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -20,6 +30,14 @@ jobs:
     name: lint + mypy + pytest (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
+      # The matrix is intentionally pinned to a single version that
+      # matches pyproject's `requires-python = ">=3.14,<3.15"`. A
+      # secondary 3.13 job would be rejected at `uv sync` time
+      # because the wheel's Python-Requires excludes it. To smoke a
+      # FUTURE minor (e.g. 3.15) before loosening the pin, invoke
+      # the workflow with `python_smoke` set — the smoke-py job
+      # below runs that version with continue-on-error so a broken
+      # pre-release does not block the canonical 3.14 path.
       fail-fast: false
       matrix:
         python-version: ["3.14"]
@@ -74,6 +92,100 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y xvfb
 
       - name: Run pre-commit on all files
-        # Hook scripts call `.venv/bin/python -m pytest`; xvfb-run wraps the
-        # whole hook invocation so pyautogui imports inside the pytest hook.
+        # Hook scripts call `uv run --frozen` (see .pre-commit-config.yaml);
+        # xvfb-run wraps the whole hook invocation so pyautogui imports
+        # inside the pytest hook succeed without a real X display.
         run: xvfb-run -a uv run pre-commit run --all-files --show-diff-on-failure
+
+  security:
+    name: security (secrets + CVE + layers)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks scans the full commit history, not just the tip,
+          # so fetch every commit (default checkout is shallow depth-1).
+          fetch-depth: 0
+
+      # Secret scan over the entire history. Invokes the gitleaks binary
+      # directly (not the marketplace action) so the scan matches the local
+      # pre-commit hook exactly and avoids the action's GITHUB_TOKEN / PR-event
+      # coupling. Uses .gitleaks.toml (upstream default ruleset + allowlist).
+      - name: Install gitleaks
+        run: |
+          GITLEAKS_VERSION=8.24.3
+          curl -sSfL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: gitleaks (secret scan, full history)
+        run: gitleaks detect --source . --config .gitleaks.toml --redact --verbose
+
+      # CVE / vulnerability scan of the resolved dependency set
+      # (uv.lock) plus any config misconfigurations. Fails the job on
+      # any HIGH or CRITICAL finding so a vulnerable dependency cannot
+      # land silently. Update uv.lock (`uv lock --upgrade-package X`)
+      # to clear findings.
+      - name: trivy (CVE scan)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: false
+
+      # Architectural import boundaries (layers + no inter-layer
+      # cycles). Mirrors the pre-commit `import-linter` hook so the
+      # contract is enforced on every PR even if a contributor skips
+      # local hooks.
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python 3.14
+        run: uv python install 3.14
+
+      - name: Sync dependencies (dev extras)
+        run: uv sync --extra dev --python 3.14
+
+      - name: import-linter (layers + no cycles)
+        run: uv run lint-imports
+
+  smoke-py:
+    # Ad-hoc smoke target — only runs when workflow_dispatch supplies
+    # a `python_smoke` input (e.g. "3.15" to smoke a future minor).
+    # continue-on-error so a broken pre-release does NOT mark the
+    # whole workflow as failed; this is intentional — the result is
+    # informational, not gating.
+    name: smoke (py${{ inputs.python_smoke }})
+    if: github.event_name == 'workflow_dispatch' && inputs.python_smoke != ''
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python ${{ inputs.python_smoke }}
+        run: uv python install ${{ inputs.python_smoke }}
+
+      - name: Sync dependencies (dev extras)
+        # If pyproject's requires-python excludes this version, uv sync
+        # will fail loudly — that is the smoke signal. continue-on-error
+        # at the job level lets the canonical 3.14 path still pass.
+        run: uv sync --extra dev --python ${{ inputs.python_smoke }}
+
+      - name: Install xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Pytest smoke
+        run: xvfb-run -a uv run pytest -q

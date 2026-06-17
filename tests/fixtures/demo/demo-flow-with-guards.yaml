@@ -1,0 +1,65 @@
+# coord-smith demo flow recipe — full guard set.
+#
+# Same four-step click sequence as ``demo-flow.yaml``, but with the post-click
+# guards layered on top:
+#
+#   * ``verify_transition: true`` — after each click, snapshot before/after
+#     and assert at least 2% of pixels changed (the demo's per-state
+#     background tint shift produces ~3-5% by design).
+#   * ``post_click_signal`` — after each click, poll for the next state's
+#     distinctive heading image to appear on screen. Fails fast if the
+#     transition didn't happen even when the pixel diff passes.
+#
+# Templates under ``templates/``:
+#   - buy-button / seat-a1 / confirm-seat / confirm-purchase  →  step click target
+#   - panel-seat-1 / panel-seat-2 / panel-confirm / panel-success  →  next-state heading
+#
+# Used by tests/integration/test_demo_flow_with_real_opencv.py
+# ::test_demo_flow_with_guards_runs_end_to_end.
+
+version: 1
+steps:
+  - name: open-buy
+    image: templates/buy-button.png
+    confidence: 0.9
+    verify_transition: true
+    transition_threshold: 0.02
+    post_click_signal:
+      image: templates/panel-seat-1.png
+      confidence: 0.9
+      timeout: 2.0
+      interval: 0.05
+
+  - name: select-seat-a1
+    image: templates/seat-a1.png
+    region: [0, 0, 640, 800]
+    confidence: 0.9
+    verify_transition: true
+    transition_threshold: 0.02
+    post_click_signal:
+      image: templates/panel-seat-2.png
+      confidence: 0.9
+      timeout: 2.0
+      interval: 0.05
+
+  - name: confirm-seat
+    image: templates/confirm-seat.png
+    confidence: 0.9
+    verify_transition: true
+    transition_threshold: 0.02
+    post_click_signal:
+      image: templates/panel-confirm.png
+      confidence: 0.9
+      timeout: 2.0
+      interval: 0.05
+
+  - name: confirm-purchase
+    image: templates/confirm-purchase.png
+    confidence: 0.9
+    verify_transition: true
+    transition_threshold: 0.02
+    post_click_signal:
+      image: templates/panel-success.png
+      confidence: 0.9
+      timeout: 2.0
+      interval: 0.05

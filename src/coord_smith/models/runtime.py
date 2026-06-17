@@ -1,35 +1,36 @@
-"""Core runtime state models for the Python scaffold."""
+"""Core runtime state models for the Python scaffold.
+
+Released scope is the only scope. The previous lifecycle tiers (modeled /
+control-only) have been removed along with the seven-mission scaffold; see
+``docs/prd-multi-step-flow-recipe.md`` §2.4 D2.
+
+The released scope ceiling system has likewise been collapsed: every run
+now targets ``runCompletion`` as the sealed exit. The ``approved_scope_ceiling``
+field is preserved on ``RuntimeState`` for backwards-compat with payload
+schemas, but only ``runCompletion`` is honored at runtime; any other value
+warns and falls back to ``runCompletion``.
+"""
 
 import warnings
 from dataclasses import dataclass, field
 from typing import Literal
 
-from coord_smith.missions.names import (
-    ALL_MISSIONS,
-    CONTROL_MISSIONS,
-    MODELED_MISSIONS,
-    RELEASED_MISSIONS,
-)
+from coord_smith.missions.names import ALL_MISSIONS, RELEASED_MISSIONS
 from coord_smith.models.checkpoint import TransitionCheckpointCollection
 from coord_smith.models.transition import TransitionArtifact
 
 RunStatus = Literal["idle", "running", "stopped", "completed", "escalated"]
-ReleaseStatus = Literal["released", "modeled", "control-only"]
+ReleaseStatus = Literal["released"]
 
-RELEASED_SCOPE_CEILINGS: tuple[str, ...] = (
-    "prepareSession",
-    "pageReadyObserved",
-    "runCompletion",
-)
+RELEASED_SCOPE_CEILINGS: tuple[str, ...] = ("runCompletion",)
 DEFAULT_RELEASED_SCOPE_CEILING: Literal["runCompletion"] = "runCompletion"
 
-# Ceiling name → terminal released mission name.  Indices are derived from
-# RELEASED_MISSIONS at call time so they stay correct when the tuple changes.
-# Keys must remain in lock-step with RELEASED_SCOPE_CEILINGS; values must be
-# valid RELEASED_MISSIONS entries.  Validated at import time below.
+# Ceiling name → terminal released mission name. With the simplified graph,
+# the only sealed exit is ``run_completion``; any caller asking for a
+# different ceiling is warned and re-pointed at this one. Keys must remain
+# in lock-step with RELEASED_SCOPE_CEILINGS; values must be valid
+# RELEASED_MISSIONS entries. Validated at import time below.
 _CEILING_TERMINAL_MISSION: dict[str, str] = {
-    "prepareSession": "prepare_session",
-    "pageReadyObserved": "page_ready_observation",
     "runCompletion": "run_completion",
 }
 assert _CEILING_TERMINAL_MISSION.keys() == set(RELEASED_SCOPE_CEILINGS), (
@@ -83,14 +84,14 @@ class MissionState:
 
 
 def mission_lifecycle(mission_name: str) -> ReleaseStatus:
-    """Return lifecycle status for a canonical mission name."""
+    """Return lifecycle status for a canonical mission name.
+
+    With modeled / control-only tiers removed, every canonical mission is
+    released. Unknown names raise ``ValueError`` to keep callers honest.
+    """
 
     if mission_name in RELEASED_MISSIONS:
         return "released"
-    if mission_name in MODELED_MISSIONS:
-        return "modeled"
-    if mission_name in CONTROL_MISSIONS:
-        return "control-only"
     msg = f"Unknown mission name: {mission_name}"
     raise ValueError(msg)
 
@@ -98,21 +99,20 @@ def mission_lifecycle(mission_name: str) -> ReleaseStatus:
 def mission_is_within_approved_scope(
     mission_name: str, approved_scope_ceiling: str
 ) -> bool:
-    """Check whether mission execution is allowed under current released ceiling."""
+    """Check whether mission execution is allowed under current released ceiling.
+
+    Released scope is the entire mission set; the only ceiling is
+    ``runCompletion``. The ceiling system is preserved as a hook for future
+    re-introduction of partial scopes (e.g., a probe-only ceiling) without
+    rewriting call sites.
+    """
 
     if mission_name not in ALL_MISSIONS:
         return False
-
-    if mission_name in CONTROL_MISSIONS:
-        return True
-    if mission_name in MODELED_MISSIONS:
-        return False
-
     if mission_name not in RELEASED_MISSIONS:
         return False
 
     approved_scope_ceiling = effective_scope_ceiling(approved_scope_ceiling)
-
     terminal = _CEILING_TERMINAL_MISSION[approved_scope_ceiling]
     max_index = RELEASED_MISSIONS.index(terminal)
     mission_index = RELEASED_MISSIONS.index(mission_name)
@@ -121,7 +121,13 @@ def mission_is_within_approved_scope(
 
 @dataclass(slots=True)
 class RuntimeState:
-    """Global state slice aligned to the LangGraph PRD."""
+    """Global state slice aligned to the multi-step LangGraph topology.
+
+    ``current_step_idx`` and ``step_results`` are populated by the per-step
+    loop introduced in ``docs/prd-multi-step-flow-recipe.md`` §2.4 D2. They
+    are unused for per-run setup/teardown missions and remain at their
+    defaults for those mission contexts.
+    """
 
     run_id: str
     run_status: RunStatus = "idle"
@@ -135,6 +141,8 @@ class RuntimeState:
     site_identity: str | None = None
     target_page: str | None = None
     final_artifact_bundle_ref: str | None = None
+    current_step_idx: int = -1
+    step_results: list[dict[str, object]] = field(default_factory=list)
     transition_checkpoints: TransitionCheckpointCollection = field(
         default_factory=TransitionCheckpointCollection
     )

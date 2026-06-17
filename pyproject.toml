@@ -4,23 +4,64 @@ build-backend = "hatchling.build"
 
 [project]
 name = "coord-smith"
-version = "0.0.1"
-description = "Python-first runtime scaffold for coord-smith."
+# Single source of truth: src/coord_smith/__init__.py.__version__.
+# Hatchling reads it via [tool.hatch.version] at build time — see
+# bottom of this file. Bumping the version requires editing ONE
+# file; the wheel + sdist + `coord-smith --version` all stay in lockstep.
+dynamic = ["version"]
+description = "Deterministic OS-level click executor for autonomous LLM agents — no browser, no runtime inference."
 readme = "README.md"
+license = {file = "LICENSE"}
 requires-python = ">=3.14,<3.15"
+authors = [
+  {name = "coord-smith contributors"},
+]
+keywords = [
+  "automation",
+  "click",
+  "screenshot",
+  "langgraph",
+  "agent",
+  "cua",
+  "pyautogui",
+  "opencv",
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: MacOS X",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS :: MacOS X",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
 dependencies = [
   "langchain>=0.3.0",
   "langgraph>=0.3.0",
+  # numpy is used directly by adapters/page_transition.py for changed-pixel
+  # counting. It already arrives transitively via opencv-python, but is
+  # declared explicitly because the source imports it (a direct import must
+  # be a direct dependency — do not rely on opencv keeping numpy).
+  "numpy>=1.26",
   "opencv-python>=4.10.0",
   "pyautogui>=0.9.54",
   "pydantic>=2.8.0",
   "pyyaml>=6.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/jazz1x/coord-smith"
+Repository = "https://github.com/jazz1x/coord-smith"
+Issues = "https://github.com/jazz1x/coord-smith/issues"
+Changelog = "https://github.com/jazz1x/coord-smith/blob/main/CHANGELOG.md"
+
 [project.optional-dependencies]
 dev = [
+  "import-linter>=2.0",
   "mypy>=1.11.0",
-  "playwright>=1.50.0",
   "pre-commit>=4.0.0",
   "pytest>=8.3.0",
   "pytest-asyncio>=0.24.0",
@@ -32,8 +73,17 @@ dev = [
 [project.scripts]
 coord-smith = "coord_smith.graph.pyautogui_cli_entrypoint:main"
 
+[tool.hatch.version]
+# Single source of truth for the package version. Match
+# `dynamic = ["version"]` at the top of [project]. Editing
+# __version__ in src/coord_smith/__init__.py also bumps the
+# wheel + sdist version.
+path = "src/coord_smith/__init__.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/coord_smith"]
+# py.typed (PEP 561) ships automatically because hatchling packages
+# the entire tree listed above; no explicit `include` line is needed.
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
@@ -67,3 +117,32 @@ python_version = "3.14"
 mypy_path = "src"
 packages = ["coord_smith"]
 strict = true
+
+[tool.importlinter]
+# Architectural import boundaries for coord_smith. Enforced in CI +
+# pre-commit via `lint-imports`. A layers contract forbids upward
+# imports, which inherently forbids inter-layer cycles — the
+# circular-import guard the project wanted.
+root_package = "coord_smith"
+
+[[tool.importlinter.contracts]]
+name = "Layered architecture (no upward imports, no inter-layer cycles)"
+type = "layers"
+# High → low. A layer may import any layer BELOW it, never above or
+# sideways. Top-level helpers not listed here (cli_logging) are
+# unconstrained leaves. Mirrors the real edge graph as of 2026-06.
+layers = [
+  "coord_smith.graph",
+  "coord_smith.adapters",
+  "coord_smith.evidence",
+  "coord_smith.config",
+  "coord_smith.reporting",
+  "coord_smith.models",
+  "coord_smith.missions",
+]
+ignore_imports = [
+  # Type-only back-reference: evidence.envelope imports ExecutionResult
+  # under `if TYPE_CHECKING:` (with `from __future__ import annotations`)
+  # purely for a return-type annotation. No runtime edge, no real cycle.
+  "coord_smith.evidence.envelope -> coord_smith.adapters.execution.client",
+]

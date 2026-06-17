@@ -143,6 +143,7 @@ async def test_click_recipe_coord_dispatches_to_pyautogui(tmp_path: Path) -> Non
             target_page_url="https://tickets.interpark.com/goods/26003199",
             site_identity="interpark",
             base_dir=tmp_path,
+            recipe_steps=list(recipe.steps) if recipe.steps else None,
         )
 
     assert (400, 300) in click_calls, (

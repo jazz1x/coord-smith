@@ -9,8 +9,8 @@ screenshot.
 
 ``PageTransitionVerifier`` compares a baseline screenshot taken just before a
 click to a follow-up screenshot taken after the click settles. The change is
-quantified by the bounding-box area of the pixel-level difference relative to
-the comparison region. A configurable threshold (default 1 percent) decides
+quantified by the count of pixels that actually differ relative to the
+comparison region. A configurable threshold (default 1 percent) decides
 whether the transition counts as detected. The verifier is intentionally
 simple: no perceptual hashing, no anti-aliasing tolerance — production-grade
 nuance is reserved for future verifiers if real-world tuning demands it.
@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
 from PIL import Image, ImageChops
 
 Region = tuple[int, int, int, int]
@@ -30,10 +31,9 @@ class PageTransitionResult:
     """Outcome of a single visual comparison.
 
     ``change_ratio`` is the fraction of pixels inside the comparison region
-    that differ between the two frames, computed as the bounding-box area of
-    the diff divided by the region area. ``bbox`` is the pixel diff bounding
-    box in absolute screen coordinates, or ``None`` when the frames are
-    pixel-identical.
+    that actually differ between the two frames (changed-pixel count divided
+    by region area). ``bbox`` is the pixel diff bounding box in absolute
+    screen coordinates, or ``None`` when the frames are pixel-identical.
     """
 
     changed: bool
@@ -91,10 +91,24 @@ class PageTransitionVerifier:
         if bbox_local is None:
             return PageTransitionResult(changed=False, change_ratio=0.0, bbox=None)
 
-        bx1, by1, bx2, by2 = bbox_local
-        bbox_area = max(0, (bx2 - bx1) * (by2 - by1))
+        # change_ratio is the fraction of pixels that actually differ, not the
+        # bounding-box coverage. Two tiny scattered changes (a cursor blink +
+        # a focus ring) span a huge bbox but change almost no pixels — using
+        # bbox area would report ~1.0 and falsely "detect" a transition. Count
+        # the genuinely-changed pixels: a pixel "changed" if ANY band differs.
+        # ``np.asarray`` of the multi-band diff reduces over the channel axis
+        # so a 1-step move in a single channel still counts (a luminance
+        # ``convert("L")`` could round it to 0). numpy is already present via
+        # opencv-python, the runtime's image dependency.
+        diff_arr = np.asarray(diff)
+        if diff_arr.ndim == 3:
+            changed_mask = diff_arr.any(axis=2)
+        else:
+            changed_mask = diff_arr != 0
+        changed_pixels = int(changed_mask.sum())
         region_area = max(1, region_size[0] * region_size[1])
-        change_ratio = bbox_area / region_area
+        change_ratio = changed_pixels / region_area
+        bx1, by1, bx2, by2 = bbox_local
         absolute_bbox: Region = (
             bx1 + region_origin[0],
             by1 + region_origin[1],
