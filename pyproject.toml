@@ -55,6 +55,7 @@ Changelog = "https://github.com/jazz1x/coord-smith/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
+  "import-linter>=2.0",
   "mypy>=1.11.0",
   "pre-commit>=4.0.0",
   "pytest>=8.3.0",
@@ -111,3 +112,32 @@ python_version = "3.14"
 mypy_path = "src"
 packages = ["coord_smith"]
 strict = true
+
+[tool.importlinter]
+# Architectural import boundaries for coord_smith. Enforced in CI +
+# pre-commit via `lint-imports`. A layers contract forbids upward
+# imports, which inherently forbids inter-layer cycles — the
+# circular-import guard the project wanted.
+root_package = "coord_smith"
+
+[[tool.importlinter.contracts]]
+name = "Layered architecture (no upward imports, no inter-layer cycles)"
+type = "layers"
+# High → low. A layer may import any layer BELOW it, never above or
+# sideways. Top-level helpers not listed here (cli_logging) are
+# unconstrained leaves. Mirrors the real edge graph as of 2026-06.
+layers = [
+  "coord_smith.graph",
+  "coord_smith.adapters",
+  "coord_smith.evidence",
+  "coord_smith.config",
+  "coord_smith.reporting",
+  "coord_smith.models",
+  "coord_smith.missions",
+]
+ignore_imports = [
+  # Type-only back-reference: evidence.envelope imports ExecutionResult
+  # under `if TYPE_CHECKING:` (with `from __future__ import annotations`)
+  # purely for a return-type annotation. No runtime edge, no real cycle.
+  "coord_smith.evidence.envelope -> coord_smith.adapters.execution.client",
+]

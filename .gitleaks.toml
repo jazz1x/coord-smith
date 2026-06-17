@@ -1,0 +1,29 @@
+# gitleaks configuration — secret scanning for coord-smith.
+#
+# Extends the upstream default ruleset (the maintained set of secret
+# detectors) and layers project-specific allowlisting on top. Keeping
+# `useDefault = true` means new upstream detectors are picked up on a
+# gitleaks upgrade without re-vendoring the whole rule table.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "coord-smith allowlist — test fixtures and example placeholders"
+# Paths that legitimately contain secret-shaped strings that are NOT
+# real credentials. coord-smith ships no real secrets; these are the
+# only places a false positive can originate.
+paths = [
+  # Lockfile hashes look high-entropy but are content digests, not secrets.
+  '''uv\.lock''',
+  # Generated artifacts (screenshots, JSONL) under any runs/ tree.
+  '''.*artifacts/.*''',
+  '''.*/runs/.*''',
+]
+# Stopwords / regexes for example tokens used in docs and tests.
+regexTarget = "match"
+regexes = [
+  # Documentation placeholders, e.g. the redacted gh token shape.
+  '''gho_\*+''',
+  '''(?i)example[_-]?(token|secret|key|password)''',
+  '''my-session''',
+]
