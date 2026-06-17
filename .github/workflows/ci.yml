@@ -107,12 +107,20 @@ jobs:
           # so fetch every commit (default checkout is shallow depth-1).
           fetch-depth: 0
 
-      # Secret scan over the entire history. Uses .gitleaks.toml
-      # (extends the upstream default ruleset + project allowlist).
+      # Secret scan over the entire history. Invokes the gitleaks binary
+      # directly (not the marketplace action) so the scan matches the local
+      # pre-commit hook exactly and avoids the action's GITHUB_TOKEN / PR-event
+      # coupling. Uses .gitleaks.toml (upstream default ruleset + allowlist).
+      - name: Install gitleaks
+        run: |
+          GITLEAKS_VERSION=8.24.3
+          curl -sSfL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /usr/local/bin gitleaks
+          gitleaks version
+
       - name: gitleaks (secret scan, full history)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITLEAKS_CONFIG: .gitleaks.toml
+        run: gitleaks detect --source . --config .gitleaks.toml --redact --verbose
 
       # CVE / vulnerability scan of the resolved dependency set
       # (uv.lock) plus any config misconfigurations. Fails the job on
