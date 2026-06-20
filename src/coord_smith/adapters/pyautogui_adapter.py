@@ -293,10 +293,30 @@ class PyAutoGUIAdapter:
             raise AccessibilityPermissionDenied(
                 f"pyautogui.position() failed: {exc!r}"
             ) from exc
-        # Warmup: prime the CG event pump before the real probe.
-        pyautogui.moveTo(start.x, start.y, duration=0)
-        await asyncio.sleep(_POST_CLICK_SETTLE_SECONDS)
         screen = pyautogui.size()
+        # Warmup: prime the CG event pump before the real probe.
+        #
+        # A cursor parked at a FAILSAFE corner would make this first moveTo
+        # raise FailSafeException — pyautogui's failSafeCheck inspects the
+        # CURRENT position before moving. FAILSAFE is a DISPATCH safety hatch
+        # (slam the cursor into a corner to abort a runaway recipe), NOT a
+        # preflight concern: a 10px permission probe is not a dispatch. So if
+        # the cursor sits at a corner, relocate it to screen-centre with the
+        # check momentarily suppressed, then IMMEDIATELY restore FAILSAFE=True —
+        # it is True for the probe below and for every actual click. Without
+        # this, a corner-parked cursor on a fully-permitted host crashes
+        # preflight as a generic exit-1 instead of yielding the permission
+        # verdict (exit 2) preflight exists to produce.
+        try:
+            pyautogui.moveTo(start.x, start.y, duration=0)
+        except pyautogui.FailSafeException:
+            pyautogui.FAILSAFE = False
+            try:
+                pyautogui.moveTo(screen.width // 2, screen.height // 2, duration=0)
+            finally:
+                pyautogui.FAILSAFE = True
+            start = pyautogui.position()
+        await asyncio.sleep(_POST_CLICK_SETTLE_SECONDS)
         probe_delta = 10 if start.x + 10 < screen.width else -10
         probe_x = start.x + probe_delta
         probe_y = start.y
