@@ -12,14 +12,18 @@ See tmp/cycles/CYCLE-LOG.md.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pyautogui
 import pytest
 from PIL import Image
 
 from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
+from coord_smith.config.click_recipe import ClickRecipe
+from coord_smith.config.released_inputs import resolve_released_scope_inputs
+from coord_smith.models.errors import ConfigError, ImageMatchConfidenceLow
 
 
 def _pt(x: int, y: int) -> object:
@@ -63,3 +67,57 @@ async def test_preflight_relocates_cursor_off_failsafe_corner(
     assert pyautogui.FAILSAFE is True
     # The warmup raised, then relocate + probe + restore ran.
     assert calls["n"] >= 3
+
+
+# ---------------------------------------------------------------------------
+# failure-screenshot-partial-write — a save that fails mid-write must report
+# screenshot=null, never a truncated path that .exists() would accept.
+# ---------------------------------------------------------------------------
+
+
+def test_failure_screenshot_save_failure_reports_null_not_partial(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    adapter = PyAutoGUIAdapter(run_root=tmp_path)
+    monkeypatch.setattr(
+        "coord_smith.adapters.pyautogui_adapter.pyautogui.screenshot",
+        lambda: Image.new("RGB", (4, 4)),
+    )
+    with patch.object(Image.Image, "save", side_effect=OSError("No space left")):
+        adapter._capture_failure_evidence(
+            step_idx=0, step_name="x", error=ImageMatchConfidenceLow("no match")
+        )
+    rec = json.loads(
+        (tmp_path / "artifacts" / "action-log" / "failure.jsonl")
+        .read_text(encoding="utf-8")
+        .splitlines()[0]
+    )
+    assert rec["screenshot"] is None  # not a truncated path
+    failure_dir = tmp_path / "artifacts" / "failure"
+    # No half-written .png and no orphan .tmp left behind.
+    assert not list(failure_dir.glob("*.png"))
+    assert not list(failure_dir.glob("*.tmp"))
+
+
+# ---------------------------------------------------------------------------
+# missing-inputs-reported-one-at-a-time — all absent inputs named in ONE error.
+# ---------------------------------------------------------------------------
+
+
+def test_missing_inputs_reported_all_at_once() -> None:
+    with pytest.raises(ConfigError) as ei:
+        resolve_released_scope_inputs(argv=["--session-ref", "s"], env={})
+    msg = str(ei.value)
+    assert "expected_auth_state" in msg
+    assert "target_page_url" in msg
+    assert "site_identity" in msg
+
+
+# ---------------------------------------------------------------------------
+# missions-deprecation-not-machine-readable — JSON Schema flags missions.
+# ---------------------------------------------------------------------------
+
+
+def test_missions_field_marked_deprecated_in_schema() -> None:
+    schema = ClickRecipe.model_json_schema()
+    assert schema["properties"]["missions"].get("deprecated") is True

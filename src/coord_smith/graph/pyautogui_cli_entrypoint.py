@@ -54,9 +54,11 @@ Options:
                         `osascript -e 'tell application "<name>" to activate'`
                         before preflight. macOS only; ignored elsewhere.
                         Env: COORDSMITH_TARGET_WINDOW.
-  --dry-run             Validate the recipe and run the graph without
-                        dispatching any real click. Exit 0 if everything
-                        loads and resolves cleanly.
+  --dry-run             Validate the recipe + the four required inputs and exit
+                        0 — WITHOUT preflight, the host lock, window activation,
+                        or running the graph (no nodes, no clicks, no
+                        screenshots). A no-permission validator; a missing input
+                        is exit 3, never exit 2.
   --recipe-schema       Emit the JSON Schema for ClickRecipe to stdout and
                         exit 0. Useful when an external agent needs the
                         schema to validate or generate a recipe without

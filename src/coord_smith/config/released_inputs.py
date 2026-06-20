@@ -121,6 +121,26 @@ def resolve_released_scope_inputs(
         env_key=ENV_SITE_IDENTITY,
     )
 
+    # Collect ALL missing required inputs and report them in ONE error, so a
+    # caller (especially an LLM that spawns a fresh process per attempt) learns
+    # the full required set in a single round-trip instead of discovering them
+    # one fix-and-retry at a time.
+    raw_by_label = {
+        "session_ref": raw_session_ref,
+        "expected_auth_state": raw_expected_auth_state,
+        "target_page_url": raw_target_page_url,
+        "site_identity": raw_site_identity,
+    }
+    missing = [label for label, value in raw_by_label.items() if value is None]
+    if missing:
+        remedies = "; ".join(
+            f"{label} ({_INPUT_REMEDY[label][0]} or {_INPUT_REMEDY[label][1]})"
+            for label in missing
+        )
+        raise ConfigError(f"Missing required input(s): {remedies}.")
+
+    # All present. The _require_present calls below now only narrow
+    # ``str | None`` -> ``str`` for the type checker (they cannot raise here).
     return ReleasedScopeInputs(
         session_ref=parse_session_ref(
             _require_present(label="session_ref", value=raw_session_ref)

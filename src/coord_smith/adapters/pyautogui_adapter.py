@@ -592,8 +592,14 @@ class PyAutoGUIAdapter:
             if step_idx is not None:
                 step_obj = payload.get("step")
                 step_name = step_obj.name if isinstance(step_obj, Step) else ""
+                # step_dispatch reaches this gather only AFTER _execute_step_
+                # dispatch's own click + guards succeeded, so a post-dispatch
+                # evidence-capture failure is post-click, NOT a click failure —
+                # without this it would default to phase='dispatch' and tell the
+                # caller the click failed when it actually landed.
                 gather_phase: PhaseName | None = {
                     "step_observe": _PHASE_PRE_CLICK,
+                    "step_dispatch": _PHASE_POST_CLICK,
                     "step_capture": _PHASE_POST_CLICK,
                 }.get(mission)
                 self._capture_failure_evidence(
@@ -829,15 +835,29 @@ class PyAutoGUIAdapter:
             / f"{idx_label}-{safe_step}-{error_class}.png"
         )
         png_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = png_path.parent / f"{png_path.name}.tmp"
+        screenshot_saved = False
         try:
             shot = pyautogui.screenshot()
             if isinstance(shot, PILImage):
-                shot.save(str(png_path))
+                # Atomic: save to a temp file then rename, so a mid-write I/O
+                # error (e.g. ENOSPC after the PNG header flushes) never leaves a
+                # truncated file at png_path that a bare .exists() check would
+                # advertise as valid evidence. Mirrors _atomic_write_json.
+                # format is explicit because the .tmp suffix hides the PNG
+                # extension PIL would otherwise infer.
+                shot.save(str(tmp_path), format="PNG")
+                tmp_path.replace(png_path)
+                screenshot_saved = True
         except Exception:
             # Capture failure is itself non-fatal — we still write the log
             # entry below so the caller knows the run failed even when the
-            # screen could not be photographed.
-            pass
+            # screen could not be photographed. Any partial temp file is left
+            # out of the record (screenshot stays null); clean it up.
+            try:
+                tmp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
 
         log_path = (
             self._run_root
@@ -862,7 +882,7 @@ class PyAutoGUIAdapter:
             "phase": resolved_phase,
             "error_class": error_class,
             "error_message": str(error),
-            "screenshot": str(png_path) if png_path.exists() else None,
+            "screenshot": str(png_path) if screenshot_saved else None,
         }
         with log_path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
