@@ -438,6 +438,14 @@ interrupted). Invocations that exit **before** a run begins write no
 Automation that polls ``run.json`` after every invocation must skip the wait for
 these pre-run exits and branch on the exit code + stderr instead.
 
+**``--dry-run`` writes a run.json** (it validates without dispatching). It is
+distinguishable from a real successful run: ``{"status": "success",
+"exit_code": 0, "run_id": null, "failure": null}``. The ``run_id`` is **null**
+(no run root is created), whereas a real success always has a non-null
+``run_id``; branch on ``run_id`` to tell them apart. Note ``step_count`` on a
+dry-run is the **recipe length** (the count that validated), not "steps
+reached" — a dry-run reaches zero steps.
+
 Location:
 
 ```

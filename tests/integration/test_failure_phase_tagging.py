@@ -161,6 +161,48 @@ async def test_phase_post_click_when_verify_transition_fails(
 
 
 @pytest.mark.asyncio
+async def test_phase_post_click_when_transition_region_offscreen(
+    tmp_path: Path,
+) -> None:
+    """A positive-extent but fully off-screen ``transition_region`` makes the
+    verifier raise ValueError; the adapter remaps it to a typed,
+    phase-tagged PageTransitionNotDetected ("could not run") instead of letting
+    a raw ValueError escape as an unattributed crash. Step validation accepts
+    an off-screen positive box (it only rejects non-positive extents), so this
+    branch is reachable from a real recipe — pin it.
+    """
+    cursor = _StationaryCursor()
+    adapter = PyAutoGUIAdapter(run_root=tmp_path)
+    step = Step(
+        name="offscreen-region",
+        coord=StepCoord(x=10, y=20),
+        verify_transition=True,
+        # positive extent (passes _validate_region) but fully off the frame
+        transition_region=(5000, 5000, 50, 50),
+        settle_ms=0,
+    )
+    payload = {"step": step.model_dump(), "step_idx": 0}
+    same_frame = Image.new("RGB", (200, 200), color="white")
+
+    with (
+        patch("pyautogui.size", return_value=_FakeSize()),
+        patch("pyautogui.screenshot", return_value=same_frame),
+        patch("pyautogui.click", side_effect=cursor.click),
+        patch("pyautogui.position", side_effect=cursor.position),
+        patch(
+            "coord_smith.adapters.pyautogui_adapter.asyncio.sleep",
+            new_callable=AsyncMock,
+        ),
+        pytest.raises(PageTransitionNotDetected),
+    ):
+        await adapter._execute_step_dispatch(payload)
+
+    record = _read_failure_record(tmp_path)
+    assert record["phase"] == "post_click"
+    assert record["error_class"] == "PageTransitionNotDetected"
+
+
+@pytest.mark.asyncio
 async def test_phase_post_click_when_post_click_signal_times_out(
     tmp_path: Path,
 ) -> None:

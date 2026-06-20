@@ -12,7 +12,7 @@ changeable and subordinate to `docs/prd.md`.
   3 per-step): `attach_session` · `prepare_session` · `step_observe` ·
   `step_dispatch` · `step_capture` · `run_completion`. Modeled tier
   permanently removed.
-- Test count: 455 passing, 4 deselected (`-m real`).
+- Test count: 456 passing, 4 deselected (`-m real`).
 - Static checks: ruff clean, mypy strict clean, pre-commit clean.
 - Platform: macOS (Accessibility + Screen Recording permissions). Linux
   / Windows preflight not implemented.
@@ -64,7 +64,10 @@ changeable and subordinate to `docs/prd.md`.
   transition, click verification, etc., plus caught
   `KeyboardInterrupt`), `2` permission preflight failed (only
   `AccessibilityPermissionDenied` / `ScreenCapturePermissionDenied`),
-  `3` recipe load or schema error, `4` host busy (another
+  `3` config error (recipe load / schema error, missing required input,
+  invalid `--cleanup` bound, failed `--target-window` activation, or a
+  malformed payload coord override — see `docs/recipe-guide.md §Exit Codes`
+  for the authoritative enumeration), `4` host busy (another
   coord-smith process holds the per-host advisory lock).
 - **Per-host advisory lock.** Acquired in ``_run`` before preflight
   via ``graph.host_lock``; the lock guards the process-global

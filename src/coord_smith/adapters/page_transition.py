@@ -124,6 +124,14 @@ class PageTransitionVerifier:
         diff = ImageChops.difference(base_view, post_view)
         bbox_local = diff.getbbox()
         if bbox_local is None:
+            # Pixel-identical frames: nothing changed, so changed=False
+            # UNCONDITIONALLY — independent of ``threshold``. This is the
+            # intended short-circuit, not the ``change_ratio >= threshold`` rule
+            # below: a change-detector must report "no transition" when zero
+            # pixels moved, even at threshold==0.0 (where the >= rule would
+            # otherwise pass on a frame that literally did not change). An
+            # all-identical frame always requires at least one differing pixel
+            # to count as changed.
             return PageTransitionResult(changed=False, change_ratio=0.0, bbox=None)
 
         # change_ratio is the fraction of pixels that actually differ, not the

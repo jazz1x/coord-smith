@@ -99,8 +99,11 @@ Exit codes:
   1 runtime error (typed dispatch failure OR caught KeyboardInterrupt /
     SIGINT — distinguished from a crash by run.json.status="interrupted")
   2 permission preflight failed
-  3 config error (recipe missing / invalid YAML or JSON / schema, a required
-    session/auth/url/site input absent, or an invalid --cleanup bound)
+  3 config error (recipe missing / invalid YAML or JSON / schema; a required
+    session/auth/url/site input absent; an invalid --cleanup bound; a failed
+    --target-window activation (bad / non-running app name — a hard fail, not a
+    silent best-effort); or a malformed payload coord override). The
+    'config error: <message>' stderr line names the exact cause.
   4 host busy (another coord-smith process holds the per-host lock)
 
 Platform: macOS only at present. Linux / Windows preflight is not implemented;

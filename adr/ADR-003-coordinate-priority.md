@@ -32,6 +32,15 @@ The dispatch priority is **fixed and global**:
 payload(x, y)  >  step.coord  >  step.image  >  no-click
 ```
 
+> **Note on level 1 (payload):** the `payload` x/y is the **OpenClaw transport
+> hook** and is *not wired through the current CLI graph* — the released
+> `execute_step_dispatch_node` builds a fixed `{step_idx, step}` payload with no
+> x/y, so in a CLI-only run (OpenClaw absent) priority 1 is never populated and
+> `step.coord` / `step.image` decide the click. The priority *order* is the
+> fixed contract; populating level 1 is the integration point for an external
+> reasoner, exercised today only by direct-adapter tests. See CLAUDE.md
+> §"Real clicks without OpenClaw".
+
 Specifically:
 
 1. If `ExecutionRequest.payload` carries non-None `x` / `y`, those
