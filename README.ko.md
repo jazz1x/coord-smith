@@ -5,7 +5,7 @@
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![version](https://img.shields.io/badge/version-0.1.1-blue)
-![tests](https://img.shields.io/badge/tests-452%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-455%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 [![CI](https://github.com/jazz1x/coord-smith/actions/workflows/ci.yml/badge.svg)](https://github.com/jazz1x/coord-smith/actions/workflows/ci.yml)
 
@@ -59,16 +59,12 @@ uv --version
 
 ## 설치
 
-엔드유저 (PyPI 휠이 게시된 후 권장 경로):
+> **상태: 미배포 WIP — 아직 PyPI에 없습니다.** 게시된 휠이나 git 태그가 없어
+> `pip install coord-smith`는 동작하지 않습니다. 아래의 소스 체크아웃으로
+> 설치하세요. 휠이 게시되면 `uv pip install coord-smith` /
+> `pip install coord-smith`가 권장 경로가 됩니다.
 
-```bash
-# uv (권장)
-uv pip install coord-smith
-# 또는 stock pip
-pip install coord-smith
-```
-
-소스 체크아웃에서 개발할 경우:
+소스 체크아웃에서 설치:
 
 ### 1. 프로젝트 부트스트랩
 
@@ -87,7 +83,7 @@ uv python install 3.14
 ### 2. 검증
 
 ```bash
-uv run pytest -q                # 452 passed, 4 deselected (real-binary)
+uv run pytest -q                # 455 passed, 4 deselected (real-binary)
 uv run ruff check .
 uv run mypy
 ```

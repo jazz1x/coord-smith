@@ -422,11 +422,21 @@ Every coord-smith **dispatch** invocation writes exactly one
 read it **first** to determine outcome instead of grepping
 individual JSONL files.
 
-**Exception**: ``coord-smith --cleanup`` is an operator-only
-command (not a dispatch run) and does **NOT** write ``run.json`` —
-it only writes a single INFO-level log line summarizing the
-cleanup pass. Automation that polls ``run.json`` after every
-invocation must skip the wait for ``--cleanup`` invocations.
+**Exceptions — pre-run exits do NOT write ``run.json``.** The envelope is
+written only for an actual dispatch *run* (including a run that fails or is
+interrupted). Invocations that exit **before** a run begins write no
+``run.json``:
+
+- ``--help`` / ``--version`` / ``--recipe-schema`` (exit 0) — informational, no run.
+- ``--cleanup`` (operator command) — writes only an INFO-level summary log line.
+- a **malformed CLI** rejected up front — an unknown/typo'd flag exits **3**
+  before the run bracket opens. The ``config error: <message>`` stderr line is
+  the diagnostic. (A *missing required input* or *bad recipe*, by contrast, is
+  detected inside the run bracket and DOES write a ``run.json`` with
+  ``status=failure``, ``exit_code=3``, ``failure=null``.)
+
+Automation that polls ``run.json`` after every invocation must skip the wait for
+these pre-run exits and branch on the exit code + stderr instead.
 
 Location:
 

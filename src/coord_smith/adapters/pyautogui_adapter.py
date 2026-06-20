@@ -558,21 +558,20 @@ class PyAutoGUIAdapter:
         # step_idx and keep the flat filename.
         step_idx_obj = payload.get("step_idx")
         step_idx = step_idx_obj if isinstance(step_idx_obj, int) else None
-        if step_idx is not None:
-            # For per-step missions (observe / dispatch / capture) a screenshot
-            # failure during evidence gather must still write a failure.jsonl
-            # record — otherwise run.json reports status=failure with
-            # failure=null and no step/phase attribution. Dispatch already
-            # captures its own failures inside _execute_step_dispatch; this
-            # covers the observe/capture evidence-gather path symmetrically.
-            try:
-                evidence_refs = self._gather_evidence(mission, step_idx=step_idx)
-            except ScreenCaptureUnavailable as exc:
+        # A screenshot/evidence-gather failure on a non-dispatch mission must
+        # still write a failure.jsonl record — otherwise run.json reports
+        # status=failure with failure=null and no attribution. (step_dispatch
+        # captures its own failures inside _execute_step_dispatch.) Per-step
+        # missions (observe pre-click, capture post-click) attribute to the
+        # gather node + phase; per-run missions (attach_session / prepare_
+        # session / run_completion, step_idx=None) attribute to the mission with
+        # step_idx=-1 so even a setup/teardown screenshot failure is captured.
+        try:
+            evidence_refs = self._gather_evidence(mission, step_idx=step_idx)
+        except ScreenCaptureUnavailable as exc:
+            if step_idx is not None:
                 step_obj = payload.get("step")
                 step_name = step_obj.name if isinstance(step_obj, Step) else ""
-                # Attribute the failure to the actual gather node (observe is
-                # pre-click, capture is post-click) rather than the hardcoded
-                # step_dispatch — no click was dispatched on the observe path.
                 gather_phase: PhaseName | None = {
                     "step_observe": _PHASE_PRE_CLICK,
                     "step_capture": _PHASE_POST_CLICK,
@@ -584,9 +583,11 @@ class PyAutoGUIAdapter:
                     mission=mission,
                     phase=gather_phase,
                 )
-                raise
-        else:
-            evidence_refs = self._gather_evidence(mission, step_idx=step_idx)
+            else:
+                self._capture_failure_evidence(
+                    step_idx=-1, step_name="", error=exc, mission=mission
+                )
+            raise
         return ExecutionResult(
             mission_name=mission,
             evidence_refs=evidence_refs,

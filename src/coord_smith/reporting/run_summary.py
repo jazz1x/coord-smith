@@ -195,12 +195,25 @@ def _read_failure_record(run_root: Path) -> dict[str, Any] | None:
     return record
 
 
+# The canonical per-step action-log files seeded by the released graph. The
+# step-count recovery reads ONLY these — not a ``step-*.jsonl`` wildcard — so a
+# user step named e.g. ``step-foo`` (its guard logs land in step-foo.jsonl via
+# the underscore->hyphen mission-key fallback) can never contaminate the count.
+# Owning the namespace explicitly removes the accidental safety the wildcard
+# relied on (that guard-log records happen to omit ``step_idx`` today).
+_CANONICAL_STEP_LOGS: tuple[str, ...] = (
+    "step-observed.jsonl",
+    "step-dispatched.jsonl",
+    "step-captured.jsonl",
+)
+
+
 def _step_count_from_recipe(*, run_root: Path | None) -> int:
     """Best-effort step count recovered from the action-log artifacts.
 
     We could thread the recipe step count down from ``_run`` instead,
     but that ties the summary writer to the graph internals. Counting
-    distinct ``step_idx`` values across ``step-*.jsonl`` files is
+    distinct ``step_idx`` values across the canonical per-step files is
     cheap and works equally well for success and failure paths.
     """
     if run_root is None:
@@ -209,7 +222,10 @@ def _step_count_from_recipe(*, run_root: Path | None) -> int:
     if not action_log.is_dir():
         return 0
     step_idxs: set[int] = set()
-    for jsonl in action_log.glob("step-*.jsonl"):
+    for name in _CANONICAL_STEP_LOGS:
+        jsonl = action_log / name
+        if not jsonl.is_file():
+            continue
         try:
             for line in jsonl.read_text(encoding="utf-8").splitlines():
                 if not line.strip():
