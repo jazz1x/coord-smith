@@ -286,3 +286,53 @@ def test_image_target_for_returns_image_config_for_image_step() -> None:
     assert target.image == "x.png"
     assert target.confidence == 0.8
     assert target.region == (0, 0, 100, 100)
+
+
+# ---------------------------------------------------------------------------
+# post-click guard fields must survive legacy missions->steps normalization on
+# BOTH branches — a new guard field silently dropped in _mission_to_step would
+# behave differently from the recipe author's intent with no error.
+# ---------------------------------------------------------------------------
+
+
+def test_mission_to_step_propagates_all_post_click_guard_fields() -> None:
+    from coord_smith.config.click_recipe import (
+        MissionClick,
+        MissionImageClick,
+        PostClickSignal,
+        _mission_to_step,
+    )
+
+    sig = PostClickSignal(image="toast.png", timeout=3.0, interval=0.2)
+    region = (1, 2, 30, 40)
+
+    coord_step = _mission_to_step(
+        "m",
+        MissionClick(
+            x=5,
+            y=6,
+            verify_transition=True,
+            transition_threshold=0.5,
+            transition_region=region,
+            post_click_signal=sig,
+        ),
+    )
+    assert coord_step.verify_transition is True
+    assert coord_step.transition_threshold == 0.5
+    assert coord_step.transition_region == region
+    assert coord_step.post_click_signal == sig
+
+    image_step = _mission_to_step(
+        "m",
+        MissionImageClick(
+            image="t.png",
+            verify_transition=True,
+            transition_threshold=0.5,
+            transition_region=region,
+            post_click_signal=sig,
+        ),
+    )
+    assert image_step.verify_transition is True
+    assert image_step.transition_threshold == 0.5
+    assert image_step.transition_region == region
+    assert image_step.post_click_signal == sig
