@@ -146,6 +146,21 @@ def _validate_region(region: Region | None) -> Region | None:
     return region
 
 
+def _validate_poll_interval_within_timeout(*, interval: float, timeout: float) -> None:
+    """Reject a poll ``interval`` that exceeds its ``timeout``.
+
+    Otherwise the poll fires once and the configured cadence has no effect.
+    Shared by ``WaitFor`` and ``PostClickSignal`` (whose after-validators were
+    byte-identical copies of this check).
+    """
+    if interval > timeout:
+        raise ValueError(
+            f"interval ({interval}s) must not exceed timeout "
+            f"({timeout}s) — otherwise the poll fires once and the "
+            "configured polling cadence has no effect"
+        )
+
+
 class PostClickSignal(BaseModel):
     """Image template that must appear on screen after a click to confirm completion."""
 
@@ -165,12 +180,9 @@ class PostClickSignal(BaseModel):
     @model_validator(mode="after")
     def _validate_fields(self) -> PostClickSignal:
         _validate_region(self.region)
-        if self.interval > self.timeout:
-            raise ValueError(
-                f"interval ({self.interval}s) must not exceed timeout "
-                f"({self.timeout}s) — otherwise the poll fires once and the "
-                "configured polling cadence has no effect"
-            )
+        _validate_poll_interval_within_timeout(
+            interval=self.interval, timeout=self.timeout
+        )
         return self
 
 
@@ -193,12 +205,9 @@ class WaitFor(BaseModel):
     @model_validator(mode="after")
     def _validate_fields(self) -> WaitFor:
         _validate_region(self.region)
-        if self.interval > self.timeout:
-            raise ValueError(
-                f"interval ({self.interval}s) must not exceed timeout "
-                f"({self.timeout}s) — otherwise the poll fires once and the "
-                "configured polling cadence has no effect"
-            )
+        _validate_poll_interval_within_timeout(
+            interval=self.interval, timeout=self.timeout
+        )
         return self
 
 
@@ -327,7 +336,9 @@ class MissionClick(BaseModel):
     post_click_signal: PostClickSignal | None = None
 
     @model_validator(mode="after")
-    def _validate_region(self) -> MissionClick:
+    def _validate_after(self) -> MissionClick:
+        # Calls the module-level _validate_region (a different name than this
+        # method had — the prior identical name read like self-recursion).
         _validate_region(self.transition_region)
         return self
 
@@ -535,9 +546,10 @@ class ClickRecipe(BaseModel):
     def coords_for(self, mission_name: str) -> tuple[int, int] | None:
         """Return static coordinates for the step with the given name.
 
-        Backwards-compat helper. Looks up the normalized step list. Returns
-        the step's coord ``(x, y)`` if the step has a coord target,
-        otherwise ``None``.
+        TEST-ONLY accessor — no production caller (the live click path resolves
+        coords via ``coord_resolver.resolve_step_click_coords``, reading
+        ``step.coord`` directly). Kept as a convenient probe for recipe-loading
+        tests. Returns the step's coord ``(x, y)`` if it has one, else ``None``.
         """
         if self.steps is None:
             return None
@@ -549,9 +561,10 @@ class ClickRecipe(BaseModel):
     def image_target_for(self, mission_name: str) -> MissionImageClick | None:
         """Return image template config for the step with the given name.
 
-        Backwards-compat helper. Wraps the step's image fields back into a
-        ``MissionImageClick`` for callers that still expect the legacy
-        shape. Returns ``None`` if the step has no image target.
+        TEST-ONLY accessor — no production caller (the live path reads
+        ``step.image`` via ``coord_resolver.locate_image_for_step``). Kept as a
+        recipe-loading test probe; wraps the step's image fields back into a
+        ``MissionImageClick``. Returns ``None`` if the step has no image target.
         """
         if self.steps is None:
             return None

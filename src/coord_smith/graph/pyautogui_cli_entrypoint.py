@@ -62,12 +62,17 @@ Options:
   --recipe-schema       Emit the JSON Schema for ClickRecipe to stdout and
                         exit 0. Useful when an external agent needs the
                         schema to validate or generate a recipe without
-                        spawning a Python interpreter.
+                        spawning a Python interpreter. NOTE: the schema
+                        under-constrains — cross-field rules (image-XOR-coord,
+                        interval<=timeout, unique/reserved step names, region
+                        extent) are NOT expressible in JSON Schema. Run
+                        --dry-run to fully validate a generated recipe.
   --cleanup             Prune artifacts/runs/ to fit retention bounds and
-                        exit 0. Use with --max-runs N (default 100) and
-                        --max-age-days N (default 14). Run roots
-                        containing a `.keep` sentinel file are never
-                        removed.
+                        exit 0 (1 if some run dir could not be removed — a
+                        partial failure; --cleanup writes no run.json). Use
+                        with --max-runs N (default 100) and --max-age-days N
+                        (default 14). Run roots containing a `.keep` sentinel
+                        file are never removed.
   --max-runs N          Retention bound used by --cleanup (default 100).
   --max-age-days N      Retention bound used by --cleanup (default 14).
   --verbose, -v         Set log level to DEBUG (overrides
