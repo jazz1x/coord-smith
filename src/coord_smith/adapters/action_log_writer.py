@@ -83,20 +83,37 @@ class ActionLogWriter:
         return mission.replace("_", "-")
 
     # ------------------------------------------------------------------
-    # Writers — byte-identical output to the original inline methods
+    # Writers — one shared envelope (_append), per-method extra fields
     # ------------------------------------------------------------------
+
+    def _append(
+        self,
+        *,
+        action_key: str,
+        mission_name: str,
+        extra: dict[str, object] | None = None,
+    ) -> None:
+        """Append one JSONL record to the action-log file for ``action_key``.
+
+        Owns the shared envelope — the ts + mission_name + event base keys, the
+        open-append, and the ensure_ascii=False encoding — so the on-disk format
+        has ONE definition (byte-identical to the original inline methods). Each
+        public writer supplies only its mission-specific ``extra`` fields.
+        """
+        entry: dict[str, object] = {
+            "ts": datetime.now(tz=UTC).isoformat(),
+            "mission_name": mission_name,
+            "event": action_key,
+        }
+        if extra:
+            entry.update(extra)
+        path = self.action_log_path(action_key)
+        with path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     def write_action_log(self, *, key: str, mission_name: MissionName) -> None:
         """Append a bare dispatch record (ts / mission_name / event)."""
-        ts = datetime.now(tz=UTC).isoformat()
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission_name,
-            "event": key,
-        }
-        path = self.action_log_path(key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        self._append(action_key=key, mission_name=mission_name)
 
     def write_image_match(
         self,
@@ -108,20 +125,16 @@ class ActionLogWriter:
         y: int,
     ) -> None:
         """Append a structured image-match record to the mission action log."""
-        ts = datetime.now(tz=UTC).isoformat()
-        action_key = self.action_key_for_mission(mission)
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission,
-            "event": action_key,
-            "image_template": template,
-            "match_confidence": confidence,
-            "match_x": x,
-            "match_y": y,
-        }
-        path = self.action_log_path(action_key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        self._append(
+            action_key=self.action_key_for_mission(mission),
+            mission_name=mission,
+            extra={
+                "image_template": template,
+                "match_confidence": confidence,
+                "match_x": x,
+                "match_y": y,
+            },
+        )
 
     def write_image_fallback(
         self,
@@ -143,21 +156,17 @@ class ActionLogWriter:
         stream so an auditor (human or LLM) can detect a permanently-stale
         template. See coord_resolver.resolve_step_click_coords.
         """
-        ts = datetime.now(tz=UTC).isoformat()
-        action_key = self.action_key_for_mission(mission)
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission,
-            "event": action_key,
-            "image_fallback_used": True,
-            "image_fallback_template": template,
-            "image_fallback_reason": reason,
-            "image_fallback_x": fallback_x,
-            "image_fallback_y": fallback_y,
-        }
-        path = self.action_log_path(action_key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        self._append(
+            action_key=self.action_key_for_mission(mission),
+            mission_name=mission,
+            extra={
+                "image_fallback_used": True,
+                "image_fallback_template": template,
+                "image_fallback_reason": reason,
+                "image_fallback_x": fallback_x,
+                "image_fallback_y": fallback_y,
+            },
+        )
 
     def write_transition(
         self,
@@ -169,20 +178,16 @@ class ActionLogWriter:
         threshold: float,
     ) -> None:
         """Append a page-transition verification record to the mission action log."""
-        ts = datetime.now(tz=UTC).isoformat()
-        action_key = self.action_key_for_mission(mission)
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission,
-            "event": action_key,
-            "transition_changed": changed,
-            "transition_change_ratio": change_ratio,
-            "transition_threshold": threshold,
-            "transition_bbox": list(bbox) if bbox is not None else None,
-        }
-        path = self.action_log_path(action_key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        self._append(
+            action_key=self.action_key_for_mission(mission),
+            mission_name=mission,
+            extra={
+                "transition_changed": changed,
+                "transition_change_ratio": change_ratio,
+                "transition_threshold": threshold,
+                "transition_bbox": list(bbox) if bbox is not None else None,
+            },
+        )
 
     def write_signal(
         self,
@@ -195,21 +200,17 @@ class ActionLogWriter:
         y: int,
     ) -> None:
         """Append a post-click-signal hit record to the mission action log."""
-        ts = datetime.now(tz=UTC).isoformat()
-        action_key = self.action_key_for_mission(mission)
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission,
-            "event": action_key,
-            "post_click_signal_template": template,
-            "post_click_signal_confidence": confidence,
-            "post_click_signal_elapsed_seconds": elapsed,
-            "post_click_signal_x": x,
-            "post_click_signal_y": y,
-        }
-        path = self.action_log_path(action_key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        self._append(
+            action_key=self.action_key_for_mission(mission),
+            mission_name=mission,
+            extra={
+                "post_click_signal_template": template,
+                "post_click_signal_confidence": confidence,
+                "post_click_signal_elapsed_seconds": elapsed,
+                "post_click_signal_x": x,
+                "post_click_signal_y": y,
+            },
+        )
 
     def write_wait_for(
         self,
@@ -227,18 +228,14 @@ class ActionLogWriter:
         keys so a downstream audit can distinguish the pre-click guard from
         the post-click signal.
         """
-        ts = datetime.now(tz=UTC).isoformat()
-        action_key = self.action_key_for_mission(mission)
-        entry: dict[str, object] = {
-            "ts": ts,
-            "mission_name": mission,
-            "event": action_key,
-            "wait_for_template": template,
-            "wait_for_confidence": confidence,
-            "wait_for_elapsed_seconds": elapsed,
-            "wait_for_x": x,
-            "wait_for_y": y,
-        }
-        path = self.action_log_path(action_key)
-        with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        self._append(
+            action_key=self.action_key_for_mission(mission),
+            mission_name=mission,
+            extra={
+                "wait_for_template": template,
+                "wait_for_confidence": confidence,
+                "wait_for_elapsed_seconds": elapsed,
+                "wait_for_x": x,
+                "wait_for_y": y,
+            },
+        )

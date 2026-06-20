@@ -82,7 +82,15 @@ class ReleasedRunContext:
 
 
 def require_existing_run_root(*, run_root: Path) -> None:
-    """Enforce released-scope contract that run_root exists before wrapper execution."""
+    """Enforce that a raw ``run_root`` path exists before writing to it.
+
+    Used by helpers that take an untyped ``run_root: Path`` (e.g.
+    ``seed_action_log_marker``). The node functions do NOT call this — they
+    receive an already-validated ``run: ReleasedRunContext`` (validated once in
+    ``__post_init__`` on a frozen, immutable dataclass), so re-checking per node
+    would re-validate a parsed value, against the repo's parse-don't-validate
+    philosophy.
+    """
 
     if not run_root.exists():
         msg = (
@@ -147,7 +155,6 @@ async def execute_attach_session_node(
 ) -> ExecutionResult:
     """Execute the released attach_session node (per-run, runs once)."""
 
-    require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("attach_session")
     state.session_ref = session_ref
 
@@ -182,7 +189,6 @@ async def execute_prepare_session_node(
 ) -> ExecutionResult:
     """Execute the released prepare_session node (per-run, runs once)."""
 
-    require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("prepare_session")
     state.target_page = target_page_url
     state.site_identity = site_identity
@@ -227,7 +233,6 @@ async def execute_step_observe_node(
     inside the ``step_dispatch`` node, NOT here.
     """
 
-    require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("step_observe")
 
     seed_action_log_marker(
@@ -266,7 +271,6 @@ async def execute_step_dispatch_node(
     sequence into a single dispatch event.
     """
 
-    require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("step_dispatch")
 
     seed_action_log_marker(
@@ -307,7 +311,6 @@ async def execute_step_capture_node(
     here — this node only records the post-click frame.
     """
 
-    require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("step_capture")
 
     seed_action_log_marker(
@@ -341,7 +344,6 @@ async def execute_run_completion_node(
 ) -> ExecutionResult:
     """Execute the released run_completion node — sealed exit at the ceiling."""
 
-    require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("run_completion")
 
     seed_action_log_marker(
