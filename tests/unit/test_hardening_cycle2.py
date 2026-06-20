@@ -66,7 +66,7 @@ def test_runtimestate_keeps_live_fields() -> None:
     field_names = {f.name for f in dataclasses.fields(RuntimeState)}
     for live in ("run_id", "current_mission", "approved_scope_ceiling",
                  "release_status", "session_ref", "site_identity",
-                 "current_step_idx", "mission_state"):
+                 "step_results", "mission_state"):
         assert live in field_names
 
 

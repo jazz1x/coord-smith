@@ -90,8 +90,8 @@ def test_released_scope_runtime_does_not_import_browser_automation_libraries() -
     )
 
 
-def test_runtime_graph_does_not_import_browser_automation_libraries() -> None:
-    """Verify that the runtime graph modules do not import browser automation libs.
+def test_graph_modules_do_not_import_browser_automation_libraries() -> None:
+    """Verify that the ``graph/`` modules do not import browser automation libs.
 
     The runtime should focus on orchestration and state transitions, delegating
     all browser operations to the OpenClaw adapter.

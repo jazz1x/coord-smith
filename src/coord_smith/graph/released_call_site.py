@@ -229,7 +229,6 @@ async def execute_step_observe_node(
 
     require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("step_observe")
-    state.current_step_idx = step_idx
 
     seed_action_log_marker(
         run_root=run.run_root,
@@ -269,7 +268,6 @@ async def execute_step_dispatch_node(
 
     require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("step_dispatch")
-    state.current_step_idx = step_idx
 
     seed_action_log_marker(
         run_root=run.run_root,
@@ -311,7 +309,6 @@ async def execute_step_capture_node(
 
     require_existing_run_root(run_root=run.run_root)
     state.set_current_mission("step_capture")
-    state.current_step_idx = step_idx
 
     seed_action_log_marker(
         run_root=run.run_root,

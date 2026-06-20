@@ -15,10 +15,6 @@ from coord_smith.graph.langgraph_released_execution import (
     build_released_scope_execution_graph,
 )
 from coord_smith.graph.released_call_site import ReleasedRunContext
-from coord_smith.graph.runtime_graph import (
-    FORWARD_MISSION_SEQUENCE,
-    build_runtime_graph_plan,
-)
 from coord_smith.missions.names import (
     ALL_MISSIONS,
     BROWSER_FACING_MISSIONS,
@@ -53,29 +49,6 @@ def test_all_missions_equals_released_missions() -> None:
 def test_browser_facing_missions_equals_released_missions() -> None:
     """All released missions are browser-facing (no non-browser tier)."""
     assert BROWSER_FACING_MISSIONS == RELEASED_MISSIONS
-
-
-def test_forward_mission_sequence_aligns_with_released_missions() -> None:
-    """The forward sequence used by transition validation matches the registry."""
-    assert FORWARD_MISSION_SEQUENCE == RELEASED_MISSIONS
-
-
-# ---- plan node naming ------------------------------------------------
-
-
-def test_runtime_graph_plan_has_six_released_nodes() -> None:
-    """``build_runtime_graph_plan`` exposes six suffixed node names."""
-    plan = build_runtime_graph_plan()
-    assert len(plan.released_nodes) == 6
-    assert plan.released_nodes == tuple(
-        f"{name}_node" for name in RELEASED_MISSIONS
-    )
-
-
-def test_runtime_graph_plan_ceiling_is_runcompletion() -> None:
-    """The plan's ceiling is ``runCompletion`` — the only valid ceiling."""
-    plan = build_runtime_graph_plan()
-    assert plan.approved_scope_ceiling == "runCompletion"
 
 
 # ---- topology derivation per step count -----------------------------

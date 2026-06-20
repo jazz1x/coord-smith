@@ -16,8 +16,6 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from coord_smith.missions.names import ALL_MISSIONS, RELEASED_MISSIONS
-from coord_smith.models.checkpoint import TransitionCheckpointCollection
-from coord_smith.models.transition import TransitionArtifact
 
 ReleaseStatus = Literal["released"]
 
@@ -122,18 +120,13 @@ def mission_is_within_approved_scope(
 class RuntimeState:
     """Global state slice aligned to the multi-step LangGraph topology.
 
-    NOTE: ``current_step_idx`` and ``step_results`` are inert scaffold
-    fields, NOT a live per-step ledger. ``current_step_idx`` is assigned in
-    the step nodes but read nowhere for any decision; ``step_results`` is
-    never appended, so ``len(step_results)`` (read once by
-    ``execute_run_completion_node`` for the run_completion payload) is
-    permanently 0. The caller-facing ``run.json`` step_count is computed via
-    independent channels (``len(recipe.steps)`` at the CLI boundary; empirical
-    ``step_idx`` recovery in ``run_summary``), so this 0 never reaches a
-    caller. These fields (plus ``transition_checkpoints`` /
-    ``record_transition_artifact``) are slated for removal alongside the
-    inert transition-checkpoint subsystem; the run_completion payload itself
-    is at the ``runCompletion`` release ceiling and is not changed here.
+    NOTE: ``step_results`` is an inert scaffold field — it is never appended,
+    so ``len(step_results)`` (read once by ``execute_run_completion_node`` for
+    the run_completion payload) is permanently 0. It is kept ONLY because that
+    payload sits at the ``runCompletion`` release ceiling, which is not changed
+    here. The caller-facing ``run.json`` step_count is computed via independent
+    channels (``len(recipe.steps)`` at the CLI boundary; empirical ``step_idx``
+    recovery in ``run_summary``), so this 0 never reaches a caller.
     """
 
     run_id: str
@@ -144,11 +137,9 @@ class RuntimeState:
     site_identity: str | None = None
     target_page: str | None = None
     final_artifact_bundle_ref: str | None = None
-    current_step_idx: int = -1
+    # Inert: never appended; len() feeds the always-0 run_completion ceiling
+    # payload (kept for the ceiling, see class docstring).
     step_results: list[dict[str, object]] = field(default_factory=list)
-    transition_checkpoints: TransitionCheckpointCollection = field(
-        default_factory=TransitionCheckpointCollection
-    )
     mission_state: MissionState = field(
         default_factory=lambda: MissionState(mission_name=ALL_MISSIONS[0])
     )
@@ -173,8 +164,3 @@ class RuntimeState:
         self.current_mission = mission_name
         self.release_status = mission_lifecycle(mission_name)
         self.mission_state = MissionState(mission_name=mission_name)
-
-    def record_transition_artifact(self, artifact: TransitionArtifact) -> None:
-        """Record one typed transition artifact into ordered checkpoint state."""
-
-        self.transition_checkpoints = self.transition_checkpoints.append(artifact)
