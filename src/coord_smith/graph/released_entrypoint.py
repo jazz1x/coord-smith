@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -35,12 +36,16 @@ async def run_released_scope(
     site_identity: SiteIdentity,
     base_dir: Path = Path("."),
     recipe_steps: list[Step] | None = None,
+    on_run_root_created: Callable[[Path], None] | None = None,
 ) -> ReleasedEntrypointResult:
     """Run the released-scope mission sequence and stop at runCompletion.
 
     ``recipe_steps`` enumerates the per-step click sequence to execute
     inside the per-run setup/teardown frame. ``None`` or an empty list
     runs the smoke target (no clicks).
+
+    ``on_run_root_created`` is forwarded to the graph so the run-summary writer
+    can claim its own run root the moment it is created.
     """
 
     result = await run_released_scope_via_langgraph(
@@ -51,5 +56,6 @@ async def run_released_scope(
         site_identity=site_identity,
         base_dir=base_dir,
         recipe_steps=recipe_steps,
+        on_run_root_created=on_run_root_created,
     )
     return ReleasedEntrypointResult(state=result.state, run=result.run)

@@ -409,6 +409,14 @@ async def _run(
             env=dict(os.environ),
             base_dir=base_dir,
             recipe_steps=recipe_steps,
+            # Let the run-summary writer claim its own run root the instant the
+            # graph creates it, so flush() never resolves a root by mtime
+            # (which could clobber a concurrent lock-holder's run.json).
+            on_run_root_created=(
+                summary_writer.set_own_run_root
+                if summary_writer is not None
+                else None
+            ),
         )
     return 0
 

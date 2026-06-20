@@ -249,6 +249,7 @@ async def run_released_scope_via_langgraph(
     site_identity: SiteIdentity,
     base_dir: Path,
     recipe_steps: list[Step] | None = None,
+    on_run_root_created: Callable[[Path], None] | None = None,
 ) -> ReleasedLangGraphRunResult:
     """Run the released-scope mission sequence through LangGraph.
 
@@ -261,12 +262,18 @@ async def run_released_scope_via_langgraph(
 
     ``recipe_steps`` is forwarded to ``build_released_scope_execution_graph``
     so the graph topology is fixed at build time to the exact step count.
+
+    ``on_run_root_created`` is invoked with the run root the instant it is
+    created (before any node runs), so the run-summary writer can claim its own
+    root and never has to guess one by mtime (see RunSummaryWriter).
     """
     if not isinstance(base_dir, Path):
         raise ConfigError("Released-scope base_dir must be a pathlib.Path")
 
     run_id = generate_run_id()
     run_root = create_run_root(base_dir=base_dir, run_id=run_id)
+    if on_run_root_created is not None:
+        on_run_root_created(run_root)
     run = ReleasedRunContext(
         run_root=run_root, approved_scope_ceiling="runCompletion"
     )

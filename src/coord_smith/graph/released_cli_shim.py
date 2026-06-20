@@ -7,7 +7,7 @@ entrypoint using an OpenClaw adapter supplied by the caller/test harness.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 from coord_smith.adapters.execution.client import ExecutionAdapter
@@ -39,8 +39,13 @@ async def run_released_scope_from_argv_env(
     env: Mapping[str, str] | None = None,
     base_dir: Path = Path("."),
     recipe_steps: list[Step] | None = None,
+    on_run_root_created: Callable[[Path], None] | None = None,
 ) -> ReleasedEntrypointResult:
-    """Run the released-scope graph using inputs resolved from argv/env."""
+    """Run the released-scope graph using inputs resolved from argv/env.
+
+    ``on_run_root_created`` is forwarded so the run-summary writer can claim
+    its own run root the moment it is created.
+    """
 
     inputs = resolve_inputs_for_released_scope(argv=argv, env=env)
     return await run_released_scope(
@@ -51,4 +56,5 @@ async def run_released_scope_from_argv_env(
         site_identity=inputs.site_identity,
         base_dir=base_dir,
         recipe_steps=recipe_steps,
+        on_run_root_created=on_run_root_created,
     )

@@ -84,8 +84,10 @@ def test_early_exit_does_not_overwrite_prior_run_root(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    # Writer constructed AFTER the prior root exists → it is snapshotted as
-    # preexisting and must be excluded from attribution.
+    # The writer never claims a run root (set_own_run_root not called — a
+    # host-busy invocation creates none), so it must NOT attribute the prior
+    # root and must write a degenerate base_dir/run.json. (Cycle 9 replaced the
+    # name-snapshot heuristic with this ownership model.)
     writer = RunSummaryWriter(base_dir=tmp_path)
     target = writer.flush(status="host_busy", exit_code=4)
 
@@ -98,11 +100,13 @@ def test_early_exit_does_not_overwrite_prior_run_root(tmp_path: Path) -> None:
     )
 
 
-def test_flush_attributes_own_root_created_after_start(tmp_path: Path) -> None:
-    # Writer first (empty snapshot), then THIS invocation creates its root.
+def test_flush_attributes_claimed_run_root(tmp_path: Path) -> None:
+    # THIS invocation creates and CLAIMS its root (set_own_run_root, as the
+    # graph does via on_run_root_created); flush writes into the claimed root.
     writer = RunSummaryWriter(base_dir=tmp_path)
     own = tmp_path / "artifacts" / "runs" / "20260101-000000-bbbbbbbb"
     own.mkdir(parents=True)
+    writer.set_own_run_root(own)
 
     target = writer.flush(status="success", exit_code=0)
 

@@ -2,19 +2,24 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
-from zoneinfo import ZoneInfo
 
 from coord_smith.models.errors import ConfigError
 
 
 def generate_run_id(*, now: datetime | None = None) -> str:
-    """Generate a stable run id for released-scope artifact paths."""
+    """Generate a stable run id for released-scope artifact paths.
+
+    The timestamp prefix is UTC so the run-root name, run.json
+    ``started_at``/``ended_at``, and every action-log ``ts`` share one time
+    base — a caller correlating run_id against those fields (or against UTC log
+    lines) sees no offset.
+    """
 
     if now is None:
-        now = datetime.now(tz=ZoneInfo("Asia/Seoul"))
+        now = datetime.now(tz=UTC)
     stamp = now.strftime("%Y%m%d-%H%M%S")
     return f"{stamp}-{uuid4().hex[:8]}"
 

@@ -23,13 +23,13 @@ from coord_smith.reporting.run_summary import (
 
 def test_run_summary_writes_success_envelope(tmp_path: Path) -> None:
     """A success flush writes run.json under the latest run root."""
-    # The writer snapshots preexisting run roots at construction (invocation
-    # start) and attributes only a root created AFTER that. Construct it
-    # BEFORE this run's root — mirroring production order, where
-    # RunSummaryLifecycle builds the writer before _run creates the root.
+    # The writer is handed its run root via set_own_run_root — in production
+    # the graph supplies it (on_run_root_created) the moment create_run_root
+    # runs; run.json is then written into that claimed root.
     writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000000-test"
     run_root.mkdir(parents=True)
+    writer.set_own_run_root(run_root)
 
     path = writer.flush(status="success", exit_code=0)
 
@@ -57,6 +57,7 @@ def test_run_summary_writes_failure_envelope_with_failure_record(
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000001-fail"
     action_log = run_root / "artifacts" / "action-log"
     action_log.mkdir(parents=True)
+    writer.set_own_run_root(run_root)
 
     failure_record = {
         "ts": "2026-05-18T00:00:01+00:00",
@@ -109,6 +110,7 @@ def test_run_summary_atomic_write_no_partial_file(tmp_path: Path) -> None:
     writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000002-atomic"
     run_root.mkdir(parents=True)
+    writer.set_own_run_root(run_root)
 
     writer.flush(status="success", exit_code=0)
 
@@ -122,6 +124,7 @@ def test_run_summary_step_count_override_wins(tmp_path: Path) -> None:
     writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000004-dry"
     run_root.mkdir(parents=True)
+    writer.set_own_run_root(run_root)
 
     writer.flush(status="success", exit_code=0, step_count_override=7)
     record = json.loads(
@@ -139,6 +142,7 @@ def test_run_summary_set_pending_step_count_persists_to_flush(
     writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000005-pending"
     run_root.mkdir(parents=True)
+    writer.set_own_run_root(run_root)
 
     writer.set_pending_step_count(3)
     writer.flush(status="success", exit_code=0)
@@ -155,6 +159,7 @@ def test_run_summary_counts_step_idxs_from_action_log(tmp_path: Path) -> None:
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000003-count"
     action_log = run_root / "artifacts" / "action-log"
     action_log.mkdir(parents=True)
+    writer.set_own_run_root(run_root)
     (action_log / "step-dispatched.jsonl").write_text(
         '{"step_idx": 0, "step_name": "a"}\n'
         '{"step_idx": 1, "step_name": "b"}\n'
@@ -184,6 +189,7 @@ def test_run_summary_logs_warning_on_malformed_failure_jsonl(
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000099-malformed"
     action_log = run_root / "artifacts" / "action-log"
     action_log.mkdir(parents=True)
+    writer.set_own_run_root(run_root)
     # Plant a first line that is NOT valid JSON.
     (action_log / "failure.jsonl").write_text(
         "this is not json\n", encoding="utf-8"
