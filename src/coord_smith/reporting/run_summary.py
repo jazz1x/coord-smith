@@ -245,13 +245,13 @@ class RunSummaryWriter:
         caller's exit code. The writer logs the error to stderr but
         does not raise.
 
-        ``step_count_override`` is used by the dry-run path: the
-        recipe step count is known at the CLI boundary, but the
-        graph never ran (no run root, no per-step JSONL files), so
-        the empirical recovery from action-log files would return
-        0 — misleading for callers reading run.json. Passing the
-        validated step count keeps the summary aligned with the
-        log line "preflight passed, N step(s) resolved".
+        ``step_count_override`` is a test/programmatic-only hook (priority #1).
+        The CLI dry-run path does NOT use it — it stashes the count via
+        ``set_pending_step_count`` (priority #2). Both exist because the
+        graph never ran on a dry-run (no run root, no per-step JSONL files),
+        so the empirical action-log recovery would return 0; supplying the
+        validated count keeps run.json aligned with the "N step(s) resolved"
+        log line.
         """
         # Resolve the run root: an explicit kwarg wins; otherwise use the root
         # THIS invocation claimed via set_own_run_root. If neither exists, the

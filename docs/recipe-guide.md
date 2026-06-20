@@ -585,6 +585,16 @@ format ``coord-smith: <LEVEL>: <message>``.
 | [`docs/recipes/image-click.yaml`](recipes/image-click.yaml) | Single-step (legacy) — template match + transition check |
 | [`docs/recipes/image-click-with-signal.yaml`](recipes/image-click-with-signal.yaml) | Single-step (legacy) — template match + post-click signal polling |
 
+> **The `docs/recipes/` image samples are illustrative** — they show recipe
+> *structure*, and their `image:` paths (`docs/recipes/templates/…`) are
+> placeholders that are **not shipped**. Dry-running one as-is exits **3** with
+> `references missing click template …` (the loader existence-checks every
+> template before any click). Supply your own templates at those paths first —
+> or use [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml), which is
+> self-contained (pure coords, no templates). The runnable, end-to-end examples
+> are the `tests/fixtures/demo/*.yaml` recipes below, whose templates ARE
+> bundled.
+
 ---
 
 ## Tutorial — End-to-End on the Bundled Demo Page

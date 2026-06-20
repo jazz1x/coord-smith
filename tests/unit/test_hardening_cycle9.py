@@ -11,10 +11,17 @@ See tmp/cycles/CYCLE-LOG.md.
 from __future__ import annotations
 
 import json
+import warnings
 from pathlib import Path
 
+import pytest
+
+from coord_smith.config.click_recipe import load_click_recipe
 from coord_smith.graph.released_run_root import generate_run_id
+from coord_smith.models.errors import ConfigError
 from coord_smith.reporting.run_summary import RunSummaryWriter
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # ---------------------------------------------------------------------------
 # run-json-concurrent-root-clobber — a host-busy invocation must not overwrite
@@ -70,3 +77,42 @@ def test_run_id_prefix_is_utc() -> None:
     assert prefix.startswith(now_utc), (
         f"run_id prefix {prefix!r} must be UTC (~{now_utc}), not host-local"
     )
+
+
+# ---------------------------------------------------------------------------
+# broken-sample-recipes-missing-templates — pin the DOCUMENTED behavior of the
+# docs/recipes samples on the real load_click_recipe() path (the suite
+# previously only model_validate'd them, never resolving templates on disk).
+# ---------------------------------------------------------------------------
+
+
+def test_coord_sample_recipe_loads() -> None:
+    """coord-click.yaml is self-contained (pure coords) and loads end-to-end."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)  # legacy missions: shape
+        recipe = load_click_recipe(
+            _REPO_ROOT / "docs" / "recipes" / "coord-click.yaml"
+        )
+    assert recipe.steps
+
+
+@pytest.mark.parametrize(
+    "sample",
+    [
+        "multi-step-flow.yaml",
+        "multi-step-with-fallback.yaml",
+        "multi-step-with-wait-for.yaml",
+        "datepicker-pattern.yaml",
+        "image-click.yaml",
+        "image-click-with-signal.yaml",
+    ],
+)
+def test_image_sample_recipes_report_missing_template(sample: str) -> None:
+    """The image samples are illustrative — their template paths are
+    placeholders. load_click_recipe must surface that precisely (exit-3
+    ConfigError naming the missing template), as recipe-guide documents."""
+    path = _REPO_ROOT / "docs" / "recipes" / sample
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        with pytest.raises(ConfigError, match="references missing"):
+            load_click_recipe(path)

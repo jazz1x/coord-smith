@@ -19,12 +19,11 @@ This module defines:
   parsed identifier annotate it as the ``NewType`` so a caller
   who forgot to parse fails mypy at the boundary, not at runtime.
 
-The parsers reuse the existing validation rules from
-``langgraph_released_execution._require_released_*_inputs`` so the
-behaviour is unchanged — this commit only surfaces a static-typing
-layer on top of the same rules. Removing the old ``_require_*``
-helpers is left to a follow-up once every call site reads from the
-parsed value.
+The validation rules live locally in this module
+(``_validate_non_empty_identifier`` and the ``parse_*`` functions); these
+parsers are the single place released-scope identifiers are shaped. (The
+historical ``langgraph_released_execution._require_released_*_inputs`` helpers
+this module once mirrored have since been removed.)
 
 ## Why NewType and not Pydantic models?
 
