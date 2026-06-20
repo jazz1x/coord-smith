@@ -35,10 +35,7 @@ from coord_smith.adapters.execution.contracts import (
 
 # --- validation re-exports ---
 from coord_smith.adapters.execution.validation import (
-    build_execution_request,
     build_execution_request_within_scope,
-    build_execution_result,
-    build_execution_result_within_scope,
     validate_execution_mission_name,
     validate_execution_request,
     validate_execution_request_within_scope,
@@ -56,10 +53,7 @@ __all__ = [
     "ExecutionRequest",
     "ExecutionResult",
     # validation
-    "build_execution_request",
     "build_execution_request_within_scope",
-    "build_execution_result",
-    "build_execution_result_within_scope",
     "validate_execution_mission_name",
     "validate_execution_request",
     "validate_execution_request_within_scope",

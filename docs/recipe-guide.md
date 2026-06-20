@@ -554,6 +554,16 @@ print(json.dumps(ClickRecipe.model_json_schema(), indent=2))
 "
 ```
 
+> **The JSON Schema cannot express the cross-field rules** that also reject a
+> recipe at load time, so a structurally-valid-against-the-schema recipe can
+> still exit **3**. The loader additionally enforces: a step must declare **at
+> least one** of `image` / `coord` (and image-match fields on a coord-only step
+> are rejected); `wait_for` / `post_click_signal` `interval` ≤ `timeout`; step
+> names are **unique** and must not collide with reserved action-log keys;
+> `region` is `[x, y, w, h]` with positive extent. An agent generating a recipe
+> from the schema alone should **run `coord-smith --dry-run`** (a no-permission,
+> no-click validator) to confirm these before dispatch.
+
 ## Diagnostic logging (caller-side control)
 
 coord-smith emits diagnostics through the stdlib `logging` framework

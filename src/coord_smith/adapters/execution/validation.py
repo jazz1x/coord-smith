@@ -254,24 +254,6 @@ def validate_execution_roundtrip_within_scope(
         raise ValueError(msg)
 
 
-def build_execution_request(
-    *, mission_name: str, payload: dict[str, object]
-) -> ExecutionRequest:
-    """Build a validated OpenClaw execution request.
-
-    ``mission_name`` is a raw string boundary input; it is parsed to
-    ``MissionName`` via ``parse_mission_name`` before construction so the
-    returned dataclass carries the typed identifier.
-    """
-    try:
-        typed_name = parse_mission_name(mission_name)
-    except ConfigError as exc:
-        raise ValueError(str(exc)) from exc
-    request = ExecutionRequest(mission_name=typed_name, payload=payload)
-    validate_execution_request(request)
-    return request
-
-
 def build_execution_request_within_scope(
     *, mission_name: str, payload: dict[str, object], approved_scope_ceiling: str
 ) -> ExecutionRequest:
@@ -285,35 +267,3 @@ def build_execution_request_within_scope(
         request, approved_scope_ceiling=approved_scope_ceiling
     )
     return request
-
-
-def build_execution_result(
-    *, mission_name: str, evidence_refs: tuple[str, ...]
-) -> ExecutionResult:
-    """Build a validated OpenClaw execution result."""
-    try:
-        typed_name = parse_mission_name(mission_name)
-    except ConfigError as exc:
-        raise ValueError(str(exc)) from exc
-    result = ExecutionResult(
-        mission_name=typed_name, evidence_refs=evidence_refs
-    )
-    validate_execution_result(result)
-    return result
-
-
-def build_execution_result_within_scope(
-    *, mission_name: str, evidence_refs: tuple[str, ...], approved_scope_ceiling: str
-) -> ExecutionResult:
-    """Build a validated OpenClaw execution result constrained to released scope."""
-    try:
-        typed_name = parse_mission_name(mission_name)
-    except ConfigError as exc:
-        raise ValueError(str(exc)) from exc
-    result = ExecutionResult(
-        mission_name=typed_name, evidence_refs=evidence_refs
-    )
-    validate_execution_result_within_scope(
-        result, approved_scope_ceiling=approved_scope_ceiling
-    )
-    return result
