@@ -79,93 +79,6 @@ class RunSummary:
         }
 
 
-def _snapshot_run_root_names(base_dir: Path) -> frozenset[str]:
-    """Return the names of run-root dirs that already exist under ``base_dir``.
-
-    Captured at writer construction (invocation start). Any run root whose
-    name is in this set pre-dates the current invocation and therefore was
-    NOT created by it — see ``_find_latest_run_root`` for how this gates
-    attribution. Run ids are unique (timestamp + random suffix), so a root
-    created by *this* invocation can never collide with a snapshotted name.
-    """
-    runs_dir = base_dir / "artifacts" / "runs"
-    if not runs_dir.is_dir():
-        return frozenset()
-    try:
-        return frozenset(p.name for p in runs_dir.iterdir() if p.is_dir())
-    except OSError:
-        return frozenset()
-
-
-def _find_latest_run_root(
-    base_dir: Path,
-    *,
-    not_before: float | None = None,
-    exclude_names: frozenset[str] = frozenset(),
-) -> Path | None:
-    """Locate the most recently created run root under ``base_dir``.
-
-    coord-smith generates a fresh ``artifacts/runs/<run_id>/`` dir
-    per invocation. With the per-host advisory lock in place
-    (graph.host_lock) only one run can be active at a time, so
-    "newest by mtime" reliably identifies the current run.
-
-    ``exclude_names`` is the set of run-root names that already existed
-    when the current invocation started (see ``_snapshot_run_root_names``).
-    A root in this set was created by a *prior* invocation and is skipped
-    outright — this is the primary, filesystem-granularity-independent gate
-    against attributing a prior run's root to this one. Without it, an
-    invocation that fails BEFORE creating its own root (recipe-load error,
-    missing input, permission denial, host-busy, KeyboardInterrupt) would
-    resolve to the prior run's dir and overwrite that run's run.json with
-    this invocation's status/exit_code — corrupting the ADR-006 outcome
-    contract a caller reads to diagnose the exit.
-
-    ``not_before`` (the wall-clock at invocation start) is a secondary,
-    belt-and-suspenders time gate retained for defense in depth.
-
-    Returns ``None`` when no qualifying run dir exists — e.g., the graph
-    raised before creating its root, or every candidate predates this
-    invocation. The caller writes a degenerate summary in that case
-    (run_id=None, run_root unknown) under ``base_dir`` rather than
-    mis-stamping a sibling.
-    """
-    runs_dir = base_dir / "artifacts" / "runs"
-    if not runs_dir.is_dir():
-        return None
-
-    def _mtime_or_none(p: Path) -> float | None:
-        # A sibling run dir can vanish mid-scan (e.g. a concurrent --cleanup
-        # prunes it). stat() would then raise FileNotFoundError and suppress
-        # run.json entirely. Treat a vanished candidate as absent (None) and
-        # skip it rather than crash the summary writer.
-        try:
-            return p.stat().st_mtime
-        except OSError:
-            return None
-
-    candidates: list[tuple[Path, float]] = []
-    for p in runs_dir.iterdir():
-        if not p.is_dir():
-            continue
-        if p.name in exclude_names:
-            # Pre-existed at invocation start — belongs to a prior run.
-            continue
-        mtime = _mtime_or_none(p)
-        if mtime is None:
-            continue
-        candidates.append((p, mtime))
-    if not_before is not None:
-        # A small tolerance absorbs coarse filesystem mtime granularity
-        # (some filesystems round to whole seconds) so the *current*
-        # run's own freshly-created root is never wrongly rejected.
-        cutoff = not_before - 1.0
-        candidates = [(p, m) for p, m in candidates if m >= cutoff]
-    if not candidates:
-        return None
-    return max(candidates, key=lambda pm: pm[1])[0]
-
-
 def _read_failure_record(run_root: Path) -> dict[str, Any] | None:
     """Return the first failure record from ``failure.jsonl`` if any."""
     failure_log = run_root / "artifacts" / "action-log" / "failure.jsonl"
@@ -260,49 +173,52 @@ def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
 class RunSummaryWriter:
     """Records the start time and flushes a ``run.json`` at exit.
 
-    Usage in ``main()``::
+    Production wiring lives in :class:`RunSummaryLifecycle`, which constructs
+    the writer at invocation start, exposes ``set_outcome(status, exit_code)``
+    for each branch of ``main()``'s try/except, and calls ``flush`` exactly
+    once on ``__exit__``. Callers do not invoke ``flush`` per-branch directly.
 
-        writer = RunSummaryWriter(base_dir=base_dir)
-        try:
-            exit_code = asyncio.run(_run(...))
-            writer.flush(status="success", exit_code=exit_code)
-            return exit_code
-        except HostBusyError:
-            writer.flush(status="host_busy", exit_code=4, run_root=None)
-            return 4
-        except KeyboardInterrupt:
-            writer.flush(status="interrupted", exit_code=1)
-            return 1
-        except Exception:
-            writer.flush(status="failure", exit_code=1)
-            raise
-
-    The writer is intentionally tolerant of being called before any
-    run-root exists (recipe load errors, host-busy on the very
-    first lock attempt). In those cases ``run.json`` is written
-    under ``base_dir/`` instead of inside a run root, so the caller
-    still has a single deterministic file to read.
+    The writer learns its run root by being handed it (``set_own_run_root``,
+    threaded into the graph as ``on_run_root_created``) the moment the graph
+    creates it — it never scans for one by mtime. The writer is intentionally
+    tolerant of being flushed before any run root exists (recipe-load error,
+    missing input, host-busy on the first lock attempt, interrupt before the
+    graph started): in those cases ``run.json`` is written under ``base_dir/``
+    instead of inside a run root, so the caller still has a single
+    deterministic file to read.
     """
 
     def __init__(self, *, base_dir: Path) -> None:
         self._base_dir = base_dir
         self._started_at_iso = datetime.now(tz=UTC).isoformat()
         self._started_at_mono = time.monotonic()
-        # Wall-clock start, used to reject stale prior-run dirs during
-        # post-hoc run-root discovery (see _find_latest_run_root).
-        # monotonic() can't be compared to a file mtime; time.time() can.
-        self._started_at_wall = time.time()
-        # Names of run roots that already exist at invocation start. The
-        # primary gate against attributing a prior run's root to this
-        # invocation (an early exit that creates no root of its own must
-        # write a degenerate run.json, NOT overwrite a sibling). Snapshotted
-        # here because the lifecycle constructs the writer before _run runs.
-        self._preexisting_run_roots = _snapshot_run_root_names(base_dir)
+        # The run root THIS invocation created, claimed via set_own_run_root
+        # the moment create_run_root runs (threaded as the on_run_root_created
+        # callback). run.json is written into this root; when it stays None
+        # (the invocation exited before creating a root — host-busy,
+        # config/permission error, interrupt-before-graph), run.json is written
+        # to a degenerate base_dir/run.json. The writer NEVER guesses a root by
+        # mtime — under a shared base_dir that could attribute a concurrent
+        # lock-holder's root to a host-busy invocation and clobber that run's
+        # run.json (the ADR-006 outcome contract).
+        self._own_run_root: Path | None = None
         # Optional step count override that the dry-run path can
         # stash during ``_run`` execution. ``flush`` reads this if
         # no explicit ``step_count_override`` argument is passed.
         # See class docstring for the dry-run UX rationale.
         self._pending_step_count: int | None = None
+
+    def set_own_run_root(self, run_root: Path) -> None:
+        """Claim the run root this invocation created.
+
+        Threaded into the graph as the ``on_run_root_created`` callback and
+        invoked the moment ``create_run_root`` runs — before any node executes,
+        so a graph that raises mid-run still attributes its failure run.json to
+        its own root. This is the ONLY way the writer learns its run root; it
+        never scans ``artifacts/runs`` by mtime (unsafe under concurrent
+        invocations sharing a ``base_dir``).
+        """
+        self._own_run_root = run_root
 
     def set_pending_step_count(self, count: int) -> None:
         """Stash a step count for the upcoming flush.
@@ -329,23 +245,23 @@ class RunSummaryWriter:
         caller's exit code. The writer logs the error to stderr but
         does not raise.
 
-        ``step_count_override`` is used by the dry-run path: the
-        recipe step count is known at the CLI boundary, but the
-        graph never ran (no run root, no per-step JSONL files), so
-        the empirical recovery from action-log files would return
-        0 — misleading for callers reading run.json. Passing the
-        validated step count keeps the summary aligned with the
-        log line "preflight passed, N step(s) resolved".
+        ``step_count_override`` is a test/programmatic-only hook (priority #1).
+        The CLI dry-run path does NOT use it — it stashes the count via
+        ``set_pending_step_count`` (priority #2). Both exist because the
+        graph never ran on a dry-run (no run root, no per-step JSONL files),
+        so the empirical action-log recovery would return 0; supplying the
+        validated count keeps run.json aligned with the "N step(s) resolved"
+        log line.
         """
-        # Locate the run root if the caller didn't pass one. Most
-        # paths will not pass it — the writer resolves it from
-        # base_dir as a post-hoc lookup.
+        # Resolve the run root: an explicit kwarg wins; otherwise use the root
+        # THIS invocation claimed via set_own_run_root. If neither exists, the
+        # invocation created no root (host-busy, config/permission error,
+        # interrupt before the graph started) — write a degenerate
+        # base_dir/run.json. The writer never guesses by mtime, which under a
+        # shared base_dir could attribute a concurrent lock-holder's root to a
+        # host-busy run and clobber that run's run.json.
         if run_root is None:
-            run_root = _find_latest_run_root(
-                self._base_dir,
-                not_before=self._started_at_wall,
-                exclude_names=self._preexisting_run_roots,
-            )
+            run_root = self._own_run_root
 
         ended_iso = datetime.now(tz=UTC).isoformat()
         elapsed = time.monotonic() - self._started_at_mono

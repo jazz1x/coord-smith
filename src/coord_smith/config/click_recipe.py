@@ -423,7 +423,16 @@ class ClickRecipe(BaseModel):
     # advertises forward-compat gating, so it must actually gate.
     version: Literal[1] = 1
     steps: list[Step] | None = None
-    missions: dict[str, MissionTarget] = Field(default_factory=dict)
+    missions: dict[str, MissionTarget] = Field(
+        default_factory=dict,
+        # Emits `"deprecated": true` in the JSON Schema (--recipe-schema) so a
+        # structure-driven LLM/tool gets a machine-readable signal, not just the
+        # prose "Legacy" note, that `missions` is the deprecated shape. Uses
+        # json_schema_extra (schema-only) rather than Field(deprecated=...),
+        # which would also emit a runtime warning on every internal access of
+        # self.missions during normalization.
+        json_schema_extra={"deprecated": True},
+    )
 
     @model_validator(mode="after")
     def _normalize_steps(self) -> ClickRecipe:

@@ -554,6 +554,16 @@ print(json.dumps(ClickRecipe.model_json_schema(), indent=2))
 "
 ```
 
+> **The JSON Schema cannot express the cross-field rules** that also reject a
+> recipe at load time, so a structurally-valid-against-the-schema recipe can
+> still exit **3**. The loader additionally enforces: a step must declare **at
+> least one** of `image` / `coord` (and image-match fields on a coord-only step
+> are rejected); `wait_for` / `post_click_signal` `interval` ≤ `timeout`; step
+> names are **unique** and must not collide with reserved action-log keys;
+> `region` is `[x, y, w, h]` with positive extent. An agent generating a recipe
+> from the schema alone should **run `coord-smith --dry-run`** (a no-permission,
+> no-click validator) to confirm these before dispatch.
+
 ## Diagnostic logging (caller-side control)
 
 coord-smith emits diagnostics through the stdlib `logging` framework
@@ -584,6 +594,16 @@ format ``coord-smith: <LEVEL>: <message>``.
 | [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml) | Single-step (legacy `missions:` shape) — fixed pixel coordinate |
 | [`docs/recipes/image-click.yaml`](recipes/image-click.yaml) | Single-step (legacy) — template match + transition check |
 | [`docs/recipes/image-click-with-signal.yaml`](recipes/image-click-with-signal.yaml) | Single-step (legacy) — template match + post-click signal polling |
+
+> **The `docs/recipes/` image samples are illustrative** — they show recipe
+> *structure*, and their `image:` paths (`docs/recipes/templates/…`) are
+> placeholders that are **not shipped**. Dry-running one as-is exits **3** with
+> `references missing click template …` (the loader existence-checks every
+> template before any click). Supply your own templates at those paths first —
+> or use [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml), which is
+> self-contained (pure coords, no templates). The runnable, end-to-end examples
+> are the `tests/fixtures/demo/*.yaml` recipes below, whose templates ARE
+> bundled.
 
 ---
 

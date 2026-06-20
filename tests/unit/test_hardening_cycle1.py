@@ -6,7 +6,7 @@ so the fix cannot silently regress. See tmp/cycles/CYCLE-LOG.md.
 
 from __future__ import annotations
 
-import time
+import json
 from pathlib import Path
 
 import pytest
@@ -20,7 +20,7 @@ from coord_smith.config.click_recipe import (
     load_click_recipe,
 )
 from coord_smith.models.errors import ConfigError
-from coord_smith.reporting.run_summary import _find_latest_run_root
+from coord_smith.reporting.run_summary import RunSummaryWriter
 
 # ---------------------------------------------------------------------------
 # per-step-screenshot-collision — success-path screenshots keyed by step_idx
@@ -48,35 +48,46 @@ def test_screenshot_path_no_idx_keeps_flat_name(tmp_path: Path) -> None:
 
 # ---------------------------------------------------------------------------
 # stale-run-root-attribution — a no-root invocation must not inherit a prior
-# run's directory identity
+# (or concurrent) run's directory identity. Cycle 9 replaced the mtime-based
+# _find_latest_run_root gate with an ownership model: the writer only writes
+# into the root it was explicitly handed via set_own_run_root.
 # ---------------------------------------------------------------------------
 
 
-def test_find_latest_run_root_rejects_stale_prior_run(tmp_path: Path) -> None:
+def test_no_claimed_root_writes_degenerate_not_prior_root(tmp_path: Path) -> None:
+    """An invocation that never claimed a run root (set_own_run_root never
+    called — host-busy / config error / interrupt before the graph created a
+    root) writes a degenerate base_dir/run.json and never attributes a prior or
+    concurrent run's root."""
     runs = tmp_path / "artifacts" / "runs"
     runs.mkdir(parents=True)
-    old = runs / "20260101-oldrun"
-    old.mkdir()
-    # Make the old dir's mtime clearly in the past.
-    old_mtime = time.time() - 3600
-    import os
+    prior = runs / "20260101-oldrun"
+    prior.mkdir()
+    prior_summary = prior / "run.json"
+    prior_summary.write_text(
+        json.dumps({"run_id": "20260101-oldrun", "status": "success"}),
+        encoding="utf-8",
+    )
 
-    os.utime(old, (old_mtime, old_mtime))
+    writer = RunSummaryWriter(base_dir=tmp_path)  # never set_own_run_root
+    target = writer.flush(status="host_busy", exit_code=4)
 
-    # An invocation that started "now" must not resolve to the hour-old dir.
-    started_now = time.time()
-    assert _find_latest_run_root(tmp_path, not_before=started_now) is None
-    # Without the gate (legacy behavior) it WOULD have returned the old dir.
-    assert _find_latest_run_root(tmp_path) == old
+    assert target == tmp_path / "run.json"  # degenerate, NOT inside prior
+    assert json.loads(prior_summary.read_text(encoding="utf-8"))["status"] == (
+        "success"
+    )  # prior run's outcome untouched
 
 
-def test_find_latest_run_root_accepts_current_run(tmp_path: Path) -> None:
-    runs = tmp_path / "artifacts" / "runs"
-    runs.mkdir(parents=True)
-    started = time.time()
-    fresh = runs / "20260618-current"
-    fresh.mkdir()  # created after `started`
-    assert _find_latest_run_root(tmp_path, not_before=started) == fresh
+def test_claimed_run_root_is_used(tmp_path: Path) -> None:
+    """When the invocation claims its run root (set_own_run_root), flush writes
+    run.json into that root regardless of any other dirs under artifacts/runs."""
+    own = tmp_path / "artifacts" / "runs" / "20260618-current"
+    own.mkdir(parents=True)
+    writer = RunSummaryWriter(base_dir=tmp_path)
+    writer.set_own_run_root(own)
+    target = writer.flush(status="success", exit_code=0)
+    assert target == own / "run.json"
+    assert json.loads(target.read_text(encoding="utf-8"))["run_id"] == own.name
 
 
 # ---------------------------------------------------------------------------

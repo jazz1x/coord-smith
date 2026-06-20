@@ -141,20 +141,3 @@ def test_write_wait_for_produces_wait_for_template_key(tmp_path: Path) -> None:
     assert r["wait_for_elapsed_seconds"] == pytest.approx(0.5)
     assert r["wait_for_x"] == 10
     assert r["wait_for_y"] == 20
-
-
-# ---------------------------------------------------------------------------
-# with_run_root
-# ---------------------------------------------------------------------------
-
-def test_with_run_root_returns_new_instance_with_different_path(
-    tmp_path: Path,
-) -> None:
-    root_a = tmp_path / "run_a"
-    root_b = tmp_path / "run_b"
-    writer = ActionLogWriter(root_a)
-    writer_b = writer.with_run_root(root_b)
-
-    writer_b.write_action_log(key="ev", mission_name="m")
-    assert (root_b / "artifacts" / "action-log" / "ev.jsonl").exists()
-    assert not (root_a / "artifacts" / "action-log" / "ev.jsonl").exists()

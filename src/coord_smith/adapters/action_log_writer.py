@@ -27,10 +27,6 @@ class ActionLogWriter:
 
     Owns no pyautogui state; safe to unit-test in isolation.
 
-    The ``run_root`` can be updated mid-run via ``with_run_root`` — the
-    returned instance is a new object sharing the same configuration with
-    only the path replaced (immutable-style update, no in-place mutation).
-
     All writers serialize with ``ensure_ascii=False`` so a unicode step name
     (permitted by the recipe schema) lands as raw UTF-8 — one encoding policy
     shared with the sibling producers ``seed_action_log_marker`` and
@@ -39,10 +35,6 @@ class ActionLogWriter:
 
     def __init__(self, run_root: Path) -> None:
         self._run_root = run_root
-
-    def with_run_root(self, run_root: Path) -> ActionLogWriter:
-        """Return a new writer bound to *run_root*."""
-        return ActionLogWriter(run_root)
 
     # ------------------------------------------------------------------
     # Public path helpers

@@ -1,21 +1,21 @@
-"""Evidence envelope model for comparable artifacts."""
+"""Released-scope evidence ref parsing + priority-gate enforcement.
+
+The runtime evidence contract is the raw ``evidence://{kind}/{key}`` ref string
+(produced by the adapter, consumed by the graph's priority gate). This module
+owns parsing those refs and enforcing the truth hierarchy
+``dom > text > clock > action-log > screenshot > coordinate``.
+"""
 
 from __future__ import annotations
 
-import json
 import re
-from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING, Literal, cast
 
 if TYPE_CHECKING:
     from coord_smith.adapters.execution.client import ExecutionResult
 
 EvidenceKind = Literal["dom", "text", "clock", "action-log", "screenshot", "coordinate"]
-EvidencePriority = Literal[
-    "dom", "text", "clock", "action-log", "screenshot", "coordinate"
-]
-EVIDENCE_PRIORITY_ORDER: tuple[EvidencePriority, ...] = (
+EVIDENCE_PRIORITY_ORDER: tuple[EvidenceKind, ...] = (
     "dom",
     "text",
     "clock",
@@ -30,15 +30,6 @@ EVIDENCE_REF_PATTERN = re.compile(
     r"/"
     r"(?P<key>[a-z0-9]+(?:-[a-z0-9]+)*)$"
 )
-
-
-@dataclass(frozen=True, slots=True)
-class EvidenceEnvelope:
-    """Normalized evidence item aligned to the hybrid evidence PRD."""
-
-    kind: EvidenceKind
-    ref: str
-    primary: bool
 
 
 def parse_released_evidence_ref(ref: str) -> tuple[EvidenceKind, str]:
@@ -68,73 +59,6 @@ def parse_released_evidence_ref(ref: str) -> tuple[EvidenceKind, str]:
     kind = cast(EvidenceKind, match.group("kind"))
     key = match.group("key")
     return kind, key
-
-
-def load_action_log_artifact(
-    artifact_path: str | Path,
-) -> list[dict[str, object]]:
-    """Load action-log JSONL artifact from disk and validate typed fields.
-
-    Args:
-        artifact_path: Path to .jsonl artifact (relative or absolute)
-
-    Returns:
-        List of parsed JSON objects from the artifact
-
-    Raises:
-        FileNotFoundError: If artifact does not exist
-        ValueError: If artifact cannot be parsed or contains invalid JSON
-        TypeError: If artifact_path is not a string or Path
-    """
-    if not isinstance(artifact_path, (str, Path)):
-        msg = "artifact_path must be a string or Path"
-        raise TypeError(msg)
-
-    path = Path(artifact_path)
-    if not path.exists():
-        msg = f"Action-log artifact not found: {path}"
-        raise FileNotFoundError(msg)
-
-    if not path.is_file():
-        msg = f"Action-log artifact path is not a file: {path}"
-        raise ValueError(msg)
-
-    try:
-        content = path.read_text(encoding="utf-8")
-    except UnicodeDecodeError as exc:
-        msg = f"Action-log artifact is not valid UTF-8: {path}"
-        raise ValueError(msg) from exc
-
-    lines = content.strip().split("\n")
-    if not lines or not lines[0]:
-        msg = f"Action-log artifact is empty: {path}"
-        raise ValueError(msg)
-
-    parsed_objects: list[dict[str, object]] = []
-    for line_no, line in enumerate(lines, start=1):
-        if not line.strip():
-            continue
-        try:
-            obj = json.loads(line)
-            if not isinstance(obj, dict):
-                msg = (
-                    f"Action-log artifact line {line_no} is not a JSON object: "
-                    f"{path}:{line_no}"
-                )
-                raise ValueError(msg)
-            parsed_objects.append(obj)
-        except json.JSONDecodeError as exc:
-            msg = (
-                f"Action-log artifact contains invalid JSON at line {line_no}: "
-                f"{path}:{line_no}"
-            )
-            raise ValueError(msg) from exc
-
-    if not parsed_objects:
-        msg = f"Action-log artifact contains no valid JSON objects: {path}"
-        raise ValueError(msg)
-
-    return parsed_objects
 
 
 def enforce_evidence_priority(
@@ -210,70 +134,3 @@ def enforce_evidence_priority_gate(result: ExecutionResult) -> EvidenceKind:
         )
 
     return top_kind
-
-
-def validate_release_ceiling_stop_proof(
-    artifact_path: str | Path,
-) -> None:
-    """Validate that release-ceiling-stop artifact exists with required typed fields.
-
-    The release-ceiling-stop proof must contain at least one JSON line with:
-    - event: "release-ceiling-stop"
-    - mission_name: "run_completion"
-    - ts: ISO-8601 timestamp
-
-    Args:
-        artifact_path: Path to release-ceiling-stop.jsonl artifact
-
-    Raises:
-        FileNotFoundError: If artifact does not exist
-        ValueError: If artifact lacks required fields or valid JSON lines
-        TypeError: If artifact_path is not a string or Path
-    """
-    if not isinstance(artifact_path, (str, Path)):
-        msg = "artifact_path must be a string or Path"
-        raise TypeError(msg)
-
-    path = Path(artifact_path)
-
-    if not path.exists():
-        msg = (
-            f"Release-ceiling-stop artifact not found: {path}\n"
-            f"Required artifact: artifacts/action-log/release-ceiling-stop.jsonl\n"
-            f"Expected fields: event, mission_name, ts (ISO-8601)"
-        )
-        raise FileNotFoundError(msg)
-
-    try:
-        artifacts = load_action_log_artifact(path)
-    except (FileNotFoundError, ValueError, TypeError) as exc:
-        msg = (
-            f"Release-ceiling-stop artifact cannot be read or parsed: {path}\n"
-            f"Expected typed fields: event, mission_name, ts (ISO-8601)"
-        )
-        raise ValueError(msg) from exc
-
-    for artifact_dict in artifacts:
-        if not isinstance(artifact_dict, dict):
-            continue
-
-        event = artifact_dict.get("event")
-        mission = artifact_dict.get("mission_name")
-        ts = artifact_dict.get("ts")
-
-        if (
-            event == "release-ceiling-stop"
-            and mission == "run_completion"
-            and isinstance(ts, str)
-            and ts
-        ):
-            return
-
-    msg = (
-        f"Release-ceiling-stop artifact {path} missing required entry.\n"
-        f"Expected at least one JSON line with:\n"
-        f"  event: 'release-ceiling-stop'\n"
-        f"  mission_name: 'run_completion'\n"
-        f"  ts: ISO-8601 timestamp"
-    )
-    raise ValueError(msg)

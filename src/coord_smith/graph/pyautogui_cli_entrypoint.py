@@ -54,9 +54,11 @@ Options:
                         `osascript -e 'tell application "<name>" to activate'`
                         before preflight. macOS only; ignored elsewhere.
                         Env: COORDSMITH_TARGET_WINDOW.
-  --dry-run             Validate the recipe and run the graph without
-                        dispatching any real click. Exit 0 if everything
-                        loads and resolves cleanly.
+  --dry-run             Validate the recipe + the four required inputs and exit
+                        0 — WITHOUT preflight, the host lock, window activation,
+                        or running the graph (no nodes, no clicks, no
+                        screenshots). A no-permission validator; a missing input
+                        is exit 3, never exit 2.
   --recipe-schema       Emit the JSON Schema for ClickRecipe to stdout and
                         exit 0. Useful when an external agent needs the
                         schema to validate or generate a recipe without
@@ -259,10 +261,13 @@ async def _activate_target_window(
 ) -> bool:
     """Activate the named macOS application via osascript.
 
-    Best-effort: returns True if osascript ran successfully, False otherwise.
-    Sleeps ``settle_seconds`` to let the system finish the activation handoff
-    before the caller proceeds to screenshot. Linux / Windows: no-op (returns
-    False).
+    On macOS a requested activation that FAILS (osascript error — a bad or
+    non-running app name) raises ``ConfigError`` -> exit 3: a hard fail, NOT a
+    silent best-effort, so a typo'd ``--target-window`` never proceeds to click
+    the wrong frontmost window. A successful activation returns True and sleeps
+    ``settle_seconds`` to let the system finish the handoff before the caller
+    screenshots. Linux / Windows: no-op, returns False (no activation
+    attempted).
 
     Async because the caller (`_run`) runs inside ``asyncio.run`` and we
     don't want to block the event loop for a full second on the settle
@@ -409,6 +414,14 @@ async def _run(
             env=dict(os.environ),
             base_dir=base_dir,
             recipe_steps=recipe_steps,
+            # Let the run-summary writer claim its own run root the instant the
+            # graph creates it, so flush() never resolves a root by mtime
+            # (which could clobber a concurrent lock-holder's run.json).
+            on_run_root_created=(
+                summary_writer.set_own_run_root
+                if summary_writer is not None
+                else None
+            ),
         )
     return 0
 
@@ -482,8 +495,9 @@ def _run_cleanup(base_dir: Path, argv: Sequence[str]) -> int:
         0 — success, all targeted runs removed (or no runs to remove)
         1 — partial failure (CleanupReport.errors > 0; some
             directories could not be deleted, e.g. permission denied)
-        3 — bad argument (negative bound — handled upstream as
-            ConfigError before this function runs)
+        3 — bad argument (a negative --max-runs / --max-age-days bound is
+            validated inside this function by _extract_cleanup_bounds, which
+            raises ConfigError -> exit 3 in main())
         4 — host busy (another coord-smith process holds the lock;
             HostBusyError propagates to main's handler)
 
