@@ -82,7 +82,33 @@ def _validate_step_name(name: str) -> str:
     # without a separator, which is already rejected above.
     if name == "." or name == ".." or name.strip() == "":
         raise ValueError(f"Step name must not be a path traversal token: {name!r}")
+    # A step's guard logs (wait_for / transition / signal) are keyed by the
+    # step name; a name equal to a reserved canonical action-log key would
+    # write those guard records INTO the canonical per-step/per-run evidence
+    # file (e.g. step-observed.jsonl), contaminating the auditable evidence
+    # trail. Reject the collision.
+    if name in _RESERVED_ACTION_LOG_KEYS:
+        raise ValueError(
+            f"Step name {name!r} collides with a reserved action-log key "
+            f"({sorted(_RESERVED_ACTION_LOG_KEYS)}); its guard logs would "
+            "contaminate the canonical evidence file. Rename the step."
+        )
     return name
+
+
+# Canonical action-log keys emitted by the released missions. A recipe step
+# must not reuse one of these as its name (see _validate_step_name). Kept as a
+# literal frozenset rather than importing from missions.evidence_specs to keep
+# config/ free of an adapter/mission dependency (layering: config is below
+# missions in the import graph).
+_RESERVED_ACTION_LOG_KEYS = frozenset({
+    "attach-session",
+    "prepare-session",
+    "step-observed",
+    "step-dispatched",
+    "step-captured",
+    "release-ceiling-stop",
+})
 
 
 def _validate_region(region: Region | None) -> Region | None:
@@ -543,7 +569,19 @@ def load_click_recipe(path: Path) -> ClickRecipe:
     """
     if not path.exists():
         raise ConfigError(f"click recipe not found: {path}")
-    text = path.read_text(encoding="utf-8")
+    if not path.is_file():
+        # A directory (or other non-file) passed to --click-recipe would
+        # otherwise raise a raw IsADirectoryError from read_text → generic
+        # exit 1. Map it to the documented config-error (exit 3).
+        raise ConfigError(f"click recipe is not a readable file: {path}")
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        # Unreadable file (permissions, I/O error, decode error) → config
+        # error, not a generic runtime crash.
+        raise ConfigError(
+            f"click recipe {path} could not be read: {exc}"
+        ) from exc
     try:
         if path.suffix.lower() in {".yaml", ".yml"}:
             data: Any = yaml.safe_load(text)

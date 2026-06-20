@@ -265,15 +265,17 @@ async def test_activate_target_window_uses_asyncio_sleep_not_time_sleep() -> Non
     mock_async_sleep.assert_awaited_once_with(0.5)
 
 
-async def test_activate_target_window_returns_false_on_osascript_failure(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """A non-zero osascript exit must be swallowed and reported via a
-    WARNING-level log record."""
-    import logging
+async def test_activate_target_window_raises_config_error_on_osascript_failure() -> (
+    None
+):
+    """An explicitly-requested activation that fails on macOS must raise
+    ConfigError (→ exit 3) — proceeding would click the wrong frontmost
+    window. (Cycle 4: was previously a warn-and-continue, which silently
+    targeted the wrong window for coord recipes.)"""
     import subprocess
 
     from coord_smith.graph import pyautogui_cli_entrypoint as cli
+    from coord_smith.models.errors import ConfigError
 
     with (
         patch.object(cli.platform, "system", return_value="Darwin"),
@@ -284,15 +286,9 @@ async def test_activate_target_window_returns_false_on_osascript_failure(
                 1, ["osascript"], stderr=b"missing app"
             ),
         ),
-        caplog.at_level(logging.WARNING, logger="coord_smith.cli"),
+        pytest.raises(ConfigError, match="NonExistentApp"),
     ):
-        ok = await cli._activate_target_window(
-            "NonExistentApp", settle_seconds=0.0
-        )
-
-    assert ok is False
-    err = "\n".join(record.getMessage() for record in caplog.records)
-    assert "activation failed" in err
+        await cli._activate_target_window("NonExistentApp", settle_seconds=0.0)
 
 
 async def test_run_activates_target_window_before_preflight(tmp_path: Path) -> None:

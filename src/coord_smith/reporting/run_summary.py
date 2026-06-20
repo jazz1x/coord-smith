@@ -106,18 +106,34 @@ def _find_latest_run_root(
     runs_dir = base_dir / "artifacts" / "runs"
     if not runs_dir.is_dir():
         return None
-    candidates = [p for p in runs_dir.iterdir() if p.is_dir()]
-    if not candidates:
-        return None
+
+    def _mtime_or_none(p: Path) -> float | None:
+        # A sibling run dir can vanish mid-scan (e.g. a concurrent --cleanup
+        # prunes it). stat() would then raise FileNotFoundError and suppress
+        # run.json entirely. Treat a vanished candidate as absent (None) and
+        # skip it rather than crash the summary writer.
+        try:
+            return p.stat().st_mtime
+        except OSError:
+            return None
+
+    candidates: list[tuple[Path, float]] = []
+    for p in runs_dir.iterdir():
+        if not p.is_dir():
+            continue
+        mtime = _mtime_or_none(p)
+        if mtime is None:
+            continue
+        candidates.append((p, mtime))
     if not_before is not None:
         # A small tolerance absorbs coarse filesystem mtime granularity
         # (some filesystems round to whole seconds) so the *current*
         # run's own freshly-created root is never wrongly rejected.
         cutoff = not_before - 1.0
-        candidates = [p for p in candidates if p.stat().st_mtime >= cutoff]
-        if not candidates:
-            return None
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+        candidates = [(p, m) for p, m in candidates if m >= cutoff]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda pm: pm[1])[0]
 
 
 def _read_failure_record(run_root: Path) -> dict[str, Any] | None:

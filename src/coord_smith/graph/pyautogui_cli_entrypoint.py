@@ -289,12 +289,18 @@ async def _activate_target_window(
             timeout=5,
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
-        _log.warning(
-            "target-window activation failed (%s): %s",
-            type(exc).__name__,
-            exc,
-        )
-        return False
+        # The operator EXPLICITLY asked to focus this window. If activation
+        # fails on macOS (typo'd app name, app not running, osascript
+        # timeout), proceeding would click whatever happens to be frontmost —
+        # a silent wrong-target for coord recipes. Fail loudly (ConfigError →
+        # exit 3) naming the window instead of warning-and-continuing. This is
+        # distinct from the Linux/Windows no-op above, which is a documented
+        # unsupported-platform warning, not a requested-but-failed activation.
+        raise ConfigError(
+            f"--target-window activation failed for {name!r} "
+            f"({type(exc).__name__}: {exc}). The app may be misspelled or not "
+            "running. Fix the window name or omit --target-window."
+        ) from exc
     if settle_seconds > 0:
         await asyncio.sleep(settle_seconds)
     return True
@@ -323,11 +329,13 @@ async def _run(
 ) -> int:
     """Instantiate PyAutoGUIAdapter, preflight OS permissions, then run the graph.
 
-    ``--dry-run`` short-circuits after recipe load + preflight: it confirms
-    the recipe parses, every referenced template resolves on disk, and the
-    host has the required OS permissions, then exits cleanly without
-    executing any click. Used by orchestrators (e.g. OpenClaw) to validate
-    a recipe before committing the user's screen to a real run.
+    ``--dry-run`` is a pure validator: it confirms the recipe parses, every
+    referenced template resolves on disk, and the four required inputs are
+    present, then exits 0 — WITHOUT preflight, the host lock, or any click.
+    It deliberately does NOT require OS permissions, so an orchestrator (e.g.
+    OpenClaw) or CI can cheaply validate a generated recipe on a host that
+    has not been granted Accessibility / Screen Recording. A missing input
+    surfaces as exit 3 (config error), the same as a real run.
 
     ``--target-window`` (macOS) activates the named app immediately before
     preflight + dispatch so the target window is front-most when
@@ -339,13 +347,36 @@ async def _run(
         argv_list
     )
     recipe = _resolve_click_recipe(cli_path=recipe_path)
+
+    if dry_run:
+        # --dry-run is a PURE, no-permission validator: it confirms the recipe
+        # parses + every template resolves (done in _resolve_click_recipe
+        # above) and the four required inputs are present, then exits 0 —
+        # WITHOUT preflight, the host lock, or window activation. An LLM
+        # caller (or CI) pre-validating a generated recipe must not need
+        # Accessibility/Screen-Recording permission, and a missing input must
+        # surface as the documented config error (exit 3), not a misdirecting
+        # "grant permission" (exit 2). Preflight is a real-run concern; a
+        # dry-run touches neither the cursor nor the shared foreground, so it
+        # needs no lock.
+        resolve_released_scope_inputs(argv=remaining_argv, env=dict(os.environ))
+        step_count = len(recipe.steps) if recipe and recipe.steps else 0
+        _log.info(
+            "dry-run OK — recipe + inputs valid, %d step(s) resolved.",
+            step_count,
+        )
+        # Stash the count so main()'s try/finally writes a run.json with
+        # step_count matching the log line (the writer's empirical recovery
+        # would return 0 — no run root is created on dry-run).
+        if summary_writer is not None:
+            summary_writer.set_pending_step_count(step_count)
+        return 0
+
     adapter = PyAutoGUIAdapter(run_root=base_dir, click_recipe=recipe)
     # Acquire the per-host advisory lock BEFORE preflight so a busy
     # neighbour does not get blamed for a permission failure. The
     # lock guards against pyautogui's process-global cursor/screen
-    # (see graph/host_lock.py docstring). ``dry_run`` still holds
-    # the lock — a parallel dry-run probe would still trigger the
-    # real preflight cursor movements that race with another run.
+    # (see graph/host_lock.py docstring).
     with acquire_host_lock(base_dir=base_dir):
         # Activate the target window INSIDE the lock: it steals foreground
         # focus and sleeps ~1s, which would disrupt an already-running
@@ -355,29 +386,6 @@ async def _run(
         if target_window:
             await _activate_target_window(target_window)
         await adapter.preflight()
-        if dry_run:
-            # --dry-run validates the whole invocation, so it must reject a
-            # missing required input the same way a real run does (exit 3),
-            # not just confirm the recipe + preflight. A real run validates
-            # these downstream in the shim; dry-run short-circuits before
-            # that, so validate them here.
-            resolve_released_scope_inputs(
-                argv=remaining_argv, env=dict(os.environ)
-            )
-            step_count = len(recipe.steps) if recipe and recipe.steps else 0
-            _log.info(
-                "dry-run OK — preflight passed, %d step(s) resolved.",
-                step_count,
-            )
-            # Stash the count so main()'s try/finally writes a
-            # run.json with step_count matching the log line. Without
-            # this the writer's empirical recovery returns 0 (no run
-            # root created on dry-run), confusing autonomous callers
-            # that read step_count to confirm the recipe matched the
-            # one they sent.
-            if summary_writer is not None:
-                summary_writer.set_pending_step_count(step_count)
-            return 0
         recipe_steps = (
             list(recipe.steps) if recipe is not None and recipe.steps else None
         )

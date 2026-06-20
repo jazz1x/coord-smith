@@ -193,7 +193,18 @@ class PyAutoGUIAdapter:
                 f"pyautogui.screenshot failed: {exc!r}"
             ) from exc
         path = self._screenshot_path(key, step_idx=step_idx)
-        screenshot.save(str(path))
+        try:
+            screenshot.save(str(path))
+        except Exception as exc:
+            # The capture succeeded but writing it to disk failed (ENOSPC,
+            # read-only artifacts dir, PIL encode error). Route it through the
+            # SAME typed channel as a capture failure so the per-step
+            # failure-evidence net catches it and run.json gets a populated
+            # failure block instead of failure=null — otherwise a successful
+            # click whose post-click save fails becomes an unattributed crash.
+            raise ScreenCaptureUnavailable(
+                f"screenshot save to {path} failed: {exc!r}"
+            ) from exc
 
     def _validate_bounds(self, x: int, y: int) -> None:
         size = pyautogui.size()
