@@ -82,8 +82,12 @@ Released CLI surface:
 - `coord-smith --click-recipe PATH` / `COORDSMITH_CLICK_RECIPE` env.
 - `coord-smith --target-window NAME` / `COORDSMITH_TARGET_WINDOW` env
   (macOS only; best-effort AppleScript activate before preflight).
-- `coord-smith --dry-run` for recipe + preflight validation without
-  click dispatch.
+- `coord-smith --dry-run` for recipe + required-input validation
+  **without preflight or click dispatch** — deliberately runnable on a
+  host that lacks Accessibility / Screen-Recording grants, so CI or an
+  LLM caller can validate a generated recipe cheaply. A green dry-run
+  does NOT confirm OS permissions; the real run can still exit 2 at
+  preflight.
 - per-host advisory lock (`fcntl.flock` on
   `<base_dir>/artifacts/.coord-smith.lock`) acquired before
   preflight; second invocation exits with code 4 (host busy).

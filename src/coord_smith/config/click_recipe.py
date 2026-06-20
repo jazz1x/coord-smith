@@ -100,7 +100,16 @@ def _validate_step_name(name: str) -> str:
 # must not reuse one of these as its name (see _validate_step_name). Kept as a
 # literal frozenset rather than importing from missions.evidence_specs to keep
 # config/ free of an adapter/mission dependency (layering: config is below
-# missions in the import graph).
+# missions in the import graph). An equivalence test
+# (test_hardening_cycle5.py) pins this set against the keys derived from
+# MISSION_FALLBACK_REFS so a future evidence-spec rename fails CI instead of
+# silently re-opening the guard-log contamination vector.
+#
+# ``failure`` is reserved even though it is not a mission action-log key: it is
+# the filename of the reserved failure-evidence artifact (``failure.jsonl``)
+# that run_summary._read_failure_record publishes into run.json. A step named
+# ``failure`` would append its guard logs there and shadow a later real failure
+# record, defeating the ADR-006 attribution contract.
 _RESERVED_ACTION_LOG_KEYS = frozenset({
     "attach-session",
     "prepare-session",
@@ -108,6 +117,7 @@ _RESERVED_ACTION_LOG_KEYS = frozenset({
     "step-dispatched",
     "step-captured",
     "release-ceiling-stop",
+    "failure",
 })
 
 

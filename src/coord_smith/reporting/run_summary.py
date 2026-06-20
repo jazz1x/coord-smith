@@ -79,8 +79,29 @@ class RunSummary:
         }
 
 
+def _snapshot_run_root_names(base_dir: Path) -> frozenset[str]:
+    """Return the names of run-root dirs that already exist under ``base_dir``.
+
+    Captured at writer construction (invocation start). Any run root whose
+    name is in this set pre-dates the current invocation and therefore was
+    NOT created by it — see ``_find_latest_run_root`` for how this gates
+    attribution. Run ids are unique (timestamp + random suffix), so a root
+    created by *this* invocation can never collide with a snapshotted name.
+    """
+    runs_dir = base_dir / "artifacts" / "runs"
+    if not runs_dir.is_dir():
+        return frozenset()
+    try:
+        return frozenset(p.name for p in runs_dir.iterdir() if p.is_dir())
+    except OSError:
+        return frozenset()
+
+
 def _find_latest_run_root(
-    base_dir: Path, *, not_before: float | None = None
+    base_dir: Path,
+    *,
+    not_before: float | None = None,
+    exclude_names: frozenset[str] = frozenset(),
 ) -> Path | None:
     """Locate the most recently created run root under ``base_dir``.
 
@@ -89,19 +110,25 @@ def _find_latest_run_root(
     (graph.host_lock) only one run can be active at a time, so
     "newest by mtime" reliably identifies the current run.
 
-    ``not_before`` is the wall-clock (``time.time()``) at which the
-    current invocation started. Candidates whose mtime predates it are
-    rejected: a run root created by a *prior* invocation must never be
-    attributed to this one. Without this gate, a second invocation that
-    fails before creating its own root (recipe-load error, missing
-    input, permission denial, host-busy) would resolve to a stale dir
-    and stamp this run's run.json with the prior run's run_id /
-    step_count / failure block — misdirecting a caller that reads
-    run.json to diagnose the exit.
+    ``exclude_names`` is the set of run-root names that already existed
+    when the current invocation started (see ``_snapshot_run_root_names``).
+    A root in this set was created by a *prior* invocation and is skipped
+    outright — this is the primary, filesystem-granularity-independent gate
+    against attributing a prior run's root to this one. Without it, an
+    invocation that fails BEFORE creating its own root (recipe-load error,
+    missing input, permission denial, host-busy, KeyboardInterrupt) would
+    resolve to the prior run's dir and overwrite that run's run.json with
+    this invocation's status/exit_code — corrupting the ADR-006 outcome
+    contract a caller reads to diagnose the exit.
+
+    ``not_before`` (the wall-clock at invocation start) is a secondary,
+    belt-and-suspenders time gate retained for defense in depth.
 
     Returns ``None`` when no qualifying run dir exists — e.g., the graph
-    raised before creating its root. The caller writes a degenerate
-    summary in that case (run_id=None, run_root unknown).
+    raised before creating its root, or every candidate predates this
+    invocation. The caller writes a degenerate summary in that case
+    (run_id=None, run_root unknown) under ``base_dir`` rather than
+    mis-stamping a sibling.
     """
     runs_dir = base_dir / "artifacts" / "runs"
     if not runs_dir.is_dir():
@@ -120,6 +147,9 @@ def _find_latest_run_root(
     candidates: list[tuple[Path, float]] = []
     for p in runs_dir.iterdir():
         if not p.is_dir():
+            continue
+        if p.name in exclude_names:
+            # Pre-existed at invocation start — belongs to a prior run.
             continue
         mtime = _mtime_or_none(p)
         if mtime is None:
@@ -246,6 +276,12 @@ class RunSummaryWriter:
         # post-hoc run-root discovery (see _find_latest_run_root).
         # monotonic() can't be compared to a file mtime; time.time() can.
         self._started_at_wall = time.time()
+        # Names of run roots that already exist at invocation start. The
+        # primary gate against attributing a prior run's root to this
+        # invocation (an early exit that creates no root of its own must
+        # write a degenerate run.json, NOT overwrite a sibling). Snapshotted
+        # here because the lifecycle constructs the writer before _run runs.
+        self._preexisting_run_roots = _snapshot_run_root_names(base_dir)
         # Optional step count override that the dry-run path can
         # stash during ``_run`` execution. ``flush`` reads this if
         # no explicit ``step_count_override`` argument is passed.
@@ -290,7 +326,9 @@ class RunSummaryWriter:
         # base_dir as a post-hoc lookup.
         if run_root is None:
             run_root = _find_latest_run_root(
-                self._base_dir, not_before=self._started_at_wall
+                self._base_dir,
+                not_before=self._started_at_wall,
+                exclude_names=self._preexisting_run_roots,
             )
 
         ended_iso = datetime.now(tz=UTC).isoformat()

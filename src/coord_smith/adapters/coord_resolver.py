@@ -83,6 +83,16 @@ class _MatchLogger(Protocol):
         y: int,
     ) -> None: ...
 
+    def write_image_fallback(
+        self,
+        *,
+        mission: str,
+        template: str,
+        reason: str,
+        fallback_x: int,
+        fallback_y: int,
+    ) -> None: ...
+
 
 def locate_image_target(
     mission: str,
@@ -266,6 +276,21 @@ def resolve_step_click_coords(
             return image_coords
         coord_coords = coord_or_none(step)
         if coord_coords is not None:
+            # Image primary missed but the coord fallback is available. Record
+            # the swallowed miss so the silent degradation (a permanently
+            # stale template riding the coord fallback) stays observable in
+            # the typed-evidence stream — otherwise the dispatch looks
+            # byte-identical to a clean coord-only step. ``image_error`` is
+            # always populated here: in the dual-target regime ``step.image``
+            # is non-None, so a None match result carries the captured error.
+            if image_error is not None:
+                collaborator._log.write_image_fallback(
+                    mission=step.name,
+                    template=step.image or "",
+                    reason=str(image_error),
+                    fallback_x=coord_coords[0],
+                    fallback_y=coord_coords[1],
+                )
             return coord_coords
         # Both failed — re-raise the captured image error.
         if image_error is not None:

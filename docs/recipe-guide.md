@@ -48,7 +48,7 @@ the pipeline with no click (useful for smoke-testing the evidence pipeline).
 | `0` | Success — pipeline reached `runCompletion` | Read `run.json` / `artifacts/`, proceed |
 | `1` | Unhandled runtime error (typed dispatch failure OR caught `KeyboardInterrupt`) | Branch on `run.json.status`: `"failure"` → read the `failure` key for diagnosis; `"interrupted"` → safe to retry (no failure block) |
 | `2` | macOS Accessibility or Screen Recording permission denied | Cannot fix via recipe; escalate to operator |
-| `3` | Config error — recipe file missing / schema invalid, **or** a required input (`--session-ref` / `--expected-auth-state` / `--target-page-url` / `--site-identity`) is absent | Fix the recipe or supply the named input, then retry |
+| `3` | Config error. Causes: recipe file missing / schema invalid; a required input (`--session-ref` / `--expected-auth-state` / `--target-page-url` / `--site-identity`) absent; an invalid `--target-window` app name (activation failed); an invalid `--cleanup` bound (`--max-runs` / `--max-age-days` non-integer or negative); or a malformed payload coord override (partial / non-integer `x`/`y`). **Read the `config error: <message>` line on stderr** — it names the exact cause; do not assume a recipe/input fix. Note: a malformed payload override raises mid-dispatch before the failure-evidence net, so `run.json` carries `status=failure`, `exit_code=3`, `failure=null`. | Read the stderr message, fix the named thing, retry |
 | `4` | Host busy — another coord-smith process held the per-host lock | Back off 1–5 s and retry; see `docs/architecture-boundaries.md §Host Exclusivity` |
 
 ---
@@ -421,10 +421,18 @@ Schema (`schema_version: 1`):
   "started_at": "2026-05-18T12:30:45+00:00",
   "ended_at":   "2026-05-18T12:30:46+00:00",
   "elapsed_seconds": 1.2345,
-  "step_count": 3,                        // distinct step_idx values seen
+  "step_count": 3,                        // steps REACHED, not recipe total
   "failure": null                         // populated when status=failure
 }
 ```
+
+> **`step_count` is "steps reached", not "recipe total".** It counts the
+> distinct `step_idx` values that produced evidence. On success it equals the
+> recipe length (all steps ran); on a mid-flow failure it is the count of steps
+> reached before the abort (a 3-step recipe failing at step index 1 reports
+> `step_count: 2`). To form "failed at step X of N", take `X` from
+> `failure.step_idx` and `N` from the recipe you submitted — `run.json` does not
+> carry the recipe total as a separate field.
 
 `status` enum (one of):
 
