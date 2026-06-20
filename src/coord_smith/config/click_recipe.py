@@ -32,8 +32,11 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
+from coord_smith.cli_logging import get_logger
 from coord_smith.models.errors import ConfigError
 from coord_smith.models.identifiers import ResolvedImagePath
+
+_log = get_logger("click_recipe")
 
 # Shared strict config for every recipe model. ``extra="forbid"`` turns a
 # misspelled key (e.g. ``confidance:`` for ``confidence:``) into a parse-time
@@ -445,6 +448,14 @@ class ClickRecipe(BaseModel):
         has_steps = self.steps is not None and len(self.steps) > 0
         has_missions = len(self.missions) > 0
         if has_steps and has_missions:
+            # warnings.warn is invisible on the real CLI (Python suppresses
+            # DeprecationWarning from library code by default), so also emit a
+            # WARNING log line through the coord_smith logger the CLI configures
+            # — otherwise the documented stderr migration nudge never appears.
+            _log.warning(
+                "recipe declares both 'steps' and 'missions'; using 'steps' "
+                "(authoritative). 'missions' is deprecated — migrate to 'steps:'."
+            )
             warnings.warn(
                 "ClickRecipe declares both 'steps' and 'missions'; 'steps' "
                 "is the source of truth. Migrate the recipe to use 'steps:' "
@@ -459,6 +470,12 @@ class ClickRecipe(BaseModel):
             )
             return self
         if not has_steps and has_missions:
+            # See above — surface the deprecation on the real CLI via the logger,
+            # not just warnings.warn (which the default filter hides).
+            _log.warning(
+                "recipe uses the deprecated 'missions' shape; auto-normalizing "
+                "to 'steps'. Migrate the recipe to use 'steps:'."
+            )
             warnings.warn(
                 "ClickRecipe 'missions' shape is deprecated; auto-normalizing "
                 "to 'steps'. Migrate the recipe to use 'steps:'.",

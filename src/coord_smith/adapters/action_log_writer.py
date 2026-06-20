@@ -30,6 +30,11 @@ class ActionLogWriter:
     The ``run_root`` can be updated mid-run via ``with_run_root`` — the
     returned instance is a new object sharing the same configuration with
     only the path replaced (immutable-style update, no in-place mutation).
+
+    All writers serialize with ``ensure_ascii=False`` so a unicode step name
+    (permitted by the recipe schema) lands as raw UTF-8 — one encoding policy
+    shared with the sibling producers ``seed_action_log_marker`` and
+    ``_capture_failure_evidence`` that append to the same action-log files.
     """
 
     def __init__(self, run_root: Path) -> None:
@@ -99,7 +104,7 @@ class ActionLogWriter:
         }
         path = self.action_log_path(key)
         with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     def write_image_match(
         self,
@@ -124,7 +129,7 @@ class ActionLogWriter:
         }
         path = self.action_log_path(action_key)
         with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     def write_image_fallback(
         self,
@@ -160,7 +165,7 @@ class ActionLogWriter:
         }
         path = self.action_log_path(action_key)
         with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     def write_transition(
         self,
@@ -185,7 +190,7 @@ class ActionLogWriter:
         }
         path = self.action_log_path(action_key)
         with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     def write_signal(
         self,
@@ -212,7 +217,7 @@ class ActionLogWriter:
         }
         path = self.action_log_path(action_key)
         with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     def write_wait_for(
         self,
@@ -244,4 +249,4 @@ class ActionLogWriter:
         }
         path = self.action_log_path(action_key)
         with path.open("a", encoding="utf-8") as f:
-            f.write(json.dumps(entry) + "\n")
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")

@@ -327,6 +327,25 @@ carry `step_idx` and `step_name`:
 {"ts": "2026-05-02T11:00:00+00:00", "mission_name": "step_dispatch", "event": "step-dispatched", "step_idx": 0, "step_name": "open-buy"}
 ```
 
+#### Success-path record fields
+
+Beyond the base keys above, a per-step record carries extra keys describing
+what the guard/resolver did. A caller (e.g. OpenClaw) can read these to audit a
+*successful* run — most importantly to detect a silently-degraded template:
+
+| Event source | Extra keys | Meaning |
+|--------------|-----------|---------|
+| image match | `image_template`, `match_confidence`, `match_x`, `match_y` | template matched at these coords/confidence |
+| **image fallback** | `image_fallback_used: true`, `image_fallback_template`, `image_fallback_reason`, `image_fallback_x`, `image_fallback_y` | a `prefer: image` step's template MISSED and the step rode its `coord` fallback. **Watch for this** — it means the template is stale even though the click "succeeded". |
+| `wait_for` hit | `wait_for_template`, `wait_for_confidence`, `wait_for_elapsed_seconds`, `wait_for_x`, `wait_for_y` | pre-click anchor appeared |
+| `post_click_signal` hit | `post_click_signal_template`, `post_click_signal_confidence`, `post_click_signal_elapsed_seconds`, `post_click_signal_x`, `post_click_signal_y` | post-click signal appeared |
+| `verify_transition` | `transition_changed`, `transition_change_ratio`, `transition_threshold`, `transition_bbox` | page-change check result |
+
+> **`transition_bbox` is `[left, top, right, bottom]`** (PIL corner-pair form),
+> NOT the `[left, top, width, height]` convention every *input* region uses
+> (`region`, `transition_region`). To get the changed-area extent: `width =
+> right - left`, `height = bottom - top`. It is `null` when nothing changed.
+
 The `release-ceiling-stop.jsonl` file is the authoritative proof that the run
 reached `runCompletion`. If it is absent after exit 0, the run was incomplete.
 
@@ -362,13 +381,21 @@ artifacts/
 }
 ```
 
+`mission_name` / `event` name the node that failed: a click-dispatch failure is
+`step_dispatch` / `step-dispatch-failed` (`phase: dispatch`), while a
+screenshot/evidence-gather failure during pre-click observation or post-click
+capture self-describes as `step_observe` / `step-observe-failed`
+(`phase: pre_click`) or `step_capture` / `step-capture-failed`
+(`phase: post_click`) — so a gather failure is never mislabeled as a dispatch
+that never happened. `step_idx` / `step_name` localize it either way.
+
 `phase` is one of:
 
 | Value | Origin |
 |-------|--------|
-| `pre_click` | Step's `wait_for` guard timed out or template missing |
+| `pre_click` | Step's `wait_for` guard timed out / template missing, or pre-click observation could not capture the screen |
 | `dispatch` | Coord resolution, click execution, baseline screenshot |
-| `post_click` | `verify_transition` failed or `post_click_signal` timed out |
+| `post_click` | `verify_transition` failed, `post_click_signal` timed out, or post-click capture could not capture the screen |
 
 The same `error_class` can originate from multiple phases (e.g.
 `ImageWaitTimeout` from `wait_for` versus `post_click_signal`); `phase`

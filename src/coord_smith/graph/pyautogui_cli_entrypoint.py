@@ -372,6 +372,17 @@ async def _run(
             summary_writer.set_pending_step_count(step_count)
         return 0
 
+    # Validate the four required released-scope inputs BEFORE adapter / lock /
+    # preflight, mirroring the dry-run branch above. Otherwise, on a host
+    # without Accessibility (the default first-run state), preflight raises
+    # first and a missing input is misreported as exit 2 "grant permission"
+    # instead of exit 3 "supply --session-ref" — routing an automated caller
+    # (OpenClaw) down the wrong recovery branch (the exit code is an ADR-006
+    # caller contract). resolve_released_scope_inputs is a pure parse of
+    # argv+env; the shim re-parses it downstream (idempotent). A missing input
+    # therefore fails fast, before acquiring the host lock for a doomed run.
+    resolve_released_scope_inputs(argv=remaining_argv, env=dict(os.environ))
+
     adapter = PyAutoGUIAdapter(run_root=base_dir, click_recipe=recipe)
     # Acquire the per-host advisory lock BEFORE preflight so a busy
     # neighbour does not get blamed for a permission failure. The

@@ -570,8 +570,19 @@ class PyAutoGUIAdapter:
             except ScreenCaptureUnavailable as exc:
                 step_obj = payload.get("step")
                 step_name = step_obj.name if isinstance(step_obj, Step) else ""
+                # Attribute the failure to the actual gather node (observe is
+                # pre-click, capture is post-click) rather than the hardcoded
+                # step_dispatch — no click was dispatched on the observe path.
+                gather_phase: PhaseName | None = {
+                    "step_observe": _PHASE_PRE_CLICK,
+                    "step_capture": _PHASE_POST_CLICK,
+                }.get(mission)
                 self._capture_failure_evidence(
-                    step_idx=step_idx, step_name=step_name, error=exc
+                    step_idx=step_idx,
+                    step_name=step_name,
+                    error=exc,
+                    mission=mission,
+                    phase=gather_phase,
                 )
                 raise
         else:
@@ -767,6 +778,8 @@ class PyAutoGUIAdapter:
         step_idx: int,
         step_name: str,
         error: Exception,
+        mission: str = "step_dispatch",
+        phase: PhaseName | None = None,
     ) -> None:
         """Write a failure screenshot + action-log record before re-raising.
 
@@ -775,6 +788,14 @@ class PyAutoGUIAdapter:
         one that matters for the caller. The record path follows the
         convention ``runs/<id>/artifacts/failure/<idx>-<step>-<error>.png``
         and the action-log file is ``runs/<id>/artifacts/action-log/failure.jsonl``.
+
+        ``mission`` names the node that failed so an evidence-gather failure in
+        ``step_observe`` / ``step_capture`` self-describes (``step-observe-
+        failed`` / ``step-capture-failed``) instead of masquerading as a
+        dispatch failure. ``phase`` overrides the read-from-exception phase for
+        those non-dispatch nodes (whose exceptions are never phase-tagged by the
+        dispatch guards); when ``None`` the phase is read from the exception
+        (dispatch path, tagged) and defaults to ``dispatch``.
         """
         error_class = type(error).__name__
         # Sanitize fragments so the filename is portable.
@@ -804,18 +825,20 @@ class PyAutoGUIAdapter:
             / "failure.jsonl"
         )
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        # Phase tag attached by ``_dispatch_with_step`` via
-        # ``step_guards.tag_phase``. Default ``"dispatch"`` covers
-        # legacy / pre-step-guards paths so the field is always
-        # present and callers don't need a presence check.
-        phase = read_phase(error)
+        # Phase: dispatch tags the exception via ``step_guards.tag_phase``
+        # (default ``"dispatch"``). observe/capture nodes never reach those
+        # guards, so the caller passes an explicit ``phase`` for them.
+        resolved_phase = phase if phase is not None else read_phase(error)
+        # Event self-describes the failing node: step_dispatch -> step-dispatch-
+        # failed, step_observe -> step-observe-failed, etc.
+        event = f"{mission.replace('_', '-')}-failed"
         entry: dict[str, object] = {
             "ts": datetime.now(tz=UTC).isoformat(),
-            "mission_name": "step_dispatch",
-            "event": "step-dispatch-failed",
+            "mission_name": mission,
+            "event": event,
             "step_idx": step_idx,
             "step_name": step_name,
-            "phase": phase,
+            "phase": resolved_phase,
             "error_class": error_class,
             "error_message": str(error),
             "screenshot": str(png_path) if png_path.exists() else None,

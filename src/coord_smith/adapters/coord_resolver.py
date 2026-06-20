@@ -296,16 +296,24 @@ def resolve_step_click_coords(
         if image_error is not None:
             raise image_error
     else:
-        # ``prefer: coord`` — coord goes first.
+        # ``prefer: coord`` — coord goes first. In the dual-target regime
+        # ``step.coord`` is guaranteed non-None (the single-target guards above
+        # already handled the coord-absent case), so ``coord_or_none`` always
+        # returns here and the image fallback below is unreachable for any
+        # schema-valid Step. The fallback to image is by design unidirectional
+        # (ADR-003: image→coord only, never coord→image — a fixed coord cannot
+        # "fail" a liveness check), so these lines are defensive dead code kept
+        # only for structural symmetry, mirroring the schema-enforced guard at
+        # ``locate_image_for_step``.
         coord_coords = coord_or_none(step)
         if coord_coords is not None:
             return coord_coords
-        image_coords, image_error = locate_image_or_none(
+        image_coords, image_error = locate_image_or_none(  # pragma: no cover
             step, collaborator=collaborator
         )
-        if image_coords is not None:
+        if image_coords is not None:  # pragma: no cover
             return image_coords
-        if image_error is not None:
+        if image_error is not None:  # pragma: no cover
             raise image_error
 
     # Defensive: schema-unreachable — both targets are absent.

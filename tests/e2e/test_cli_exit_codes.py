@@ -47,14 +47,24 @@ def test_main_exits_0_on_successful_run(tmp_path: Path) -> None:
 
 
 def test_main_exits_2_on_accessibility_permission_denied() -> None:
-    """Preflight AccessibilityPermissionDenied must produce exit 2."""
+    """Preflight AccessibilityPermissionDenied must produce exit 2.
+
+    Supplies the four required inputs so validation passes and preflight is
+    actually reached — since cycle 6, a missing input short-circuits to exit 3
+    BEFORE preflight, so this test must isolate the permission failure with
+    valid inputs.
+    """
+    argv = [
+        "--session-ref", "s", "--expected-auth-state", "a",
+        "--target-page-url", "https://x.invalid/p", "--site-identity", "x",
+    ]
     with patch.object(
         PyAutoGUIAdapter,
         "preflight",
         new_callable=AsyncMock,
         side_effect=AccessibilityPermissionDenied("no accessibility permission"),
     ):
-        exit_code = main(argv=[])
+        exit_code = main(argv=argv)
 
     assert exit_code == 2, f"Expected exit 2, got {exit_code}"
 
@@ -67,7 +77,15 @@ def test_main_exits_3_on_missing_recipe_file(tmp_path: Path) -> None:
 
 
 def test_main_exits_1_on_unhandled_runtime_error() -> None:
-    """An unhandled exception from the run must produce exit 1."""
+    """An unhandled exception from the run must produce exit 1.
+
+    Inputs supplied so validation + preflight pass and the mocked graph
+    (raising RuntimeError) is reached — see the exit-2 test above.
+    """
+    argv = [
+        "--session-ref", "s", "--expected-auth-state", "a",
+        "--target-page-url", "https://x.invalid/p", "--site-identity", "x",
+    ]
     with (
         patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
         patch(
@@ -76,6 +94,6 @@ def test_main_exits_1_on_unhandled_runtime_error() -> None:
             side_effect=RuntimeError("unexpected failure"),
         ),
     ):
-        exit_code = main(argv=[])
+        exit_code = main(argv=argv)
 
     assert exit_code == 1, f"Expected exit 1, got {exit_code}"
