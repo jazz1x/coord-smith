@@ -21,7 +21,7 @@ import pytest
 from PIL import Image
 
 from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
-from coord_smith.config.click_recipe import ClickRecipe
+from coord_smith.config.click_recipe import ClickRecipe, Step
 from coord_smith.config.released_inputs import resolve_released_scope_inputs
 from coord_smith.models.errors import ConfigError, ImageMatchConfidenceLow
 
@@ -121,3 +121,25 @@ def test_missing_inputs_reported_all_at_once() -> None:
 def test_missions_field_marked_deprecated_in_schema() -> None:
     schema = ClickRecipe.model_json_schema()
     assert schema["properties"]["missions"].get("deprecated") is True
+
+
+# ---------------------------------------------------------------------------
+# post-click-signal-interval-timeout-untested — pin the PostClickSignal
+# interval>timeout branch (byte-identical to WaitFor's, but previously only
+# WaitFor's copy was tested).
+# ---------------------------------------------------------------------------
+
+
+def test_post_click_signal_rejects_interval_exceeding_timeout() -> None:
+    with pytest.raises(ValueError):  # noqa: PT011
+        Step.model_validate(
+            {
+                "name": "x",
+                "coord": {"x": 1, "y": 1},
+                "post_click_signal": {
+                    "image": "s.png",
+                    "timeout": 1.0,
+                    "interval": 99.0,
+                },
+            }
+        )
