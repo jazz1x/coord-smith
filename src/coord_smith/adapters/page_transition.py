@@ -32,12 +32,21 @@ class PageTransitionResult:
 
     ``change_ratio`` is the fraction of pixels inside the comparison region
     that actually differ between the two frames (changed-pixel count divided
-    by region area). ``bbox`` is the pixel diff bounding box in absolute
-    screen coordinates, or ``None`` when the frames are pixel-identical.
+    by region area).
+
+    ``bbox`` is the pixel-diff bounding box in absolute screen coordinates,
+    or ``None`` when the frames are pixel-identical. NOTE: its 4-tuple is
+    ``(left, top, right, bottom)`` — PIL ``getbbox`` corner-pair semantics —
+    NOT the ``(left, top, width, height)`` extent form used by the *input*
+    ``region`` parameter. The two share the ``Region`` alias for brevity but
+    are distinct conventions; a consumer converting bbox to width/height must
+    compute ``right - left`` / ``bottom - top``. Logged verbatim as
+    ``transition_bbox`` (see ``ActionLogWriter.write_transition``).
     """
 
     changed: bool
     change_ratio: float
+    # See class docstring: (left, top, right, bottom), not (l, t, w, h).
     bbox: Region | None
 
 
@@ -80,15 +89,49 @@ class PageTransitionVerifier:
             region_size = baseline.size
         else:
             left, top, width, height = region
-            box = (left, top, left + width, top + height)
+            # Clamp the requested box to the actual frame bounds. A region
+            # that extends past the screen edge (or starts off-screen) yields
+            # a smaller *real* crop than its declared width×height; using the
+            # declared area as the change_ratio denominator would dilute the
+            # ratio and spuriously suppress a real transition. Intersect with
+            # (0, 0, W, H) so the denominator reflects the in-bounds area.
+            frame_w, frame_h = baseline.size
+            clamped_left = max(0, min(left, frame_w))
+            clamped_top = max(0, min(top, frame_h))
+            clamped_right = max(clamped_left, min(left + width, frame_w))
+            clamped_bottom = max(clamped_top, min(top + height, frame_h))
+            region_size = (
+                clamped_right - clamped_left,
+                clamped_bottom - clamped_top,
+            )
+            if region_size[0] <= 0 or region_size[1] <= 0:
+                # The requested region lies ENTIRELY off-screen — the clamp
+                # leaves an empty rectangle. Without this guard the empty crop
+                # diffs to "no change" and the caller gets a spurious
+                # PageTransitionNotDetected on every click, indistinguishable
+                # from a real no-transition. Surface the authoring error
+                # explicitly instead of silently failing the click forever.
+                raise ValueError(
+                    "transition_region "
+                    f"{region!r} is entirely outside the {baseline.size} "
+                    "frame; nothing to compare. Fix the region coordinates."
+                )
+            box = (clamped_left, clamped_top, clamped_right, clamped_bottom)
             base_view = baseline.crop(box)
             post_view = post.crop(box)
-            region_origin = (left, top)
-            region_size = (width, height)
+            region_origin = (clamped_left, clamped_top)
 
         diff = ImageChops.difference(base_view, post_view)
         bbox_local = diff.getbbox()
         if bbox_local is None:
+            # Pixel-identical frames: nothing changed, so changed=False
+            # UNCONDITIONALLY — independent of ``threshold``. This is the
+            # intended short-circuit, not the ``change_ratio >= threshold`` rule
+            # below: a change-detector must report "no transition" when zero
+            # pixels moved, even at threshold==0.0 (where the >= rule would
+            # otherwise pass on a frame that literally did not change). An
+            # all-identical frame always requires at least one differing pixel
+            # to count as changed.
             return PageTransitionResult(changed=False, change_ratio=0.0, bbox=None)
 
         # change_ratio is the fraction of pixels that actually differ, not the

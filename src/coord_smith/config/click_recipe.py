@@ -32,8 +32,11 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
+from coord_smith.cli_logging import get_logger
 from coord_smith.models.errors import ConfigError
 from coord_smith.models.identifiers import ResolvedImagePath
+
+_log = get_logger("click_recipe")
 
 # Shared strict config for every recipe model. ``extra="forbid"`` turns a
 # misspelled key (e.g. ``confidance:`` for ``confidence:``) into a parse-time
@@ -41,6 +44,13 @@ from coord_smith.models.identifiers import ResolvedImagePath
 # recipe is the one input an autonomous caller or human author controls, so
 # a typo must fail loudly (exit 3) rather than mis-click.
 _STRICT = ConfigDict(extra="forbid")
+
+# Image-match defaults applied when a Step omits the optional field. Named
+# once here so the two sites that reconstruct a MissionImageClick from a Step
+# (coord_resolver.locate_image_for_step, ClickRecipe.image_target_for) cannot
+# drift apart. These mirror the Field defaults on MissionImageClick.
+DEFAULT_IMAGE_CONFIDENCE = 0.9
+DEFAULT_IMAGE_GRAYSCALE = False
 
 # A search/comparison rectangle ``(left, top, width, height)``. The origin
 # may sit anywhere on (or off) screen, but width/height must be positive —
@@ -75,7 +85,43 @@ def _validate_step_name(name: str) -> str:
     # without a separator, which is already rejected above.
     if name == "." or name == ".." or name.strip() == "":
         raise ValueError(f"Step name must not be a path traversal token: {name!r}")
+    # A step's guard logs (wait_for / transition / signal) are keyed by the
+    # step name; a name equal to a reserved canonical action-log key would
+    # write those guard records INTO the canonical per-step/per-run evidence
+    # file (e.g. step-observed.jsonl), contaminating the auditable evidence
+    # trail. Reject the collision.
+    if name in _RESERVED_ACTION_LOG_KEYS:
+        raise ValueError(
+            f"Step name {name!r} collides with a reserved action-log key "
+            f"({sorted(_RESERVED_ACTION_LOG_KEYS)}); its guard logs would "
+            "contaminate the canonical evidence file. Rename the step."
+        )
     return name
+
+
+# Canonical action-log keys emitted by the released missions. A recipe step
+# must not reuse one of these as its name (see _validate_step_name). Kept as a
+# literal frozenset rather than importing from missions.evidence_specs to keep
+# config/ free of an adapter/mission dependency (layering: config is below
+# missions in the import graph). An equivalence test
+# (test_hardening_cycle5.py) pins this set against the keys derived from
+# MISSION_FALLBACK_REFS so a future evidence-spec rename fails CI instead of
+# silently re-opening the guard-log contamination vector.
+#
+# ``failure`` is reserved even though it is not a mission action-log key: it is
+# the filename of the reserved failure-evidence artifact (``failure.jsonl``)
+# that run_summary._read_failure_record publishes into run.json. A step named
+# ``failure`` would append its guard logs there and shadow a later real failure
+# record, defeating the ADR-006 attribution contract.
+_RESERVED_ACTION_LOG_KEYS = frozenset({
+    "attach-session",
+    "prepare-session",
+    "step-observed",
+    "step-dispatched",
+    "step-captured",
+    "release-ceiling-stop",
+    "failure",
+})
 
 
 def _validate_region(region: Region | None) -> Region | None:
@@ -109,9 +155,16 @@ class PostClickSignal(BaseModel):
     confidence: float = Field(default=0.9, ge=0.0, le=1.0)
     timeout: float = Field(default=5.0, gt=0.0)
     interval: float = Field(default=0.1, gt=0.0)
+    region: tuple[int, int, int, int] | None = None
+    """Optional search rectangle ``(left, top, width, height)`` to scope the
+    post-click poll, mirroring ``WaitFor.region``. Restricting the search to
+    the area where the signal is expected (e.g. a toast region) speeds up
+    matching and avoids false hits elsewhere on screen. ``None`` polls the
+    full screen."""
 
     @model_validator(mode="after")
-    def _interval_within_timeout(self) -> PostClickSignal:
+    def _validate_fields(self) -> PostClickSignal:
+        _validate_region(self.region)
         if self.interval > self.timeout:
             raise ValueError(
                 f"interval ({self.interval}s) must not exceed timeout "
@@ -174,8 +227,9 @@ class Step(BaseModel):
     ``coord`` on the same step.
 
     Image-match parameters (``region``, ``confidence``, ``grayscale``) are
-    only meaningful when ``image`` is set; they are silently ignored
-    otherwise. ``wait_for`` is a pre-click guard; ``verify_transition`` and
+    only meaningful when ``image`` is set; declaring them on a coord-only
+    step is rejected at parse time (they would otherwise be silently
+    ignored). ``wait_for`` is a pre-click guard; ``verify_transition`` and
     ``post_click_signal`` are post-click guards.
     """
 
@@ -222,6 +276,27 @@ class Step(BaseModel):
             raise ValueError(
                 f"Step '{self.name}': must declare at least one of 'image' or 'coord'"
             )
+        # Image-match parameters are meaningless without an image target.
+        # On a coord-only step they would be silently ignored at dispatch —
+        # which defeats the strict-schema typo guard (a misplaced field would
+        # pass unnoticed). Reject them so the author learns the field has no
+        # effect here, mirroring how extra="forbid" rejects unknown keys.
+        if self.image is None:
+            dead = [
+                n
+                for n, v in (
+                    ("region", self.region),
+                    ("confidence", self.confidence),
+                    ("grayscale", self.grayscale),
+                )
+                if v is not None
+            ]
+            if dead:
+                raise ValueError(
+                    f"Step '{self.name}': image-match field(s) {dead} have no "
+                    "effect on a coord-only step (no 'image' declared). Remove "
+                    "them, or add an 'image' target."
+                )
         # Resolve default prefer. When both are present, default = 'image'
         # (image is more environment-portable; coord works only on a fixed
         # screen layout). When only one is present, prefer matches that one.
@@ -373,6 +448,14 @@ class ClickRecipe(BaseModel):
         has_steps = self.steps is not None and len(self.steps) > 0
         has_missions = len(self.missions) > 0
         if has_steps and has_missions:
+            # warnings.warn is invisible on the real CLI (Python suppresses
+            # DeprecationWarning from library code by default), so also emit a
+            # WARNING log line through the coord_smith logger the CLI configures
+            # — otherwise the documented stderr migration nudge never appears.
+            _log.warning(
+                "recipe declares both 'steps' and 'missions'; using 'steps' "
+                "(authoritative). 'missions' is deprecated — migrate to 'steps:'."
+            )
             warnings.warn(
                 "ClickRecipe declares both 'steps' and 'missions'; 'steps' "
                 "is the source of truth. Migrate the recipe to use 'steps:' "
@@ -387,6 +470,12 @@ class ClickRecipe(BaseModel):
             )
             return self
         if not has_steps and has_missions:
+            # See above — surface the deprecation on the real CLI via the logger,
+            # not just warnings.warn (which the default filter hides).
+            _log.warning(
+                "recipe uses the deprecated 'missions' shape; auto-normalizing "
+                "to 'steps'. Migrate the recipe to use 'steps:'."
+            )
             warnings.warn(
                 "ClickRecipe 'missions' shape is deprecated; auto-normalizing "
                 "to 'steps'. Migrate the recipe to use 'steps:'.",
@@ -463,17 +552,33 @@ class ClickRecipe(BaseModel):
                     image=step.image,
                     confidence=step.confidence
                     if step.confidence is not None
-                    else 0.9,
+                    else DEFAULT_IMAGE_CONFIDENCE,
                     region=step.region,
                     grayscale=step.grayscale
                     if step.grayscale is not None
-                    else False,
+                    else DEFAULT_IMAGE_GRAYSCALE,
                     verify_transition=step.verify_transition,
                     transition_threshold=step.transition_threshold,
                     transition_region=step.transition_region,
                     post_click_signal=step.post_click_signal,
                 )
         return None
+
+
+def _steps_mirror_missions(
+    steps: list[Step] | None, missions: dict[str, MissionTarget]
+) -> bool:
+    """True when ``steps`` was derived from ``missions`` (legacy-only path).
+
+    ``_normalize_steps`` populates ``steps`` from ``missions`` only when the
+    recipe declared ``missions`` alone; in that case the step names are
+    exactly the mission keys. When a recipe declares BOTH, ``steps`` is the
+    author's own list and does NOT mirror ``missions`` — so the missions
+    block is superseded leftover, not a live source to existence-check.
+    """
+    if not steps or not missions:
+        return False
+    return [s.name for s in steps] == list(missions.keys())
 
 
 def load_click_recipe(path: Path) -> ClickRecipe:
@@ -491,7 +596,19 @@ def load_click_recipe(path: Path) -> ClickRecipe:
     """
     if not path.exists():
         raise ConfigError(f"click recipe not found: {path}")
-    text = path.read_text(encoding="utf-8")
+    if not path.is_file():
+        # A directory (or other non-file) passed to --click-recipe would
+        # otherwise raise a raw IsADirectoryError from read_text → generic
+        # exit 1. Map it to the documented config-error (exit 3).
+        raise ConfigError(f"click recipe is not a readable file: {path}")
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        # Unreadable file (permissions, I/O error, decode error) → config
+        # error, not a generic runtime crash.
+        raise ConfigError(
+            f"click recipe {path} could not be read: {exc}"
+        ) from exc
     try:
         if path.suffix.lower() in {".yaml", ".yml"}:
             data: Any = yaml.safe_load(text)
@@ -538,9 +655,18 @@ def load_click_recipe(path: Path) -> ClickRecipe:
             )
         return ResolvedImagePath(str(img_path))
 
-    # Resolve image paths in legacy ``missions`` (still consumed by callers
-    # that haven't migrated to ``steps``).
-    if recipe.missions is not None:
+    # Resolve image paths in legacy ``missions`` ONLY when the missions block
+    # is the live source — i.e. each mission was normalized into a step (the
+    # step list mirrors the missions). When a recipe declares BOTH ``steps``
+    # and ``missions``, ``_normalize_steps`` keeps ``steps`` as the source of
+    # truth and leaves the (now superseded) ``missions`` in place for
+    # backward-compat reads. Existence-checking those dead templates would
+    # hard-fail an otherwise-valid recipe whose live steps are all present,
+    # so skip them — only the live step list (resolved below) gates loading.
+    missions_superseded_by_steps = bool(recipe.missions) and not _steps_mirror_missions(
+        recipe.steps, recipe.missions
+    )
+    if recipe.missions and not missions_superseded_by_steps:
         for mission_name, entry in recipe.missions.items():
             if isinstance(entry, MissionImageClick):
                 entry.image = _resolve(

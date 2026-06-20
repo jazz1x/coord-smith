@@ -79,7 +79,30 @@ class RunSummary:
         }
 
 
-def _find_latest_run_root(base_dir: Path) -> Path | None:
+def _snapshot_run_root_names(base_dir: Path) -> frozenset[str]:
+    """Return the names of run-root dirs that already exist under ``base_dir``.
+
+    Captured at writer construction (invocation start). Any run root whose
+    name is in this set pre-dates the current invocation and therefore was
+    NOT created by it — see ``_find_latest_run_root`` for how this gates
+    attribution. Run ids are unique (timestamp + random suffix), so a root
+    created by *this* invocation can never collide with a snapshotted name.
+    """
+    runs_dir = base_dir / "artifacts" / "runs"
+    if not runs_dir.is_dir():
+        return frozenset()
+    try:
+        return frozenset(p.name for p in runs_dir.iterdir() if p.is_dir())
+    except OSError:
+        return frozenset()
+
+
+def _find_latest_run_root(
+    base_dir: Path,
+    *,
+    not_before: float | None = None,
+    exclude_names: frozenset[str] = frozenset(),
+) -> Path | None:
     """Locate the most recently created run root under ``base_dir``.
 
     coord-smith generates a fresh ``artifacts/runs/<run_id>/`` dir
@@ -87,18 +110,60 @@ def _find_latest_run_root(base_dir: Path) -> Path | None:
     (graph.host_lock) only one run can be active at a time, so
     "newest by mtime" reliably identifies the current run.
 
-    Returns ``None`` when no run dir exists yet — e.g., the graph
-    raised before creating its root (recipe load error, lock
-    contention). The caller writes a degenerate summary in that
-    case (run_id=None, run_root unknown).
+    ``exclude_names`` is the set of run-root names that already existed
+    when the current invocation started (see ``_snapshot_run_root_names``).
+    A root in this set was created by a *prior* invocation and is skipped
+    outright — this is the primary, filesystem-granularity-independent gate
+    against attributing a prior run's root to this one. Without it, an
+    invocation that fails BEFORE creating its own root (recipe-load error,
+    missing input, permission denial, host-busy, KeyboardInterrupt) would
+    resolve to the prior run's dir and overwrite that run's run.json with
+    this invocation's status/exit_code — corrupting the ADR-006 outcome
+    contract a caller reads to diagnose the exit.
+
+    ``not_before`` (the wall-clock at invocation start) is a secondary,
+    belt-and-suspenders time gate retained for defense in depth.
+
+    Returns ``None`` when no qualifying run dir exists — e.g., the graph
+    raised before creating its root, or every candidate predates this
+    invocation. The caller writes a degenerate summary in that case
+    (run_id=None, run_root unknown) under ``base_dir`` rather than
+    mis-stamping a sibling.
     """
     runs_dir = base_dir / "artifacts" / "runs"
     if not runs_dir.is_dir():
         return None
-    candidates = [p for p in runs_dir.iterdir() if p.is_dir()]
+
+    def _mtime_or_none(p: Path) -> float | None:
+        # A sibling run dir can vanish mid-scan (e.g. a concurrent --cleanup
+        # prunes it). stat() would then raise FileNotFoundError and suppress
+        # run.json entirely. Treat a vanished candidate as absent (None) and
+        # skip it rather than crash the summary writer.
+        try:
+            return p.stat().st_mtime
+        except OSError:
+            return None
+
+    candidates: list[tuple[Path, float]] = []
+    for p in runs_dir.iterdir():
+        if not p.is_dir():
+            continue
+        if p.name in exclude_names:
+            # Pre-existed at invocation start — belongs to a prior run.
+            continue
+        mtime = _mtime_or_none(p)
+        if mtime is None:
+            continue
+        candidates.append((p, mtime))
+    if not_before is not None:
+        # A small tolerance absorbs coarse filesystem mtime granularity
+        # (some filesystems round to whole seconds) so the *current*
+        # run's own freshly-created root is never wrongly rejected.
+        cutoff = not_before - 1.0
+        candidates = [(p, m) for p, m in candidates if m >= cutoff]
     if not candidates:
         return None
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+    return max(candidates, key=lambda pm: pm[1])[0]
 
 
 def _read_failure_record(run_root: Path) -> dict[str, Any] | None:
@@ -130,12 +195,25 @@ def _read_failure_record(run_root: Path) -> dict[str, Any] | None:
     return record
 
 
+# The canonical per-step action-log files seeded by the released graph. The
+# step-count recovery reads ONLY these — not a ``step-*.jsonl`` wildcard — so a
+# user step named e.g. ``step-foo`` (its guard logs land in step-foo.jsonl via
+# the underscore->hyphen mission-key fallback) can never contaminate the count.
+# Owning the namespace explicitly removes the accidental safety the wildcard
+# relied on (that guard-log records happen to omit ``step_idx`` today).
+_CANONICAL_STEP_LOGS: tuple[str, ...] = (
+    "step-observed.jsonl",
+    "step-dispatched.jsonl",
+    "step-captured.jsonl",
+)
+
+
 def _step_count_from_recipe(*, run_root: Path | None) -> int:
     """Best-effort step count recovered from the action-log artifacts.
 
     We could thread the recipe step count down from ``_run`` instead,
     but that ties the summary writer to the graph internals. Counting
-    distinct ``step_idx`` values across ``step-*.jsonl`` files is
+    distinct ``step_idx`` values across the canonical per-step files is
     cheap and works equally well for success and failure paths.
     """
     if run_root is None:
@@ -144,7 +222,10 @@ def _step_count_from_recipe(*, run_root: Path | None) -> int:
     if not action_log.is_dir():
         return 0
     step_idxs: set[int] = set()
-    for jsonl in action_log.glob("step-*.jsonl"):
+    for name in _CANONICAL_STEP_LOGS:
+        jsonl = action_log / name
+        if not jsonl.is_file():
+            continue
         try:
             for line in jsonl.read_text(encoding="utf-8").splitlines():
                 if not line.strip():
@@ -207,6 +288,16 @@ class RunSummaryWriter:
         self._base_dir = base_dir
         self._started_at_iso = datetime.now(tz=UTC).isoformat()
         self._started_at_mono = time.monotonic()
+        # Wall-clock start, used to reject stale prior-run dirs during
+        # post-hoc run-root discovery (see _find_latest_run_root).
+        # monotonic() can't be compared to a file mtime; time.time() can.
+        self._started_at_wall = time.time()
+        # Names of run roots that already exist at invocation start. The
+        # primary gate against attributing a prior run's root to this
+        # invocation (an early exit that creates no root of its own must
+        # write a degenerate run.json, NOT overwrite a sibling). Snapshotted
+        # here because the lifecycle constructs the writer before _run runs.
+        self._preexisting_run_roots = _snapshot_run_root_names(base_dir)
         # Optional step count override that the dry-run path can
         # stash during ``_run`` execution. ``flush`` reads this if
         # no explicit ``step_count_override`` argument is passed.
@@ -250,7 +341,11 @@ class RunSummaryWriter:
         # paths will not pass it — the writer resolves it from
         # base_dir as a post-hoc lookup.
         if run_root is None:
-            run_root = _find_latest_run_root(self._base_dir)
+            run_root = _find_latest_run_root(
+                self._base_dir,
+                not_before=self._started_at_wall,
+                exclude_names=self._preexisting_run_roots,
+            )
 
         ended_iso = datetime.now(tz=UTC).isoformat()
         elapsed = time.monotonic() - self._started_at_mono

@@ -152,12 +152,28 @@ class PyAutoGUIAdapter:
     def _action_log_path(self, key: str) -> Path:
         return self._log.action_log_path(key)
 
-    def _screenshot_path(self, key: str) -> Path:
-        path = self._run_root / "artifacts" / "screenshot" / f"{key}.png"
+    def _screenshot_path(self, key: str, *, step_idx: int | None = None) -> Path:
+        """Resolve the on-disk screenshot path for an evidence *key*.
+
+        For per-step missions (``step_observe`` / ``step_dispatch`` /
+        ``step_capture``) the same evidence key recurs on every step
+        iteration, so the filename is prefixed with the zero-padded
+        ``step_idx`` to keep each step's frame distinct on disk. Without
+        the prefix every step would overwrite the previous step's PNG,
+        leaving only the final step's frame — an auditor reading per-step
+        screenshot evidence would get the wrong frame for every earlier
+        step. The failure path already keys by ``step_idx`` (see
+        ``_capture_failure_evidence``); this restores the same per-step
+        identity on the success path. The logical evidence ref
+        (``evidence://screenshot/<key>``) is unchanged — only the on-disk
+        filename gains the prefix.
+        """
+        filename = f"{step_idx:02d}-{key}.png" if step_idx is not None else f"{key}.png"
+        path = self._run_root / "artifacts" / "screenshot" / filename
         path.parent.mkdir(parents=True, exist_ok=True)
         return path
 
-    def _capture_screenshot(self, key: str) -> None:
+    def _capture_screenshot(self, key: str, *, step_idx: int | None = None) -> None:
         """Capture a screenshot or raise a typed error.
 
         macOS screencapture with denied Screen Recording permission yields a
@@ -176,8 +192,19 @@ class PyAutoGUIAdapter:
             raise ScreenCaptureUnavailable(
                 f"pyautogui.screenshot failed: {exc!r}"
             ) from exc
-        path = self._screenshot_path(key)
-        screenshot.save(str(path))
+        path = self._screenshot_path(key, step_idx=step_idx)
+        try:
+            screenshot.save(str(path))
+        except Exception as exc:
+            # The capture succeeded but writing it to disk failed (ENOSPC,
+            # read-only artifacts dir, PIL encode error). Route it through the
+            # SAME typed channel as a capture failure so the per-step
+            # failure-evidence net catches it and run.json gets a populated
+            # failure block instead of failure=null — otherwise a successful
+            # click whose post-click save fails becomes an unattributed crash.
+            raise ScreenCaptureUnavailable(
+                f"screenshot save to {path} failed: {exc!r}"
+            ) from exc
 
     def _validate_bounds(self, x: int, y: int) -> None:
         size = pyautogui.size()
@@ -217,7 +244,9 @@ class PyAutoGUIAdapter:
                 "— likely Accessibility permission missing"
             )
 
-    def _gather_evidence(self, mission: MissionName) -> tuple[str, ...]:
+    def _gather_evidence(
+        self, mission: MissionName, *, step_idx: int | None = None
+    ) -> tuple[str, ...]:
         mission_refs = _FALLBACK_REFS.get(mission)
         if mission_refs is None:
             action_key = mission.replace("_", "-")
@@ -228,7 +257,10 @@ class PyAutoGUIAdapter:
             if kind == "action-log":
                 self._log.write_action_log(key=key, mission_name=mission)
             elif kind == "screenshot":
-                self._capture_screenshot(key)
+                # step_idx is threaded only for per-step missions; per-run
+                # missions (attach/prepare/run_completion) run once and pass
+                # None, keeping their flat <key>.png filename.
+                self._capture_screenshot(key, step_idx=step_idx)
         return mission_refs
 
     async def preflight(self) -> None:
@@ -372,6 +404,7 @@ class PyAutoGUIAdapter:
         interval: float = 0.1,
         confidence: float = 0.9,
         region: tuple[int, int, int, int] | None = None,
+        role: str = "image",
     ) -> tuple[int, int]:
         """Poll ``locateCenterOnScreen`` until the template appears or timeout elapses.
 
@@ -396,7 +429,7 @@ class PyAutoGUIAdapter:
                 return (int(located.x), int(located.y))
             if time.monotonic() >= deadline:
                 msg = (
-                    f"post-click signal '{path}' not found within "
+                    f"{role} '{path}' not found within "
                     f"{timeout:.2f}s at confidence>={confidence}"
                 )
                 if last_exc is not None:
@@ -424,12 +457,24 @@ class PyAutoGUIAdapter:
                 "post-click screenshot returned unexpected type: "
                 f"expected PIL.Image, got {type(post)!r}"
             )
-        result = PageTransitionVerifier().verify_changed(
-            baseline=baseline,
-            post=post,
-            threshold=threshold,
-            region=region,
-        )
+        try:
+            result = PageTransitionVerifier().verify_changed(
+                baseline=baseline,
+                post=post,
+                threshold=threshold,
+                region=region,
+            )
+        except ValueError as exc:
+            # An entirely-off-screen transition_region leaves an empty crop
+            # (see PageTransitionVerifier.verify_changed). Surface it as a
+            # typed dispatch failure with the real cause named, instead of the
+            # generic "below threshold" message — the region is the bug, not a
+            # missing page change. Still PageTransitionNotDetected so the
+            # failure-evidence path fires and the phase tag stays 'post_click'.
+            raise PageTransitionNotDetected(
+                f"transition verification for mission '{mission}' could not "
+                f"run: {exc}"
+            ) from exc
         self._write_transition_log(
             mission=mission,
             changed=result.changed,
@@ -507,7 +552,42 @@ class PyAutoGUIAdapter:
         if mission == "step_dispatch":
             await self._execute_step_dispatch(payload)
 
-        evidence_refs = self._gather_evidence(mission)
+        # Per-step missions carry step_idx in the payload; thread it so each
+        # step's success-path screenshot is keyed distinctly on disk instead
+        # of overwriting the previous step's frame. Per-run missions have no
+        # step_idx and keep the flat filename.
+        step_idx_obj = payload.get("step_idx")
+        step_idx = step_idx_obj if isinstance(step_idx_obj, int) else None
+        # A screenshot/evidence-gather failure on a non-dispatch mission must
+        # still write a failure.jsonl record — otherwise run.json reports
+        # status=failure with failure=null and no attribution. (step_dispatch
+        # captures its own failures inside _execute_step_dispatch.) Per-step
+        # missions (observe pre-click, capture post-click) attribute to the
+        # gather node + phase; per-run missions (attach_session / prepare_
+        # session / run_completion, step_idx=None) attribute to the mission with
+        # step_idx=-1 so even a setup/teardown screenshot failure is captured.
+        try:
+            evidence_refs = self._gather_evidence(mission, step_idx=step_idx)
+        except ScreenCaptureUnavailable as exc:
+            if step_idx is not None:
+                step_obj = payload.get("step")
+                step_name = step_obj.name if isinstance(step_obj, Step) else ""
+                gather_phase: PhaseName | None = {
+                    "step_observe": _PHASE_PRE_CLICK,
+                    "step_capture": _PHASE_POST_CLICK,
+                }.get(mission)
+                self._capture_failure_evidence(
+                    step_idx=step_idx,
+                    step_name=step_name,
+                    error=exc,
+                    mission=mission,
+                    phase=gather_phase,
+                )
+            else:
+                self._capture_failure_evidence(
+                    step_idx=-1, step_name="", error=exc, mission=mission
+                )
+            raise
         return ExecutionResult(
             mission_name=mission,
             evidence_refs=evidence_refs,
@@ -569,6 +649,7 @@ class PyAutoGUIAdapter:
             PageTransitionNotDetected,
             ImageWaitTimeout,
             ScreenCaptureUnavailable,
+            pyautogui.FailSafeException,
         ) as exc:
             # ScreenCaptureUnavailable is included so a capture failure during
             # a verify_transition step still writes a failure.jsonl record
@@ -579,6 +660,15 @@ class PyAutoGUIAdapter:
             # contract. Permission errors are intentionally NOT caught here:
             # they must reach main()'s exit-2 handler, not be recorded as a
             # per-step dispatch failure.
+            #
+            # FailSafeException is the FAILSAFE=True emergency abort (user
+            # slams the cursor into a screen corner). It is NOT an AppError,
+            # so without this branch it would escape the failure-evidence net
+            # and produce run.json with failure=null — indistinguishable from
+            # an arbitrary crash. Capturing it here records the step/phase and
+            # error_class=FailSafeException before re-raising unchanged (still
+            # exit 1); the caller can now see the run aborted at a specific
+            # step rather than vanishing without attribution.
             self._capture_failure_evidence(
                 step_idx=step_idx, step_name=step.name, error=exc
             )
@@ -689,6 +779,8 @@ class PyAutoGUIAdapter:
         step_idx: int,
         step_name: str,
         error: Exception,
+        mission: str = "step_dispatch",
+        phase: PhaseName | None = None,
     ) -> None:
         """Write a failure screenshot + action-log record before re-raising.
 
@@ -697,6 +789,14 @@ class PyAutoGUIAdapter:
         one that matters for the caller. The record path follows the
         convention ``runs/<id>/artifacts/failure/<idx>-<step>-<error>.png``
         and the action-log file is ``runs/<id>/artifacts/action-log/failure.jsonl``.
+
+        ``mission`` names the node that failed so an evidence-gather failure in
+        ``step_observe`` / ``step_capture`` self-describes (``step-observe-
+        failed`` / ``step-capture-failed``) instead of masquerading as a
+        dispatch failure. ``phase`` overrides the read-from-exception phase for
+        those non-dispatch nodes (whose exceptions are never phase-tagged by the
+        dispatch guards); when ``None`` the phase is read from the exception
+        (dispatch path, tagged) and defaults to ``dispatch``.
         """
         error_class = type(error).__name__
         # Sanitize fragments so the filename is portable.
@@ -726,18 +826,20 @@ class PyAutoGUIAdapter:
             / "failure.jsonl"
         )
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        # Phase tag attached by ``_dispatch_with_step`` via
-        # ``step_guards.tag_phase``. Default ``"dispatch"`` covers
-        # legacy / pre-step-guards paths so the field is always
-        # present and callers don't need a presence check.
-        phase = read_phase(error)
+        # Phase: dispatch tags the exception via ``step_guards.tag_phase``
+        # (default ``"dispatch"``). observe/capture nodes never reach those
+        # guards, so the caller passes an explicit ``phase`` for them.
+        resolved_phase = phase if phase is not None else read_phase(error)
+        # Event self-describes the failing node: step_dispatch -> step-dispatch-
+        # failed, step_observe -> step-observe-failed, etc.
+        event = f"{mission.replace('_', '-')}-failed"
         entry: dict[str, object] = {
             "ts": datetime.now(tz=UTC).isoformat(),
-            "mission_name": "step_dispatch",
-            "event": "step-dispatch-failed",
+            "mission_name": mission,
+            "event": event,
             "step_idx": step_idx,
             "step_name": step_name,
-            "phase": phase,
+            "phase": resolved_phase,
             "error_class": error_class,
             "error_message": str(error),
             "screenshot": str(png_path) if png_path.exists() else None,

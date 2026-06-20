@@ -23,11 +23,14 @@ from coord_smith.reporting.run_summary import (
 
 def test_run_summary_writes_success_envelope(tmp_path: Path) -> None:
     """A success flush writes run.json under the latest run root."""
-    # Create a fake run root so the writer can locate it.
+    # The writer snapshots preexisting run roots at construction (invocation
+    # start) and attributes only a root created AFTER that. Construct it
+    # BEFORE this run's root — mirroring production order, where
+    # RunSummaryLifecycle builds the writer before _run creates the root.
+    writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000000-test"
     run_root.mkdir(parents=True)
 
-    writer = RunSummaryWriter(base_dir=tmp_path)
     path = writer.flush(status="success", exit_code=0)
 
     assert path == run_root / SUMMARY_FILENAME
@@ -50,6 +53,7 @@ def test_run_summary_writes_failure_envelope_with_failure_record(
 ) -> None:
     """When status=failure, the writer reads failure.jsonl and
     surfaces a compact failure block in run.json."""
+    writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000001-fail"
     action_log = run_root / "artifacts" / "action-log"
     action_log.mkdir(parents=True)
@@ -69,7 +73,6 @@ def test_run_summary_writes_failure_envelope_with_failure_record(
         json.dumps(failure_record) + "\n", encoding="utf-8"
     )
 
-    writer = RunSummaryWriter(base_dir=tmp_path)
     path = writer.flush(status="failure", exit_code=1)
 
     record = json.loads(path.read_text(encoding="utf-8"))
@@ -103,10 +106,10 @@ def test_run_summary_writes_under_base_dir_when_no_run_root(
 
 def test_run_summary_atomic_write_no_partial_file(tmp_path: Path) -> None:
     """A successful flush leaves no .tmp files behind."""
+    writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000002-atomic"
     run_root.mkdir(parents=True)
 
-    writer = RunSummaryWriter(base_dir=tmp_path)
     writer.flush(status="success", exit_code=0)
 
     leftover_tmps = list(run_root.glob(".run.json.*.tmp"))
@@ -116,10 +119,10 @@ def test_run_summary_atomic_write_no_partial_file(tmp_path: Path) -> None:
 def test_run_summary_step_count_override_wins(tmp_path: Path) -> None:
     """flush(step_count_override=N) wins over empirical recovery — used
     by dry-run where no run root exists yet."""
+    writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000004-dry"
     run_root.mkdir(parents=True)
 
-    writer = RunSummaryWriter(base_dir=tmp_path)
     writer.flush(status="success", exit_code=0, step_count_override=7)
     record = json.loads(
         (run_root / SUMMARY_FILENAME).read_text(encoding="utf-8")
@@ -133,10 +136,10 @@ def test_run_summary_set_pending_step_count_persists_to_flush(
     """set_pending_step_count is the stash channel used by the CLI
     dry-run path — flush() reads it when no explicit override is
     passed."""
+    writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000005-pending"
     run_root.mkdir(parents=True)
 
-    writer = RunSummaryWriter(base_dir=tmp_path)
     writer.set_pending_step_count(3)
     writer.flush(status="success", exit_code=0)
     record = json.loads(
@@ -148,6 +151,7 @@ def test_run_summary_set_pending_step_count_persists_to_flush(
 def test_run_summary_counts_step_idxs_from_action_log(tmp_path: Path) -> None:
     """step_count is recovered from distinct step_idx values in
     step-*.jsonl files (no recipe coupling required)."""
+    writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000003-count"
     action_log = run_root / "artifacts" / "action-log"
     action_log.mkdir(parents=True)
@@ -158,7 +162,6 @@ def test_run_summary_counts_step_idxs_from_action_log(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    writer = RunSummaryWriter(base_dir=tmp_path)
     writer.flush(status="success", exit_code=0)
     record = json.loads(
         (run_root / SUMMARY_FILENAME).read_text(encoding="utf-8")
@@ -177,6 +180,7 @@ def test_run_summary_logs_warning_on_malformed_failure_jsonl(
     tampering)."""
     import logging
 
+    writer = RunSummaryWriter(base_dir=tmp_path)
     run_root = tmp_path / "artifacts" / "runs" / "20260518-000099-malformed"
     action_log = run_root / "artifacts" / "action-log"
     action_log.mkdir(parents=True)
@@ -184,8 +188,6 @@ def test_run_summary_logs_warning_on_malformed_failure_jsonl(
     (action_log / "failure.jsonl").write_text(
         "this is not json\n", encoding="utf-8"
     )
-
-    writer = RunSummaryWriter(base_dir=tmp_path)
     with caplog.at_level(logging.WARNING, logger="coord_smith.run_summary"):
         writer.flush(status="failure", exit_code=1)
 

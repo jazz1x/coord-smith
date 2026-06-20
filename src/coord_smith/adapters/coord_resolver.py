@@ -41,7 +41,12 @@ from typing import Protocol
 
 import pyautogui
 
-from coord_smith.config.click_recipe import MissionImageClick, Step
+from coord_smith.config.click_recipe import (
+    DEFAULT_IMAGE_CONFIDENCE,
+    DEFAULT_IMAGE_GRAYSCALE,
+    MissionImageClick,
+    Step,
+)
 from coord_smith.models.errors import (
     ConfigError,
     ImageMatchConfidenceLow,
@@ -76,6 +81,16 @@ class _MatchLogger(Protocol):
         confidence: float,
         x: int,
         y: int,
+    ) -> None: ...
+
+    def write_image_fallback(
+        self,
+        *,
+        mission: str,
+        template: str,
+        reason: str,
+        fallback_x: int,
+        fallback_y: int,
     ) -> None: ...
 
 
@@ -151,9 +166,13 @@ def locate_image_for_step(
         )
     target = MissionImageClick(
         image=step.image,
-        confidence=step.confidence if step.confidence is not None else 0.9,
+        confidence=step.confidence
+        if step.confidence is not None
+        else DEFAULT_IMAGE_CONFIDENCE,
         region=step.region,
-        grayscale=step.grayscale if step.grayscale is not None else False,
+        grayscale=step.grayscale
+        if step.grayscale is not None
+        else DEFAULT_IMAGE_GRAYSCALE,
     )
     return locate_image_target(step.name, target, collaborator=collaborator)
 
@@ -257,21 +276,44 @@ def resolve_step_click_coords(
             return image_coords
         coord_coords = coord_or_none(step)
         if coord_coords is not None:
+            # Image primary missed but the coord fallback is available. Record
+            # the swallowed miss so the silent degradation (a permanently
+            # stale template riding the coord fallback) stays observable in
+            # the typed-evidence stream — otherwise the dispatch looks
+            # byte-identical to a clean coord-only step. ``image_error`` is
+            # always populated here: in the dual-target regime ``step.image``
+            # is non-None, so a None match result carries the captured error.
+            if image_error is not None:
+                collaborator._log.write_image_fallback(
+                    mission=step.name,
+                    template=step.image or "",
+                    reason=str(image_error),
+                    fallback_x=coord_coords[0],
+                    fallback_y=coord_coords[1],
+                )
             return coord_coords
         # Both failed — re-raise the captured image error.
         if image_error is not None:
             raise image_error
     else:
-        # ``prefer: coord`` — coord goes first.
+        # ``prefer: coord`` — coord goes first. In the dual-target regime
+        # ``step.coord`` is guaranteed non-None (the single-target guards above
+        # already handled the coord-absent case), so ``coord_or_none`` always
+        # returns here and the image fallback below is unreachable for any
+        # schema-valid Step. The fallback to image is by design unidirectional
+        # (ADR-003: image→coord only, never coord→image — a fixed coord cannot
+        # "fail" a liveness check), so these lines are defensive dead code kept
+        # only for structural symmetry, mirroring the schema-enforced guard at
+        # ``locate_image_for_step``.
         coord_coords = coord_or_none(step)
         if coord_coords is not None:
             return coord_coords
-        image_coords, image_error = locate_image_or_none(
+        image_coords, image_error = locate_image_or_none(  # pragma: no cover
             step, collaborator=collaborator
         )
-        if image_coords is not None:
+        if image_coords is not None:  # pragma: no cover
             return image_coords
-        if image_error is not None:
+        if image_error is not None:  # pragma: no cover
             raise image_error
 
     # Defensive: schema-unreachable — both targets are absent.

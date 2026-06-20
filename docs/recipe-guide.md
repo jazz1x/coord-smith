@@ -48,7 +48,7 @@ the pipeline with no click (useful for smoke-testing the evidence pipeline).
 | `0` | Success — pipeline reached `runCompletion` | Read `run.json` / `artifacts/`, proceed |
 | `1` | Unhandled runtime error (typed dispatch failure OR caught `KeyboardInterrupt`) | Branch on `run.json.status`: `"failure"` → read the `failure` key for diagnosis; `"interrupted"` → safe to retry (no failure block) |
 | `2` | macOS Accessibility or Screen Recording permission denied | Cannot fix via recipe; escalate to operator |
-| `3` | Config error — recipe file missing / schema invalid, **or** a required input (`--session-ref` / `--expected-auth-state` / `--target-page-url` / `--site-identity`) is absent | Fix the recipe or supply the named input, then retry |
+| `3` | Config error. Causes: recipe file missing / schema invalid; a required input (`--session-ref` / `--expected-auth-state` / `--target-page-url` / `--site-identity`) absent; an invalid `--target-window` app name (activation failed); an invalid `--cleanup` bound (`--max-runs` / `--max-age-days` non-integer or negative); or a malformed payload coord override (partial / non-integer `x`/`y`). **Read the `config error: <message>` line on stderr** — it names the exact cause; do not assume a recipe/input fix. Note: a malformed payload override raises mid-dispatch before the failure-evidence net, so `run.json` carries `status=failure`, `exit_code=3`, `failure=null`. | Read the stderr message, fix the named thing, retry |
 | `4` | Host busy — another coord-smith process held the per-host lock | Back off 1–5 s and retry; see `docs/architecture-boundaries.md §Host Exclusivity` |
 
 ---
@@ -144,8 +144,13 @@ Use when the target button moves between runs (responsive layout, scroll).
 `region` restricts the search rectangle for speed and accuracy.
 
 Failure modes:
-- `ImageTemplateNotFound` (exit 1) — template file does not exist.
-- `ImageMatchConfidenceLow` (exit 1) — template on screen but below `confidence`.
+- Missing template file — caught at **recipe load** as a `ConfigError`
+  (**exit 3**) when loaded via `--click-recipe`: every referenced template
+  is existence-checked before any click. (`ImageTemplateNotFound` / exit 1
+  is the runtime form, reachable only when a `Step` is built directly via
+  `model_construct`, bypassing the loader — not the normal CLI path.)
+- `ImageMatchConfidenceLow` (**exit 1**) — template on screen but below
+  `confidence` at click time.
 
 ### C. Hybrid — image primary with coord fallback
 
@@ -277,10 +282,13 @@ binds the wait to the step that needs it.
 | `image` | str (path) | — | yes |
 | `confidence` | float 0–1 | `0.9` | no |
 | `timeout` | float > 0 | `5.0` | no |
-| `interval` | float > 0 | `0.1` | no |
+| `interval` | float > 0 (≤ `timeout`) | `0.1` | no |
+| `region` | `[left, top, width, height]` | `null` | no |
 
 > Image paths are resolved relative to the recipe file's directory.
-> Absolute paths are accepted unchanged.
+> Absolute paths are accepted unchanged. `region` scopes the post-click
+> poll to a rectangle (e.g. the toast area), mirroring `wait_for.region`;
+> omit it to poll the full screen.
 
 ### Legacy `MissionClick` / `MissionImageClick` (deprecated)
 
@@ -319,6 +327,25 @@ carry `step_idx` and `step_name`:
 {"ts": "2026-05-02T11:00:00+00:00", "mission_name": "step_dispatch", "event": "step-dispatched", "step_idx": 0, "step_name": "open-buy"}
 ```
 
+#### Success-path record fields
+
+Beyond the base keys above, a per-step record carries extra keys describing
+what the guard/resolver did. A caller (e.g. OpenClaw) can read these to audit a
+*successful* run — most importantly to detect a silently-degraded template:
+
+| Event source | Extra keys | Meaning |
+|--------------|-----------|---------|
+| image match | `image_template`, `match_confidence`, `match_x`, `match_y` | template matched at these coords/confidence |
+| **image fallback** | `image_fallback_used: true`, `image_fallback_template`, `image_fallback_reason`, `image_fallback_x`, `image_fallback_y` | a `prefer: image` step's template MISSED and the step rode its `coord` fallback. **Watch for this** — it means the template is stale even though the click "succeeded". |
+| `wait_for` hit | `wait_for_template`, `wait_for_confidence`, `wait_for_elapsed_seconds`, `wait_for_x`, `wait_for_y` | pre-click anchor appeared |
+| `post_click_signal` hit | `post_click_signal_template`, `post_click_signal_confidence`, `post_click_signal_elapsed_seconds`, `post_click_signal_x`, `post_click_signal_y` | post-click signal appeared |
+| `verify_transition` | `transition_changed`, `transition_change_ratio`, `transition_threshold`, `transition_bbox` | page-change check result |
+
+> **`transition_bbox` is `[left, top, right, bottom]`** (PIL corner-pair form),
+> NOT the `[left, top, width, height]` convention every *input* region uses
+> (`region`, `transition_region`). To get the changed-area extent: `width =
+> right - left`, `height = bottom - top`. It is `null` when nothing changed.
+
 The `release-ceiling-stop.jsonl` file is the authoritative proof that the run
 reached `runCompletion`. If it is absent after exit 0, the run was incomplete.
 
@@ -354,13 +381,21 @@ artifacts/
 }
 ```
 
+`mission_name` / `event` name the node that failed: a click-dispatch failure is
+`step_dispatch` / `step-dispatch-failed` (`phase: dispatch`), while a
+screenshot/evidence-gather failure during pre-click observation or post-click
+capture self-describes as `step_observe` / `step-observe-failed`
+(`phase: pre_click`) or `step_capture` / `step-capture-failed`
+(`phase: post_click`) — so a gather failure is never mislabeled as a dispatch
+that never happened. `step_idx` / `step_name` localize it either way.
+
 `phase` is one of:
 
 | Value | Origin |
 |-------|--------|
-| `pre_click` | Step's `wait_for` guard timed out or template missing |
+| `pre_click` | Step's `wait_for` guard timed out / template missing, or pre-click observation could not capture the screen |
 | `dispatch` | Coord resolution, click execution, baseline screenshot |
-| `post_click` | `verify_transition` failed or `post_click_signal` timed out |
+| `post_click` | `verify_transition` failed, `post_click_signal` timed out, or post-click capture could not capture the screen |
 
 The same `error_class` can originate from multiple phases (e.g.
 `ImageWaitTimeout` from `wait_for` versus `post_click_signal`); `phase`
@@ -387,11 +422,29 @@ Every coord-smith **dispatch** invocation writes exactly one
 read it **first** to determine outcome instead of grepping
 individual JSONL files.
 
-**Exception**: ``coord-smith --cleanup`` is an operator-only
-command (not a dispatch run) and does **NOT** write ``run.json`` —
-it only writes a single INFO-level log line summarizing the
-cleanup pass. Automation that polls ``run.json`` after every
-invocation must skip the wait for ``--cleanup`` invocations.
+**Exceptions — pre-run exits do NOT write ``run.json``.** The envelope is
+written only for an actual dispatch *run* (including a run that fails or is
+interrupted). Invocations that exit **before** a run begins write no
+``run.json``:
+
+- ``--help`` / ``--version`` / ``--recipe-schema`` (exit 0) — informational, no run.
+- ``--cleanup`` (operator command) — writes only an INFO-level summary log line.
+- a **malformed CLI** rejected up front — an unknown/typo'd flag exits **3**
+  before the run bracket opens. The ``config error: <message>`` stderr line is
+  the diagnostic. (A *missing required input* or *bad recipe*, by contrast, is
+  detected inside the run bracket and DOES write a ``run.json`` with
+  ``status=failure``, ``exit_code=3``, ``failure=null``.)
+
+Automation that polls ``run.json`` after every invocation must skip the wait for
+these pre-run exits and branch on the exit code + stderr instead.
+
+**``--dry-run`` writes a run.json** (it validates without dispatching). It is
+distinguishable from a real successful run: ``{"status": "success",
+"exit_code": 0, "run_id": null, "failure": null}``. The ``run_id`` is **null**
+(no run root is created), whereas a real success always has a non-null
+``run_id``; branch on ``run_id`` to tell them apart. Note ``step_count`` on a
+dry-run is the **recipe length** (the count that validated), not "steps
+reached" — a dry-run reaches zero steps.
 
 Location:
 
@@ -413,10 +466,18 @@ Schema (`schema_version: 1`):
   "started_at": "2026-05-18T12:30:45+00:00",
   "ended_at":   "2026-05-18T12:30:46+00:00",
   "elapsed_seconds": 1.2345,
-  "step_count": 3,                        // distinct step_idx values seen
+  "step_count": 3,                        // steps REACHED, not recipe total
   "failure": null                         // populated when status=failure
 }
 ```
+
+> **`step_count` is "steps reached", not "recipe total".** It counts the
+> distinct `step_idx` values that produced evidence. On success it equals the
+> recipe length (all steps ran); on a mid-flow failure it is the count of steps
+> reached before the abort (a 3-step recipe failing at step index 1 reports
+> `step_count: 2`). To form "failed at step X of N", take `X` from
+> `failure.step_idx` and `N` from the recipe you submitted — `run.json` does not
+> carry the recipe total as a separate field.
 
 `status` enum (one of):
 

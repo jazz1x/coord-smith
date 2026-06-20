@@ -5,7 +5,7 @@
 ![python](https://img.shields.io/badge/python-3.14-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![version](https://img.shields.io/badge/version-0.1.1-blue)
-![tests](https://img.shields.io/badge/tests-398%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-456%20passing-brightgreen)
 ![runtime](https://img.shields.io/badge/runtime-LLM--free-orange)
 [![CI](https://github.com/jazz1x/coord-smith/actions/workflows/ci.yml/badge.svg)](https://github.com/jazz1x/coord-smith/actions/workflows/ci.yml)
 
@@ -59,16 +59,12 @@ uv --version
 
 ## Install
 
-For end users (PyPI consumers — preferred once a wheel is published):
+> **Status: unreleased WIP — not on PyPI yet.** There are no published wheels or
+> git tags, so `pip install coord-smith` does **not** resolve. Install from a
+> source checkout (below). Once a wheel is published, `uv pip install
+> coord-smith` / `pip install coord-smith` will become the preferred path.
 
-```bash
-# uv (recommended)
-uv pip install coord-smith
-# or stock pip
-pip install coord-smith
-```
-
-For development from a source checkout:
+Install from a source checkout:
 
 ### 1. Bootstrap the project
 
@@ -87,7 +83,7 @@ uv python install 3.14
 ### 2. Verify
 
 ```bash
-uv run pytest -q                # 398 passed, 4 deselected (real-binary)
+uv run pytest -q                # 456 passed, 4 deselected (real-binary)
 uv run ruff check .
 uv run mypy
 ```
@@ -177,7 +173,7 @@ Every invocation writes a single `run.json` summary that the caller can read in 
   "started_at": "...",
   "ended_at": "...",
   "elapsed_seconds": 1.2345,
-  "step_count": 3,
+  "step_count": 3,           // steps REACHED (= recipe length on success; fewer on mid-flow failure)
   "failure": null            // compact failure block when status=failure
 }
 ```
@@ -208,7 +204,7 @@ steps:
     transition_region: [0, 100, 1920, 800]
 ```
 
-Pre-click screenshot → click → post-click screenshot → `PIL.ImageChops.difference` bbox area / region area > threshold ⇒ pass. Below the threshold raises `PageTransitionNotDetected`.
+Pre-click screenshot → click → post-click screenshot → fraction of pixels in the region that actually differ (changed-pixel count / region area) > threshold ⇒ pass. Below the threshold raises `PageTransitionNotDetected`. (The metric is a true changed-pixel count, **not** the bounding-box area of the diff: two tiny scattered changes — a cursor blink plus a focus ring — span a huge bbox while changing almost no pixels, so bbox-area would falsely report a transition. See `adapters/page_transition.py`.)
 
 ### Post-click signal polling (optional, off by default)
 

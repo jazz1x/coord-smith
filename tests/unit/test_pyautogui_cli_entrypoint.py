@@ -11,7 +11,24 @@ from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
 from coord_smith.graph.pyautogui_cli_entrypoint import _run
 
 
-async def test_run_instantiates_pyautogui_adapter(tmp_path: Path) -> None:
+@pytest.fixture
+def required_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Supply the four required released-scope inputs via env.
+
+    Real-run-path plumbing tests below mock the graph but, since hardening
+    cycle 6, the CLI validates the four required inputs BEFORE preflight (so a
+    missing input surfaces as exit 3, not a misdirecting exit 2). These tests
+    must therefore provide valid inputs to reach the code they exercise.
+    """
+    monkeypatch.setenv("COORDSMITH_SESSION_REF", "sess-1")
+    monkeypatch.setenv("COORDSMITH_EXPECTED_AUTH_STATE", "authed")
+    monkeypatch.setenv("COORDSMITH_TARGET_PAGE_URL", "https://example.invalid/page")
+    monkeypatch.setenv("COORDSMITH_SITE_IDENTITY", "example")
+
+
+async def test_run_instantiates_pyautogui_adapter(
+    tmp_path: Path, required_inputs: None
+) -> None:
     with (
         patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
         patch(
@@ -28,7 +45,9 @@ async def test_run_instantiates_pyautogui_adapter(tmp_path: Path) -> None:
     assert isinstance(adapter, PyAutoGUIAdapter)
 
 
-async def test_run_passes_run_root_to_adapter(tmp_path: Path) -> None:
+async def test_run_passes_run_root_to_adapter(
+    tmp_path: Path, required_inputs: None
+) -> None:
     captured: list[PyAutoGUIAdapter] = []
 
     async def _capture(**kwargs: object) -> MagicMock:
@@ -47,7 +66,9 @@ async def test_run_passes_run_root_to_adapter(tmp_path: Path) -> None:
     assert captured[0]._run_root == tmp_path
 
 
-async def test_run_passes_argv_to_graph(tmp_path: Path) -> None:
+async def test_run_passes_argv_to_graph(
+    tmp_path: Path, required_inputs: None
+) -> None:
     with (
         patch.object(PyAutoGUIAdapter, "preflight", new_callable=AsyncMock),
         patch(
@@ -66,7 +87,9 @@ async def test_run_passes_argv_to_graph(tmp_path: Path) -> None:
     assert "s" in call_argv
 
 
-def test_main_returns_exit_code_2_when_preflight_fails(tmp_path: Path) -> None:
+def test_main_returns_exit_code_2_when_preflight_fails(
+    tmp_path: Path, required_inputs: None
+) -> None:
     """Preflight ExecutionTransportError should produce exit 2 with stderr message."""
     from coord_smith.graph.pyautogui_cli_entrypoint import main
     from coord_smith.models.errors import AccessibilityPermissionDenied
@@ -83,7 +106,7 @@ def test_main_returns_exit_code_2_when_preflight_fails(tmp_path: Path) -> None:
 
 
 def test_main_handles_keyboard_interrupt_with_exit_1(
-    caplog: pytest.LogCaptureFixture,
+    caplog: pytest.LogCaptureFixture, required_inputs: None
 ) -> None:
     """Ctrl-C / SIGINT raises KeyboardInterrupt which inherits from
     BaseException, NOT Exception. Without an explicit handler the
@@ -265,15 +288,17 @@ async def test_activate_target_window_uses_asyncio_sleep_not_time_sleep() -> Non
     mock_async_sleep.assert_awaited_once_with(0.5)
 
 
-async def test_activate_target_window_returns_false_on_osascript_failure(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """A non-zero osascript exit must be swallowed and reported via a
-    WARNING-level log record."""
-    import logging
+async def test_activate_target_window_raises_config_error_on_osascript_failure() -> (
+    None
+):
+    """An explicitly-requested activation that fails on macOS must raise
+    ConfigError (→ exit 3) — proceeding would click the wrong frontmost
+    window. (Cycle 4: was previously a warn-and-continue, which silently
+    targeted the wrong window for coord recipes.)"""
     import subprocess
 
     from coord_smith.graph import pyautogui_cli_entrypoint as cli
+    from coord_smith.models.errors import ConfigError
 
     with (
         patch.object(cli.platform, "system", return_value="Darwin"),
@@ -284,18 +309,14 @@ async def test_activate_target_window_returns_false_on_osascript_failure(
                 1, ["osascript"], stderr=b"missing app"
             ),
         ),
-        caplog.at_level(logging.WARNING, logger="coord_smith.cli"),
+        pytest.raises(ConfigError, match="NonExistentApp"),
     ):
-        ok = await cli._activate_target_window(
-            "NonExistentApp", settle_seconds=0.0
-        )
-
-    assert ok is False
-    err = "\n".join(record.getMessage() for record in caplog.records)
-    assert "activation failed" in err
+        await cli._activate_target_window("NonExistentApp", settle_seconds=0.0)
 
 
-async def test_run_activates_target_window_before_preflight(tmp_path: Path) -> None:
+async def test_run_activates_target_window_before_preflight(
+    tmp_path: Path, required_inputs: None
+) -> None:
     """When --target-window is set, activation runs before preflight."""
     from coord_smith.graph import pyautogui_cli_entrypoint as cli
 
@@ -327,7 +348,9 @@ async def test_run_activates_target_window_before_preflight(tmp_path: Path) -> N
     assert call_order[1] == "preflight"
 
 
-async def test_run_skips_activation_when_target_window_unset(tmp_path: Path) -> None:
+async def test_run_skips_activation_when_target_window_unset(
+    tmp_path: Path, required_inputs: None
+) -> None:
     """Without --target-window and without env override, no activation."""
     from coord_smith.graph import pyautogui_cli_entrypoint as cli
 
@@ -487,7 +510,9 @@ def test_strip_verbosity_flags_removes_cli_only_flags() -> None:
     assert "--site-identity" in remaining
 
 
-async def test_run_passes_os_environ_as_env_to_graph(tmp_path: Path) -> None:
+async def test_run_passes_os_environ_as_env_to_graph(
+    tmp_path: Path, required_inputs: None
+) -> None:
     """env=dict(os.environ) must reach run_released_scope_from_argv_env."""
     sentinel = "test-session-ref-value"
 

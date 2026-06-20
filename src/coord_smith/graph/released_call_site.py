@@ -221,8 +221,10 @@ async def execute_step_observe_node(
     Captures the on-screen state immediately before dispatch (folds the
     legacy ``page_ready_observation``/``sync_observation``/
     ``target_actionability_observation`` lifecycle into a single
-    pre-click checkpoint). If the step declares ``wait_for``, the adapter
-    waits for the configured image to appear within timeout.
+    pre-click checkpoint): emits the per-step evidence pair (action-log +
+    screenshot) and returns. The step's guards — ``wait_for`` (pre-click),
+    ``verify_transition`` and ``post_click_signal`` (post-click) — all run
+    inside the ``step_dispatch`` node, NOT here.
     """
 
     require_existing_run_root(run_root=run.run_root)
@@ -299,9 +301,12 @@ async def execute_step_capture_node(
 ) -> ExecutionResult:
     """Post-click capture for one step.
 
-    Captures post-click screenshot, optional transition diff, and optional
-    post-click signal polling. Folds the legacy ``click_completion`` and
-    ``success_observation`` missions into a single capture event.
+    Emits the per-step post-click evidence pair (action-log + screenshot)
+    and returns, folding the legacy ``click_completion`` and
+    ``success_observation`` missions into a single capture event. NOTE: the
+    transition diff (``verify_transition``) and post-click signal poll
+    (``post_click_signal``) execute inside the ``step_dispatch`` node, not
+    here — this node only records the post-click frame.
     """
 
     require_existing_run_root(run_root=run.run_root)

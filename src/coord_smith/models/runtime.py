@@ -19,7 +19,6 @@ from coord_smith.missions.names import ALL_MISSIONS, RELEASED_MISSIONS
 from coord_smith.models.checkpoint import TransitionCheckpointCollection
 from coord_smith.models.transition import TransitionArtifact
 
-RunStatus = Literal["idle", "running", "stopped", "completed", "escalated"]
 ReleaseStatus = Literal["released"]
 
 RELEASED_SCOPE_CEILINGS: tuple[str, ...] = ("runCompletion",)
@@ -123,18 +122,22 @@ def mission_is_within_approved_scope(
 class RuntimeState:
     """Global state slice aligned to the multi-step LangGraph topology.
 
-    ``current_step_idx`` and ``step_results`` are populated by the per-step
-    loop introduced in ``docs/prd-multi-step-flow-recipe.md`` §2.4 D2. They
-    are unused for per-run setup/teardown missions and remain at their
-    defaults for those mission contexts.
+    NOTE: ``current_step_idx`` and ``step_results`` are inert scaffold
+    fields, NOT a live per-step ledger. ``current_step_idx`` is assigned in
+    the step nodes but read nowhere for any decision; ``step_results`` is
+    never appended, so ``len(step_results)`` (read once by
+    ``execute_run_completion_node`` for the run_completion payload) is
+    permanently 0. The caller-facing ``run.json`` step_count is computed via
+    independent channels (``len(recipe.steps)`` at the CLI boundary; empirical
+    ``step_idx`` recovery in ``run_summary``), so this 0 never reaches a
+    caller. These fields (plus ``transition_checkpoints`` /
+    ``record_transition_artifact``) are slated for removal alongside the
+    inert transition-checkpoint subsystem; the run_completion payload itself
+    is at the ``runCompletion`` release ceiling and is not changed here.
     """
 
     run_id: str
-    run_status: RunStatus = "idle"
-    current_phase: str = "Phase 4 — Validation And Layout Definition"
     current_mission: str = ALL_MISSIONS[0]
-    current_anchor: str = "pythonRuntimeBootstrapCreated"
-    highest_reached_stage: str = "none"
     approved_scope_ceiling: str = "runCompletion"
     release_status: ReleaseStatus = "released"
     session_ref: str | None = None
