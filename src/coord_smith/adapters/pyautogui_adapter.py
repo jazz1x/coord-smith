@@ -445,12 +445,24 @@ class PyAutoGUIAdapter:
                 "post-click screenshot returned unexpected type: "
                 f"expected PIL.Image, got {type(post)!r}"
             )
-        result = PageTransitionVerifier().verify_changed(
-            baseline=baseline,
-            post=post,
-            threshold=threshold,
-            region=region,
-        )
+        try:
+            result = PageTransitionVerifier().verify_changed(
+                baseline=baseline,
+                post=post,
+                threshold=threshold,
+                region=region,
+            )
+        except ValueError as exc:
+            # An entirely-off-screen transition_region leaves an empty crop
+            # (see PageTransitionVerifier.verify_changed). Surface it as a
+            # typed dispatch failure with the real cause named, instead of the
+            # generic "below threshold" message — the region is the bug, not a
+            # missing page change. Still PageTransitionNotDetected so the
+            # failure-evidence path fires and the phase tag stays 'post_click'.
+            raise PageTransitionNotDetected(
+                f"transition verification for mission '{mission}' could not "
+                f"run: {exc}"
+            ) from exc
         self._write_transition_log(
             mission=mission,
             changed=result.changed,

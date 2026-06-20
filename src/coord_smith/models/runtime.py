@@ -19,7 +19,6 @@ from coord_smith.missions.names import ALL_MISSIONS, RELEASED_MISSIONS
 from coord_smith.models.checkpoint import TransitionCheckpointCollection
 from coord_smith.models.transition import TransitionArtifact
 
-RunStatus = Literal["idle", "running", "stopped", "completed", "escalated"]
 ReleaseStatus = Literal["released"]
 
 RELEASED_SCOPE_CEILINGS: tuple[str, ...] = ("runCompletion",)
@@ -130,11 +129,7 @@ class RuntimeState:
     """
 
     run_id: str
-    run_status: RunStatus = "idle"
-    current_phase: str = "Phase 4 — Validation And Layout Definition"
     current_mission: str = ALL_MISSIONS[0]
-    current_anchor: str = "pythonRuntimeBootstrapCreated"
-    highest_reached_stage: str = "none"
     approved_scope_ceiling: str = "runCompletion"
     release_status: ReleaseStatus = "released"
     session_ref: str | None = None

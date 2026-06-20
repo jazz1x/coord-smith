@@ -100,14 +100,26 @@ class PageTransitionVerifier:
             clamped_top = max(0, min(top, frame_h))
             clamped_right = max(clamped_left, min(left + width, frame_w))
             clamped_bottom = max(clamped_top, min(top + height, frame_h))
-            box = (clamped_left, clamped_top, clamped_right, clamped_bottom)
-            base_view = baseline.crop(box)
-            post_view = post.crop(box)
-            region_origin = (clamped_left, clamped_top)
             region_size = (
                 clamped_right - clamped_left,
                 clamped_bottom - clamped_top,
             )
+            if region_size[0] <= 0 or region_size[1] <= 0:
+                # The requested region lies ENTIRELY off-screen — the clamp
+                # leaves an empty rectangle. Without this guard the empty crop
+                # diffs to "no change" and the caller gets a spurious
+                # PageTransitionNotDetected on every click, indistinguishable
+                # from a real no-transition. Surface the authoring error
+                # explicitly instead of silently failing the click forever.
+                raise ValueError(
+                    "transition_region "
+                    f"{region!r} is entirely outside the {baseline.size} "
+                    "frame; nothing to compare. Fix the region coordinates."
+                )
+            box = (clamped_left, clamped_top, clamped_right, clamped_bottom)
+            base_view = baseline.crop(box)
+            post_view = post.crop(box)
+            region_origin = (clamped_left, clamped_top)
 
         diff = ImageChops.difference(base_view, post_view)
         bbox_local = diff.getbbox()
