@@ -15,6 +15,7 @@ from coord_smith import __version__
 from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
 from coord_smith.cli_logging import configure_logging, get_logger
 from coord_smith.config.click_recipe import ClickRecipe, load_click_recipe
+from coord_smith.config.released_inputs import resolve_released_scope_inputs
 from coord_smith.graph.host_lock import HostBusyError, acquire_host_lock
 from coord_smith.graph.released_cli_shim import run_released_scope_from_argv_env
 from coord_smith.graph.run_cleanup import (
@@ -179,6 +180,66 @@ def _strip_verbosity_flags(argv: Sequence[str]) -> list[str]:
     return [a for a in argv if a not in consumed]
 
 
+# Every option flag coord-smith accepts, across all parse stages. A token
+# that starts with '-', is not a bare '-'/'--', and is not in this set is a
+# typo (e.g. --click-recipie) — argparse's parse_known_args would silently
+# drop it, making a fat-fingered run look like a successful no-op. Rejecting
+# it up front mirrors the recipe layer's extra="forbid" strictness.
+_KNOWN_FLAGS = frozenset({
+    "-h", "--help",
+    "-V", "--version",
+    "--recipe-schema",
+    "--verbose", "-v", "--quiet", "-q",
+    "--click-recipe",
+    "--dry-run",
+    "--target-window",
+    "--session-ref",
+    "--expected-auth-state",
+    "--target-page-url",
+    "--site-identity",
+    "--cleanup",
+    "--max-runs",
+    "--max-age-days",
+})
+
+
+def _reject_unknown_flags(argv: Sequence[str]) -> None:
+    """Raise ``ConfigError`` (→ exit 3) on the first unrecognized option flag.
+
+    A flag-shaped token (`-x` / `--long`) that is not a known coord-smith flag
+    is almost always a typo. argparse's ``parse_known_args`` would discard it
+    silently — so a misspelled ``--click-recipe`` yields exit 0 with zero
+    clicks, indistinguishable from an intended smoke target. Fail loudly
+    instead, naming the offending flag. ``--max-runs=5`` style ``flag=value``
+    tokens are split on ``=`` so the flag part is checked.
+    """
+    for tok in argv:
+        if not tok.startswith("-") or tok in ("-", "--"):
+            continue  # positional or stdin sentinel, not a flag
+        if _is_negative_number(tok):
+            continue  # a value like '-1' / '-3.5' (e.g. --max-runs -1), not a flag
+        flag = tok.split("=", 1)[0]
+        if flag not in _KNOWN_FLAGS:
+            raise ConfigError(
+                f"unknown flag: {flag!r}. Run 'coord-smith --help' for the "
+                "accepted flags. (A misspelled flag is dropped silently by the "
+                "parser, so coord-smith rejects unknown flags up front.)"
+            )
+
+
+def _is_negative_number(tok: str) -> bool:
+    """True when ``tok`` is a negative numeric literal (e.g. ``-1``, ``-3.5``).
+
+    Such tokens are option *values* (``--max-runs -1``), not flags, so the
+    unknown-flag guard must not reject them.
+    """
+    try:
+        float(tok)
+    except ValueError:
+        return False
+    return True
+
+
 def _resolve_target_window(
     *, cli_value: str | None, env: dict[str, str] | None = None
 ) -> str | None:
@@ -277,9 +338,6 @@ async def _run(
     recipe_path, dry_run, target_window, remaining_argv = _extract_known_flags(
         argv_list
     )
-    target_window = _resolve_target_window(cli_value=target_window)
-    if target_window:
-        await _activate_target_window(target_window)
     recipe = _resolve_click_recipe(cli_path=recipe_path)
     adapter = PyAutoGUIAdapter(run_root=base_dir, click_recipe=recipe)
     # Acquire the per-host advisory lock BEFORE preflight so a busy
@@ -289,8 +347,23 @@ async def _run(
     # the lock — a parallel dry-run probe would still trigger the
     # real preflight cursor movements that race with another run.
     with acquire_host_lock(base_dir=base_dir):
+        # Activate the target window INSIDE the lock: it steals foreground
+        # focus and sleeps ~1s, which would disrupt an already-running
+        # invocation if done before this run owns the host. Only the lock
+        # holder should touch the shared foreground.
+        target_window = _resolve_target_window(cli_value=target_window)
+        if target_window:
+            await _activate_target_window(target_window)
         await adapter.preflight()
         if dry_run:
+            # --dry-run validates the whole invocation, so it must reject a
+            # missing required input the same way a real run does (exit 3),
+            # not just confirm the recipe + preflight. A real run validates
+            # these downstream in the shim; dry-run short-circuits before
+            # that, so validate them here.
+            resolve_released_scope_inputs(
+                argv=remaining_argv, env=dict(os.environ)
+            )
             step_count = len(recipe.steps) if recipe and recipe.steps else 0
             _log.info(
                 "dry-run OK — preflight passed, %d step(s) resolved.",
@@ -459,6 +532,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     # handler. CLI flags > COORDSMITH_LOG_LEVEL > default INFO.
     configure_logging(level=_resolve_log_level(argv_list))
     argv_list = _strip_verbosity_flags(argv_list)
+
+    # Reject typo'd flags before any work — a silently-dropped --click-recipe
+    # would otherwise run as a no-op and report success. Maps to exit 3.
+    try:
+        _reject_unknown_flags(argv_list)
+    except ConfigError as exc:
+        _log.error("config error: %s", exc)
+        return 3
 
     if _wants_cleanup(argv_list):
         # ``--cleanup`` is an operator command, not a click run.

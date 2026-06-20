@@ -144,8 +144,13 @@ Use when the target button moves between runs (responsive layout, scroll).
 `region` restricts the search rectangle for speed and accuracy.
 
 Failure modes:
-- `ImageTemplateNotFound` (exit 1) — template file does not exist.
-- `ImageMatchConfidenceLow` (exit 1) — template on screen but below `confidence`.
+- Missing template file — caught at **recipe load** as a `ConfigError`
+  (**exit 3**) when loaded via `--click-recipe`: every referenced template
+  is existence-checked before any click. (`ImageTemplateNotFound` / exit 1
+  is the runtime form, reachable only when a `Step` is built directly via
+  `model_construct`, bypassing the loader — not the normal CLI path.)
+- `ImageMatchConfidenceLow` (**exit 1**) — template on screen but below
+  `confidence` at click time.
 
 ### C. Hybrid — image primary with coord fallback
 

@@ -122,7 +122,7 @@ exit_codes:
 Fresh checkouts run, in order:
 
 1. `uv sync --extra dev` — installs runtime + dev deps from `pyproject.toml`.
-2. `uv run pytest -q` — expected: 398 passing, 4 deselected.
+2. `uv run pytest -q` — expected: 415 passing, 4 deselected.
 
 If pytest collection fails with `ModuleNotFoundError: PIL|pyautogui`, step 1
 did not complete.

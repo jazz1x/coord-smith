@@ -393,6 +393,7 @@ class PyAutoGUIAdapter:
         interval: float = 0.1,
         confidence: float = 0.9,
         region: tuple[int, int, int, int] | None = None,
+        role: str = "image",
     ) -> tuple[int, int]:
         """Poll ``locateCenterOnScreen`` until the template appears or timeout elapses.
 
@@ -417,7 +418,7 @@ class PyAutoGUIAdapter:
                 return (int(located.x), int(located.y))
             if time.monotonic() >= deadline:
                 msg = (
-                    f"post-click signal '{path}' not found within "
+                    f"{role} '{path}' not found within "
                     f"{timeout:.2f}s at confidence>={confidence}"
                 )
                 if last_exc is not None:
@@ -546,7 +547,24 @@ class PyAutoGUIAdapter:
         # step_idx and keep the flat filename.
         step_idx_obj = payload.get("step_idx")
         step_idx = step_idx_obj if isinstance(step_idx_obj, int) else None
-        evidence_refs = self._gather_evidence(mission, step_idx=step_idx)
+        if step_idx is not None:
+            # For per-step missions (observe / dispatch / capture) a screenshot
+            # failure during evidence gather must still write a failure.jsonl
+            # record — otherwise run.json reports status=failure with
+            # failure=null and no step/phase attribution. Dispatch already
+            # captures its own failures inside _execute_step_dispatch; this
+            # covers the observe/capture evidence-gather path symmetrically.
+            try:
+                evidence_refs = self._gather_evidence(mission, step_idx=step_idx)
+            except ScreenCaptureUnavailable as exc:
+                step_obj = payload.get("step")
+                step_name = step_obj.name if isinstance(step_obj, Step) else ""
+                self._capture_failure_evidence(
+                    step_idx=step_idx, step_name=step_name, error=exc
+                )
+                raise
+        else:
+            evidence_refs = self._gather_evidence(mission, step_idx=step_idx)
         return ExecutionResult(
             mission_name=mission,
             evidence_refs=evidence_refs,
@@ -608,6 +626,7 @@ class PyAutoGUIAdapter:
             PageTransitionNotDetected,
             ImageWaitTimeout,
             ScreenCaptureUnavailable,
+            pyautogui.FailSafeException,
         ) as exc:
             # ScreenCaptureUnavailable is included so a capture failure during
             # a verify_transition step still writes a failure.jsonl record
@@ -618,6 +637,15 @@ class PyAutoGUIAdapter:
             # contract. Permission errors are intentionally NOT caught here:
             # they must reach main()'s exit-2 handler, not be recorded as a
             # per-step dispatch failure.
+            #
+            # FailSafeException is the FAILSAFE=True emergency abort (user
+            # slams the cursor into a screen corner). It is NOT an AppError,
+            # so without this branch it would escape the failure-evidence net
+            # and produce run.json with failure=null — indistinguishable from
+            # an arbitrary crash. Capturing it here records the step/phase and
+            # error_class=FailSafeException before re-raising unchanged (still
+            # exit 1); the caller can now see the run aborted at a specific
+            # step rather than vanishing without attribution.
             self._capture_failure_evidence(
                 step_idx=step_idx, step_name=step.name, error=exc
             )

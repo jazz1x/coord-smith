@@ -123,6 +123,7 @@ class StepGuardCollaborator(Protocol):
         interval: float,
         confidence: float,
         region: tuple[int, int, int, int] | None = None,
+        role: str = "image",
     ) -> tuple[int, int]: ...
 
     def _write_wait_for_log(
@@ -182,6 +183,7 @@ async def run_pre_click_wait_for(
         interval=wait_for.interval,
         confidence=wait_for.confidence,
         region=wait_for.region,
+        role="pre-click wait_for anchor",
     )
     elapsed = time.monotonic() - start
     collaborator._write_wait_for_log(
@@ -226,6 +228,7 @@ async def run_post_click_signal(
         interval=signal.interval,
         confidence=signal.confidence,
         region=signal.region,
+        role="post-click signal",
     )
     elapsed = time.monotonic() - start
     collaborator._write_signal_log(
