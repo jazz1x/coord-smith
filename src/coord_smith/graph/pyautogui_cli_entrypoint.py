@@ -435,6 +435,25 @@ def _wants_cleanup(argv: Sequence[str]) -> bool:
     return any(a == "--cleanup" for a in argv)
 
 
+# Cleanup-scoped bounds. They only take effect under --cleanup; on a normal
+# dispatch run the released-input shim drops them silently (parse_known_args),
+# so main() warns when they appear WITHOUT --cleanup — symmetric to
+# _run_cleanup's co-flag warning for the reverse misuse.
+_CLEANUP_ONLY_FLAGS = ("--max-runs", "--max-age-days")
+
+
+def _cleanup_only_flags_present(argv: Sequence[str]) -> list[str]:
+    """Return the cleanup-scoped flag tokens (``--max-runs`` / ``--max-age-days``).
+
+    Splits ``flag=value`` on ``=`` so both ``--max-runs 5`` and ``--max-runs=5``
+    spellings are detected. main() uses this to warn when the bounds are passed
+    WITHOUT ``--cleanup``, where the shim silently drops them — closing the same
+    loud-on-misuse gap that ``_reject_unknown_flags`` and the recipe schema's
+    ``extra="forbid"`` close elsewhere, instead of a confusing no-op.
+    """
+    return [tok for tok in argv if tok.split("=", 1)[0] in _CLEANUP_ONLY_FLAGS]
+
+
 def _extract_cleanup_bounds(
     argv: Sequence[str],
 ) -> tuple[int, int]:
@@ -600,6 +619,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             # releases the lock.
             _log.error("host busy: %s", exc)
             return 4
+
+    # --max-runs / --max-age-days only act under --cleanup (handled above). On
+    # a dispatch run the released-input shim drops them silently via
+    # parse_known_args, so a caller passing them here gets a no-op with no
+    # signal. Warn — mirroring _run_cleanup's co-flag warning for the reverse
+    # misuse — so the inert flag is visible rather than quietly ignored.
+    stray_cleanup_flags = _cleanup_only_flags_present(argv_list)
+    if stray_cleanup_flags:
+        _log.warning(
+            "ignoring %s — --max-runs / --max-age-days only take effect with "
+            "--cleanup; this invocation dispatches clicks and does not prune "
+            "artifacts/runs/",
+            stray_cleanup_flags,
+        )
 
     # base_dir resolves to an absolute path so the per-host advisory
     # lock and the run.json target both refer to the same filesystem
