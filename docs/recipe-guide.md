@@ -39,6 +39,67 @@ variable. Omitting one exits with code `3` (config error) and a message naming
 the flag + env var to set. `--click-recipe` is **optional**: omitting it runs
 the pipeline with no click (useful for smoke-testing the evidence pipeline).
 
+### Inline recipes
+
+When an agent generates a recipe in memory, pass it directly instead of writing
+a file:
+
+```bash
+# JSON inline
+coord-smith \
+  --session-ref        <session-id>        \
+  --expected-auth-state authenticated      \
+  --target-page-url    <url>               \
+  --site-identity      <site-name>         \
+  --recipe-json        '{"version": 1, "steps": [...]}'
+
+# YAML inline
+coord-smith \
+  --session-ref        <session-id>        \
+  --expected-auth-state authenticated      \
+  --target-page-url    <url>               \
+  --site-identity      <site-name>         \
+  --recipe-yaml        'version: 1\nsteps:\n  - name: ...'
+```
+
+Recipe source priority (highest first): `--recipe-json` > `--recipe-yaml` >
+`--click-recipe` > `COORDSMITH_CLICK_RECIPE` env var.
+
+### JSON stdout
+
+Add `--json` to any dispatch invocation to print the final `run.json` to stdout
+after it is written to disk. This lets a calling agent read the outcome in the
+same process without a second file read:
+
+```bash
+coord-smith --recipe-json '{...}' --json ...
+```
+
+### Python API
+
+For agents that prefer to call coord-smith as a library:
+
+```python
+import asyncio
+import coord_smith
+
+async def main() -> None:
+    result = await coord_smith.run_click_recipe(
+        recipe={"version": 1, "steps": [{"name": "click-buy", "coord": {"x": 800, "y": 500}}]},
+        session_ref="session-id",
+        expected_auth_state="authenticated",
+        target_page_url="https://example.com",
+        site_identity="example",
+    )
+    print(result.status, result.exit_code, result.run_json_path)
+
+asyncio.run(main())
+```
+
+A synchronous wrapper is also available: `coord_smith.run_click_recipe_sync(...)`.
+Both functions accept a `Path`, YAML/JSON string, `dict`, or `ClickRecipe` model
+and return a `RunResult` dataclass with the written `run.json` path and summary.
+
 ---
 
 ## Exit Codes
@@ -591,19 +652,19 @@ format ``coord-smith: <LEVEL>: <message>``.
 | [`docs/recipes/datepicker-pattern.yaml`](recipes/datepicker-pattern.yaml) | **Datepicker / grid widget** — wide-context template + region restriction for visually-similar cells |
 | [`tests/fixtures/demo/demo-flow.yaml`](../tests/fixtures/demo/demo-flow.yaml) | **End-to-end tutorial** — four-step recipe against the bundled demo page (see Tutorial below) |
 | [`tests/fixtures/demo/demo-flow-with-guards.yaml`](../tests/fixtures/demo/demo-flow-with-guards.yaml) | **End-to-end tutorial + guards** — same flow with `verify_transition` + `post_click_signal` per step |
-| [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml) | Single-step (legacy `missions:` shape) — fixed pixel coordinate |
-| [`docs/recipes/image-click.yaml`](recipes/image-click.yaml) | Single-step (legacy) — template match + transition check |
-| [`docs/recipes/image-click-with-signal.yaml`](recipes/image-click-with-signal.yaml) | Single-step (legacy) — template match + post-click signal polling |
+| [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml) | Single-step (`steps:` shape) — fixed pixel coordinate |
+| [`docs/recipes/image-click.yaml`](recipes/image-click.yaml) | Single-step (`steps:` shape) — template match + transition check |
+| [`docs/recipes/image-click-with-signal.yaml`](recipes/image-click-with-signal.yaml) | Single-step (`steps:` shape) — template match + post-click signal polling |
 
-> **The `docs/recipes/` image samples are illustrative** — they show recipe
-> *structure*, and their `image:` paths (`docs/recipes/templates/…`) are
-> placeholders that are **not shipped**. Dry-running one as-is exits **3** with
-> `references missing click template …` (the loader existence-checks every
-> template before any click). Supply your own templates at those paths first —
-> or use [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml), which is
+> **The `docs/recipes/` image samples ship placeholder templates** under
+> `docs/recipes/templates/` so that `--dry-run` validates the recipe structure
+> out of the box. The placeholders are simple colored rectangles — they will
+> **not** match a real screen during an actual click. Replace each one with a
+> crop taken from your target browser before running a real dispatch, or use
+> [`docs/recipes/coord-click.yaml`](recipes/coord-click.yaml), which is
 > self-contained (pure coords, no templates). The runnable, end-to-end examples
 > are the `tests/fixtures/demo/*.yaml` recipes below, whose templates ARE
-> bundled.
+> bundled and matched against the bundled demo page.
 
 ---
 

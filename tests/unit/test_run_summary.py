@@ -31,7 +31,7 @@ def test_run_summary_writes_success_envelope(tmp_path: Path) -> None:
     run_root.mkdir(parents=True)
     writer.set_own_run_root(run_root)
 
-    path = writer.flush(status="success", exit_code=0)
+    path, _ = writer.flush(status="success", exit_code=0)
 
     assert path == run_root / SUMMARY_FILENAME
     record = json.loads(path.read_text(encoding="utf-8"))
@@ -74,7 +74,7 @@ def test_run_summary_writes_failure_envelope_with_failure_record(
         json.dumps(failure_record) + "\n", encoding="utf-8"
     )
 
-    path = writer.flush(status="failure", exit_code=1)
+    path, _ = writer.flush(status="failure", exit_code=1)
 
     record = json.loads(path.read_text(encoding="utf-8"))
     assert record["status"] == "failure"
@@ -95,7 +95,7 @@ def test_run_summary_writes_under_base_dir_when_no_run_root(
     error) the summary is written at base_dir/run.json so the
     caller still has a deterministic file to read."""
     writer = RunSummaryWriter(base_dir=tmp_path)
-    path = writer.flush(status="host_busy", exit_code=4)
+    path, _ = writer.flush(status="host_busy", exit_code=4)
 
     assert path == tmp_path / SUMMARY_FILENAME
     record = json.loads(path.read_text(encoding="utf-8"))
@@ -220,7 +220,7 @@ def test_run_summary_writer_does_not_raise_when_target_unwritable(
         side_effect=OSError("disk full"),
     ):
         # Must not raise.
-        path = writer.flush(status="success", exit_code=0)
+        path, _ = writer.flush(status="success", exit_code=0)
 
     err = capsys.readouterr().err
     assert "run-summary write failed" in err

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "coord-smith"
-# Single source of truth: src/coord_smith/__init__.py.__version__.
+# Single source of truth: src/coord_smith/_version.py.__version__.
 # Hatchling reads it via [tool.hatch.version] at build time — see
 # bottom of this file. Bumping the version requires editing ONE
 # file; the wheel + sdist + `coord-smith --version` all stay in lockstep.
@@ -76,9 +76,9 @@ coord-smith = "coord_smith.graph.pyautogui_cli_entrypoint:main"
 [tool.hatch.version]
 # Single source of truth for the package version. Match
 # `dynamic = ["version"]` at the top of [project]. Editing
-# __version__ in src/coord_smith/__init__.py also bumps the
+# __version__ in src/coord_smith/_version.py also bumps the
 # wheel + sdist version.
-path = "src/coord_smith/__init__.py"
+path = "src/coord_smith/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/coord_smith"]

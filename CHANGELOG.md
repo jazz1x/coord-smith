@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security & supply chain
+- **Pipeline hardening** — secret/CVE scanning is enforced in CI and
+  available locally:
+  - `gitleaks` + `trivy` already run in the CI `security` job.
+  - `trivy` is now also a local pre-commit hook (`trivy-fs`), so
+    HIGH/CRITICAL findings can be caught before push. See
+    `CONTRIBUTING.md` for installation notes.
+  - `SECURITY.md` documents the secret/dependency scanning mitigations
+    and updates the current version to `0.1.1`.
 - **Pipeline hardening** — three new scanners wired into pre-commit
   and a CI `security` job:
   - **gitleaks** secret scan (`.gitleaks.toml` extends the upstream
@@ -53,6 +61,25 @@ verified before fixing and pinned by a regression test
   `ConfigError` → exit 3 (was a bare `ValueError` → exit 1,
   indistinguishable from a runtime click failure) with a message
   naming the flag + env var. `docs/recipe-guide.md` corrected.
+
+### Fixed — recipes & docs usability
+- **docs/recipes examples now dry-run out of the box.** Previously,
+  the image-based samples under `docs/recipes/` referenced templates
+  that were not shipped, so `coord-smith --dry-run` exited 3 on a
+  fresh clone. Placeholder PNGs are now bundled under
+  `docs/recipes/templates/` together with a generator script; all
+  samples validate without errors. The placeholders are simple colored
+  rectangles and must be replaced with real screen crops before any
+  actual click run.
+- **Single-step samples migrated to `steps:`.**
+  `coord-click.yaml`, `image-click.yaml`, and
+  `image-click-with-signal.yaml` switched from the legacy `missions:`
+  shape to the canonical `steps:` shape, matching the README quickstart
+  and removing deprecation warnings from the public examples.
+- **Docs sync.** `docs/recipe-guide.md` and `README.ko.md` updated to
+  reflect the new sample state, CI security job, and local trivy hook.
+- **Binary asset handling.** Added `.gitattributes` so PNG/JPEG/GIF
+  files are treated as binary in diffs.
 
 ### Changed — Clean Architecture follow-ups
 

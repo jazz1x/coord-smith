@@ -70,7 +70,7 @@ def test_no_claimed_root_writes_degenerate_not_prior_root(tmp_path: Path) -> Non
     )
 
     writer = RunSummaryWriter(base_dir=tmp_path)  # never set_own_run_root
-    target = writer.flush(status="host_busy", exit_code=4)
+    target, _ = writer.flush(status="host_busy", exit_code=4)
 
     assert target == tmp_path / "run.json"  # degenerate, NOT inside prior
     assert json.loads(prior_summary.read_text(encoding="utf-8"))["status"] == (
@@ -85,7 +85,7 @@ def test_claimed_run_root_is_used(tmp_path: Path) -> None:
     own.mkdir(parents=True)
     writer = RunSummaryWriter(base_dir=tmp_path)
     writer.set_own_run_root(own)
-    target = writer.flush(status="success", exit_code=0)
+    target, _ = writer.flush(status="success", exit_code=0)
     assert target == own / "run.json"
     assert json.loads(target.read_text(encoding="utf-8"))["run_id"] == own.name
 

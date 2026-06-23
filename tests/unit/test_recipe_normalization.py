@@ -152,19 +152,27 @@ def test_empty_recipe_is_valid_no_click_smoke_target() -> None:
         "image-click-with-signal.yaml",
     ],
 )
-def test_existing_fixture_recipes_normalize_to_single_step(
+def test_existing_fixture_recipes_are_single_step(
     fixture_name: str,
 ) -> None:
-    """Each existing docs/recipes/*.yaml normalizes to exactly one Step."""
+    """Each existing docs/recipes/*.yaml parses to exactly one Step.
+
+    These examples were migrated from the legacy ``missions:`` shape to
+    ``steps:``; this test now guards that they remain single-step recipes.
+    """
     fixture = Path("docs/recipes") / fixture_name
     data = yaml.safe_load(fixture.read_text(encoding="utf-8"))
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
         recipe = ClickRecipe.model_validate(data)
+    # New-shape recipes must not emit deprecation warnings.
+    deprecation = [x for x in w if issubclass(x.category, DeprecationWarning)]
+    assert len(deprecation) == 0, (
+        f"{fixture_name} is a steps:-first recipe and must not deprecate"
+    )
     assert recipe.steps is not None
     assert len(recipe.steps) == 1
     step = recipe.steps[0]
-    assert step.name == "click_dispatch"
     # Must declare exactly one of image / coord (recipe authors haven't yet
     # adopted the dual-target multi-step shape).
     has_image = step.image is not None
@@ -178,9 +186,7 @@ def test_coord_recipe_step_has_correct_coord() -> None:
     """coord-click.yaml carries (800, 500)."""
     fixture = Path("docs/recipes/coord-click.yaml")
     data = yaml.safe_load(fixture.read_text(encoding="utf-8"))
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        recipe = ClickRecipe.model_validate(data)
+    recipe = ClickRecipe.model_validate(data)
     step = recipe.steps[0]
     assert step.coord is not None
     assert (step.coord.x, step.coord.y) == (800, 500)
@@ -190,9 +196,7 @@ def test_image_with_signal_recipe_carries_post_click_signal() -> None:
     """image-click-with-signal.yaml propagates post_click_signal into the Step."""
     fixture = Path("docs/recipes/image-click-with-signal.yaml")
     data = yaml.safe_load(fixture.read_text(encoding="utf-8"))
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        recipe = ClickRecipe.model_validate(data)
+    recipe = ClickRecipe.model_validate(data)
     step = recipe.steps[0]
     assert step.post_click_signal is not None
     assert step.post_click_signal.image  # path resolution may not run on raw model_validate

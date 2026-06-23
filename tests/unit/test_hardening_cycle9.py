@@ -18,7 +18,6 @@ import pytest
 
 from coord_smith.config.click_recipe import load_click_recipe
 from coord_smith.graph.released_run_root import generate_run_id
-from coord_smith.models.errors import ConfigError
 from coord_smith.reporting.run_summary import RunSummaryWriter
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -48,7 +47,7 @@ def test_host_busy_does_not_clobber_concurrent_lock_holders_root(
     )
 
     # B times out on the lock -> host_busy flush. B never claimed a root.
-    target_b = writer_b.flush(status="host_busy", exit_code=4)
+    target_b, _ = writer_b.flush(status="host_busy", exit_code=4)
 
     # B writes a degenerate base_dir/run.json, NOT into A's root.
     assert target_b == tmp_path / "run.json"
@@ -107,12 +106,12 @@ def test_coord_sample_recipe_loads() -> None:
         "image-click-with-signal.yaml",
     ],
 )
-def test_image_sample_recipes_report_missing_template(sample: str) -> None:
-    """The image samples are illustrative — their template paths are
-    placeholders. load_click_recipe must surface that precisely (exit-3
-    ConfigError naming the missing template), as recipe-guide documents."""
+def test_image_sample_recipes_load_with_placeholders(sample: str) -> None:
+    """The image samples ship placeholder templates under docs/recipes/templates/
+    so that `--dry-run` validation succeeds out of the box. load_click_recipe must
+    resolve those templates and produce a non-empty step list."""
     path = _REPO_ROOT / "docs" / "recipes" / sample
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        with pytest.raises(ConfigError, match="references missing"):
-            load_click_recipe(path)
+        recipe = load_click_recipe(path)
+    assert recipe.steps

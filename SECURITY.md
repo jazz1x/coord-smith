@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-coord-smith is pre-release software (current version `0.1.0`).
+coord-smith is pre-release software (current version `0.1.1`).
 Only the `main` branch / latest commit receives security fixes.
 
 | Version | Supported |
@@ -35,6 +35,13 @@ an external orchestrator (e.g. OpenClaw). Relevant exposures:
   (`fcntl.flock`) prevents two coord-smith processes from
   racing on the cursor; it is advisory and does not defend
   against an adversarial neighbour bypassing the lock.
+- **Secrets / vulnerable dependencies in source.** Mitigations:
+  - `gitleaks` scans every commit (CI full history + pre-commit
+    staged changes) to catch accidentally committed credentials.
+  - `trivy fs --scanners vuln,secret` scans the repository and
+    lockfile for HIGH/CRITICAL CVEs and secrets on every PR.
+  - Operators should still review recipes before running them and
+    keep the artifact directory permissions restrictive.
 
 ## Reporting a vulnerability
 

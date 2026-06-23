@@ -143,7 +143,16 @@ def test_main_handles_keyboard_interrupt_with_exit_1(
 def test_extract_known_flags_returns_path_dry_run_and_strips(tmp_path: Path) -> None:
     from coord_smith.graph.pyautogui_cli_entrypoint import _extract_known_flags
 
-    recipe_path, dry_run, target_window, remaining = _extract_known_flags(
+    (
+        recipe_path,
+        dry_run,
+        target_window,
+        recipe_json,
+        recipe_yaml,
+        recipe_stdin,
+        emit_json,
+        remaining,
+    ) = _extract_known_flags(
         [
             "--session-ref", "s", "--click-recipe", "/tmp/r.json",
             "--dry-run", "--site-identity", "x",
@@ -152,6 +161,10 @@ def test_extract_known_flags_returns_path_dry_run_and_strips(tmp_path: Path) -> 
     assert recipe_path == Path("/tmp/r.json")
     assert dry_run is True
     assert target_window is None
+    assert recipe_json is None
+    assert recipe_yaml is None
+    assert recipe_stdin is False
+    assert emit_json is False
     assert "--click-recipe" not in remaining
     assert "/tmp/r.json" not in remaining
     assert "--dry-run" not in remaining
@@ -161,12 +174,25 @@ def test_extract_known_flags_returns_path_dry_run_and_strips(tmp_path: Path) -> 
 def test_extract_known_flags_dry_run_defaults_false(tmp_path: Path) -> None:
     from coord_smith.graph.pyautogui_cli_entrypoint import _extract_known_flags
 
-    recipe_path, dry_run, target_window, remaining = _extract_known_flags(
+    (
+        recipe_path,
+        dry_run,
+        target_window,
+        recipe_json,
+        recipe_yaml,
+        recipe_stdin,
+        emit_json,
+        remaining,
+    ) = _extract_known_flags(
         ["--session-ref", "s"]
     )
     assert recipe_path is None
     assert dry_run is False
     assert target_window is None
+    assert recipe_json is None
+    assert recipe_yaml is None
+    assert recipe_stdin is False
+    assert emit_json is False
     assert remaining == ["--session-ref", "s"]
 
 
@@ -174,12 +200,25 @@ def test_extract_known_flags_captures_target_window(tmp_path: Path) -> None:
     """--target-window NAME is stripped from argv and surfaced separately."""
     from coord_smith.graph.pyautogui_cli_entrypoint import _extract_known_flags
 
-    recipe_path, dry_run, target_window, remaining = _extract_known_flags(
+    (
+        recipe_path,
+        dry_run,
+        target_window,
+        recipe_json,
+        recipe_yaml,
+        recipe_stdin,
+        emit_json,
+        remaining,
+    ) = _extract_known_flags(
         ["--session-ref", "s", "--target-window", "Google Chrome"]
     )
     assert recipe_path is None
     assert dry_run is False
     assert target_window == "Google Chrome"
+    assert recipe_json is None
+    assert recipe_yaml is None
+    assert recipe_stdin is False
+    assert emit_json is False
     assert "--target-window" not in remaining
     assert "Google Chrome" not in remaining
     assert "--session-ref" in remaining
@@ -391,15 +430,21 @@ def test_resolve_click_recipe_cli_wins_over_env(tmp_path: Path) -> None:
 
     cli_recipe = tmp_path / "cli.json"
     cli_recipe.write_text(
-        '{"missions": {"click_dispatch": {"x": 1, "y": 2}}}', encoding="utf-8"
+        '{"steps": [{"name": "click_dispatch", "coord": {"x": 1, "y": 2}}]}',
+        encoding="utf-8",
     )
     env_recipe = tmp_path / "env.json"
     env_recipe.write_text(
-        '{"missions": {"click_dispatch": {"x": 99, "y": 99}}}', encoding="utf-8"
+        '{"steps": [{"name": "click_dispatch", "coord": {"x": 99, "y": 99}}]}',
+        encoding="utf-8",
     )
 
     recipe = _resolve_click_recipe(
-        cli_path=cli_recipe, env={"COORDSMITH_CLICK_RECIPE": str(env_recipe)}
+        cli_path=cli_recipe,
+        recipe_json=None,
+        recipe_yaml=None,
+        recipe_stdin=False,
+        env={"COORDSMITH_CLICK_RECIPE": str(env_recipe)},
     )
     assert recipe is not None
     assert recipe.coords_for("click_dispatch") == (1, 2)
@@ -410,11 +455,16 @@ def test_resolve_click_recipe_uses_env_when_no_cli(tmp_path: Path) -> None:
 
     env_recipe = tmp_path / "env.json"
     env_recipe.write_text(
-        '{"missions": {"click_dispatch": {"x": 11, "y": 22}}}', encoding="utf-8"
+        '{"steps": [{"name": "click_dispatch", "coord": {"x": 11, "y": 22}}]}',
+        encoding="utf-8",
     )
 
     recipe = _resolve_click_recipe(
-        cli_path=None, env={"COORDSMITH_CLICK_RECIPE": str(env_recipe)}
+        cli_path=None,
+        recipe_json=None,
+        recipe_yaml=None,
+        recipe_stdin=False,
+        env={"COORDSMITH_CLICK_RECIPE": str(env_recipe)},
     )
     assert recipe is not None
     assert recipe.coords_for("click_dispatch") == (11, 22)
@@ -423,7 +473,16 @@ def test_resolve_click_recipe_uses_env_when_no_cli(tmp_path: Path) -> None:
 def test_resolve_click_recipe_returns_none_when_neither_set() -> None:
     from coord_smith.graph.pyautogui_cli_entrypoint import _resolve_click_recipe
 
-    assert _resolve_click_recipe(cli_path=None, env={}) is None
+    assert (
+        _resolve_click_recipe(
+            cli_path=None,
+            recipe_json=None,
+            recipe_yaml=None,
+            recipe_stdin=False,
+            env={},
+        )
+        is None
+    )
 
 
 def test_main_returns_exit_code_3_on_config_error(tmp_path: Path) -> None:

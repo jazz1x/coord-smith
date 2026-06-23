@@ -89,7 +89,7 @@ def test_early_exit_does_not_overwrite_prior_run_root(tmp_path: Path) -> None:
     # root and must write a degenerate base_dir/run.json. (Cycle 9 replaced the
     # name-snapshot heuristic with this ownership model.)
     writer = RunSummaryWriter(base_dir=tmp_path)
-    target = writer.flush(status="host_busy", exit_code=4)
+    target, _ = writer.flush(status="host_busy", exit_code=4)
 
     # Degenerate write lands under base_dir, NOT inside the prior root.
     assert target == tmp_path / "run.json"
@@ -108,7 +108,7 @@ def test_flush_attributes_claimed_run_root(tmp_path: Path) -> None:
     own.mkdir(parents=True)
     writer.set_own_run_root(own)
 
-    target = writer.flush(status="success", exit_code=0)
+    target, _ = writer.flush(status="success", exit_code=0)
 
     assert target == own / "run.json"
     assert json.loads(target.read_text(encoding="utf-8"))["run_id"] == own.name

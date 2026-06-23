@@ -11,7 +11,10 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from coord_smith import __version__
+import yaml
+from pydantic import ValidationError
+
+from coord_smith._version import __version__
 from coord_smith.adapters.pyautogui_adapter import PyAutoGUIAdapter
 from coord_smith.cli_logging import configure_logging, get_logger
 from coord_smith.config.click_recipe import ClickRecipe, load_click_recipe
@@ -59,6 +62,16 @@ Options:
                         or running the graph (no nodes, no clicks, no
                         screenshots). A no-permission validator; a missing input
                         is exit 3, never exit 2.
+  --recipe-json TEXT    Inline JSON recipe (alternative to --click-recipe).
+                        Useful when an LLM agent generates a recipe in memory
+                        and wants to avoid writing a temporary file.
+  --recipe-yaml TEXT    Inline YAML recipe (alternative to --click-recipe).
+  --recipe-stdin        Read the recipe from stdin as YAML/JSON.
+  --json                After the run completes, print the contents of
+                        run.json to stdout. The run.json file is still
+                        written to disk; this flag duplicates it to stdout
+                        so LLM callers can read the outcome in the same
+                        process without a second file read.
   --recipe-schema       Emit the JSON Schema for ClickRecipe to stdout and
                         exit 0. Useful when an external agent needs the
                         schema to validate or generate a recipe without
@@ -129,14 +142,23 @@ def _wants_version(argv: Sequence[str]) -> bool:
 
 def _extract_known_flags(
     argv: Sequence[str],
-) -> tuple[Path | None, bool, str | None, list[str]]:
+) -> tuple[
+    Path | None,
+    bool,
+    str | None,
+    str | None,
+    str | None,
+    bool,
+    bool,
+    list[str],
+]:
     """Strip CLI-only flags.
 
-    Returns ``(recipe_path, dry_run, target_window, remaining_argv)``. The
-    remaining argv is forwarded to the released-scope shim, which only parses
+    Returns ``(recipe_path, dry_run, target_window, recipe_json,
+    recipe_yaml, recipe_stdin, emit_json, remaining_argv)``. The remaining
+    argv is forwarded to the released-scope shim, which only parses
     session/auth/url/site-identity. Anything we want the shim NOT to see
-    (``--click-recipe``, ``--dry-run``, ``--target-window``) must be peeled
-    off here.
+    must be peeled off here.
 
     Verbosity flags (``--verbose`` / ``--quiet``) and ``--recipe-schema``
     are handled separately in :func:`main` — they bypass ``_run`` and so
@@ -146,17 +168,29 @@ def _extract_known_flags(
     parser.add_argument("--click-recipe", dest="click_recipe", type=Path)
     parser.add_argument("--dry-run", dest="dry_run", action="store_true")
     parser.add_argument("--target-window", dest="target_window", type=str)
+    parser.add_argument("--recipe-json", dest="recipe_json", type=str)
+    parser.add_argument("--recipe-yaml", dest="recipe_yaml", type=str)
+    parser.add_argument("--recipe-stdin", dest="recipe_stdin", action="store_true")
+    parser.add_argument("--json", dest="emit_json", action="store_true")
     namespace, remaining = parser.parse_known_args(list(argv))
     return (
         namespace.click_recipe,
         namespace.dry_run,
         namespace.target_window,
+        namespace.recipe_json,
+        namespace.recipe_yaml,
+        namespace.recipe_stdin,
+        namespace.emit_json,
         remaining,
     )
 
 
 def _wants_recipe_schema(argv: Sequence[str]) -> bool:
     return any(a == "--recipe-schema" for a in argv)
+
+
+def _wants_json(argv: Sequence[str]) -> bool:
+    return any(a == "--json" for a in argv)
 
 
 def _resolve_log_level(argv: Sequence[str]) -> str | None:
@@ -177,16 +211,21 @@ def _resolve_log_level(argv: Sequence[str]) -> str | None:
 
 
 def _strip_verbosity_flags(argv: Sequence[str]) -> list[str]:
-    """Remove ``--verbose`` / ``-v`` / ``--quiet`` / ``-q`` /
-    ``--recipe-schema`` so the released-scope shim does not see
-    them. These flags are handled at the CLI boundary.
+    """Remove CLI-only flags the released-scope shim should not see.
+
+    ``--verbose`` / ``-v`` / ``--quiet`` / ``-q`` are handled by
+    ``configure_logging``; ``--recipe-schema`` emits schema and exits;
+    ``--json`` is handled in ``main`` after the run. These flags are
+    handled at the CLI boundary.
 
     Note: ``--cleanup`` and its bounds (``--max-runs`` / ``--max-age-days``)
     are not stripped here — the cleanup path short-circuits in
     ``main()`` before the shim is reached, so the shim never sees
     them.
     """
-    consumed = {"--verbose", "-v", "--quiet", "-q", "--recipe-schema"}
+    consumed = {
+        "--verbose", "-v", "--quiet", "-q", "--recipe-schema", "--json"
+    }
     return [a for a in argv if a not in consumed]
 
 
@@ -210,6 +249,10 @@ _KNOWN_FLAGS = frozenset({
     "--cleanup",
     "--max-runs",
     "--max-age-days",
+    "--json",
+    "--recipe-json",
+    "--recipe-yaml",
+    "--recipe-stdin",
 })
 
 
@@ -320,18 +363,43 @@ async def _activate_target_window(
 
 
 def _resolve_click_recipe(
-    *, cli_path: Path | None, env: dict[str, str] | None = None
+    *,
+    cli_path: Path | None,
+    recipe_json: str | None,
+    recipe_yaml: str | None,
+    recipe_stdin: bool,
+    env: dict[str, str] | None = None,
 ) -> ClickRecipe | None:
-    """CLI --click-recipe overrides COORDSMITH_CLICK_RECIPE; both optional."""
-    env_map = env if env is not None else dict(os.environ)
-    path: Path | None = cli_path
-    if path is None:
-        env_value = env_map.get(ENV_CLICK_RECIPE)
-        if env_value:
-            path = Path(env_value)
-    if path is None:
-        return None
-    return load_click_recipe(path)
+    """Resolve a recipe from inline JSON/YAML, stdin, file path, or env.
+
+    Priority: ``--recipe-json`` > ``--recipe-yaml`` > ``--recipe-stdin`` >
+    ``--click-recipe`` > ``COORDSMITH_CLICK_RECIPE`` env var.
+    """
+    import json as _json  # local — keep top-level imports lean
+
+    try:
+        if recipe_json is not None:
+            data = _json.loads(recipe_json)
+            return ClickRecipe.model_validate(data)
+        if recipe_yaml is not None:
+            data = yaml.safe_load(recipe_yaml)
+            return ClickRecipe.model_validate(data)
+        if recipe_stdin:
+            stdin_text = sys.stdin.read()
+            data = yaml.safe_load(stdin_text)
+            return ClickRecipe.model_validate(data)
+
+        env_map = env if env is not None else dict(os.environ)
+        path: Path | None = cli_path
+        if path is None:
+            env_value = env_map.get(ENV_CLICK_RECIPE)
+            if env_value:
+                path = Path(env_value)
+        if path is None:
+            return None
+        return load_click_recipe(path)
+    except ValidationError as exc:
+        raise ConfigError(f"invalid recipe: {exc}") from exc
 
 
 async def _run(
@@ -356,10 +424,22 @@ async def _run(
     §Window Ownership for caller responsibilities.
     """
     argv_list = list(argv or [])
-    recipe_path, dry_run, target_window, remaining_argv = _extract_known_flags(
-        argv_list
+    (
+        recipe_path,
+        dry_run,
+        target_window,
+        recipe_json,
+        recipe_yaml,
+        recipe_stdin,
+        _emit_json,
+        remaining_argv,
+    ) = _extract_known_flags(argv_list)
+    recipe = _resolve_click_recipe(
+        cli_path=recipe_path,
+        recipe_json=recipe_json,
+        recipe_yaml=recipe_yaml,
+        recipe_stdin=recipe_stdin,
     )
-    recipe = _resolve_click_recipe(cli_path=recipe_path)
 
     if dry_run:
         # --dry-run is a PURE, no-permission validator: it confirms the recipe
@@ -591,6 +671,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     # first diagnostic line (if any) lands through the configured
     # handler. CLI flags > COORDSMITH_LOG_LEVEL > default INFO.
     configure_logging(level=_resolve_log_level(argv_list))
+
+    # Capture --json before stripping CLI-only flags; _strip_verbosity_flags
+    # removes --json because it is handled after the run in main().
+    emit_json = _wants_json(argv_list)
     argv_list = _strip_verbosity_flags(argv_list)
 
     # Reject typo'd flags before any work — a silently-dropped --click-recipe
@@ -649,6 +733,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     # run.json on exit (regardless of exception). Extracted in
     # B-CA-5 so main() carries one concern (CLI routing) instead
     # of two (CLI routing + reporting lifecycle).
+    exit_code = 1
     with RunSummaryLifecycle(base_dir=base_dir) as summary:
         try:
             exit_code = asyncio.run(
@@ -662,7 +747,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 status="success" if exit_code == 0 else "failure",
                 exit_code=exit_code,
             )
-            return exit_code
         except KeyboardInterrupt:
             # User or supervisor (Ctrl-C, SIGINT) requested stop.
             # ``except Exception`` below does NOT catch
@@ -675,11 +759,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "interrupted by user / supervisor (KeyboardInterrupt)"
             )
             summary.set_outcome(status="interrupted", exit_code=1)
-            return 1
+            exit_code = 1
         except ConfigError as exc:
             _log.error("config error: %s", exc)
             summary.set_outcome(status="failure", exit_code=3)
-            return 3
+            exit_code = 3
         except HostBusyError as exc:
             # Another coord-smith process holds the per-host lock.
             # Exit 4 is documented in --help so callers (e.g.
@@ -687,7 +771,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             # this as a generic runtime error.
             _log.error("host busy: %s", exc)
             summary.set_outcome(status="host_busy", exit_code=4)
-            return 4
+            exit_code = 4
         except (AccessibilityPermissionDenied, ScreenCapturePermissionDenied) as exc:
             # Permission-class transport errors raised by preflight
             # or screen capture. The "grant permission and retry"
@@ -708,11 +792,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "the host terminal app and retry."
             )
             summary.set_outcome(status="failure", exit_code=2)
-            return 2
+            exit_code = 2
         except Exception as exc:  # noqa: BLE001
             _log.error("runtime error (%s): %s", type(exc).__name__, exc)
             summary.set_outcome(status="failure", exit_code=1)
-            return 1
+            exit_code = 1
+
+    if emit_json and summary.last_summary_path is not None:
+        sys.stdout.write(summary.last_summary_path.read_text(encoding="utf-8"))
+    return exit_code
 
 
 if __name__ == "__main__":

@@ -170,6 +170,66 @@ YAML이 정식 포맷이며, `.json` 파일은 backwards compatibility 용으로
 
 실패 시 `run.json` 안의 `failure` 키가 `step_idx`, `step_name`, `phase` (`pre_click` / `dispatch` / `post_click`), `error_class`, screenshot 경로, 그리고 전체 `failure.jsonl` 포인터를 담고 있습니다. (`failure` 는 JSON 필드이지, 별도 `run.json.failure` 파일이 아닙니다.)
 
+## 인라인 레시피 & JSON 출력
+
+파일을 따로 작성하지 않고 인라인으로 레시피를 전달할 수 있습니다. LLM 에이전트가 메모리 내에서 레시피를 생성할 때 유용합니다:
+
+```bash
+# JSON 레시피 인라인
+coord-smith --recipe-json '{"version": 1, "steps": [{"name": "click-buy", "coord": {"x": 800, "y": 500}}]}' \
+      --session-ref my-session \
+      --expected-auth-state authenticated \
+      --target-page-url https://example.com \
+      --site-identity example
+
+# YAML 레시피 인라인
+coord-smith --recipe-yaml 'version: 1\nsteps:\n  - name: click-buy\n    coord: {x: 800, y: 500}' \
+      --session-ref my-session \
+      --expected-auth-state authenticated \
+      --target-page-url https://example.com \
+      --site-identity example
+```
+
+`--json` 을 추가하면 실행 완료 후 `run.json` 의 내용을 stdout에 출력합니다(디스크에도 여전히 기록됨):
+
+```bash
+coord-smith --recipe-json '{...}' --json ...
+```
+
+여러 레시피 소스가 동시에 주어지면 우선순위는 `--recipe-json` > `--recipe-yaml` > `--click-recipe` > `COORDSMITH_CLICK_RECIPE` 환경변수 순입니다.
+
+## Python 에서 호출하기
+
+coord-smith 는 CLI 없이도 프로그래밍 방식으로 호출할 수 있습니다:
+
+```python
+from pathlib import Path
+import coord_smith
+
+result = await coord_smith.run_click_recipe(
+    recipe=Path("./recipe.yaml"),          # Path, str YAML/JSON, dict, 또는 ClickRecipe
+    session_ref="my-session",
+    expected_auth_state="authenticated",
+    target_page_url="https://example.com",
+    site_identity="example",
+    dry_run=False,
+)
+
+print(result.status)          # success | failure | interrupted | host_busy
+print(result.exit_code)       # 0 | 1 | 2 | 3 | 4
+print(result.run_json_path)   # 작성된 run.json 의 Path
+print(result.step_count)
+print(result.failure)
+```
+
+동기 래퍼도 제공됩니다:
+
+```python
+result = coord_smith.run_click_recipe_sync(...)
+```
+
+둘 다 `coord_smith.RunResult` dataclass를 반환합니다. 이 함수는 레시피와 필수 입력값을 검증하고, preflight 를 실행하고, 호스트 락을 획득하고, 그래프를 실행하고, 모든 종료 경로에서 `run.json` 을 작성합니다.
+
 ## Click Recipes
 
 ### 이미지 기반 클릭 (OpenCV 템플릿 매칭)
@@ -219,8 +279,10 @@ steps:
 | Test (기본) | `uv run pytest -q` | `-m real` 자동 제외 |
 | Test (real) | `uv run pytest -m real -q` | macOS Accessibility + Screen Recording 필요 |
 | Pre-commit | `uv run pre-commit run --all-files` | 전수 검사 |
+| Secrets | `gitleaks detect ...` | CI 에서 full-history scan; pre-commit 에서 staged scan |
+| CVE / misconfig | `trivy fs --scanners vuln,secret ...` | CI 에서 HIGH/CRITICAL 차단; 로컬 pre-commit hook (선택) |
 
-GitHub Actions 가 `main` 으로의 push 와 모든 PR 에서 동작합니다 — [`.github/workflows/ci.yml`](.github/workflows/ci.yml) 참고. 워크플로우는 Python 3.14 + xvfb (Ubuntu, `import pyautogui` 가 실제 display 없이도 성공하도록) 를 설치한 뒤 ruff + mypy + pytest 를 돌리고, 별도 pre-commit job 도 함께 실행합니다. 로컬에서는 `uv run pre-commit install` 로 깔리는 pre-commit 훅이 같은 게이트입니다.
+GitHub Actions 가 `main` 으로의 push 와 모든 PR 에서 동작합니다 — [`.github/workflows/ci.yml`](.github/workflows/ci.yml) 참고. 워크플로우는 Python 3.14 + xvfb (Ubuntu, `import pyautogui` 가 실제 display 없이도 성공하도록) 를 설치한 뒤 **lint/type/test** job 과 **security** job (gitleaks + trivy + import-linter) 을 실행하고, 별도 pre-commit job 도 함께 실행합니다. 로컬에서는 `uv run pre-commit install` 로 깔리는 pre-commit 훅이 같은 게이트입니다. trivy 는 `brew install trivy` 등으로 별도 설치해야 로컬 pre-commit hook 이 실행됩니다.
 
 ## 불변식
 

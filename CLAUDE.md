@@ -32,9 +32,25 @@ required:
   site_identity:       "사이트 식별자"
 
 click_rule:            # 선택. 없으면 클릭 없이 통과.
-  source: "--click-recipe PATH  또는  COORDSMITH_CLICK_RECIPE 환경변수"
+  sources:
+    - "--recipe-json TEXT"   # 메모리 내 JSON 레시피 (agent/LLM 호출에 유용)
+    - "--recipe-yaml TEXT"   # 메모리 내 YAML 레시피
+    - "--click-recipe PATH"  # 파일 기반 레시피
+    - "COORDSMITH_CLICK_RECIPE 환경변수"
+  priority: "--recipe-json > --recipe-yaml > --click-recipe > COORDSMITH_CLICK_RECIPE"
   format: "YAML (.yaml/.yml) 또는 JSON — 둘 다 런타임 파싱 지원. YAML 권장."
   coord_priority: "payload(OpenClaw) > recipe coord > recipe image > no-click"
+
+python_api:
+  entrypoints:
+    - "await coord_smith.run_click_recipe(...)"
+    - "coord_smith.run_click_recipe_sync(...)"
+  recipe_input: "Path | str YAML/JSON | dict | ClickRecipe"
+  return: "coord_smith.RunResult (status, exit_code, run_json_path, step_count, failure, ...)"
+
+json_stdout:
+  flag: "--json"
+  purpose: "실행 완료 후 run.json 의 내용을 stdout에 출력; 호출 에이전트가 별도 파일 읽기 없이 결과 확인"
 ```
 
 ### 클릭 규칙 포맷 (YAML — 사람과 AI 모두 이 형태로 작성)

@@ -45,6 +45,15 @@ repos:
         entry: uv run --frozen -- lint-imports
         language: system
         pass_filenames: false
+      - id: trivy-fs
+        name: trivy filesystem scan
+        entry: trivy fs --scanners vuln,secret --severity HIGH,CRITICAL --exit-code 1 .
+        language: system
+        pass_filenames: false
+        # Trivy is not installed by uv; contributors must install the binary
+        # themselves (see CONTRIBUTING.md). CI runs the same scan via
+        # aquasecurity/trivy-action, so skipping this hook locally does not
+        # bypass the security gate.
       - id: pytest-unit-contract
         name: pytest unit + contract
         entry: uv run --frozen -- pytest tests/unit tests/contract -q

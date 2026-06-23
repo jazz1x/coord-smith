@@ -1,6 +1,6 @@
 version: 1
-missions:
-  click_dispatch:
+steps:
+  - name: click-buy
     image: templates/buy-button.png
     confidence: 0.9
     verify_transition: true

@@ -70,6 +70,10 @@ class ExecutionBoundary(Protocol):
         self, request: ExecutionRequest
     ) -> ExecutionResult: ...
 
+    async def preflight(self) -> None:
+        """Validate that the runtime can execute (permissions, environment)."""
+        ...
+
 
 class ExecutionAdapter(ExecutionBoundary, Protocol):
     """Canonical alias for the injected OpenClaw execution boundary."""

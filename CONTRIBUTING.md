@@ -54,6 +54,11 @@ uv run mypy
 
 # Install pre-commit hooks (one-time per clone).
 uv run pre-commit install
+
+# Optional but recommended: install trivy so the local secret/CVE hook runs.
+# macOS:   brew install trivy
+# Ubuntu:  apt-get install trivy  (or download the release binary)
+# See https://aquasecurity.github.io/trivy/latest/getting-started/installation/
 ```
 
 Real-binary tests (`pytest -m real`) require macOS Accessibility +
@@ -65,9 +70,12 @@ real cursor — do not run them in a loop.
 1. **Tests** must accompany behaviour changes. Recipe schema
    changes need parse-level + adapter-level coverage.
 2. **`uv run pytest -q`** is green and reports the expected pass
-   count (currently ~280).
+   count (currently 452).
 3. **`uv run ruff check .`** and **`uv run mypy`** are both clean.
-4. **`uv run pre-commit run --all-files`** has nothing to fix.
+4. **`uv run pre-commit run --all-files`** has nothing to fix. If you
+   have not installed trivy locally, the `trivy-fs` hook will fail; CI
+   still runs the same scan, but installing trivy lets you catch issues
+   before push.
 5. If you touched `docs/recipe-guide.md` schema sections, the
    contract tests under `tests/contract/` still pass.
 6. If you changed a public field on `Step` / `ClickRecipe`, you
@@ -89,11 +97,12 @@ Co-author attribution is welcome but not required.
 ## Versioning / release
 
 This project uses Semantic Versioning. The path from 0.0.1 →
-0.1.0 → 1.0.0 is documented in `docs/backlog.md`. Until a
-CI/release workflow lands (see B-PROD-2), version bumps are
-manual: edit `pyproject.toml`'s `[project].version` and the
-matching `__version__` in `src/coord_smith/__init__.py`, then
-tag the commit.
+0.1.0 → 1.0.0 is documented in `docs/backlog.md`. The version is
+managed dynamically: the single source of truth is
+`src/coord_smith/_version.py::__version__` (read by Hatchling via
+`[tool.hatch.version]`). Until a CI/release workflow lands
+(see B-PROD-2), version bumps are manual: edit `__version__` in
+`src/coord_smith/_version.py`, then tag the commit.
 
 ## Questions
 

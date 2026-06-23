@@ -1,0 +1,8 @@
+# Treat image assets as binary so git diff does not attempt to render
+# them as text. The project ships placeholder PNGs under docs/recipes/templates/
+# for dry-run validation; they are intentionally small and tracked in git.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary

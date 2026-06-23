@@ -238,12 +238,17 @@ class RunSummaryWriter:
         exit_code: int,
         run_root: Path | None = None,
         step_count_override: int | None = None,
-    ) -> Path:
-        """Write the summary and return the path it was written to.
+    ) -> tuple[Path, RunSummary]:
+        """Write the summary and return the path and the in-memory summary.
 
         Best-effort: a failure inside the writer must not mask the
         caller's exit code. The writer logs the error to stderr but
         does not raise.
+
+        Returns the written path and the :class:`RunSummary` that was
+        serialized. Callers that need structured access to the summary
+        (e.g. the programmatic Python API) can use the returned object
+        instead of re-reading ``run.json`` from disk.
 
         ``step_count_override`` is a test/programmatic-only hook (priority #1).
         The CLI dry-run path does NOT use it — it stashes the count via
@@ -329,4 +334,4 @@ class RunSummaryWriter:
                 f"{exc}",
                 file=sys.stderr,
             )
-        return target
+        return target, summary

@@ -180,6 +180,66 @@ Every invocation writes a single `run.json` summary that the caller can read in 
 
 On failure, the `failure` key inside `run.json` carries `step_idx`, `step_name`, `phase` (`pre_click` / `dispatch` / `post_click`), `error_class`, `screenshot` path, and a pointer to the full `failure.jsonl`. (Note: `failure` is a JSON field, not a separate `run.json.failure` file.)
 
+## Inline recipes & JSON output
+
+You can pass a recipe directly instead of writing a file — useful when an LLM agent generates the recipe in memory:
+
+```bash
+# JSON recipe inline
+coord-smith --recipe-json '{"version": 1, "steps": [{"name": "click-buy", "coord": {"x": 800, "y": 500}}]}' \
+      --session-ref my-session \
+      --expected-auth-state authenticated \
+      --target-page-url https://example.com \
+      --site-identity example
+
+# YAML recipe inline
+coord-smith --recipe-yaml 'version: 1\nsteps:\n  - name: click-buy\n    coord: {x: 800, y: 500}' \
+      --session-ref my-session \
+      --expected-auth-state authenticated \
+      --target-page-url https://example.com \
+      --site-identity example
+```
+
+Add `--json` to print the contents of `run.json` to stdout after the run finishes (the file is still written to disk):
+
+```bash
+coord-smith --recipe-json '{...}' --json ...
+```
+
+Priority when multiple recipe sources are present: `--recipe-json` > `--recipe-yaml` > `--click-recipe` > `COORDSMITH_CLICK_RECIPE` env var.
+
+## Calling from Python
+
+coord-smith can also be invoked programmatically without the CLI:
+
+```python
+from pathlib import Path
+import coord_smith
+
+result = await coord_smith.run_click_recipe(
+    recipe=Path("./recipe.yaml"),          # Path, str YAML/JSON, dict, or ClickRecipe
+    session_ref="my-session",
+    expected_auth_state="authenticated",
+    target_page_url="https://example.com",
+    site_identity="example",
+    dry_run=False,
+)
+
+print(result.status)          # success | failure | interrupted | host_busy
+print(result.exit_code)       # 0 | 1 | 2 | 3 | 4
+print(result.run_json_path)   # Path to the written run.json
+print(result.step_count)
+print(result.failure)
+```
+
+A synchronous wrapper is also available:
+
+```python
+result = coord_smith.run_click_recipe_sync(...)
+```
+
+Both return a `coord_smith.RunResult` dataclass. The function validates the recipe and required inputs, runs preflight, acquires the host lock, executes the graph, and writes `run.json` on every exit path.
+
 ## Click Recipes
 
 ### Image-based clicking (OpenCV template matching)
@@ -230,6 +290,8 @@ Polls `locateCenterOnScreen` until the signal image appears. Timeout raises `Ima
 | Tests (default) | `uv run pytest -q` | `-m real` auto-excluded |
 | Tests (real binary) | `uv run pytest -m real -q` | macOS Accessibility + Screen Recording |
 | Pre-commit | `uv run pre-commit run --all-files` | Full sweep |
+| Secrets | `gitleaks detect ...` | Full-history scan in CI; staged scan in pre-commit |
+| CVE / misconfig | `trivy fs --scanners vuln,secret ...` | HIGH/CRITICAL findings block CI; optional local hook |
 
 GitHub Actions runs on every push to `main` and every pull request — see [`.github/workflows/ci.yml`](.github/workflows/ci.yml). The workflow installs Python 3.14 + xvfb (Ubuntu only, so `import pyautogui` succeeds without a real display) and runs ruff + mypy + pytest, plus a separate pre-commit job. Locally, the same gates run via the pre-commit hooks installed by `uv run pre-commit install`.
 

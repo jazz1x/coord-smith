@@ -43,7 +43,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Literal, Self
 
-from coord_smith.reporting.run_summary import RunStatus, RunSummaryWriter
+from coord_smith.reporting.run_summary import RunStatus, RunSummary, RunSummaryWriter
 
 
 class RunSummaryLifecycle:
@@ -80,6 +80,8 @@ class RunSummaryLifecycle:
         self.writer: RunSummaryWriter
         self._status: RunStatus = "failure"
         self._exit_code: int = 1
+        self.last_summary_path: Path | None = None
+        self.last_summary: RunSummary | None = None
 
     def __enter__(self) -> Self:
         """Create the writer; return self so callers reach
@@ -107,9 +109,11 @@ class RunSummaryLifecycle:
         # ``RunSummaryWriter._atomic_write_json``); we still
         # wrap in try/except as defense-in-depth.
         try:
-            self.writer.flush(
+            path, summary = self.writer.flush(
                 status=self._status, exit_code=self._exit_code
             )
+            self.last_summary_path = path
+            self.last_summary = summary
         except Exception:  # noqa: BLE001 — lifecycle exit must not raise
             pass
         return False
